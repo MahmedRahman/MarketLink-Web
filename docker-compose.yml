@@ -1,0 +1,15 @@
+services:
+  laravel:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/var/www/html
+      - ./prod.env:/var/www/html/.env
+    networks:
+      - laravel-network
+
+
+networks:
+  laravel-network:
+    driver: bridge
