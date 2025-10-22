@@ -706,6 +706,14 @@
             @apply bg-indigo-100 text-indigo-800;
         }
         
+        .role-pink {
+            @apply bg-pink-100 text-pink-800;
+        }
+        
+        .role-teal {
+            @apply bg-teal-100 text-teal-800;
+        }
+        
         .role-gray {
             @apply bg-gray-100 text-gray-800;
         }

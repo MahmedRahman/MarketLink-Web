@@ -35,7 +35,7 @@ class EmployeeController extends Controller
             'phone' => 'nullable|string|max:20',
             'email' => 'required|email|unique:employees,email',
             'password' => 'required|string|min:6',
-            'role' => 'required|in:content_writer,ad_manager,designer,video_editor,page_manager,account_manager',
+                'role' => 'required|in:content_writer,ad_manager,designer,video_editor,page_manager,account_manager,monitor,media_buyer',
             'status' => 'required|in:active,inactive,pending'
         ]);
 
@@ -74,7 +74,7 @@ class EmployeeController extends Controller
             'phone' => 'nullable|string|max:20',
             'email' => 'required|email|unique:employees,email,' . $employee->id,
             'password' => 'nullable|string|min:6',
-            'role' => 'required|in:content_writer,ad_manager,designer,video_editor,page_manager,account_manager',
+                'role' => 'required|in:content_writer,ad_manager,designer,video_editor,page_manager,account_manager,monitor,media_buyer',
             'status' => 'required|in:active,inactive,pending'
         ]);
 

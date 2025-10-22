@@ -40,6 +40,8 @@ class Employee extends Authenticatable
             'video_editor' => 'مصمم فيديوهات',
             'page_manager' => 'إدارة الصفحة',
             'account_manager' => 'أكونت منجر',
+            'monitor' => 'مونتير',
+            'media_buyer' => 'ميديا بايرز',
             default => 'غير محدد'
         };
     }
@@ -53,6 +55,8 @@ class Employee extends Authenticatable
             'video_editor' => 'red',
             'page_manager' => 'yellow',
             'account_manager' => 'indigo',
+            'monitor' => 'pink',
+            'media_buyer' => 'teal',
             default => 'gray'
         };
     }

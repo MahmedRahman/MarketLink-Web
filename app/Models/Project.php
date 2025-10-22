@@ -16,18 +16,18 @@ class Project extends Model
         'instagram_url',
         'twitter_url',
         'linkedin_url',
-        'youtube_url',
-        'tiktok_url',
-        'whatsapp_number',
-        'phone_number',
-        'email',
-        'address',
-        'status'
+               'youtube_url',
+               'tiktok_url',
+               'status',
+        'authorized_persons',
+        'project_accounts'
     ];
 
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+        'authorized_persons' => 'array',
+        'project_accounts' => 'array',
     ];
 
     public function client(): BelongsTo
@@ -53,5 +53,52 @@ class Project extends Model
             'pending' => 'yellow',
             default => 'gray'
         };
+    }
+
+    /**
+     * إضافة شخص موثق للمشروع
+     */
+    public function addAuthorizedPerson($name, $phone)
+    {
+        $persons = $this->authorized_persons ?? [];
+        $persons[] = [
+            'name' => $name,
+            'phone' => $phone,
+            'added_at' => now()->toISOString()
+        ];
+        $this->authorized_persons = $persons;
+        $this->save();
+    }
+
+    /**
+     * إضافة حساب للمشروع
+     */
+    public function addProjectAccount($username, $password, $url)
+    {
+        $accounts = $this->project_accounts ?? [];
+        $accounts[] = [
+            'username' => $username,
+            'password' => $password,
+            'url' => $url,
+            'added_at' => now()->toISOString()
+        ];
+        $this->project_accounts = $accounts;
+        $this->save();
+    }
+
+    /**
+     * الحصول على عدد الأشخاص الموثقين
+     */
+    public function getAuthorizedPersonsCountAttribute()
+    {
+        return count($this->authorized_persons ?? []);
+    }
+
+    /**
+     * الحصول على عدد الحسابات
+     */
+    public function getProjectAccountsCountAttribute()
+    {
+        return count($this->project_accounts ?? []);
     }
 }
