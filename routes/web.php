@@ -4,6 +4,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\WebhookController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -28,5 +29,9 @@ Route::middleware('auth')->group(function () {
     // Employees Routes
     Route::resource('employees', EmployeeController::class);
 });
+
+// Webhook routes (no authentication required)
+Route::post('/webhook/github', [WebhookController::class, 'github'])->name('webhook.github')->middleware('verify.github.webhook');
+Route::get('/webhook/status', [WebhookController::class, 'status'])->name('webhook.status');
 
 require __DIR__.'/auth.php';
