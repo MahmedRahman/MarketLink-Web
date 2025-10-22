@@ -275,7 +275,7 @@
                                     type="tel"
                                     name="authorized_persons[0][phone]"
                                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
-                                    placeholder="مثال: +966501234567"
+                                                placeholder="مثال: 01234567890"
                                 />
                             </div>
                         </div>
@@ -425,7 +425,7 @@ $(document).ready(function() {
                             type="tel"
                             name="authorized_persons[${authorizedPersonIndex}][phone]"
                             class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
-                            placeholder="مثال: +966501234567"
+                                                placeholder="مثال: 01234567890"
                         />
                         <button type="button" class="remove-authorized-person px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
                             <i class="fas fa-trash"></i>

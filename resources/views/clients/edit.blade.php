@@ -110,7 +110,7 @@
                                 name="phone"
                                 value="{{ old('phone', $client->phone) }}"
                                 class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
-                                placeholder="مثال: +966501234567"
+                                       placeholder="مثال: 01234567890"
                             />
                             @error('phone')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>

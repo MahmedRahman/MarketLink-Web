@@ -3,7 +3,10 @@
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\ProjectRevenueController;
+use App\Http\Controllers\ProjectExpenseController;
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\WebhookController;
 use Illuminate\Support\Facades\Route;
 
@@ -23,12 +26,22 @@ Route::middleware('auth')->group(function () {
     // Clients Routes
     Route::resource('clients', ClientController::class);
     
-    // Projects Routes
-    Route::resource('projects', ProjectController::class);
-    
-    // Employees Routes
-    Route::resource('employees', EmployeeController::class);
-});
+           // Projects Routes
+           Route::resource('projects', ProjectController::class);
+           
+           // Project Revenues Routes
+           Route::resource('projects.revenues', ProjectRevenueController::class);
+           
+           // Project Expenses Routes
+           Route::resource('projects.expenses', ProjectExpenseController::class);
+           
+           // Employees Routes
+           Route::resource('employees', EmployeeController::class);
+           
+           // Reports Routes
+           Route::get('reports', [ReportsController::class, 'index'])->name('reports.index');
+           Route::get('reports/export', [ReportsController::class, 'export'])->name('reports.export');
+       });
 
 // Webhook routes (no authentication required)
 Route::post('/webhook/github', [WebhookController::class, 'github'])->name('webhook.github')->middleware('verify.github.webhook');

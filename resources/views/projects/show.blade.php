@@ -96,6 +96,14 @@
                                     <i class="fas fa-edit text-sm mr-2"></i>
                                     تعديل المشروع
                                 </a>
+                                <a href="{{ route('projects.revenues.index', $project) }}" class="w-full bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-xl flex items-center justify-center transition-colors">
+                                    <i class="fas fa-money-bill-wave text-sm mr-2"></i>
+                                    إدارة الإيرادات
+                                </a>
+                                <a href="{{ route('projects.expenses.index', $project) }}" class="w-full bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-xl flex items-center justify-center transition-colors">
+                                    <i class="fas fa-receipt text-sm mr-2"></i>
+                                    إدارة المصروفات
+                                </a>
                                 <button onclick="confirmDelete('{{ route('projects.destroy', $project) }}', 'تأكيد حذف المشروع', 'هل أنت متأكد من حذف المشروع {{ $project->business_name }}؟')" class="w-full bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl flex items-center justify-center transition-colors">
                                     <i class="fas fa-trash text-sm mr-2"></i>
                                     حذف المشروع
