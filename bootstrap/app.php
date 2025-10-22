@@ -14,11 +14,6 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'verify.github.webhook' => \App\Http\Middleware\VerifyGitHubWebhook::class,
         ]);
-        
-        // Force HTTPS in production
-        $middleware->web(append: [
-            \App\Http\Middleware\ForceHttps::class,
-        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
