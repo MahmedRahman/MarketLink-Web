@@ -4,10 +4,20 @@ services:
     ports:
       - "8000:8000"
     volumes:
+      # استبعاد vendor و node_modules من volume mapping
       - .:/var/www/html
       - ./prod.env:/var/www/html/.env
+      - vendor:/var/www/html/vendor
+      - node_modules:/var/www/html/node_modules
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
     networks:
       - laravel-network
+
+volumes:
+  vendor:
+  node_modules:
 
 
 networks:
