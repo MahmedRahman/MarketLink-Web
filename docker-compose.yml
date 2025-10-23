@@ -14,11 +14,11 @@ services:
       - APP_DEBUG=false
     networks:
       - laravel-network
+    restart: unless-stopped   # ✅ حطها هنا جوه السيرفس
 
 volumes:
   vendor:
   node_modules:
-restart: unless-stopped
 
 networks:
   laravel-network:
