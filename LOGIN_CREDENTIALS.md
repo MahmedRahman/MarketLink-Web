@@ -41,3 +41,4 @@ $user->save();
 ### إذا ظهرت رسالة "Too many login attempts":
 1. انتظر 60 ثانية
 2. أو امسح الـ cache: `php artisan cache:clear`
+

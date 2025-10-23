@@ -224,3 +224,4 @@ function confirmDelete(url, title, message) {
 </script>
 @endsection
 @endsection
+

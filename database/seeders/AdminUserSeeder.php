@@ -27,3 +27,4 @@ class AdminUserSeeder extends Seeder
         $this->command->info('Admin user created successfully!');
     }
 }
+

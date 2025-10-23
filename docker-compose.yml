@@ -18,7 +18,7 @@ services:
 volumes:
   vendor:
   node_modules:
-
+restart: unless-stopped
 
 networks:
   laravel-network:
