@@ -20,6 +20,10 @@
                     </div>
                 </div>
                 <div class="flex items-center space-x-3 rtl:space-x-reverse">
+                    <a href="{{ route('reports.employee-financial') }}" class="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors">
+                        <i class="fas fa-user text-sm ml-2"></i>
+                        تقرير الموظف المالي
+                    </a>
                     <a href="{{ route('reports.export', request()->query()) }}" class="flex items-center px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors">
                         <i class="fas fa-download text-sm ml-2"></i>
                         تصدير Excel
@@ -297,6 +301,7 @@ $(document).ready(function() {
 </script>
 @endsection
 @endsection
+
 
 
 

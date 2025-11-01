@@ -16,6 +16,7 @@ class PlanTask extends Model
         'list_type',
         'order',
         'due_date',
+        'color',
         'task_data',
     ];
 

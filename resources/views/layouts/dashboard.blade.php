@@ -821,7 +821,7 @@
             <!-- Logo -->
             <div class="p-6 border-b border-gray-200">
                 <div class="flex items-center">
-                    <div class="w-12 h-12 logo-gradient rounded-2xl flex items-center justify-center shadow-lg">
+                    <div class="w-12 h-12 logo-gradient rounded-2xl flex items-center justify-center shadow-lg ml-4">
                         <span class="material-icons text-white text-xl">business</span>
                     </div>
                     <div class="ml-4">
@@ -845,18 +845,18 @@
                         <i class="fas fa-users text-lg ml-3"></i>
                         <span class="font-medium">العملاء</span>
                     </a>
-                    
+                         <!-- Employees -->
+                         <a href="{{ route('employees.index') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('employees.*') ? 'active' : '' }}">
+                        <i class="fas fa-users-cog text-lg ml-3"></i>
+                        <span class="font-medium">الموظفين</span>
+                    </a>
                     <!-- Projects -->
                     <a href="{{ route('projects.index') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('projects.*') ? 'active' : '' }}">
                         <i class="fas fa-project-diagram text-lg ml-3"></i>
                         <span class="font-medium">المشاريع</span>
                     </a>
                     
-                    <!-- Employees -->
-                    <a href="{{ route('employees.index') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('employees.*') ? 'active' : '' }}">
-                        <i class="fas fa-users-cog text-lg ml-3"></i>
-                        <span class="font-medium">الموظفين</span>
-                    </a>
+               
                     
                     <!-- Monthly Plans -->
                     <a href="{{ route('monthly-plans.index') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('monthly-plans.*') ? 'active' : '' }}">
@@ -879,7 +879,7 @@
                     @endif
                     
                     <!-- Settings -->
-                    <a href="#" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl">
+                    <a href="{{ route('profile.edit') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('profile.*') ? 'active' : '' }}">
                         <i class="fas fa-cog text-lg ml-3"></i>
                         <span class="font-medium">الإعدادات</span>
                     </a>
@@ -907,15 +907,15 @@
                         </button>
                         
                         <!-- User Profile -->
-                        <div class="flex items-center space-x-3 bg-gray-50 rounded-xl p-2">
-                            <div class="w-10 h-10 logo-gradient rounded-xl flex items-center justify-center shadow-md">
+                        <a href="{{ route('profile.edit') }}" class="flex items-center space-x-3 bg-gray-50 rounded-xl p-2 hover:bg-gray-100 transition-colors">
+                            <div class="w-10 h-10 logo-gradient rounded-xl flex items-center justify-center shadow-md ml-4">
                                 <i class="fas fa-user text-white text-sm"></i>
                             </div>
                             <div class="text-right">
                                 <p class="text-sm font-medium text-gray-800">{{ Auth::user()->name }}</p>
                                 <p class="text-xs text-gray-500">مدير النظام</p>
                             </div>
-                        </div>
+                        </a>
                         
                         <!-- Logout -->
                         <form method="POST" action="{{ route('logout') }}" class="inline">

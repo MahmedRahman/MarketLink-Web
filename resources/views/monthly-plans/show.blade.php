@@ -101,7 +101,7 @@
         </div>
 
         <!-- Trello Board Section -->
-        <div class="card rounded-2xl p-6">
+        <div id="kanban-section" class="card rounded-2xl p-6">
             <div class="flex items-center justify-between mb-6">
                 <div class="flex items-center">
                     <div class="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center icon-spacing ml-3">
@@ -109,14 +109,19 @@
                     </div>
                     <h3 class="text-lg font-semibold text-gray-800">متابعة الخطة</h3>
                 </div>
-                <button onclick="showAddTaskModal()" class="btn-primary text-white px-4 py-2 rounded-lg flex items-center">
-                    <span class="material-icons text-sm ml-2">add</span>
-                    إضافة مهمة
-                </button>
+                <div class="flex items-center space-x-2 rtl:space-x-reverse">
+                    <button id="toggle-fullscreen-btn" onclick="toggleFullscreen()" class="flex items-center px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors" title="تكبير/تصغير">
+                        <span class="material-icons text-lg" id="fullscreen-icon">fullscreen</span>
+                    </button>
+                    <button onclick="showAddTaskModal()" class="btn-primary text-white px-4 py-2 rounded-lg flex items-center">
+                        <span class="material-icons text-sm ml-2">add</span>
+                        إضافة مهمة
+                    </button>
+                </div>
             </div>
 
             <!-- Board -->
-            <div id="kanban-board" class="flex gap-4 overflow-x-auto pb-4" style="min-height: 500px;">
+            <div id="kanban-board" class="flex gap-4 overflow-x-auto pb-4 kanban-board-container" style="min-height: 500px;">
                 <!-- Tasks List -->
                 <div class="flex-shrink-0 w-80 bg-gray-50 rounded-xl p-4" data-list-type="tasks" data-employee-id="">
                     <div class="flex items-center justify-between mb-4">
@@ -193,6 +198,16 @@
                 <input type="date" id="task-due-date" name="due_date"
                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary">
             </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">اللون</label>
+                <div class="flex items-center gap-3">
+                    <input type="color" id="task-color" name="color" value="#6366f1"
+                        class="w-16 h-10 border border-gray-300 rounded-lg cursor-pointer">
+                    <input type="text" id="task-color-hex" value="#6366f1" placeholder="#6366f1"
+                        class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
+                        pattern="^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$">
+                </div>
+            </div>
             <input type="hidden" id="task-list-type" name="list_type" value="tasks">
             <div class="flex justify-end space-x-3 rtl:space-x-reverse">
                 <button type="button" onclick="hideAddTaskModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
@@ -245,6 +260,16 @@
                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary">
             </div>
             <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">اللون</label>
+                <div class="flex items-center gap-3">
+                    <input type="color" id="edit-task-color" name="color" value="#6366f1"
+                        class="w-16 h-10 border border-gray-300 rounded-lg cursor-pointer">
+                    <input type="text" id="edit-task-color-hex" value="#6366f1" placeholder="#6366f1"
+                        class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
+                        pattern="^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$">
+                </div>
+            </div>
+            <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">الحالة</label>
                 <select id="edit-task-status" name="status"
                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary">
@@ -274,9 +299,72 @@
 @section('scripts')
 <!-- SortableJS for Drag & Drop -->
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+<style>
+/* Fullscreen styles */
+.kanban-section-fullscreen {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    z-index: 9999 !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    overflow: hidden !important;
+    background: white !important;
+}
+
+.kanban-section-fullscreen .kanban-board-container {
+    height: calc(100vh - 120px) !important;
+    min-height: calc(100vh - 120px) !important;
+}
+
+.kanban-section-fullscreen .card {
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+body.kanban-fullscreen-active {
+    overflow: hidden !important;
+}
+</style>
 <script>
 const monthlyPlanId = {{ $monthlyPlan->id }};
 let currentEditTaskId = null;
+let isFullscreen = false;
+
+// Toggle Fullscreen Function
+function toggleFullscreen() {
+    const kanbanSection = document.getElementById('kanban-section');
+    const icon = document.getElementById('fullscreen-icon');
+    const body = document.body;
+    
+    isFullscreen = !isFullscreen;
+    
+    if (isFullscreen) {
+        kanbanSection.classList.add('kanban-section-fullscreen');
+        body.classList.add('kanban-fullscreen-active');
+        icon.textContent = 'fullscreen_exit';
+    } else {
+        kanbanSection.classList.remove('kanban-section-fullscreen');
+        body.classList.remove('kanban-fullscreen-active');
+        icon.textContent = 'fullscreen';
+        // Scroll back to the section
+        kanbanSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
+
+// Exit fullscreen on ESC key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && isFullscreen) {
+        toggleFullscreen();
+    }
+});
 
 // Initialize Sortable for all lists
 document.addEventListener('DOMContentLoaded', function() {
@@ -386,6 +474,9 @@ function showAddTaskModal() {
 function hideAddTaskModal() {
     document.getElementById('add-task-modal').classList.add('hidden');
     document.getElementById('add-task-form').reset();
+    // Reset color to default
+    document.getElementById('task-color').value = '#6366f1';
+    document.getElementById('task-color-hex').value = '#6366f1';
 }
 
 function showEditTaskModal(taskId, taskData) {
@@ -396,6 +487,9 @@ function showEditTaskModal(taskId, taskData) {
     document.getElementById('edit-task-assigned-to').value = taskData.assigned_to || '';
     document.getElementById('edit-task-due-date').value = taskData.due_date || '';
     document.getElementById('edit-task-status').value = taskData.status;
+    const taskColor = taskData.color || '#6366f1';
+    document.getElementById('edit-task-color').value = taskColor;
+    document.getElementById('edit-task-color-hex').value = taskColor;
     document.getElementById('edit-task-modal').classList.remove('hidden');
 }
 
@@ -411,6 +505,10 @@ document.getElementById('add-task-form').addEventListener('submit', function(e) 
     const assignedTo = formData.get('assigned_to');
     const listType = assignedTo ? 'employee' : 'tasks';
     formData.set('list_type', listType);
+    
+    // Add color to form data
+    const color = document.getElementById('task-color').value || '#6366f1';
+    formData.set('color', color);
 
     fetch(`/monthly-plans/${monthlyPlanId}/tasks`, {
         method: 'POST',
@@ -439,18 +537,37 @@ document.getElementById('edit-task-form').addEventListener('submit', function(e)
     if (!currentEditTaskId) return;
 
     const formData = new FormData(this);
-    const assignedTo = formData.get('assigned_to');
-    const listType = assignedTo ? 'employee' : 'tasks';
-    formData.set('list_type', listType);
+    
+    // جمع البيانات من النموذج
+    const data = {
+        title: formData.get('title'),
+        description: formData.get('description') || null,
+        assigned_to: formData.get('assigned_to') || null,
+        due_date: formData.get('due_date') || null,
+        status: formData.get('status'),
+        color: document.getElementById('edit-task-color').value || '#6366f1'
+    };
+    
+    // تحديد list_type بناءً على assigned_to
+    data.list_type = data.assigned_to ? 'employee' : 'tasks';
     
     fetch(`/monthly-plans/${monthlyPlanId}/tasks/${currentEditTaskId}`, {
         method: 'POST',
         headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json'
         },
-        body: formData
+        body: JSON.stringify(data)
     })
-    .then(response => response.json())
+    .then(response => {
+        return response.json().then(responseData => {
+            if (!response.ok) {
+                throw new Error(responseData.error || responseData.message || 'حدث خطأ أثناء تحديث المهمة');
+            }
+            return responseData;
+        });
+    })
     .then(data => {
         if (data.success) {
             location.reload();
@@ -460,7 +577,7 @@ document.getElementById('edit-task-form').addEventListener('submit', function(e)
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('حدث خطأ أثناء تحديث المهمة');
+        alert(error.message || 'حدث خطأ أثناء تحديث المهمة');
     });
 });
 
@@ -487,6 +604,30 @@ function deleteTask() {
 // Update task assigned_to when selecting employee in add modal
 document.getElementById('task-assigned-to').addEventListener('change', function() {
     document.getElementById('task-list-type').value = this.value ? 'employee' : 'tasks';
+});
+
+// Sync color picker with hex input in add modal
+document.getElementById('task-color').addEventListener('input', function() {
+    document.getElementById('task-color-hex').value = this.value;
+});
+
+document.getElementById('task-color-hex').addEventListener('input', function() {
+    const hexValue = this.value;
+    if (/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(hexValue)) {
+        document.getElementById('task-color').value = hexValue;
+    }
+});
+
+// Sync color picker with hex input in edit modal
+document.getElementById('edit-task-color').addEventListener('input', function() {
+    document.getElementById('edit-task-color-hex').value = this.value;
+});
+
+document.getElementById('edit-task-color-hex').addEventListener('input', function() {
+    const hexValue = this.value;
+    if (/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(hexValue)) {
+        document.getElementById('edit-task-color').value = hexValue;
+    }
 });
 </script>
 @endsection

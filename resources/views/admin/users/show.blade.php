@@ -65,6 +65,39 @@
         </form>
     </div>
     
+    <!-- Change Password Card -->
+    <div class="card">
+        <h3 class="text-lg font-semibold mb-4">تغيير كلمة المرور</h3>
+        <form method="POST" action="{{ route('admin.users.updatePassword', $user) }}" class="space-y-4">
+            @csrf
+            @method('PATCH')
+            <div>
+                <label for="password" class="block text-sm font-medium text-gray-700 mb-2">كلمة المرور الجديدة</label>
+                <input type="password" 
+                       name="password" 
+                       id="password" 
+                       required 
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                       autocomplete="new-password">
+                @error('password')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
+            <div>
+                <label for="password_confirmation" class="block text-sm font-medium text-gray-700 mb-2">تأكيد كلمة المرور</label>
+                <input type="password" 
+                       name="password_confirmation" 
+                       id="password_confirmation" 
+                       required 
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                       autocomplete="new-password">
+            </div>
+            <div>
+                <button type="submit" class="btn-primary">تحديث كلمة المرور</button>
+            </div>
+        </form>
+    </div>
+    
     @if($user->organization && $user->organization->activeSubscription())
         <div class="card">
             <h3 class="text-lg font-semibold mb-4">الاشتراك</h3>

@@ -164,14 +164,95 @@ class MonthlyPlanController extends Controller
             'month_number' => 'required|integer|min:1|max:12',
             'description' => 'nullable|string',
             'status' => 'required|in:draft,active,completed,cancelled',
+            'goals' => 'required|array|min:1',
+            'goals.*.goal_type' => 'required|string',
+            'goals.*.goal_name' => 'required|string|max:255',
+            'goals.*.target_value' => 'required|integer|min:0',
+            'goals.*.unit' => 'nullable|string|max:50',
+            'goals.*.description' => 'nullable|string',
+            'employee_ids' => 'required|array|min:1',
+            'employee_ids.*' => 'exists:employees,id',
         ]);
 
-        $monthlyPlan->update($request->only([
-            'project_id', 'month', 'year', 'month_number', 'description', 'status'
-        ]));
-
-        return redirect()->route('monthly-plans.show', $monthlyPlan)
-            ->with('success', 'تم تحديث الخطة بنجاح');
+        try {
+            DB::beginTransaction();
+            
+            $organizationId = $request->user()->organization_id;
+            
+            // التحقق من أن المشروع يتبع المنظمة
+            $project = Project::where('id', $request->project_id)
+                ->where('organization_id', $organizationId)
+                ->firstOrFail();
+            
+            // تحديث الخطة الشهرية
+            $monthlyPlan->update($request->only([
+                'project_id', 'month', 'year', 'month_number', 'description', 'status'
+            ]));
+            
+            // تحديث الأهداف
+            // جمع IDs للأهداف الموجودة المرسلة
+            $submittedGoalIds = collect($request->goals)
+                ->filter(fn($goal) => isset($goal['id']))
+                ->pluck('id')
+                ->toArray();
+            
+            // حذف الأهداف التي لم يتم إرسالها
+            $monthlyPlan->goals()
+                ->whereNotIn('id', $submittedGoalIds)
+                ->delete();
+            
+            // تحديث الأهداف الموجودة أو إنشاء جديدة
+            foreach ($request->goals as $goalData) {
+                if (isset($goalData['id'])) {
+                    // تحديث هدف موجود
+                    $goal = MonthlyPlanGoal::where('id', $goalData['id'])
+                        ->where('monthly_plan_id', $monthlyPlan->id)
+                        ->first();
+                    
+                    if ($goal) {
+                        $goal->update([
+                            'goal_type' => $goalData['goal_type'],
+                            'goal_name' => $goalData['goal_name'],
+                            'target_value' => $goalData['target_value'],
+                            'unit' => $goalData['unit'] ?? null,
+                            'description' => $goalData['description'] ?? null,
+                        ]);
+                    }
+                } else {
+                    // إنشاء هدف جديد
+                    MonthlyPlanGoal::create([
+                        'monthly_plan_id' => $monthlyPlan->id,
+                        'goal_type' => $goalData['goal_type'],
+                        'goal_name' => $goalData['goal_name'],
+                        'target_value' => $goalData['target_value'],
+                        'achieved_value' => 0,
+                        'unit' => $goalData['unit'] ?? null,
+                        'description' => $goalData['description'] ?? null,
+                    ]);
+                }
+            }
+            
+            // تحديث الموظفين
+            $employeeIds = $request->employee_ids;
+            // التحقق من أن الموظفين يتبعون المنظمة
+            $validEmployees = Employee::whereIn('id', $employeeIds)
+                ->where('organization_id', $organizationId)
+                ->pluck('id')
+                ->toArray();
+            
+            $monthlyPlan->employees()->sync($validEmployees);
+            
+            DB::commit();
+            
+            return redirect()->route('monthly-plans.show', $monthlyPlan)
+                ->with('success', 'تم تحديث الخطة بنجاح');
+                
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()
+                ->with('error', 'حدث خطأ أثناء تحديث الخطة: ' . $e->getMessage())
+                ->withInput();
+        }
     }
 
     public function destroy(Request $request, MonthlyPlan $monthlyPlan)

@@ -54,13 +54,15 @@ Route::middleware(['auth', \App\Http\Middleware\CheckTrialStatus::class])->group
            // Monthly Plans Routes
            Route::resource('monthly-plans', \App\Http\Controllers\MonthlyPlanController::class);
            Route::post('monthly-plans/{monthlyPlan}/tasks', [\App\Http\Controllers\PlanTaskController::class, 'store'])->name('monthly-plans.tasks.store');
-           Route::post('monthly-plans/{monthlyPlan}/tasks/{task}', [\App\Http\Controllers\PlanTaskController::class, 'update'])->name('monthly-plans.tasks.update');
+           Route::get('monthly-plans/{monthlyPlan}/tasks/{task}/edit', [\App\Http\Controllers\PlanTaskController::class, 'edit'])->name('monthly-plans.tasks.edit');
+           Route::put('monthly-plans/{monthlyPlan}/tasks/{task}', [\App\Http\Controllers\PlanTaskController::class, 'update'])->name('monthly-plans.tasks.update');
            Route::post('monthly-plans/{monthlyPlan}/tasks/{task}/move', [\App\Http\Controllers\PlanTaskController::class, 'move'])->name('monthly-plans.tasks.move');
            Route::delete('monthly-plans/{monthlyPlan}/tasks/{task}', [\App\Http\Controllers\PlanTaskController::class, 'destroy'])->name('monthly-plans.tasks.destroy');
            
            // Reports Routes
            Route::get('reports', [ReportsController::class, 'index'])->name('reports.index');
            Route::get('reports/export', [ReportsController::class, 'export'])->name('reports.export');
+           Route::get('reports/employee-financial', [ReportsController::class, 'employeeFinancial'])->name('reports.employee-financial');
        });
 
 // Subscription Routes
@@ -79,6 +81,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/users', [AdminController::class, 'users'])->name('users.index');
     Route::get('/users/{user}', [AdminController::class, 'showUser'])->name('users.show');
     Route::patch('/users/{user}/status', [AdminController::class, 'updateUserStatus'])->name('users.updateStatus');
+    Route::patch('/users/{user}/password', [AdminController::class, 'updateUserPassword'])->name('users.updatePassword');
     Route::delete('/users/{user}', [AdminController::class, 'deleteUser'])->name('users.delete');
     
     // Organizations Routes

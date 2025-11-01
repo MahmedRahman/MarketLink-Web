@@ -9,6 +9,8 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Password;
 
 class AdminController extends Controller
 {
@@ -207,5 +209,26 @@ class AdminController extends Controller
 
         return redirect()->back()
             ->with('success', "تم تحديث حالة المستخدم إلى: {$statusText}");
+    }
+
+    /**
+     * تحديث كلمة مرور المستخدم
+     */
+    public function updateUserPassword(Request $request, User $user): RedirectResponse
+    {
+        if ($user->is_admin) {
+            abort(403, 'لا يمكن تغيير كلمة مرور المدير');
+        }
+
+        $request->validate([
+            'password' => ['required', 'confirmed', Password::defaults()],
+        ]);
+
+        $user->update([
+            'password' => Hash::make($request->password),
+        ]);
+
+        return redirect()->back()
+            ->with('success', 'تم تحديث كلمة المرور بنجاح');
     }
 }

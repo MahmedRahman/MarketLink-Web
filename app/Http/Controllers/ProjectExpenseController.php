@@ -11,7 +11,7 @@ class ProjectExpenseController extends Controller
 {
     public function index(Project $project)
     {
-        $expenses = $project->expenses()->latest()->paginate(10);
+        $expenses = $project->expenses()->with('employee')->latest()->get();
         return view('projects.expenses.index', compact('project', 'expenses'));
     }
 
