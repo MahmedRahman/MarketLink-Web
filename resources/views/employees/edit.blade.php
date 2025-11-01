@@ -194,16 +194,17 @@
                         <!-- Instapay Number -->
                         <div>
                             <label for="instapay_number" class="block text-sm font-medium text-gray-700 mb-2">
-                                رقم أنصاباي (Instapay)
+                                رقم انستاباي (Instapay)
                             </label>
                             <input
                                 type="text"
                                 id="instapay_number"
                                 name="instapay_number"
-                                value="{{ old('instapay_number', $employee->instapay_number) }}"
+                                value="{{ old('instapay_number', $employee->instapay_number ?? '') }}"
                                 class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
-                                placeholder="أدخل رقم أنصاباي"
+                                placeholder="أدخل رقم أو معلومات انستاباي (مثل: 01234567890 أو username@instapay)"
                             />
+                            <p class="mt-1 text-xs text-gray-500">يمكن إدخال رقم أو أي نص آخر متعلق بانستاباي</p>
                             @error('instapay_number')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
