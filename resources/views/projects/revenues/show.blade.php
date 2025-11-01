@@ -56,6 +56,13 @@
                             <span class="text-lg font-bold text-green-600">{{ $revenue->formatted_amount }}</span>
                         </div>
                         
+                        @if($revenue->remaining_amount !== null)
+                        <div class="flex items-center justify-between py-3 border-b border-gray-100">
+                            <span class="text-sm font-medium text-gray-600">المبلغ المتبقي:</span>
+                            <span class="text-lg font-bold text-orange-600">{{ $revenue->formatted_remaining_amount }}</span>
+                        </div>
+                        @endif
+                        
                         <div class="flex items-center justify-between py-3 border-b border-gray-100">
                             <span class="text-sm font-medium text-gray-600">تاريخ الإيراد:</span>
                             <span class="text-sm text-gray-900">{{ $revenue->revenue_date->format('Y-m-d') }}</span>

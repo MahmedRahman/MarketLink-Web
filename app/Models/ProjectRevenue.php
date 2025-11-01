@@ -13,6 +13,7 @@ class ProjectRevenue extends Model
         'title',
         'description',
         'amount',
+        'remaining_amount',
         'currency',
         'revenue_date',
         'payment_method',
@@ -32,6 +33,7 @@ class ProjectRevenue extends Model
         'revenue_date' => 'date',
         'invoice_date' => 'date',
         'amount' => 'decimal:2',
+        'remaining_amount' => 'decimal:2',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
@@ -46,6 +48,14 @@ class ProjectRevenue extends Model
     public function getFormattedAmountAttribute()
     {
         return number_format($this->amount, 2) . ' جنيه';
+    }
+
+    public function getFormattedRemainingAmountAttribute()
+    {
+        if ($this->remaining_amount !== null) {
+            return number_format($this->remaining_amount, 2) . ' جنيه';
+        }
+        return null;
     }
 
     public function getStatusBadgeAttribute()

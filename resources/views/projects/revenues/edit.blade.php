@@ -99,6 +99,27 @@
                             @enderror
                         </div>
 
+                        <!-- Remaining Amount -->
+                        <div>
+                            <label for="remaining_amount" class="block text-sm font-medium text-gray-700 mb-2">
+                                المبلغ المتبقي
+                            </label>
+                            <input
+                                type="number"
+                                id="remaining_amount"
+                                name="remaining_amount"
+                                value="{{ old('remaining_amount', $revenue->remaining_amount) }}"
+                                step="0.01"
+                                min="0"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                                placeholder="0.00"
+                            />
+                            <p class="mt-1 text-xs text-gray-500">المبلغ المتبقي الذي لم يتم استلامه بعد</p>
+                            @error('remaining_amount')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
                         <!-- Currency -->
                         <div>
                             <label for="currency" class="block text-sm font-medium text-gray-700 mb-2">
