@@ -119,6 +119,10 @@
                                     <i class="fas fa-receipt text-sm ml-2"></i>
                                     إدارة المصروفات
                                 </a>
+                                <a href="{{ route('projects.financial-report', $project) }}" class="w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-xl flex items-center justify-center transition-colors">
+                                    <i class="fas fa-chart-line text-sm ml-2"></i>
+                                    التقرير المالي الشهري
+                                </a>
                                 <button onclick="confirmDelete('{{ route('projects.destroy', $project) }}', 'تأكيد حذف المشروع', 'هل أنت متأكد من حذف المشروع {{ $project->business_name }}؟')" class="w-full bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl flex items-center justify-center transition-colors">
                                     <i class="fas fa-trash text-sm ml-2"></i>
                                     حذف المشروع

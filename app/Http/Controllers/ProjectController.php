@@ -4,10 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\Project;
 use App\Models\ProjectFile;
+use App\Models\ProjectRevenue;
+use App\Models\ProjectExpense;
 use App\Models\Client;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\RedirectResponse;
+use Carbon\Carbon;
 
 class ProjectController extends Controller
 {
@@ -335,5 +338,86 @@ class ProjectController extends Controller
             return redirect()->route('projects.show', $project)
                 ->with('error', 'حدث خطأ أثناء حذف الملف: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * عرض التقرير المالي الشهري للمشروع
+     */
+    public function financialReport(Request $request, Project $project)
+    {
+        if ($project->organization_id !== $request->user()->organization_id) {
+            abort(403);
+        }
+
+        // الحصول على الشهر المحدد أو الشهر الحالي
+        $selectedMonth = $request->get('month', Carbon::now()->format('Y-m'));
+        
+        try {
+            $monthDate = Carbon::createFromFormat('Y-m', $selectedMonth);
+        } catch (\Exception $e) {
+            $monthDate = Carbon::now();
+            $selectedMonth = $monthDate->format('Y-m');
+        }
+
+        $startOfMonth = $monthDate->copy()->startOfMonth();
+        $endOfMonth = $monthDate->copy()->endOfMonth();
+
+        // جلب الإيرادات في الشهر المحدد
+        $revenues = ProjectRevenue::where('project_id', $project->id)
+            ->whereBetween('revenue_date', [$startOfMonth->format('Y-m-d'), $endOfMonth->format('Y-m-d')])
+            ->orderBy('revenue_date', 'desc')
+            ->get();
+
+        // جلب المصروفات في الشهر المحدد
+        $expenses = ProjectExpense::where('project_id', $project->id)
+            ->whereBetween('expense_date', [$startOfMonth->format('Y-m-d'), $endOfMonth->format('Y-m-d')])
+            ->orderBy('expense_date', 'desc')
+            ->get();
+
+        // حساب الإجماليات
+        $total_revenues = $revenues->sum('amount') ?? 0;
+        $total_paid_revenues = $revenues->sum('paid_amount') ?? 0;
+        $total_remaining_revenues = $revenues->sum(function($revenue) {
+            return $revenue->calculated_remaining_amount;
+        }) ?? 0;
+
+        $total_expenses = $expenses->sum('amount') ?? 0;
+        $total_paid_expenses = $expenses->where('status', 'paid')->sum('amount') ?? 0;
+        $total_pending_expenses = $expenses->where('status', 'pending')->sum('amount') ?? 0;
+
+        $net_profit = $total_paid_revenues - $total_paid_expenses;
+
+        // إحصائيات الإيرادات حسب الحالة
+        $revenues_received = $revenues->where('status', 'received')->sum('amount') ?? 0;
+        $revenues_pending = $revenues->where('status', 'pending')->sum('amount') ?? 0;
+        $revenues_cancelled = $revenues->where('status', 'cancelled')->sum('amount') ?? 0;
+
+        // إحصائيات المصروفات حسب الحالة
+        $expenses_paid = $expenses->where('status', 'paid')->sum('amount') ?? 0;
+        $expenses_pending = $expenses->where('status', 'pending')->sum('amount') ?? 0;
+        $expenses_cancelled = $expenses->where('status', 'cancelled')->sum('amount') ?? 0;
+
+        $project->load('client');
+
+        return view('projects.financial-report', compact(
+            'project',
+            'selectedMonth',
+            'monthDate',
+            'revenues',
+            'expenses',
+            'total_revenues',
+            'total_paid_revenues',
+            'total_remaining_revenues',
+            'total_expenses',
+            'total_paid_expenses',
+            'total_pending_expenses',
+            'net_profit',
+            'revenues_received',
+            'revenues_pending',
+            'revenues_cancelled',
+            'expenses_paid',
+            'expenses_pending',
+            'expenses_cancelled'
+        ));
     }
 }

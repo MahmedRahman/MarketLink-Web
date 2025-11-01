@@ -45,6 +45,9 @@ Route::middleware(['auth', \App\Http\Middleware\CheckTrialStatus::class])->group
            // Project Expenses Routes
            Route::resource('projects.expenses', ProjectExpenseController::class);
            
+           // Project Financial Report Routes
+           Route::get('projects/{project}/financial-report', [ProjectController::class, 'financialReport'])->name('projects.financial-report');
+           
            // Employees Routes
            Route::resource('employees', EmployeeController::class);
            
