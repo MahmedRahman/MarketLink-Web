@@ -858,6 +858,12 @@
                         <span class="font-medium">الموظفين</span>
                     </a>
                     
+                    <!-- Monthly Plans -->
+                    <a href="{{ route('monthly-plans.index') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('monthly-plans.*') ? 'active' : '' }}">
+                        <span class="material-icons text-lg ml-3">calendar_month</span>
+                        <span class="font-medium">الخطط الشهرية</span>
+                    </a>
+                    
                     <!-- Reports -->
                     <a href="{{ route('reports.index') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('reports.*') ? 'active' : '' }}">
                         <i class="fas fa-chart-line text-lg ml-3"></i>

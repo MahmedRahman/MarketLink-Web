@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Storage;
 
 class ProjectRevenue extends Model
 {
@@ -16,6 +17,7 @@ class ProjectRevenue extends Model
         'revenue_date',
         'payment_method',
         'payment_reference',
+        'transfer_image',
         'status',
         'invoice_number',
         'invoice_date',
@@ -33,6 +35,8 @@ class ProjectRevenue extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
+
+    protected $appends = ['transfer_image_url'];
 
     public function project(): BelongsTo
     {
@@ -71,8 +75,31 @@ class ProjectRevenue extends Model
             'bank_transfer' => 'تحويل بنكي',
             'credit_card' => 'بطاقة ائتمان',
             'check' => 'شيك',
+            'vodafone_cash' => 'فودافون كاش',
+            'instapay' => 'انستاباي',
+            'paypal' => 'باي بال',
+            'western_union' => 'ويسترن يونيون',
             'other' => 'أخرى',
             default => 'غير محدد'
         };
+    }
+
+    /**
+     * الحصول على رابط صورة التحويل
+     */
+    public function getTransferImageUrlAttribute(): ?string
+    {
+        if ($this->transfer_image) {
+            // التحقق من وجود الملف أولاً
+            if (Storage::disk('public')->exists($this->transfer_image)) {
+                // استخدام asset() للحصول على المسار الصحيح بناءً على الطلب الحالي
+                // إذا كان request متاحاً، استخدمه، وإلا استخدم config
+                if (app()->runningInConsole() || !request()->hasHeader('Host')) {
+                    return config('app.url') . '/storage/' . $this->transfer_image;
+                }
+                return request()->getSchemeAndHttpHost() . '/storage/' . $this->transfer_image;
+            }
+        }
+        return null;
     }
 }

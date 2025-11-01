@@ -49,6 +49,13 @@ Route::middleware(['auth', \App\Http\Middleware\CheckTrialStatus::class])->group
            // Employees Routes
            Route::resource('employees', EmployeeController::class);
            
+           // Monthly Plans Routes
+           Route::resource('monthly-plans', \App\Http\Controllers\MonthlyPlanController::class);
+           Route::post('monthly-plans/{monthlyPlan}/tasks', [\App\Http\Controllers\PlanTaskController::class, 'store'])->name('monthly-plans.tasks.store');
+           Route::post('monthly-plans/{monthlyPlan}/tasks/{task}', [\App\Http\Controllers\PlanTaskController::class, 'update'])->name('monthly-plans.tasks.update');
+           Route::post('monthly-plans/{monthlyPlan}/tasks/{task}/move', [\App\Http\Controllers\PlanTaskController::class, 'move'])->name('monthly-plans.tasks.move');
+           Route::delete('monthly-plans/{monthlyPlan}/tasks/{task}', [\App\Http\Controllers\PlanTaskController::class, 'destroy'])->name('monthly-plans.tasks.destroy');
+           
            // Reports Routes
            Route::get('reports', [ReportsController::class, 'index'])->name('reports.index');
            Route::get('reports/export', [ReportsController::class, 'export'])->name('reports.export');

@@ -50,7 +50,7 @@
                 </div>
             @endif
 
-            <form method="POST" action="{{ route('projects.revenues.update', [$project, $revenue]) }}" class="space-y-8">
+            <form method="POST" action="{{ route('projects.revenues.update', [$project, $revenue]) }}" class="space-y-8" enctype="multipart/form-data">
                 @csrf
                 @method('PUT')
 
@@ -173,6 +173,10 @@
                                 <option value="">اختر طريقة الدفع</option>
                                 <option value="cash" {{ old('payment_method', $revenue->payment_method) === 'cash' ? 'selected' : '' }}>نقدي</option>
                                 <option value="bank_transfer" {{ old('payment_method', $revenue->payment_method) === 'bank_transfer' ? 'selected' : '' }}>تحويل بنكي</option>
+                                <option value="vodafone_cash" {{ old('payment_method', $revenue->payment_method) === 'vodafone_cash' ? 'selected' : '' }}>فودافون كاش</option>
+                                <option value="instapay" {{ old('payment_method', $revenue->payment_method) === 'instapay' ? 'selected' : '' }}>انستاباي</option>
+                                <option value="paypal" {{ old('payment_method', $revenue->payment_method) === 'paypal' ? 'selected' : '' }}>باي بال</option>
+                                <option value="western_union" {{ old('payment_method', $revenue->payment_method) === 'western_union' ? 'selected' : '' }}>ويسترن يونيون</option>
                                 <option value="credit_card" {{ old('payment_method', $revenue->payment_method) === 'credit_card' ? 'selected' : '' }}>بطاقة ائتمان</option>
                                 <option value="check" {{ old('payment_method', $revenue->payment_method) === 'check' ? 'selected' : '' }}>شيك</option>
                                 <option value="other" {{ old('payment_method', $revenue->payment_method) === 'other' ? 'selected' : '' }}>أخرى</option>
@@ -182,24 +186,62 @@
                             @enderror
                         </div>
 
-                        <!-- Payment Reference -->
+                        <!-- Transfer Image -->
                         <div>
-                            <label for="payment_reference" class="block text-sm font-medium text-gray-700 mb-2">
-                                مرجع الدفع
+                            <label for="transfer_image" class="block text-sm font-medium text-gray-700 mb-2">
+                                صورة التحويل
                             </label>
                             <input
-                                type="text"
-                                id="payment_reference"
-                                name="payment_reference"
-                                value="{{ old('payment_reference', $revenue->payment_reference) }}"
+                                type="file"
+                                id="transfer_image"
+                                name="transfer_image"
+                                accept="image/jpeg,image/jpg,image/png,image/gif"
                                 class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
-                                placeholder="مثال: 01234567890 أو رقم التحويل"
                             />
-                            @error('payment_reference')
+                            <p class="mt-1 text-xs text-gray-500">الحجم الأقصى: 5MB (JPG, PNG, GIF)</p>
+                            @error('transfer_image')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
+                    </div>
 
+                    <!-- Current Image -->
+                    @if($revenue->transfer_image)
+                    <div class="mt-4 p-4 bg-gray-50 rounded-xl border border-gray-200">
+                        <label class="block text-sm font-medium text-gray-700 mb-3">صورة التحويل الحالية</label>
+                        <div class="relative inline-block">
+                            @if($revenue->transfer_image_url)
+                                <img src="{{ $revenue->transfer_image_url }}" alt="صورة التحويل" class="max-w-xs rounded-lg border border-gray-300 shadow-sm cursor-pointer hover:shadow-md transition-shadow" onclick="window.open('{{ $revenue->transfer_image_url }}', '_blank')" title="اضغط لفتح الصورة بحجم كامل" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                <div style="display: none;" class="text-red-500 text-sm p-2 bg-red-50 rounded">تعذر تحميل الصورة</div>
+                            @else
+                                <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                    <p class="text-sm text-yellow-800">الصورة موجودة لكن الرابط غير صحيح</p>
+                                    <p class="text-xs text-yellow-600 mt-1">المسار: {{ $revenue->transfer_image }}</p>
+                                </div>
+                            @endif
+                            <p class="text-xs text-gray-500 mt-2 mb-3">اضغط على الصورة لفتحها بحجم كامل</p>
+                            <label class="flex items-center cursor-pointer">
+                                <input type="checkbox" id="delete_transfer_image" name="delete_transfer_image" value="1" class="rounded border-gray-300 text-red-600 focus:ring-red-500">
+                                <span class="mr-2 text-sm text-red-600 font-medium">حذف الصورة الحالية</span>
+                            </label>
+                        </div>
+                    </div>
+                    @endif
+
+                    <!-- Image Preview for New Upload -->
+                    <div id="image-preview-container" class="hidden mt-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">معاينة الصورة الجديدة</label>
+                        <div class="relative inline-block">
+                            <img id="image-preview" src="" alt="Preview" class="max-w-xs rounded-lg border border-gray-300 shadow-sm">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Status and Notes Section -->
+                <div class="form-section space-y-6">
+                    <h3 class="text-lg font-semibold text-gray-800">الحالة والملاحظات</h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <!-- Status -->
                         <div>
                             <label for="status" class="block text-sm font-medium text-gray-700 mb-2">
@@ -217,48 +259,6 @@
                                 <option value="cancelled" {{ old('status', $revenue->status) === 'cancelled' ? 'selected' : '' }}>ملغي</option>
                             </select>
                             @error('status')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Invoice Information Section -->
-                <div class="form-section space-y-6">
-                    <h3 class="text-lg font-semibold text-gray-800">معلومات الفاتورة</h3>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Invoice Number -->
-                        <div>
-                            <label for="invoice_number" class="block text-sm font-medium text-gray-700 mb-2">
-                                رقم الفاتورة
-                            </label>
-                            <input
-                                type="text"
-                                id="invoice_number"
-                                name="invoice_number"
-                                value="{{ old('invoice_number', $revenue->invoice_number) }}"
-                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
-                                placeholder="أدخل رقم الفاتورة"
-                            />
-                            @error('invoice_number')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                        <!-- Invoice Date -->
-                        <div>
-                            <label for="invoice_date" class="block text-sm font-medium text-gray-700 mb-2">
-                                تاريخ الفاتورة
-                            </label>
-                            <input
-                                type="date"
-                                id="invoice_date"
-                                name="invoice_date"
-                                value="{{ old('invoice_date', $revenue->invoice_date ? $revenue->invoice_date->format('Y-m-d') : '') }}"
-                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
-                            />
-                            @error('invoice_date')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
@@ -313,6 +313,43 @@ $(document).ready(function() {
             searching: function() {
                 return 'جاري البحث...';
             }
+        }
+    });
+
+    // معاينة صورة التحويل
+    $('#transfer_image').on('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            // التحقق من نوع الملف
+            const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+            if (!validTypes.includes(file.type)) {
+                alert('نوع الملف غير مدعوم. يرجى اختيار صورة (JPG, PNG, GIF)');
+                $(this).val('');
+                return;
+            }
+            
+            // التحقق من حجم الملف (5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('حجم الملف كبير جداً. الحد الأقصى 5MB');
+                $(this).val('');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                $('#image-preview').attr('src', e.target.result);
+                $('#image-preview-container').removeClass('hidden');
+            };
+            reader.readAsDataURL(file);
+        } else {
+            $('#image-preview-container').addClass('hidden');
+        }
+    });
+
+    // إخفاء معاينة الصورة عند تحديد حذف الصورة الحالية
+    $('#delete_transfer_image').on('change', function() {
+        if ($(this).is(':checked')) {
+            // يمكن إضافة تنبيه هنا إذا لزم الأمر
         }
     });
 });

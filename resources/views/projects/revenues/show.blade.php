@@ -71,39 +71,32 @@
                 </div>
 
                 <!-- Payment Information -->
+                @if($revenue->payment_method || $revenue->transfer_image)
                 <div class="card rounded-2xl p-6">
                     <h3 class="text-lg font-semibold text-gray-800 mb-4">معلومات الدفع</h3>
                     <div class="space-y-4">
+                        @if($revenue->payment_method)
                         <div class="flex items-center justify-between py-3 border-b border-gray-100">
                             <span class="text-sm font-medium text-gray-600">طريقة الدفع:</span>
                             <span class="text-sm text-gray-900">{{ $revenue->payment_method_badge }}</span>
                         </div>
-                        
-                        @if($revenue->payment_reference)
-                        <div class="flex items-center justify-between py-3 border-b border-gray-100">
-                            <span class="text-sm font-medium text-gray-600">مرجع الدفع:</span>
-                            <span class="text-sm text-gray-900">{{ $revenue->payment_reference }}</span>
-                        </div>
-                        @endif
-                    </div>
-                </div>
-
-                <!-- Invoice Information -->
-                @if($revenue->invoice_number || $revenue->invoice_date)
-                <div class="card rounded-2xl p-6">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">معلومات الفاتورة</h3>
-                    <div class="space-y-4">
-                        @if($revenue->invoice_number)
-                        <div class="flex items-center justify-between py-3 border-b border-gray-100">
-                            <span class="text-sm font-medium text-gray-600">رقم الفاتورة:</span>
-                            <span class="text-sm text-gray-900">{{ $revenue->invoice_number }}</span>
-                        </div>
                         @endif
                         
-                        @if($revenue->invoice_date)
-                        <div class="flex items-center justify-between py-3 border-b border-gray-100">
-                            <span class="text-sm font-medium text-gray-600">تاريخ الفاتورة:</span>
-                            <span class="text-sm text-gray-900">{{ $revenue->invoice_date->format('Y-m-d') }}</span>
+                        @if($revenue->transfer_image && $revenue->transfer_image_url)
+                        <div>
+                            <label class="block text-sm font-medium text-gray-600 mb-2">صورة التحويل:</label>
+                            <div class="mt-2">
+                                <img src="{{ $revenue->transfer_image_url }}" alt="صورة التحويل" class="max-w-full md:max-w-md rounded-lg border border-gray-300 shadow-sm cursor-pointer hover:shadow-md transition-shadow" onclick="window.open('{{ $revenue->transfer_image_url }}', '_blank')" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                <div style="display: none;" class="text-red-500 text-sm">تعذر تحميل الصورة</div>
+                            </div>
+                        </div>
+                        @elseif($revenue->transfer_image)
+                        <div>
+                            <label class="block text-sm font-medium text-gray-600 mb-2">صورة التحويل:</label>
+                            <div class="mt-2 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                <p class="text-sm text-yellow-800">الصورة موجودة لكن الرابط غير صحيح</p>
+                                <p class="text-xs text-yellow-600 mt-1">المسار: {{ $revenue->transfer_image }}</p>
+                            </div>
                         </div>
                         @endif
                     </div>
