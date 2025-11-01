@@ -52,6 +52,11 @@ class Project extends Model
         return $this->hasMany(ProjectExpense::class);
     }
 
+    public function files(): HasMany
+    {
+        return $this->hasMany(ProjectFile::class);
+    }
+
     public function getStatusBadgeAttribute()
     {
         return match($this->status) {

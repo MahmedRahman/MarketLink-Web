@@ -36,8 +36,14 @@ class EmployeeController extends Controller
             'phone' => 'nullable|string|max:20',
             'email' => 'required|email|unique:employees,email',
             'password' => 'required|string|min:6',
-                'role' => 'required|in:content_writer,ad_manager,designer,video_editor,page_manager,account_manager,monitor,media_buyer',
-            'status' => 'required|in:active,inactive,pending'
+            'role' => 'required|in:content_writer,ad_manager,designer,video_editor,page_manager,account_manager,monitor,media_buyer',
+            'status' => 'required|in:active,inactive,pending',
+            'instapay_number' => 'nullable|string|max:20',
+            'vodafone_cash_number' => 'nullable|string|max:20',
+            'facebook_url' => 'nullable|url|max:500',
+            'linkedin_url' => 'nullable|url|max:500',
+            'portfolio_url' => 'nullable|url|max:500',
+            'notes' => 'nullable|string|max:1000',
         ]);
 
         $data = $request->all();
@@ -87,8 +93,14 @@ class EmployeeController extends Controller
             'phone' => 'nullable|string|max:20',
             'email' => 'required|email|unique:employees,email,' . $employee->id,
             'password' => 'nullable|string|min:6',
-                'role' => 'required|in:content_writer,ad_manager,designer,video_editor,page_manager,account_manager,monitor,media_buyer',
-            'status' => 'required|in:active,inactive,pending'
+            'role' => 'required|in:content_writer,ad_manager,designer,video_editor,page_manager,account_manager,monitor,media_buyer',
+            'status' => 'required|in:active,inactive,pending',
+            'instapay_number' => 'nullable|string|max:20',
+            'vodafone_cash_number' => 'nullable|string|max:20',
+            'facebook_url' => 'nullable|url|max:500',
+            'linkedin_url' => 'nullable|url|max:500',
+            'portfolio_url' => 'nullable|url|max:500',
+            'notes' => 'nullable|string|max:1000',
         ]);
 
         $data = $request->all();

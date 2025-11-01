@@ -110,6 +110,123 @@
                             @enderror
                         </div>
                     </div>
+
+                    <!-- Social Links -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+                        <!-- Facebook URL -->
+                        <div>
+                            <label for="facebook_url" class="block text-sm font-medium text-gray-700 mb-2">
+                                رابط الفيس بوك
+                            </label>
+                            <input
+                                type="url"
+                                id="facebook_url"
+                                name="facebook_url"
+                                value="{{ old('facebook_url', $employee->facebook_url) }}"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                                placeholder="https://facebook.com/username"
+                            />
+                            @error('facebook_url')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <!-- LinkedIn URL -->
+                        <div>
+                            <label for="linkedin_url" class="block text-sm font-medium text-gray-700 mb-2">
+                                رابط LinkedIn
+                            </label>
+                            <input
+                                type="url"
+                                id="linkedin_url"
+                                name="linkedin_url"
+                                value="{{ old('linkedin_url', $employee->linkedin_url) }}"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                                placeholder="https://linkedin.com/in/username"
+                            />
+                            @error('linkedin_url')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <!-- Portfolio URL -->
+                        <div>
+                            <label for="portfolio_url" class="block text-sm font-medium text-gray-700 mb-2">
+                                رابط البورتفوليو
+                            </label>
+                            <input
+                                type="url"
+                                id="portfolio_url"
+                                name="portfolio_url"
+                                value="{{ old('portfolio_url', $employee->portfolio_url) }}"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                                placeholder="https://portfolio.com"
+                            />
+                            @error('portfolio_url')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <!-- Notes -->
+                    <div class="mt-6">
+                        <label for="notes" class="block text-sm font-medium text-gray-700 mb-2">
+                            الملاحظات
+                        </label>
+                        <textarea
+                            id="notes"
+                            name="notes"
+                            rows="4"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                            placeholder="أدخل ملاحظات عن الموظف (اختياري)"
+                        >{{ old('notes', $employee->notes) }}</textarea>
+                        @error('notes')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+                </div>
+
+                <!-- Payment Information Section -->
+                <div class="form-section space-y-6">
+                    <h3 class="text-lg font-semibold text-gray-800">بيانات التحويل</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Instapay Number -->
+                        <div>
+                            <label for="instapay_number" class="block text-sm font-medium text-gray-700 mb-2">
+                                رقم أنصاباي (Instapay)
+                            </label>
+                            <input
+                                type="text"
+                                id="instapay_number"
+                                name="instapay_number"
+                                value="{{ old('instapay_number', $employee->instapay_number) }}"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                                placeholder="أدخل رقم أنصاباي"
+                            />
+                            @error('instapay_number')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <!-- Vodafone Cash Number -->
+                        <div>
+                            <label for="vodafone_cash_number" class="block text-sm font-medium text-gray-700 mb-2">
+                                رقم فودافون كاش (Vodafone Cash)
+                            </label>
+                            <input
+                                type="text"
+                                id="vodafone_cash_number"
+                                name="vodafone_cash_number"
+                                value="{{ old('vodafone_cash_number', $employee->vodafone_cash_number) }}"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                                placeholder="أدخل رقم فودافون كاش"
+                            />
+                            @error('vodafone_cash_number')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Role and Status Section -->

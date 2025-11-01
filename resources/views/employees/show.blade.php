@@ -202,6 +202,72 @@
                 </div>
             </div>
         </div>
+
+        <!-- Social Links Section -->
+        @if($employee->facebook_url || $employee->linkedin_url || $employee->portfolio_url)
+        <div class="card rounded-2xl p-6">
+            <div class="flex items-center mb-6">
+                <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center icon-spacing ml-3">
+                    <i class="fas fa-share-alt text-blue-600"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-800">روابط التواصل الاجتماعي</h3>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                @if($employee->facebook_url)
+                <div>
+                    <label class="block text-sm font-medium text-gray-500 mb-2">رابط الفيس بوك</label>
+                    <div class="flex items-center">
+                        <i class="fab fa-facebook text-blue-600 text-xl ml-2"></i>
+                        <a href="{{ $employee->facebook_url }}" target="_blank" class="text-blue-600 hover:text-blue-700 break-all">
+                            {{ $employee->facebook_url }}
+                        </a>
+                    </div>
+                </div>
+                @endif
+                
+                @if($employee->linkedin_url)
+                <div>
+                    <label class="block text-sm font-medium text-gray-500 mb-2">رابط LinkedIn</label>
+                    <div class="flex items-center">
+                        <i class="fab fa-linkedin text-blue-700 text-xl ml-2"></i>
+                        <a href="{{ $employee->linkedin_url }}" target="_blank" class="text-blue-600 hover:text-blue-700 break-all">
+                            {{ $employee->linkedin_url }}
+                        </a>
+                    </div>
+                </div>
+                @endif
+                
+                @if($employee->portfolio_url)
+                <div>
+                    <label class="block text-sm font-medium text-gray-500 mb-2">رابط البورتفوليو</label>
+                    <div class="flex items-center">
+                        <i class="fas fa-briefcase text-purple-600 text-xl ml-2"></i>
+                        <a href="{{ $employee->portfolio_url }}" target="_blank" class="text-blue-600 hover:text-blue-700 break-all">
+                            {{ $employee->portfolio_url }}
+                        </a>
+                    </div>
+                </div>
+                @endif
+            </div>
+        </div>
+        @endif
+
+        <!-- Notes Section -->
+        @if($employee->notes)
+        <div class="card rounded-2xl p-6">
+            <div class="flex items-center mb-6">
+                <div class="w-10 h-10 bg-yellow-100 rounded-xl flex items-center justify-center icon-spacing ml-3">
+                    <i class="fas fa-sticky-note text-yellow-600"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-800">الملاحظات</h3>
+            </div>
+            
+            <div class="bg-gray-50 rounded-xl p-4">
+                <p class="text-gray-700 whitespace-pre-line">{{ $employee->notes }}</p>
+            </div>
+        </div>
+        @endif
     </div>
 </div>
 @endsection

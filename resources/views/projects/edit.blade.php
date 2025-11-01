@@ -328,13 +328,82 @@
                     <div id="project-accounts-container">
                         @if($project->project_accounts && count($project->project_accounts) > 0)
                             @foreach($project->project_accounts as $index => $account)
-                                <div class="project-account-item grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border border-gray-200 rounded-xl mb-4">
+                                <div class="project-account-item p-4 border border-gray-200 rounded-xl mb-4 space-y-4">
+                                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">نوع الحساب</label>
+                                            <input
+                                                type="text"
+                                                name="project_accounts[{{ $index }}][account_type]"
+                                                value="{{ $account['account_type'] ?? '' }}"
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                                                placeholder="مثال: فيسبوك، إنستغرام..."
+                                            />
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">اسم المستخدم</label>
+                                            <input
+                                                type="text"
+                                                name="project_accounts[{{ $index }}][username]"
+                                                value="{{ $account['username'] ?? '' }}"
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                                                placeholder="أدخل اسم المستخدم"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">كلمة المرور</label>
+                                            <input
+                                                type="password"
+                                                name="project_accounts[{{ $index }}][password]"
+                                                value="{{ $account['password'] ?? '' }}"
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                                                placeholder="أدخل كلمة المرور"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">الرابط</label>
+                                            <input
+                                                type="url"
+                                                name="project_accounts[{{ $index }}][url]"
+                                                value="{{ $account['url'] ?? '' }}"
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                                                placeholder="https://example.com"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">ملاحظات</label>
+                                        <div class="flex gap-2">
+                                            <textarea
+                                                name="project_accounts[{{ $index }}][notes]"
+                                                rows="2"
+                                                class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                                                placeholder="أدخل ملاحظات عن الحساب (اختياري)"
+                                            >{{ $account['notes'] ?? '' }}</textarea>
+                                            <button type="button" class="remove-project-account px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors self-start">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        @else
+                            <div class="project-account-item p-4 border border-gray-200 rounded-xl space-y-4">
+                                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">نوع الحساب</label>
+                                        <input
+                                            type="text"
+                                            name="project_accounts[0][account_type]"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                                            placeholder="مثال: فيسبوك، إنستغرام..."
+                                        />
+                                    </div>
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-2">اسم المستخدم</label>
                                         <input
                                             type="text"
-                                            name="project_accounts[{{ $index }}][username]"
-                                            value="{{ $account['username'] ?? '' }}"
+                                            name="project_accounts[0][username]"
                                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
                                             placeholder="أدخل اسم المستخدم"
                                         />
@@ -343,57 +412,29 @@
                                         <label class="block text-sm font-medium text-gray-700 mb-2">كلمة المرور</label>
                                         <input
                                             type="password"
-                                            name="project_accounts[{{ $index }}][password]"
-                                            value="{{ $account['password'] ?? '' }}"
+                                            name="project_accounts[0][password]"
                                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
                                             placeholder="أدخل كلمة المرور"
                                         />
                                     </div>
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-2">الرابط</label>
-                                        <div class="flex gap-2">
-                                            <input
-                                                type="url"
-                                                name="project_accounts[{{ $index }}][url]"
-                                                value="{{ $account['url'] ?? '' }}"
-                                                class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
-                                                placeholder="https://example.com"
-                                            />
-                                            <button type="button" class="remove-project-account px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </div>
+                                        <input
+                                            type="url"
+                                            name="project_accounts[0][url]"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                                            placeholder="https://example.com"
+                                        />
                                     </div>
                                 </div>
-                            @endforeach
-                        @else
-                            <div class="project-account-item grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border border-gray-200 rounded-xl">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">اسم المستخدم</label>
-                                    <input
-                                        type="text"
-                                        name="project_accounts[0][username]"
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">ملاحظات</label>
+                                    <textarea
+                                        name="project_accounts[0][notes]"
+                                        rows="2"
                                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
-                                        placeholder="أدخل اسم المستخدم"
-                                    />
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">كلمة المرور</label>
-                                    <input
-                                        type="password"
-                                        name="project_accounts[0][password]"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
-                                        placeholder="أدخل كلمة المرور"
-                                    />
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">الرابط</label>
-                                    <input
-                                        type="url"
-                                        name="project_accounts[0][url]"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
-                                        placeholder="https://example.com"
-                                    />
+                                        placeholder="أدخل ملاحظات عن الحساب (اختياري)"
+                                    ></textarea>
                                 </div>
                             </div>
                         @endif
@@ -520,35 +561,55 @@ $(document).ready(function() {
         e.preventDefault();
         console.log('Adding project account');
         const newAccountHtml = `
-            <div class="project-account-item grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border border-gray-200 rounded-xl mb-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">اسم المستخدم</label>
-                    <input
-                        type="text"
-                        name="project_accounts[${projectAccountIndex}][username]"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
-                        placeholder="أدخل اسم المستخدم"
-                    />
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">كلمة المرور</label>
-                    <input
-                        type="password"
-                        name="project_accounts[${projectAccountIndex}][password]"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
-                        placeholder="أدخل كلمة المرور"
-                    />
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">الرابط</label>
-                    <div class="flex gap-2">
+            <div class="project-account-item p-4 border border-gray-200 rounded-xl mb-4 space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">نوع الحساب</label>
+                        <input
+                            type="text"
+                            name="project_accounts[${projectAccountIndex}][account_type]"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                            placeholder="مثال: فيسبوك، إنستغرام..."
+                        />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">اسم المستخدم</label>
+                        <input
+                            type="text"
+                            name="project_accounts[${projectAccountIndex}][username]"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                            placeholder="أدخل اسم المستخدم"
+                        />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">كلمة المرور</label>
+                        <input
+                            type="password"
+                            name="project_accounts[${projectAccountIndex}][password]"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                            placeholder="أدخل كلمة المرور"
+                        />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">الرابط</label>
                         <input
                             type="url"
                             name="project_accounts[${projectAccountIndex}][url]"
-                            class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
                             placeholder="https://example.com"
                         />
-                        <button type="button" class="remove-project-account px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">ملاحظات</label>
+                    <div class="flex gap-2">
+                        <textarea
+                            name="project_accounts[${projectAccountIndex}][notes]"
+                            rows="2"
+                            class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                            placeholder="أدخل ملاحظات عن الحساب (اختياري)"
+                        ></textarea>
+                        <button type="button" class="remove-project-account px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors self-start">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>

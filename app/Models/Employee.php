@@ -18,7 +18,13 @@ class Employee extends Authenticatable
         'password',
         'role',
         'status',
-        'organization_id'
+        'organization_id',
+        'instapay_number',
+        'vodafone_cash_number',
+        'facebook_url',
+        'linkedin_url',
+        'portfolio_url',
+        'notes',
     ];
 
     protected $hidden = [

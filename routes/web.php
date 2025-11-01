@@ -36,6 +36,9 @@ Route::middleware(['auth', \App\Http\Middleware\CheckTrialStatus::class])->group
     
            // Projects Routes
            Route::resource('projects', ProjectController::class);
+           Route::post('projects/{project}/files', [ProjectController::class, 'uploadFile'])->name('projects.files.upload');
+           Route::get('projects/{project}/files/{file}/download', [ProjectController::class, 'downloadFile'])->name('projects.files.download');
+           Route::delete('projects/{project}/files/{file}', [ProjectController::class, 'deleteFile'])->name('projects.files.delete');
            
            // Project Revenues Routes
            Route::resource('projects.revenues', ProjectRevenueController::class);

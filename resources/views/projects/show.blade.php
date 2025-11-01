@@ -7,6 +7,21 @@
 @section('content')
 <div class="container mx-auto px-4">
     <div class="max-w-6xl mx-auto space-y-6">
+        <!-- Success/Error Messages -->
+        @if(session('success'))
+            <div class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg flex items-center">
+                <span class="material-icons ml-2">check_circle</span>
+                {{ session('success') }}
+            </div>
+        @endif
+
+        @if(session('error'))
+            <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg flex items-center">
+                <span class="material-icons ml-2">error</span>
+                {{ session('error') }}
+            </div>
+        @endif
+
         <!-- Header -->
         <div class="card page-header rounded-2xl p-6">
             <div class="flex items-center justify-between">
@@ -312,7 +327,13 @@
                                 </div>
                                 <div>
                                     <h4 class="font-semibold text-gray-800">{{ $account['username'] ?? 'غير محدد' }}</h4>
-                                    <p class="text-xs text-gray-500">حساب المشروع</p>
+                                    <p class="text-xs text-gray-500">
+                                        @if($account['account_type'] ?? null)
+                                            {{ $account['account_type'] }}
+                                        @else
+                                            حساب المشروع
+                                        @endif
+                                    </p>
                                 </div>
                             </div>
                             <span class="text-xs text-gray-400">#{{ $index + 1 }}</span>
@@ -368,6 +389,14 @@
                                 </div>
                             </div>
                             @endif
+
+                            <!-- Notes Section -->
+                            @if($account['notes'] ?? null)
+                            <div class="bg-white rounded-lg p-3 border border-teal-200">
+                                <label class="block text-xs font-medium text-gray-500 mb-2">ملاحظات</label>
+                                <p class="text-sm text-gray-700">{{ $account['notes'] }}</p>
+                            </div>
+                            @endif
                             
                             <!-- Added Date -->
                             @if($account['added_at'] ?? null)
@@ -391,6 +420,120 @@
                         <i class="fas fa-plus text-sm ml-2"></i>
                         إضافة حسابات
                     </a>
+                </div>
+            @endif
+        </div>
+
+        <!-- Project Files Section -->
+        <div class="card rounded-2xl p-6">
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center icon-spacing ml-3">
+                        <span class="material-icons text-purple-600">attach_file</span>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800">الملفات المرجعية</h3>
+                        <p class="text-sm text-gray-600">الملفات والوثائق المرجعية للمشروع</p>
+                    </div>
+                </div>
+                <span class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-medium">
+                    {{ $project->files->count() }} ملف
+                </span>
+            </div>
+
+            <!-- Upload File Form -->
+            <div class="bg-gray-50 rounded-xl p-4 mb-6 border border-gray-200">
+                <form action="{{ route('projects.files.upload', $project) }}" method="POST" enctype="multipart/form-data" class="space-y-4">
+                    @csrf
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="md:col-span-2">
+                            <label for="file" class="block text-sm font-medium text-gray-700 mb-2">
+                                اختيار ملف
+                            </label>
+                            <input
+                                type="file"
+                                id="file"
+                                name="file"
+                                required
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.zip,.rar,.txt"
+                            />
+                            <p class="mt-1 text-xs text-gray-500">الحجم الأقصى: 10MB</p>
+                        </div>
+                        <div>
+                            <label for="file_description" class="block text-sm font-medium text-gray-700 mb-2">
+                                وصف الملف (اختياري)
+                            </label>
+                            <input
+                                type="text"
+                                id="file_description"
+                                name="description"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                placeholder="وصف الملف..."
+                            />
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-primary text-white px-6 py-2 rounded-lg inline-flex items-center">
+                        <span class="material-icons text-sm ml-2">upload</span>
+                        رفع الملف
+                    </button>
+                </form>
+            </div>
+
+            <!-- Files List -->
+            @if($project->files->count() > 0)
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    @foreach($project->files as $file)
+                        <div class="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-lg transition-shadow">
+                            <div class="flex items-start justify-between mb-3">
+                                <div class="flex items-center flex-1">
+                                    <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center ml-3">
+                                        <span class="material-icons text-purple-600 text-lg">{{ $file->file_icon }}</span>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <h4 class="font-semibold text-gray-800 text-sm truncate" title="{{ $file->file_name }}">
+                                            {{ $file->file_name }}
+                                        </h4>
+                                        <p class="text-xs text-gray-500 mt-1">
+                                            {{ $file->formatted_file_size }}
+                                        </p>
+                                    </div>
+                                </div>
+                                <form action="{{ route('projects.files.delete', [$project, $file]) }}" method="POST" onsubmit="return confirm('هل أنت متأكد من حذف هذا الملف؟');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="text-red-500 hover:text-red-700 p-1">
+                                        <span class="material-icons text-sm">delete</span>
+                                    </button>
+                                </form>
+                            </div>
+
+                            @if($file->description)
+                                <p class="text-xs text-gray-600 mb-3 line-clamp-2">{{ $file->description }}</p>
+                            @endif
+
+                            <div class="flex items-center justify-between pt-3 border-t border-gray-100">
+                                <a 
+                                    href="{{ route('projects.files.download', [$project, $file]) }}" 
+                                    class="text-purple-600 hover:text-purple-700 text-sm font-medium flex items-center"
+                                >
+                                    <span class="material-icons text-sm ml-1">download</span>
+                                    تحميل
+                                </a>
+                                <span class="text-xs text-gray-400">
+                                    {{ $file->created_at->format('Y-m-d') }}
+                                </span>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @else
+                <div class="text-center py-8">
+                    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span class="material-icons text-gray-400 text-3xl">attach_file</span>
+                    </div>
+                    <h4 class="text-lg font-medium text-gray-900 mb-2">لا توجد ملفات</h4>
+                    <p class="text-gray-500">لم يتم رفع أي ملفات مرجعية لهذا المشروع بعد</p>
                 </div>
             @endif
         </div>

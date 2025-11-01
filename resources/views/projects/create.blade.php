@@ -50,7 +50,7 @@
                 </div>
             @endif
 
-            <form method="POST" action="{{ route('projects.store') }}" class="space-y-8">
+            <form method="POST" action="{{ route('projects.store') }}" enctype="multipart/form-data" class="space-y-8">
                 @csrf
                 
                 <!-- Basic Information Section -->
@@ -293,33 +293,53 @@
                     <p class="text-sm text-gray-600">أضف الحسابات الخاصة بالمشروع (اختياري)</p>
                     
                     <div id="project-accounts-container">
-                        <div class="project-account-item grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border border-gray-200 rounded-xl">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">اسم المستخدم</label>
-                                <input
-                                    type="text"
-                                    name="project_accounts[0][username]"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
-                                    placeholder="أدخل اسم المستخدم"
-                                />
+                        <div class="project-account-item p-4 border border-gray-200 rounded-xl space-y-4">
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">نوع الحساب</label>
+                                    <input
+                                        type="text"
+                                        name="project_accounts[0][account_type]"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                                        placeholder="مثال: فيسبوك، إنستغرام..."
+                                    />
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">اسم المستخدم</label>
+                                    <input
+                                        type="text"
+                                        name="project_accounts[0][username]"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                                        placeholder="أدخل اسم المستخدم"
+                                    />
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">كلمة المرور</label>
+                                    <input
+                                        type="password"
+                                        name="project_accounts[0][password]"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                                        placeholder="أدخل كلمة المرور"
+                                    />
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">الرابط</label>
+                                    <input
+                                        type="url"
+                                        name="project_accounts[0][url]"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                                        placeholder="https://example.com"
+                                    />
+                                </div>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">كلمة المرور</label>
-                                <input
-                                    type="password"
-                                    name="project_accounts[0][password]"
+                                <label class="block text-sm font-medium text-gray-700 mb-2">ملاحظات</label>
+                                <textarea
+                                    name="project_accounts[0][notes]"
+                                    rows="2"
                                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
-                                    placeholder="أدخل كلمة المرور"
-                                />
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">الرابط</label>
-                                <input
-                                    type="url"
-                                    name="project_accounts[0][url]"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
-                                    placeholder="https://example.com"
-                                />
+                                    placeholder="أدخل ملاحظات عن الحساب (اختياري)"
+                                ></textarea>
                             </div>
                         </div>
                     </div>
@@ -327,6 +347,52 @@
                     <button type="button" id="add-project-account" class="btn-primary text-white px-4 py-2 rounded-lg flex items-center">
                         <i class="fas fa-plus text-sm ml-2"></i>
                         إضافة حساب آخر
+                    </button>
+                </div>
+
+                <!-- Project Files Section -->
+                <div class="form-section space-y-6">
+                    <h3 class="text-lg font-semibold text-gray-800">الملفات المرجعية</h3>
+                    <p class="text-sm text-gray-600">رفع ملفات مرجعية للمشروع (اختياري)</p>
+                    
+                    <div id="files-container" class="space-y-4">
+                        <div class="file-item p-4 border border-gray-200 rounded-xl">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        اختيار ملف
+                                    </label>
+                                    <input
+                                        type="file"
+                                        name="files[]"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors text-sm"
+                                        accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.zip,.rar,.txt"
+                                    />
+                                    <p class="mt-1 text-xs text-gray-500">الحجم الأقصى: 10MB</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        وصف الملف (اختياري)
+                                    </label>
+                                    <div class="flex gap-2">
+                                        <input
+                                            type="text"
+                                            name="file_descriptions[]"
+                                            class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors text-sm"
+                                            placeholder="وصف الملف..."
+                                        />
+                                        <button type="button" class="remove-file px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm hidden">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button type="button" id="add-file" class="btn-primary text-white px-4 py-2 rounded-lg flex items-center">
+                        <i class="fas fa-plus text-sm ml-2"></i>
+                        إضافة ملف آخر
                     </button>
                 </div>
 
@@ -451,35 +517,55 @@ $(document).ready(function() {
         e.preventDefault();
         console.log('Adding project account');
         const newAccountHtml = `
-            <div class="project-account-item grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border border-gray-200 rounded-xl mb-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">اسم المستخدم</label>
-                    <input
-                        type="text"
-                        name="project_accounts[${projectAccountIndex}][username]"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
-                        placeholder="أدخل اسم المستخدم"
-                    />
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">كلمة المرور</label>
-                    <input
-                        type="password"
-                        name="project_accounts[${projectAccountIndex}][password]"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
-                        placeholder="أدخل كلمة المرور"
-                    />
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">الرابط</label>
-                    <div class="flex gap-2">
+            <div class="project-account-item p-4 border border-gray-200 rounded-xl mb-4 space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">نوع الحساب</label>
+                        <input
+                            type="text"
+                            name="project_accounts[${projectAccountIndex}][account_type]"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                            placeholder="مثال: فيسبوك، إنستغرام..."
+                        />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">اسم المستخدم</label>
+                        <input
+                            type="text"
+                            name="project_accounts[${projectAccountIndex}][username]"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                            placeholder="أدخل اسم المستخدم"
+                        />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">كلمة المرور</label>
+                        <input
+                            type="password"
+                            name="project_accounts[${projectAccountIndex}][password]"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                            placeholder="أدخل كلمة المرور"
+                        />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">الرابط</label>
                         <input
                             type="url"
                             name="project_accounts[${projectAccountIndex}][url]"
-                            class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
                             placeholder="https://example.com"
                         />
-                        <button type="button" class="remove-project-account px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">ملاحظات</label>
+                    <div class="flex gap-2">
+                        <textarea
+                            name="project_accounts[${projectAccountIndex}][notes]"
+                            rows="2"
+                            class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                            placeholder="أدخل ملاحظات عن الحساب (اختياري)"
+                        ></textarea>
+                        <button type="button" class="remove-project-account px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors self-start">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
@@ -495,6 +581,64 @@ $(document).ready(function() {
         e.preventDefault();
         console.log('Removing project account');
         $(this).closest('.project-account-item').remove();
+    });
+
+    // Add File
+    let fileIndex = 1;
+    $(document).on('click', '#add-file', function(e) {
+        e.preventDefault();
+        const newFileHtml = `
+            <div class="file-item p-4 border border-gray-200 rounded-xl">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            اختيار ملف
+                        </label>
+                        <input
+                            type="file"
+                            name="files[]"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors text-sm"
+                            accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.zip,.rar,.txt"
+                        />
+                        <p class="mt-1 text-xs text-gray-500">الحجم الأقصى: 10MB</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            وصف الملف (اختياري)
+                        </label>
+                        <div class="flex gap-2">
+                            <input
+                                type="text"
+                                name="file_descriptions[]"
+                                class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors text-sm"
+                                placeholder="وصف الملف..."
+                            />
+                            <button type="button" class="remove-file px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        $('#files-container').append(newFileHtml);
+        fileIndex++;
+        
+        // Show remove button on first file if there are multiple files
+        if ($('#files-container .file-item').length > 1) {
+            $('#files-container .file-item').first().find('.remove-file').removeClass('hidden');
+        }
+    });
+
+    // Remove File
+    $(document).on('click', '.remove-file', function(e) {
+        e.preventDefault();
+        $(this).closest('.file-item').remove();
+        
+        // Hide remove button on first file if only one file remains
+        if ($('#files-container .file-item').length === 1) {
+            $('#files-container .file-item').first().find('.remove-file').addClass('hidden');
+        }
     });
 });
 </script>
