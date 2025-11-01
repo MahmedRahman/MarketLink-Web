@@ -13,7 +13,7 @@ class ProjectRevenue extends Model
         'title',
         'description',
         'amount',
-        'remaining_amount',
+        'paid_amount',
         'currency',
         'revenue_date',
         'payment_method',
@@ -33,7 +33,7 @@ class ProjectRevenue extends Model
         'revenue_date' => 'date',
         'invoice_date' => 'date',
         'amount' => 'decimal:2',
-        'remaining_amount' => 'decimal:2',
+        'paid_amount' => 'decimal:2',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
@@ -50,12 +50,27 @@ class ProjectRevenue extends Model
         return number_format($this->amount, 2) . ' جنيه';
     }
 
-    public function getFormattedRemainingAmountAttribute()
+    public function getFormattedPaidAmountAttribute()
     {
-        if ($this->remaining_amount !== null) {
-            return number_format($this->remaining_amount, 2) . ' جنيه';
+        if ($this->paid_amount !== null) {
+            return number_format($this->paid_amount, 2) . ' جنيه';
         }
-        return null;
+        return '0.00 جنيه';
+    }
+
+    /**
+     * حساب المبلغ المتبقي (المبلغ الإجمالي - المبلغ المدفوع)
+     */
+    public function getCalculatedRemainingAmountAttribute()
+    {
+        $total = $this->amount ?? 0;
+        $paid = $this->paid_amount ?? 0;
+        return max(0, $total - $paid);
+    }
+
+    public function getFormattedCalculatedRemainingAmountAttribute()
+    {
+        return number_format($this->calculated_remaining_amount, 2) . ' جنيه';
     }
 
     public function getStatusBadgeAttribute()

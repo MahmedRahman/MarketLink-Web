@@ -86,7 +86,10 @@
                                 العنوان
                             </th>
                             <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                المبلغ
+                                المبلغ الإجمالي
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                المبلغ المتبقي
                             </th>
                             <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 التاريخ
@@ -113,6 +116,9 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm font-semibold text-gray-900">{{ $revenue->formatted_amount }}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-semibold text-orange-600">{{ $revenue->formatted_calculated_remaining_amount }}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm text-gray-500">{{ $revenue->revenue_date->format('Y-m-d') }}</div>
@@ -187,7 +193,7 @@ $(document).ready(function() {
                 text: 'تصدير Excel',
                 className: 'btn btn-success',
                 exportOptions: {
-                    columns: [0, 1, 2, 3, 4]
+                    columns: [0, 1, 2, 3, 4, 5]
                 }
             },
             {
@@ -195,7 +201,7 @@ $(document).ready(function() {
                 text: 'تصدير PDF',
                 className: 'btn btn-danger',
                 exportOptions: {
-                    columns: [0, 1, 2, 3, 4]
+                    columns: [0, 1, 2, 3, 4, 5]
                 }
             },
             {
@@ -203,13 +209,13 @@ $(document).ready(function() {
                 text: 'طباعة',
                 className: 'btn btn-info',
                 exportOptions: {
-                    columns: [0, 1, 2, 3, 4]
+                    columns: [0, 1, 2, 3, 4, 5]
                 }
             }
         ],
         columnDefs: [
             {
-                targets: [5], // Actions column
+                targets: [6], // Actions column
                 orderable: false,
                 searchable: false
             }

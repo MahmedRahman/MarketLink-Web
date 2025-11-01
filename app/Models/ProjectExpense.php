@@ -9,6 +9,7 @@ class ProjectExpense extends Model
 {
     protected $fillable = [
         'project_id',
+        'employee_id',
         'title',
         'description',
         'amount',
@@ -35,6 +36,11 @@ class ProjectExpense extends Model
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
+    }
+
+    public function employee(): BelongsTo
+    {
+        return $this->belongsTo(Employee::class);
     }
 
     public function getFormattedAmountAttribute()
@@ -84,6 +90,8 @@ class ProjectExpense extends Model
             'bank_transfer' => 'تحويل بنكي',
             'credit_card' => 'بطاقة ائتمان',
             'check' => 'شيك',
+            'vodafone_cash' => 'فودافون كاش',
+            'instapay' => 'انستاباي',
             'other' => 'أخرى',
             default => 'غير محدد'
         };

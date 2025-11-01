@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Project;
 use App\Models\ProjectExpense;
+use App\Models\Employee;
 use Illuminate\Http\Request;
 
 class ProjectExpenseController extends Controller
@@ -14,9 +15,15 @@ class ProjectExpenseController extends Controller
         return view('projects.expenses.index', compact('project', 'expenses'));
     }
 
-    public function create(Project $project)
+    public function create(Project $project, Request $request)
     {
-        return view('projects.expenses.create', compact('project'));
+        $organizationId = $request->user()->organization_id;
+        $employees = Employee::where('organization_id', $organizationId)
+            ->where('status', 'active')
+            ->orderBy('name')
+            ->get();
+        
+        return view('projects.expenses.create', compact('project', 'employees'));
     }
 
     public function store(Request $request, Project $project)
@@ -28,8 +35,9 @@ class ProjectExpenseController extends Controller
                 'amount' => 'required|numeric|min:0',
                 'currency' => 'required|string|max:3|in:EGP',
                 'expense_date' => 'required|date',
+                'employee_id' => 'nullable|exists:employees,id',
                 'category' => 'required|in:marketing,advertising,design,development,content,tools,subscriptions,other',
-                'payment_method' => 'required|in:cash,bank_transfer,credit_card,check,other',
+                'payment_method' => 'required|in:cash,bank_transfer,credit_card,check,vodafone_cash,instapay,other',
                 'payment_reference' => 'nullable|string|max:255',
                 'status' => 'required|in:pending,paid,cancelled',
                 'notes' => 'nullable|string'
@@ -53,12 +61,19 @@ class ProjectExpenseController extends Controller
 
     public function show(Project $project, ProjectExpense $expense)
     {
+        $expense->load('employee');
         return view('projects.expenses.show', compact('project', 'expense'));
     }
 
-    public function edit(Project $project, ProjectExpense $expense)
+    public function edit(Project $project, ProjectExpense $expense, Request $request)
     {
-        return view('projects.expenses.edit', compact('project', 'expense'));
+        $organizationId = $request->user()->organization_id;
+        $employees = Employee::where('organization_id', $organizationId)
+            ->where('status', 'active')
+            ->orderBy('name')
+            ->get();
+        
+        return view('projects.expenses.edit', compact('project', 'expense', 'employees'));
     }
 
     public function update(Request $request, Project $project, ProjectExpense $expense)
@@ -70,8 +85,9 @@ class ProjectExpenseController extends Controller
                 'amount' => 'required|numeric|min:0',
                 'currency' => 'required|string|max:3|in:EGP',
                 'expense_date' => 'required|date',
+                'employee_id' => 'nullable|exists:employees,id',
                 'category' => 'required|in:marketing,advertising,design,development,content,tools,subscriptions,other',
-                'payment_method' => 'required|in:cash,bank_transfer,credit_card,check,other',
+                'payment_method' => 'required|in:cash,bank_transfer,credit_card,check,vodafone_cash,instapay,other',
                 'payment_reference' => 'nullable|string|max:255',
                 'status' => 'required|in:pending,paid,cancelled',
                 'notes' => 'nullable|string'

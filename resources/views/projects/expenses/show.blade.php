@@ -75,6 +75,52 @@
                     </div>
                 </div>
 
+                <!-- Employee Information -->
+                @if($expense->employee)
+                <div class="card rounded-2xl p-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">معلومات الموظف</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between py-3 border-b border-gray-100">
+                            <span class="text-sm font-medium text-gray-600">الموظف:</span>
+                            <span class="text-sm text-gray-900">{{ $expense->employee->name }}</span>
+                        </div>
+                        <div class="flex items-center justify-between py-3 border-b border-gray-100">
+                            <span class="text-sm font-medium text-gray-600">الدور:</span>
+                            <span class="text-sm text-gray-900">{{ $expense->employee->role_badge }}</span>
+                        </div>
+                        @if($expense->employee->instapay_number || $expense->employee->vodafone_cash_number)
+                        <div class="mt-4 pt-4 border-t border-gray-200">
+                            <h4 class="text-sm font-semibold text-gray-700 mb-3">بيانات التحويل:</h4>
+                            <div class="space-y-2">
+                                @if($expense->employee->instapay_number)
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs text-gray-600">Instapay:</span>
+                                    <div class="flex items-center">
+                                        <span class="text-xs text-gray-800 font-mono ml-2">{{ $expense->employee->instapay_number }}</span>
+                                        <button onclick="copyToClipboard('{{ $expense->employee->instapay_number }}')" class="text-blue-600 hover:text-blue-700 ml-2" title="نسخ">
+                                            <i class="fas fa-copy text-xs"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                @endif
+                                @if($expense->employee->vodafone_cash_number)
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs text-gray-600">فودافون كاش:</span>
+                                    <div class="flex items-center">
+                                        <span class="text-xs text-gray-800 font-mono ml-2">{{ $expense->employee->vodafone_cash_number }}</span>
+                                        <button onclick="copyToClipboard('{{ $expense->employee->vodafone_cash_number }}')" class="text-blue-600 hover:text-blue-700 ml-2" title="نسخ">
+                                            <i class="fas fa-copy text-xs"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                @endif
+                            </div>
+                        </div>
+                        @endif
+                    </div>
+                </div>
+                @endif
+
                 <!-- Payment Information -->
                 <div class="card rounded-2xl p-6">
                     <h3 class="text-lg font-semibold text-gray-800 mb-4">معلومات الدفع</h3>
@@ -203,6 +249,25 @@ function confirmDelete(url, title, message) {
             document.body.appendChild(form);
             form.submit();
         }
+    });
+}
+
+// دالة نسخ إلى الحافظة
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(function() {
+        Swal.fire({
+            icon: 'success',
+            title: 'تم النسخ',
+            text: 'تم نسخ النص بنجاح',
+            timer: 1500,
+            showConfirmButton: false
+        });
+    }).catch(function(err) {
+        Swal.fire({
+            icon: 'error',
+            title: 'خطأ',
+            text: 'فشل نسخ النص: ' + err
+        });
     });
 }
 </script>

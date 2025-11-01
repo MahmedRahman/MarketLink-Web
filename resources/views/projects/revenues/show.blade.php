@@ -52,16 +52,21 @@
                         @endif
                         
                         <div class="flex items-center justify-between py-3 border-b border-gray-100">
-                            <span class="text-sm font-medium text-gray-600">المبلغ:</span>
+                            <span class="text-sm font-medium text-gray-600">المبلغ الإجمالي:</span>
                             <span class="text-lg font-bold text-green-600">{{ $revenue->formatted_amount }}</span>
                         </div>
                         
-                        @if($revenue->remaining_amount !== null)
+                        @if($revenue->paid_amount !== null && $revenue->paid_amount > 0)
                         <div class="flex items-center justify-between py-3 border-b border-gray-100">
-                            <span class="text-sm font-medium text-gray-600">المبلغ المتبقي:</span>
-                            <span class="text-lg font-bold text-orange-600">{{ $revenue->formatted_remaining_amount }}</span>
+                            <span class="text-sm font-medium text-gray-600">المبلغ المدفوع:</span>
+                            <span class="text-lg font-bold text-blue-600">{{ $revenue->formatted_paid_amount }}</span>
                         </div>
                         @endif
+
+                        <div class="flex items-center justify-between py-3 border-b border-gray-100">
+                            <span class="text-sm font-medium text-gray-600">المبلغ المتبقي:</span>
+                            <span class="text-lg font-bold text-orange-600">{{ $revenue->formatted_calculated_remaining_amount }}</span>
+                        </div>
                         
                         <div class="flex items-center justify-between py-3 border-b border-gray-100">
                             <span class="text-sm font-medium text-gray-600">تاريخ الإيراد:</span>

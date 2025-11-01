@@ -135,6 +135,31 @@
                             @enderror
                         </div>
 
+                        <!-- Employee -->
+                        <div>
+                            <label for="employee_id" class="block text-sm font-medium text-gray-700 mb-2">
+                                الموظف (اختياري)
+                            </label>
+                            <select
+                                id="employee_id"
+                                name="employee_id"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors select2"
+                            >
+                                <option value="">اختر الموظف (اختياري)</option>
+                                @foreach($employees as $employee)
+                                    <option value="{{ $employee->id }}" 
+                                        data-instapay="{{ $employee->instapay_number ?? '' }}"
+                                        data-vodafone="{{ $employee->vodafone_cash_number ?? '' }}"
+                                        {{ old('employee_id', $expense->employee_id) == $employee->id ? 'selected' : '' }}>
+                                        {{ $employee->name }} ({{ $employee->role_badge }})
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('employee_id')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
                         <!-- Category -->
                         <div>
                             <label for="category" class="block text-sm font-medium text-gray-700 mb-2">
@@ -220,6 +245,8 @@
                                 <option value="">اختر طريقة الدفع</option>
                                 <option value="cash" {{ old('payment_method', $expense->payment_method) === 'cash' ? 'selected' : '' }}>نقدي</option>
                                 <option value="bank_transfer" {{ old('payment_method', $expense->payment_method) === 'bank_transfer' ? 'selected' : '' }}>تحويل بنكي</option>
+                                <option value="vodafone_cash" {{ old('payment_method', $expense->payment_method) === 'vodafone_cash' ? 'selected' : '' }}>فودافون كاش</option>
+                                <option value="instapay" {{ old('payment_method', $expense->payment_method) === 'instapay' ? 'selected' : '' }}>انستاباي</option>
                                 <option value="credit_card" {{ old('payment_method', $expense->payment_method) === 'credit_card' ? 'selected' : '' }}>بطاقة ائتمان</option>
                                 <option value="check" {{ old('payment_method', $expense->payment_method) === 'check' ? 'selected' : '' }}>شيك</option>
                                 <option value="other" {{ old('payment_method', $expense->payment_method) === 'other' ? 'selected' : '' }}>أخرى</option>
@@ -246,6 +273,35 @@
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
+                    </div>
+
+                    <!-- Employee Payment Info (Display when employee is selected) -->
+                    <div id="employee-payment-info" class="hidden mt-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                        <h4 class="text-sm font-semibold text-blue-800 mb-3">بيانات التحويل للموظف المختار:</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div id="instapay-info" class="hidden">
+                                <label class="block text-xs font-medium text-blue-700 mb-1">رقم Instapay:</label>
+                                <div class="flex items-center bg-white rounded-lg p-2 border border-blue-200">
+                                    <span id="instapay-number" class="flex-1 text-sm text-gray-800 font-mono"></span>
+                                    <button type="button" onclick="copyToClipboard('instapay-number', 'instapay-copy-btn')" id="instapay-copy-btn" class="ml-2 text-blue-600 hover:text-blue-700" title="نسخ">
+                                        <i class="fas fa-copy text-sm"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="vodafone-info" class="hidden">
+                                <label class="block text-xs font-medium text-blue-700 mb-1">رقم فودافون كاش:</label>
+                                <div class="flex items-center bg-white rounded-lg p-2 border border-blue-200">
+                                    <span id="vodafone-number" class="flex-1 text-sm text-gray-800 font-mono"></span>
+                                    <button type="button" onclick="copyToClipboard('vodafone-number', 'vodafone-copy-btn')" id="vodafone-copy-btn" class="ml-2 text-blue-600 hover:text-blue-700" title="نسخ">
+                                        <i class="fas fa-copy text-sm"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-xs text-blue-600 mt-3">
+                            <i class="fas fa-info-circle ml-1"></i>
+                            يمكنك نسخ بيانات التحويل أعلاه واستخدامها في مرجع الدفع
+                        </p>
                     </div>
                 </div>
 
@@ -303,7 +359,61 @@ $(document).ready(function() {
             }
         }
     });
+
+    // عرض بيانات التحويل عند اختيار موظف
+    $('#employee_id').on('change', function() {
+        const selectedOption = $(this).find('option:selected');
+        const employeeId = $(this).val();
+        const employeeName = selectedOption.text();
+        const instapay = selectedOption.data('instapay') || '';
+        const vodafone = selectedOption.data('vodafone') || '';
+        
+        const paymentInfoDiv = $('#employee-payment-info');
+        const instapayInfo = $('#instapay-info');
+        const vodafoneInfo = $('#vodafone-info');
+        
+        if (employeeId && (instapay || vodafone)) {
+            // عرض البيانات
+            if (instapay) {
+                $('#instapay-number').text(instapay);
+                instapayInfo.removeClass('hidden');
+            } else {
+                instapayInfo.addClass('hidden');
+            }
+            
+            if (vodafone) {
+                $('#vodafone-number').text(vodafone);
+                vodafoneInfo.removeClass('hidden');
+            } else {
+                vodafoneInfo.addClass('hidden');
+            }
+            
+            paymentInfoDiv.removeClass('hidden');
+        } else {
+            paymentInfoDiv.addClass('hidden');
+        }
+    });
+
+    // تشغيل عند تحميل الصفحة إذا كان هناك موظف محدد مسبقاً
+    if ($('#employee_id').val()) {
+        $('#employee_id').trigger('change');
+    }
 });
+
+// دالة نسخ إلى الحافظة
+function copyToClipboard(elementId, buttonId) {
+    const text = document.getElementById(elementId).textContent;
+    navigator.clipboard.writeText(text).then(function() {
+        const btn = document.getElementById(buttonId);
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check text-green-600 text-sm"></i>';
+        setTimeout(function() {
+            btn.innerHTML = originalHTML;
+        }, 2000);
+    }).catch(function(err) {
+        alert('فشل نسخ النص: ' + err);
+    });
+}
 </script>
 @endsection
 @endsection

@@ -77,10 +77,10 @@
                             @enderror
                         </div>
 
-                        <!-- Amount -->
+                        <!-- Total Amount -->
                         <div>
                             <label for="amount" class="block text-sm font-medium text-gray-700 mb-2">
-                                المبلغ <span class="text-red-500">*</span>
+                                المبلغ الإجمالي <span class="text-red-500">*</span>
                             </label>
                             <input
                                 type="number"
@@ -98,25 +98,36 @@
                             @enderror
                         </div>
 
-                        <!-- Remaining Amount -->
+                        <!-- Paid Amount -->
                         <div>
-                            <label for="remaining_amount" class="block text-sm font-medium text-gray-700 mb-2">
-                                المبلغ المتبقي
+                            <label for="paid_amount" class="block text-sm font-medium text-gray-700 mb-2">
+                                المبلغ المدفوع
                             </label>
                             <input
                                 type="number"
-                                id="remaining_amount"
-                                name="remaining_amount"
-                                value="{{ old('remaining_amount') }}"
+                                id="paid_amount"
+                                name="paid_amount"
+                                value="{{ old('paid_amount') }}"
                                 step="0.01"
                                 min="0"
                                 class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
                                 placeholder="0.00"
                             />
-                            <p class="mt-1 text-xs text-gray-500">المبلغ المتبقي الذي لم يتم استلامه بعد</p>
-                            @error('remaining_amount')
+                            <p class="mt-1 text-xs text-gray-500">المبلغ الذي تم دفعه بالفعل</p>
+                            @error('paid_amount')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
+                        </div>
+
+                        <!-- Calculated Remaining Amount (Read-only) -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                المبلغ المتبقي (محسوب تلقائياً)
+                            </label>
+                            <div class="w-full px-4 py-3 border border-gray-300 rounded-xl bg-gray-50 text-gray-700 font-semibold" id="calculated_remaining_display">
+                                0.00 جنيه
+                            </div>
+                            <p class="mt-1 text-xs text-gray-500">المبلغ المتبقي = المبلغ الإجمالي - المبلغ المدفوع</p>
                         </div>
 
                         <!-- Currency -->
@@ -327,6 +338,21 @@ $(document).ready(function() {
             $('#image-preview-container').addClass('hidden');
         }
     });
+
+    // حساب المبلغ المتبقي تلقائياً
+    function calculateRemaining() {
+        const totalAmount = parseFloat($('#amount').val()) || 0;
+        const paidAmount = parseFloat($('#paid_amount').val()) || 0;
+        const remaining = Math.max(0, totalAmount - paidAmount);
+        $('#calculated_remaining_display').text(remaining.toFixed(2) + ' جنيه');
+    }
+
+    $('#amount, #paid_amount').on('input change', function() {
+        calculateRemaining();
+    });
+
+    // حساب عند تحميل الصفحة
+    calculateRemaining();
 });
 </script>
 @endsection
