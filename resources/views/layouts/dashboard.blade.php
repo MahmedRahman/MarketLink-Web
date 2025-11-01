@@ -1018,51 +1018,35 @@
                 reverseButtons: true
             }).then((result) => {
                 if (result.isConfirmed) {
-                    // Use XMLHttpRequest instead of fetch to avoid browser security warnings
+                    // Use form submission with a hidden form to avoid browser security warnings
                     const csrfToken = document.querySelector('meta[name="csrf-token"]');
                     const token = csrfToken ? csrfToken.getAttribute('content') : '';
                     
-                    // Create form data
-                    const formData = new FormData();
-                    formData.append('_method', 'DELETE');
+                    // Create a hidden form
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = url;
+                    form.style.display = 'none';
+                    
+                    // Add CSRF token
                     if (token) {
-                        formData.append('_token', token);
+                        const csrfInput = document.createElement('input');
+                        csrfInput.type = 'hidden';
+                        csrfInput.name = '_token';
+                        csrfInput.value = token;
+                        form.appendChild(csrfInput);
                     }
                     
-                    // Submit using XMLHttpRequest
-                    const xhr = new XMLHttpRequest();
-                    xhr.open('POST', url, true);
-                    xhr.setRequestHeader('X-CSRF-TOKEN', token);
-                    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+                    // Add method spoofing
+                    const methodInput = document.createElement('input');
+                    methodInput.type = 'hidden';
+                    methodInput.name = '_method';
+                    methodInput.value = 'DELETE';
+                    form.appendChild(methodInput);
                     
-                    xhr.onload = function() {
-                        if (xhr.status >= 200 && xhr.status < 300) {
-                            // Success - reload page
-                            window.location.reload();
-                        } else if (xhr.status === 302 || xhr.status === 0) {
-                            // Redirect - reload page
-                            window.location.reload();
-                        } else {
-                            // Error
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'حدث خطأ',
-                                text: 'فشل حذف العنصر. يرجى المحاولة مرة أخرى.',
-                                confirmButtonText: 'حسناً'
-                            });
-                        }
-                    };
-                    
-                    xhr.onerror = function() {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'حدث خطأ',
-                            text: 'فشل حذف العنصر. يرجى المحاولة مرة أخرى.',
-                            confirmButtonText: 'حسناً'
-                        });
-                    };
-                    
-                    xhr.send(formData);
+                    // Add to body and submit
+                    document.body.appendChild(form);
+                    form.submit();
                 }
             });
         }
