@@ -11,9 +11,10 @@ class EmployeeController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $employees = Employee::latest()->paginate(10);
+        $organizationId = $request->user()->organization_id;
+        $employees = Employee::where('organization_id', $organizationId)->latest()->paginate(10);
         return view('employees.index', compact('employees'));
     }
 
@@ -41,6 +42,7 @@ class EmployeeController extends Controller
 
         $data = $request->all();
         $data['password'] = Hash::make($request->password);
+        $data['organization_id'] = $request->user()->organization_id;
 
         Employee::create($data);
 
@@ -51,16 +53,24 @@ class EmployeeController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Employee $employee)
+    public function show(Request $request, Employee $employee)
     {
+        if ($employee->organization_id !== $request->user()->organization_id) {
+            abort(403);
+        }
+
         return view('employees.show', compact('employee'));
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Employee $employee)
+    public function edit(Request $request, Employee $employee)
     {
+        if ($employee->organization_id !== $request->user()->organization_id) {
+            abort(403);
+        }
+
         return view('employees.edit', compact('employee'));
     }
 
@@ -69,6 +79,9 @@ class EmployeeController extends Controller
      */
     public function update(Request $request, Employee $employee)
     {
+        if ($employee->organization_id !== $request->user()->organization_id) {
+            abort(403);
+        }
         $request->validate([
             'name' => 'required|string|max:255',
             'phone' => 'nullable|string|max:20',
@@ -95,8 +108,12 @@ class EmployeeController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Employee $employee)
+    public function destroy(Request $request, Employee $employee)
     {
+        if ($employee->organization_id !== $request->user()->organization_id) {
+            abort(403);
+        }
+
         $employee->delete();
 
         return redirect()->route('employees.index')

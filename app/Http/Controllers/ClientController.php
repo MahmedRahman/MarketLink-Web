@@ -10,9 +10,10 @@ class ClientController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $clients = Client::latest()->paginate(10);
+        $organizationId = $request->user()->organization_id;
+        $clients = Client::where('organization_id', $organizationId)->latest()->paginate(10);
         return view('clients.index', compact('clients'));
     }
 
@@ -39,7 +40,10 @@ class ClientController extends Controller
             'status' => 'required|in:active,inactive,pending'
         ]);
 
-        Client::create($request->all());
+        $data = $request->all();
+        $data['organization_id'] = $request->user()->organization_id;
+
+        Client::create($data);
 
         return redirect()->route('clients.index')
             ->with('success', 'تم إضافة العميل بنجاح');
@@ -48,8 +52,13 @@ class ClientController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Client $client)
+    public function show(Request $request, Client $client)
     {
+        // التأكد من أن العميل يتبع نفس المنظمة
+        if ($client->organization_id !== $request->user()->organization_id) {
+            abort(403);
+        }
+
         $client->load('projects');
         return view('clients.show', compact('client'));
     }
@@ -57,8 +66,13 @@ class ClientController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Client $client)
+    public function edit(Request $request, Client $client)
     {
+        // التأكد من أن العميل يتبع نفس المنظمة
+        if ($client->organization_id !== $request->user()->organization_id) {
+            abort(403);
+        }
+
         return view('clients.edit', compact('client'));
     }
 
@@ -67,6 +81,11 @@ class ClientController extends Controller
      */
     public function update(Request $request, Client $client)
     {
+        // التأكد من أن العميل يتبع نفس المنظمة
+        if ($client->organization_id !== $request->user()->organization_id) {
+            abort(403);
+        }
+
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:clients,email,' . $client->id,
@@ -86,8 +105,13 @@ class ClientController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Client $client)
+    public function destroy(Request $request, Client $client)
     {
+        // التأكد من أن العميل يتبع نفس المنظمة
+        if ($client->organization_id !== $request->user()->organization_id) {
+            abort(403);
+        }
+
         $client->delete();
 
         return redirect()->route('clients.index')

@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -21,6 +22,9 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'organization_id',
+        'is_admin',
+        'status',
     ];
 
     /**
@@ -43,6 +47,39 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_admin' => 'boolean',
         ];
+    }
+
+    /**
+     * Get the organization that the user belongs to.
+     */
+    public function organization(): BelongsTo
+    {
+        return $this->belongsTo(Organization::class);
+    }
+
+    /**
+     * Check if user's organization is on trial.
+     */
+    public function organizationIsOnTrial(): bool
+    {
+        return $this->organization && $this->organization->isOnTrial();
+    }
+
+    /**
+     * Check if user's organization trial has expired.
+     */
+    public function organizationTrialExpired(): bool
+    {
+        return $this->organization && $this->organization->trialExpired();
+    }
+
+    /**
+     * Check if user's organization has active subscription.
+     */
+    public function organizationHasActiveSubscription(): bool
+    {
+        return $this->organization && $this->organization->hasActiveSubscription();
     }
 }

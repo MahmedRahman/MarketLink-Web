@@ -25,13 +25,13 @@
 ### 1. قبل الإصلاح
 ```html
 <div class="flex items-center mb-4">
-    <i class="fas fa-user text-primary text-xl mr-2"></i>
+    <i class="fas fa-user text-primary text-xl ml-2"></i>
     <h3 class="text-lg font-semibold text-gray-800">المعلومات الأساسية</h3>
 </div>
 
 @error('name')
     <p class="mt-1 text-sm text-red-600 flex items-center">
-        <span class="material-icons text-xs mr-1">error</span>
+        <span class="material-icons text-xs ml-1">error</span>
         {{ $message }}
     </p>
 @enderror

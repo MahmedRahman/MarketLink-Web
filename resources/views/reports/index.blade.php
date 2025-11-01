@@ -21,7 +21,7 @@
                 </div>
                 <div class="flex items-center space-x-3 rtl:space-x-reverse">
                     <a href="{{ route('reports.export', request()->query()) }}" class="flex items-center px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors">
-                        <i class="fas fa-download text-sm mr-2"></i>
+                        <i class="fas fa-download text-sm ml-2"></i>
                         تصدير Excel
                     </a>
                 </div>
@@ -83,11 +83,11 @@
                 <!-- Filter Buttons -->
                 <div class="lg:col-span-5 flex items-center justify-center space-x-3 rtl:space-x-reverse pt-4">
                     <button type="submit" class="btn-primary text-white px-6 py-3 rounded-xl flex items-center">
-                        <i class="fas fa-search text-sm mr-2"></i>
+                        <i class="fas fa-search text-sm ml-2"></i>
                         تطبيق الفلاتر
                     </button>
                     <a href="{{ route('reports.index') }}" class="cancel-button px-6 py-3 rounded-xl flex items-center">
-                        <i class="fas fa-times text-sm mr-2"></i>
+                        <i class="fas fa-times text-sm ml-2"></i>
                         إعادة تعيين
                     </a>
                 </div>
@@ -99,7 +99,7 @@
             <!-- Total Revenues -->
             <div class="card rounded-2xl p-6">
                 <div class="flex items-center">
-                    <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mr-4">
+                    <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center ml-4">
                         <i class="fas fa-arrow-up text-green-600 text-xl"></i>
                     </div>
                     <div>
@@ -112,7 +112,7 @@
             <!-- Total Expenses -->
             <div class="card rounded-2xl p-6">
                 <div class="flex items-center">
-                    <div class="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center mr-4">
+                    <div class="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center ml-4">
                         <i class="fas fa-arrow-down text-red-600 text-xl"></i>
                     </div>
                     <div>
@@ -125,7 +125,7 @@
             <!-- Net Profit -->
             <div class="card rounded-2xl p-6">
                 <div class="flex items-center">
-                    <div class="w-12 h-12 {{ $netProfit >= 0 ? 'bg-blue-100' : 'bg-orange-100' }} rounded-xl flex items-center justify-center mr-4">
+                    <div class="w-12 h-12 {{ $netProfit >= 0 ? 'bg-blue-100' : 'bg-orange-100' }} rounded-xl flex items-center justify-center ml-4">
                         <i class="fas fa-chart-line {{ $netProfit >= 0 ? 'text-blue-600' : 'text-orange-600' }} text-xl"></i>
                     </div>
                     <div>
@@ -297,4 +297,12 @@ $(document).ready(function() {
 </script>
 @endsection
 @endsection
+
+
+
+
+
+
+
+
 

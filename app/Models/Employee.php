@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
 class Employee extends Authenticatable
@@ -16,7 +17,8 @@ class Employee extends Authenticatable
         'email',
         'password',
         'role',
-        'status'
+        'status',
+        'organization_id'
     ];
 
     protected $hidden = [
@@ -79,5 +81,10 @@ class Employee extends Authenticatable
             'pending' => 'yellow',
             default => 'gray'
         };
+    }
+
+    public function organization(): BelongsTo
+    {
+        return $this->belongsTo(Organization::class);
     }
 }

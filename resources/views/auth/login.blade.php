@@ -16,6 +16,9 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
     <style>
         * {
             font-family: 'Cairo', sans-serif;
@@ -128,28 +131,6 @@
                 <p class="text-gray-600 text-sm">نظام إدارة شركات التسويق الإلكتروني</p>
             </div>
 
-            <!-- Admin Credentials Card -->
-            <div class="glass-effect rounded-2xl p-4 mb-6">
-                <div class="flex items-center mb-2">
-                    <span class="material-icons text-blue-600 text-sm mr-2">admin_panel_settings</span>
-                    <h3 class="text-sm font-semibold text-blue-800">بيانات المدير</h3>
-                </div>
-                <div class="text-xs text-blue-700 space-y-1">
-                    <p><span class="font-medium">البريد:</span> admin@marketlink.com</p>
-                    <p><span class="font-medium">كلمة المرور:</span> 123456</p>
-                </div>
-            </div>
-
-            <!-- Session Status -->
-            @if (session('status'))
-                <div class="bg-green-50 border border-green-200 rounded-xl p-3 mb-4">
-                    <div class="flex items-center">
-                        <span class="material-icons text-green-600 text-sm mr-2">check_circle</span>
-                        <span class="text-sm text-green-700">{{ session('status') }}</span>
-                    </div>
-                </div>
-            @endif
-
             <!-- Login Form -->
             <form method="POST" action="{{ route('login') }}" class="space-y-6">
                 @csrf
@@ -173,12 +154,6 @@
                             placeholder="أدخل بريدك الإلكتروني"
                         />
                     </div>
-                    @error('email')
-                        <p class="mt-1 text-xs text-red-600 flex items-center">
-                            <span class="material-icons text-xs mr-1">error</span>
-                            {{ $message }}
-                        </p>
-                    @enderror
                 </div>
 
                 <!-- Password Field -->
@@ -198,12 +173,6 @@
                             placeholder="أدخل كلمة المرور"
                         />
                     </div>
-                    @error('password')
-                        <p class="mt-1 text-xs text-red-600 flex items-center">
-                            <span class="material-icons text-xs mr-1">error</span>
-                            {{ $message }}
-                        </p>
-                    @enderror
                 </div>
 
                 <!-- Remember Me -->
@@ -215,23 +184,140 @@
                             name="remember"
                             class="rounded border-gray-300 text-purple-600 shadow-sm focus:ring-purple-500"
                         />
-                        <span class="mr-2 text-sm text-gray-600">تذكرني</span>
+                        <span class="ml-2 text-sm text-gray-600">تذكرني</span>
                     </label>
                 </div>
 
                 <!-- Login Button -->
                 <button type="submit" class="material-3-button w-full py-3 px-4 rounded-xl text-white font-medium text-sm flex items-center justify-center">
-                    <span class="material-icons text-sm mr-2">login</span>
+                    <span class="material-icons text-sm ml-2">login</span>
                     تسجيل الدخول
                 </button>
             </form>
 
+            <!-- Register Link -->
+            <div class="mt-6 text-center pt-6 border-t border-gray-200">
+                <p class="text-sm text-gray-600 mb-3">
+                    ليس لديك حساب؟
+                </p>
+                <a href="{{ route('register') }}" class="inline-flex items-center justify-center w-full py-3 px-4 rounded-xl text-sm font-medium text-purple-600 bg-purple-50 hover:bg-purple-100 transition-colors">
+                    <span class="material-icons text-sm ml-2">person_add</span>
+                    إنشاء حساب جديد
+                </a>
+            </div>
+
         </div>
 
         <!-- Footer -->
-        <div class="text-center mt-6">
+        <div class="text-center mt-6 space-y-2">
+            <a href="{{ route('welcome') }}" class="text-white/80 hover:text-white text-xs block transition-colors">
+                ← العودة للصفحة الرئيسية
+            </a>
             <p class="text-xs text-white/80">© 2024 MarketLink. جميع الحقوق محفوظة.</p>
         </div>
     </div>
+
+    <!-- SweetAlert Script -->
+    <script>
+        @if(session('status'))
+            Swal.fire({
+                icon: 'success',
+                title: 'نجح',
+                text: {!! json_encode(session('status'), JSON_UNESCAPED_UNICODE) !!},
+                confirmButtonText: 'حسناً',
+                confirmButtonColor: '#667eea',
+            });
+        @endif
+
+        @if($errors->has('email'))
+            @php
+                $errorMessage = $errors->first('email');
+                $isSuspended = str_contains($errorMessage, 'إيقاف');
+                $isInactive = str_contains($errorMessage, 'غير نشط');
+                $isThrottle = str_contains(strtolower($errorMessage), 'throttle') || str_contains($errorMessage, 'كثير');
+            @endphp
+            
+            @if($isSuspended)
+                Swal.fire({
+                    icon: 'error',
+                    title: 'حسابك موقوف',
+                    html: '<div class="text-right"><p class="mb-3 font-semibold">{!! e($errorMessage) !!}</p><p class="text-sm text-gray-600 mt-2">يرجى التواصل مع الدعم الفني لتفعيل حسابك</p></div>',
+                    confirmButtonText: 'حسناً',
+                    confirmButtonColor: '#ef4444',
+                    showDenyButton: true,
+                    denyButtonText: 'العودة للصفحة الرئيسية',
+                    denyButtonColor: '#6b7280',
+                    footer: '<a href="mailto:support@marketlink.com" style="color: #3b82f6; text-decoration: underline;">تواصل مع الدعم الفني</a>',
+                }).then((result) => {
+                    if (result.isDenied) {
+                        window.location.href = '{{ route("welcome") }}';
+                    }
+                });
+            @elseif($isInactive)
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'حسابك غير نشط',
+                    html: '<div class="text-right"><p class="mb-3 font-semibold">{!! e($errorMessage) !!}</p><p class="text-sm text-gray-600 mt-2">يرجى التواصل مع الدعم الفني</p></div>',
+                    confirmButtonText: 'حسناً',
+                    confirmButtonColor: '#f59e0b',
+                    showDenyButton: true,
+                    denyButtonText: 'العودة للصفحة الرئيسية',
+                    denyButtonColor: '#6b7280',
+                    footer: '<a href="mailto:support@marketlink.com" style="color: #3b82f6; text-decoration: underline;">تواصل مع الدعم الفني</a>',
+                }).then((result) => {
+                    if (result.isDenied) {
+                        window.location.href = '{{ route("welcome") }}';
+                    }
+                });
+            @elseif($isThrottle)
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'محاولات كثيرة',
+                    text: {!! json_encode($errorMessage, JSON_UNESCAPED_UNICODE) !!},
+                    confirmButtonText: 'حسناً',
+                    confirmButtonColor: '#f59e0b',
+                    showDenyButton: true,
+                    denyButtonText: 'العودة للصفحة الرئيسية',
+                    denyButtonColor: '#6b7280',
+                }).then((result) => {
+                    if (result.isDenied) {
+                        window.location.href = '{{ route("welcome") }}';
+                    }
+                });
+            @else
+                Swal.fire({
+                    icon: 'error',
+                    title: 'خطأ في تسجيل الدخول',
+                    text: {!! json_encode($errorMessage, JSON_UNESCAPED_UNICODE) !!},
+                    confirmButtonText: 'حسناً',
+                    confirmButtonColor: '#ef4444',
+                    showDenyButton: true,
+                    denyButtonText: 'العودة للصفحة الرئيسية',
+                    denyButtonColor: '#6b7280',
+                }).then((result) => {
+                    if (result.isDenied) {
+                        window.location.href = '{{ route("welcome") }}';
+                    }
+                });
+            @endif
+        @endif
+
+        @if($errors->has('password'))
+            Swal.fire({
+                icon: 'error',
+                title: 'خطأ',
+                text: {!! json_encode($errors->first('password'), JSON_UNESCAPED_UNICODE) !!},
+                confirmButtonText: 'حسناً',
+                confirmButtonColor: '#ef4444',
+                showDenyButton: true,
+                denyButtonText: 'العودة للصفحة الرئيسية',
+                denyButtonColor: '#6b7280',
+            }).then((result) => {
+                if (result.isDenied) {
+                    window.location.href = '{{ route("welcome") }}';
+                }
+            });
+        @endif
+    </script>
 </body>
 </html>

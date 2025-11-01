@@ -42,3 +42,11 @@ $user->save();
 1. انتظر 60 ثانية
 2. أو امسح الـ cache: `php artisan cache:clear`
 
+
+
+
+
+
+
+
+

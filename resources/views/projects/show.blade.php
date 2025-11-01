@@ -21,7 +21,7 @@
                 </div>
                 <div class="flex items-center space-x-3 rtl:space-x-reverse">
                     <a href="{{ route('projects.edit', $project) }}" class="flex items-center px-4 py-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-xl transition-colors icon-spacing">
-                        <i class="fas fa-edit text-sm mr-2"></i>
+                        <i class="fas fa-edit text-sm ml-2"></i>
                         تعديل
                     </a>
                     <a href="{{ route('projects.index') }}" class="flex items-center px-4 py-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-colors icon-spacing">
@@ -93,19 +93,19 @@
                         <div class="pt-4 border-t border-gray-200">
                             <div class="flex flex-col space-y-2">
                                 <a href="{{ route('projects.edit', $project) }}" class="w-full btn-primary text-white px-4 py-2 rounded-xl flex items-center justify-center hover:no-underline">
-                                    <i class="fas fa-edit text-sm mr-2"></i>
+                                    <i class="fas fa-edit text-sm ml-2"></i>
                                     تعديل المشروع
                                 </a>
                                 <a href="{{ route('projects.revenues.index', $project) }}" class="w-full bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-xl flex items-center justify-center transition-colors">
-                                    <i class="fas fa-money-bill-wave text-sm mr-2"></i>
+                                    <i class="fas fa-money-bill-wave text-sm ml-2"></i>
                                     إدارة الإيرادات
                                 </a>
                                 <a href="{{ route('projects.expenses.index', $project) }}" class="w-full bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-xl flex items-center justify-center transition-colors">
-                                    <i class="fas fa-receipt text-sm mr-2"></i>
+                                    <i class="fas fa-receipt text-sm ml-2"></i>
                                     إدارة المصروفات
                                 </a>
                                 <button onclick="confirmDelete('{{ route('projects.destroy', $project) }}', 'تأكيد حذف المشروع', 'هل أنت متأكد من حذف المشروع {{ $project->business_name }}؟')" class="w-full bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl flex items-center justify-center transition-colors">
-                                    <i class="fas fa-trash text-sm mr-2"></i>
+                                    <i class="fas fa-trash text-sm ml-2"></i>
                                     حذف المشروع
                                 </button>
                             </div>
@@ -129,7 +129,7 @@
                 @if($project->website_url)
                 <div class="bg-gray-50 rounded-xl p-4">
                     <div class="flex items-center mb-2">
-                        <i class="fas fa-globe text-blue-600 mr-2"></i>
+                        <i class="fas fa-globe text-blue-600 ml-2"></i>
                         <span class="font-medium text-gray-800">الموقع الإلكتروني</span>
                     </div>
                     <a href="{{ $project->website_url }}" target="_blank" class="text-blue-600 hover:text-blue-700 text-sm break-all">
@@ -141,7 +141,7 @@
                 @if($project->facebook_url)
                 <div class="bg-gray-50 rounded-xl p-4">
                     <div class="flex items-center mb-2">
-                        <i class="fab fa-facebook text-blue-600 mr-2"></i>
+                        <i class="fab fa-facebook text-blue-600 ml-2"></i>
                         <span class="font-medium text-gray-800">فيسبوك</span>
                     </div>
                     <a href="{{ $project->facebook_url }}" target="_blank" class="text-blue-600 hover:text-blue-700 text-sm break-all">
@@ -153,7 +153,7 @@
                 @if($project->instagram_url)
                 <div class="bg-gray-50 rounded-xl p-4">
                     <div class="flex items-center mb-2">
-                        <i class="fab fa-instagram text-pink-600 mr-2"></i>
+                        <i class="fab fa-instagram text-pink-600 ml-2"></i>
                         <span class="font-medium text-gray-800">انستغرام</span>
                     </div>
                     <a href="{{ $project->instagram_url }}" target="_blank" class="text-blue-600 hover:text-blue-700 text-sm break-all">
@@ -165,7 +165,7 @@
                 @if($project->twitter_url)
                 <div class="bg-gray-50 rounded-xl p-4">
                     <div class="flex items-center mb-2">
-                        <i class="fab fa-twitter text-blue-400 mr-2"></i>
+                        <i class="fab fa-twitter text-blue-400 ml-2"></i>
                         <span class="font-medium text-gray-800">تويتر</span>
                     </div>
                     <a href="{{ $project->twitter_url }}" target="_blank" class="text-blue-600 hover:text-blue-700 text-sm break-all">
@@ -177,7 +177,7 @@
                 @if($project->linkedin_url)
                 <div class="bg-gray-50 rounded-xl p-4">
                     <div class="flex items-center mb-2">
-                        <i class="fab fa-linkedin text-blue-700 mr-2"></i>
+                        <i class="fab fa-linkedin text-blue-700 ml-2"></i>
                         <span class="font-medium text-gray-800">لينكدإن</span>
                     </div>
                     <a href="{{ $project->linkedin_url }}" target="_blank" class="text-blue-600 hover:text-blue-700 text-sm break-all">
@@ -189,7 +189,7 @@
                 @if($project->youtube_url)
                 <div class="bg-gray-50 rounded-xl p-4">
                     <div class="flex items-center mb-2">
-                        <i class="fab fa-youtube text-red-600 mr-2"></i>
+                        <i class="fab fa-youtube text-red-600 ml-2"></i>
                         <span class="font-medium text-gray-800">يوتيوب</span>
                     </div>
                     <a href="{{ $project->youtube_url }}" target="_blank" class="text-blue-600 hover:text-blue-700 text-sm break-all">
@@ -201,7 +201,7 @@
                 @if($project->tiktok_url)
                 <div class="bg-gray-50 rounded-xl p-4">
                     <div class="flex items-center mb-2">
-                        <i class="fab fa-tiktok text-gray-800 mr-2"></i>
+                        <i class="fab fa-tiktok text-gray-800 ml-2"></i>
                         <span class="font-medium text-gray-800">تيك توك</span>
                     </div>
                     <a href="{{ $project->tiktok_url }}" target="_blank" class="text-blue-600 hover:text-blue-700 text-sm break-all">
@@ -237,7 +237,7 @@
                     <div class="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-xl p-4 border border-indigo-100">
                         <div class="flex items-center justify-between mb-3">
                             <div class="flex items-center">
-                                <div class="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center mr-3">
+                                <div class="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center ml-3">
                                     <i class="fas fa-user text-white text-sm"></i>
                                 </div>
                                 <div>
@@ -251,7 +251,7 @@
                         @if($person['phone'] ?? null)
                         <div class="flex items-center justify-between bg-white rounded-lg p-2">
                             <div class="flex items-center">
-                                <i class="fas fa-phone text-indigo-500 mr-2"></i>
+                                <i class="fas fa-phone text-indigo-500 ml-2"></i>
                                 <span class="text-sm text-gray-600">رقم الهاتف</span>
                             </div>
                             <a href="tel:{{ $person['phone'] }}" class="text-indigo-600 hover:text-indigo-700 text-sm font-medium">
@@ -262,7 +262,7 @@
                         
                         @if($person['added_at'] ?? null)
                         <div class="mt-2 text-xs text-gray-400">
-                            <i class="fas fa-clock mr-1"></i>
+                            <i class="fas fa-clock ml-1"></i>
                             تم الإضافة: {{ \Carbon\Carbon::parse($person['added_at'])->format('Y-m-d') }}
                         </div>
                         @endif
@@ -277,7 +277,7 @@
                     <h4 class="text-lg font-medium text-gray-900 mb-2">لا يوجد أشخاص موثقين</h4>
                     <p class="text-gray-500 mb-4">لم يتم إضافة أي أشخاص موثقين لهذا المشروع بعد</p>
                     <a href="{{ route('projects.edit', $project) }}" class="inline-flex items-center px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-colors">
-                        <i class="fas fa-plus text-sm mr-2"></i>
+                        <i class="fas fa-plus text-sm ml-2"></i>
                         إضافة أشخاص موثقين
                     </a>
                 </div>
@@ -307,7 +307,7 @@
                     <div class="bg-gradient-to-br from-teal-50 to-green-50 rounded-xl p-4 border border-teal-100">
                         <div class="flex items-center justify-between mb-4">
                             <div class="flex items-center">
-                                <div class="w-8 h-8 bg-teal-500 rounded-full flex items-center justify-center mr-3">
+                                <div class="w-8 h-8 bg-teal-500 rounded-full flex items-center justify-center ml-3">
                                     <i class="fas fa-user-circle text-white text-sm"></i>
                                 </div>
                                 <div>
@@ -337,7 +337,7 @@
                                     >
                                     <button 
                                         onclick="copyPassword('password-{{ $loop->index }}')" 
-                                        class="mr-2 px-3 py-2 bg-teal-500 text-white text-xs rounded-lg hover:bg-teal-600 transition-colors"
+                                        class="ml-2 px-3 py-2 bg-teal-500 text-white text-xs rounded-lg hover:bg-teal-600 transition-colors"
                                         title="نسخ كلمة المرور"
                                     >
                                         <i class="fas fa-copy"></i>
@@ -360,7 +360,7 @@
                                     <a 
                                         href="{{ $account['url'] }}" 
                                         target="_blank" 
-                                        class="mr-2 px-2 py-1 bg-teal-100 text-teal-600 text-xs rounded hover:bg-teal-200 transition-colors"
+                                        class="ml-2 px-2 py-1 bg-teal-100 text-teal-600 text-xs rounded hover:bg-teal-200 transition-colors"
                                         title="فتح الرابط"
                                     >
                                         <i class="fas fa-external-link-alt"></i>
@@ -372,7 +372,7 @@
                             <!-- Added Date -->
                             @if($account['added_at'] ?? null)
                             <div class="text-xs text-gray-400">
-                                <i class="fas fa-clock mr-1"></i>
+                                <i class="fas fa-clock ml-1"></i>
                                 تم الإضافة: {{ \Carbon\Carbon::parse($account['added_at'])->format('Y-m-d') }}
                             </div>
                             @endif
@@ -388,7 +388,7 @@
                     <h4 class="text-lg font-medium text-gray-900 mb-2">لا يوجد حسابات</h4>
                     <p class="text-gray-500 mb-4">لم يتم إضافة أي حسابات لهذا المشروع بعد</p>
                     <a href="{{ route('projects.edit', $project) }}" class="inline-flex items-center px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors">
-                        <i class="fas fa-plus text-sm mr-2"></i>
+                        <i class="fas fa-plus text-sm ml-2"></i>
                         إضافة حسابات
                     </a>
                 </div>

@@ -3,11 +3,14 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Organization;
+use App\Models\Subscription;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\View\View;
@@ -35,11 +38,31 @@ class RegisteredUserController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-        ]);
+        DB::transaction(function () use ($request, &$user) {
+            // إنشاء Organization باستخدام اسم المستخدم
+            $organization = Organization::create([
+                'name' => $request->name . ' - منظمة',
+                'email' => $request->email,
+                'is_active' => true,
+            ]);
+
+            // إنشاء User مع ربطه بـ Organization
+            $user = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+                'organization_id' => $organization->id,
+            ]);
+
+            // إنشاء Subscription Trial لمدة 14 يوم
+            Subscription::create([
+                'organization_id' => $organization->id,
+                'status' => 'trial',
+                'plan' => 'trial',
+                'trial_ends_at' => now()->addDays(14),
+                'starts_at' => now(),
+            ]);
+        });
 
         event(new Registered($user));
 

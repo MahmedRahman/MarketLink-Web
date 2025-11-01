@@ -10,7 +10,7 @@
     <div class="card rounded-2xl p-6 mb-6">
         <div class="flex items-center justify-between">
             <div class="flex items-center">
-                <div class="w-12 h-12 logo-gradient rounded-2xl flex items-center justify-center shadow-lg mr-4">
+                <div class="w-12 h-12 logo-gradient rounded-2xl flex items-center justify-center shadow-lg ml-4">
                     <i class="fas fa-users text-white text-xl"></i>
                 </div>
                 <div>
@@ -19,7 +19,7 @@
                 </div>
             </div>
             <a href="{{ route('clients.create') }}" class="btn-primary text-white px-6 py-3 rounded-xl flex items-center hover:no-underline">
-                <i class="fas fa-user-plus text-sm mr-2"></i>
+                <i class="fas fa-user-plus text-sm ml-2"></i>
                 إضافة عميل جديد
             </a>
         </div>
@@ -66,12 +66,10 @@
 
     <!-- Clients Table -->
     <div class="card rounded-2xl overflow-hidden">
-        <div class="p-6 border-b border-gray-200">
-            <h3 class="text-lg font-semibold text-gray-800">قائمة العملاء</h3>
-        </div>
+   
         
         @if($clients->count() > 0)
-            <div class="overflow-x-auto">
+            <div class="overflow-x-auto p-6">
                 <table id="clientsTable" class="w-full">
                     <thead>
                         <tr>
@@ -138,7 +136,7 @@
                 <h3 class="text-lg font-medium text-gray-900 mb-2">لا يوجد عملاء</h3>
                 <p class="text-gray-500 mb-6">ابدأ بإضافة عميل جديد</p>
                 <a href="{{ route('clients.create') }}" class="btn-primary text-white px-6 py-3 rounded-xl inline-flex items-center hover:no-underline">
-                    <i class="fas fa-user-plus text-sm mr-2"></i>
+                    <i class="fas fa-user-plus text-sm ml-2"></i>
                     إضافة عميل جديد
                 </a>
             </div>

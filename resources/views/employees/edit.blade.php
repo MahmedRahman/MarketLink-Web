@@ -180,7 +180,7 @@
                 <!-- Actions -->
                 <div class="flex items-center justify-center rtl-spacing pt-8 border-t border-gray-200">
                     <button type="submit" class="action-button btn-primary text-white px-8 py-4 rounded-2xl flex items-center font-medium text-lg min-w-[160px] justify-center">
-                        <i class="fas fa-save text-lg mr-3"></i>
+                        <i class="fas fa-save text-lg ml-3"></i>
                         حفظ التغييرات
                     </button>
                     <a href="{{ route('employees.index') }}" class="action-button cancel-button flex items-center px-8 py-4 rounded-2xl font-medium text-lg min-w-[140px] justify-center">

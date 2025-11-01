@@ -10,6 +10,7 @@ class Project extends Model
 {
     protected $fillable = [
         'client_id',
+        'organization_id',
         'business_name',
         'business_description',
         'website_url',
@@ -17,9 +18,9 @@ class Project extends Model
         'instagram_url',
         'twitter_url',
         'linkedin_url',
-               'youtube_url',
-               'tiktok_url',
-               'status',
+        'youtube_url',
+        'tiktok_url',
+        'status',
         'authorized_persons',
         'project_accounts'
     ];
@@ -34,6 +35,11 @@ class Project extends Model
     public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class);
+    }
+
+    public function organization(): BelongsTo
+    {
+        return $this->belongsTo(Organization::class);
     }
 
     public function revenues(): HasMany

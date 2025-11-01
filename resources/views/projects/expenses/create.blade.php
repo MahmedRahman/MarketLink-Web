@@ -30,7 +30,7 @@
             @if ($errors->any())
                 <div class="mb-6 bg-red-50 border border-red-200 rounded-xl p-4">
                     <div class="flex items-center mb-2">
-                        <i class="fas fa-exclamation-triangle text-red-500 mr-2"></i>
+                        <i class="fas fa-exclamation-triangle text-red-500 ml-2"></i>
                         <h3 class="text-red-800 font-semibold">يرجى تصحيح الأخطاء التالية:</h3>
                     </div>
                     <ul class="text-red-700 text-sm space-y-1">
@@ -44,7 +44,7 @@
             @if (session('error'))
                 <div class="mb-6 bg-red-50 border border-red-200 rounded-xl p-4">
                     <div class="flex items-center">
-                        <i class="fas fa-exclamation-triangle text-red-500 mr-2"></i>
+                        <i class="fas fa-exclamation-triangle text-red-500 ml-2"></i>
                         <span class="text-red-800">{{ session('error') }}</span>
                     </div>
                 </div>
@@ -272,7 +272,7 @@
                 <!-- Actions -->
                 <div class="flex items-center justify-center rtl-spacing pt-8 border-t border-gray-200">
                     <button type="submit" class="action-button btn-primary text-white px-8 py-4 rounded-2xl flex items-center font-medium text-lg min-w-[160px] justify-center">
-                        <i class="fas fa-save text-lg mr-3"></i>
+                        <i class="fas fa-save text-lg ml-3"></i>
                         حفظ المصروف
                     </button>
                     <a href="{{ route('projects.expenses.index', $project) }}" class="action-button cancel-button flex items-center px-8 py-4 rounded-2xl font-medium text-lg min-w-[140px] justify-center">

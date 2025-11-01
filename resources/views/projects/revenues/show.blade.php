@@ -21,7 +21,7 @@
                 </div>
                 <div class="flex items-center space-x-3 rtl:space-x-reverse">
                     <a href="{{ route('projects.revenues.edit', [$project, $revenue]) }}" class="flex items-center px-4 py-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-xl transition-colors">
-                        <i class="fas fa-edit text-sm mr-2"></i>
+                        <i class="fas fa-edit text-sm ml-2"></i>
                         تعديل
                     </a>
                     <a href="{{ route('projects.revenues.index', $project) }}" class="flex items-center px-4 py-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-colors">
@@ -149,17 +149,17 @@
                     <h3 class="text-lg font-semibold text-gray-800 mb-4">إجراءات سريعة</h3>
                     <div class="space-y-3">
                         <a href="{{ route('projects.revenues.edit', [$project, $revenue]) }}" class="w-full flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors">
-                            <i class="fas fa-edit text-sm mr-2"></i>
+                            <i class="fas fa-edit text-sm ml-2"></i>
                             تعديل الإيراد
                         </a>
                         
                         <button onclick="confirmDelete('{{ route('projects.revenues.destroy', [$project, $revenue]) }}', 'تأكيد حذف الإيراد', 'هل أنت متأكد من حذف الإيراد {{ $revenue->title }}؟')" class="w-full flex items-center justify-center px-4 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors">
-                            <i class="fas fa-trash text-sm mr-2"></i>
+                            <i class="fas fa-trash text-sm ml-2"></i>
                             حذف الإيراد
                         </button>
                         
                         <a href="{{ route('projects.revenues.index', $project) }}" class="w-full flex items-center justify-center px-4 py-3 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition-colors">
-                            <i class="fas fa-arrow-right text-sm mr-2"></i>
+                            <i class="fas fa-arrow-right text-sm ml-2"></i>
                             العودة للقائمة
                         </a>
                     </div>
@@ -224,4 +224,12 @@ function confirmDelete(url, title, message) {
 </script>
 @endsection
 @endsection
+
+
+
+
+
+
+
+
 

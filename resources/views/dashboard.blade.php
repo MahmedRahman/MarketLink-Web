@@ -6,12 +6,68 @@
 
 @section('content')
 <div class="space-y-6">
+    @php
+        $user = Auth::user();
+        $organization = $user->organization;
+        $subscription = $organization ? $organization->activeSubscription() : null;
+        $isOnTrial = $user->organizationIsOnTrial();
+        $trialExpired = $user->organizationTrialExpired();
+        $hasActiveSubscription = $user->organizationHasActiveSubscription();
+    @endphp
+
+    @if($isOnTrial && $subscription)
+    <!-- Trial Alert -->
+    <div class="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-2xl p-6">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center">
+                <div class="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center ml-4">
+                    <span class="material-icons text-white">timer</span>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-800">فترة التجربة المجانية</h3>
+                    <p class="text-sm text-gray-600">
+                        باقي {{ $subscription->remaining_trial_days }} يوم على انتهاء فترة التجربة
+                    </p>
+                </div>
+            </div>
+            <a href="{{ route('subscription.plans') }}" class="btn-primary text-white px-6 py-2 rounded-xl hover:no-underline">
+                اشترك الآن
+            </a>
+        </div>
+    </div>
+    @endif
+
+    @if($hasActiveSubscription && $subscription)
+    <!-- Active Subscription Alert -->
+    <div class="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-2xl p-6">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center">
+                <div class="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center ml-4">
+                    <span class="material-icons text-white">check_circle</span>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-800">اشتراك نشط</h3>
+                    <p class="text-sm text-gray-600">
+                        خطتك: {{ $subscription->plan === 'basic' ? 'بيسك' : ($subscription->plan === 'professional' ? 'بروفيشنال' : 'إنتربرايز') }}
+                    </p>
+                </div>
+            </div>
+            <a href="{{ route('subscription.index') }}" class="bg-white text-gray-700 px-6 py-2 rounded-xl hover:bg-gray-50">
+                إدارة الاشتراك
+            </a>
+        </div>
+    </div>
+    @endif
+
     <!-- Welcome Card -->
     <div class="card rounded-2xl p-6">
         <div class="flex items-center justify-between">
             <div>
                 <h2 class="text-2xl font-bold text-gray-800 mb-2">مرحباً بك، {{ Auth::user()->name }}!</h2>
                 <p class="text-gray-600">نظام إدارة شركات التسويق الإلكتروني جاهز للاستخدام</p>
+                @if($organization)
+                    <p class="text-sm text-gray-500 mt-1">المنظمة: {{ $organization->name }}</p>
+                @endif
             </div>
             <div class="w-16 h-16 bg-gradient-to-r from-purple-500 to-blue-500 rounded-2xl flex items-center justify-center">
                 <span class="material-icons text-white text-2xl">dashboard</span>
@@ -110,15 +166,15 @@
         <h3 class="text-lg font-semibold text-gray-800 mb-4">الإجراءات السريعة</h3>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <a href="{{ route('clients.index') }}" class="btn-primary text-white px-6 py-3 rounded-xl flex items-center justify-center hover:no-underline">
-                <span class="material-icons text-sm mr-2">person_add</span>
+                <span class="material-icons text-sm ml-2">person_add</span>
                 إدارة العملاء
             </a>
             <a href="#" class="bg-gray-100 text-gray-700 px-6 py-3 rounded-xl flex items-center justify-center hover:bg-gray-200 transition-colors">
-                <span class="material-icons text-sm mr-2">business</span>
+                <span class="material-icons text-sm ml-2">business</span>
                 إدارة الشركات
             </a>
             <a href="#" class="bg-gray-100 text-gray-700 px-6 py-3 rounded-xl flex items-center justify-center hover:bg-gray-200 transition-colors">
-                <span class="material-icons text-sm mr-2">web</span>
+                <span class="material-icons text-sm ml-2">web</span>
                 إدارة الصفحات
             </a>
         </div>

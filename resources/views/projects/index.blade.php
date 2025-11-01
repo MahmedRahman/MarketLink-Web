@@ -19,7 +19,7 @@
                 </div>
             </div>
             <a href="{{ route('projects.create') }}" class="btn-primary text-white px-6 py-3 rounded-xl flex items-center hover:no-underline">
-                <i class="fas fa-plus text-sm mr-2"></i>
+                <i class="fas fa-plus text-sm ml-2"></i>
                 إضافة مشروع جديد
             </a>
         </div>
@@ -84,7 +84,7 @@
                             <tr class="border-b border-gray-100 hover:bg-gray-50">
                                 <td class="py-4 px-4">
                                     <div class="flex items-center">
-                                        <div class="w-10 h-10 bg-gradient-to-r from-purple-500 to-blue-500 rounded-xl flex items-center justify-center mr-3">
+                                        <div class="w-10 h-10 bg-gradient-to-r from-purple-500 to-blue-500 rounded-xl flex items-center justify-center ml-3">
                                             <i class="fas fa-building text-white text-sm"></i>
                                         </div>
                                         <div>
@@ -101,7 +101,7 @@
                                     <div class="text-sm text-gray-900">
                                         @if($project->website_url)
                                             <a href="{{ $project->website_url }}" target="_blank" class="text-blue-600 hover:text-blue-900">
-                                                <i class="fas fa-globe text-sm mr-1"></i>
+                                                <i class="fas fa-globe text-sm ml-1"></i>
                                                 الموقع
                                             </a>
                                         @else
@@ -144,7 +144,7 @@
                 <h3 class="text-lg font-medium text-gray-900 mb-2">لا يوجد مشاريع</h3>
                 <p class="text-gray-500 mb-6">ابدأ بإضافة مشروع جديد</p>
                 <a href="{{ route('projects.create') }}" class="btn-primary text-white px-6 py-3 rounded-xl inline-flex items-center hover:no-underline">
-                    <i class="fas fa-plus text-sm mr-2"></i>
+                    <i class="fas fa-plus text-sm ml-2"></i>
                     إضافة مشروع جديد
                 </a>
             </div>

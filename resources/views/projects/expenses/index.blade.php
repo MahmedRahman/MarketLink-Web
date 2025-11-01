@@ -10,7 +10,7 @@
     <div class="card rounded-2xl p-6 mb-6">
         <div class="flex items-center justify-between">
             <div class="flex items-center">
-                <div class="w-12 h-12 logo-gradient rounded-2xl flex items-center justify-center shadow-lg mr-4">
+                <div class="w-12 h-12 logo-gradient rounded-2xl flex items-center justify-center shadow-lg ml-4">
                     <i class="fas fa-receipt text-white text-xl"></i>
                 </div>
                 <div>
@@ -20,7 +20,7 @@
             </div>
             <div class="flex items-center space-x-3 rtl:space-x-reverse">
                 <a href="{{ route('projects.expenses.create', $project) }}" class="btn-primary text-white px-6 py-3 rounded-xl flex items-center hover:no-underline">
-                    <i class="fas fa-plus text-sm mr-2"></i>
+                    <i class="fas fa-plus text-sm ml-2"></i>
                     إضافة مصروف جديد
                 </a>
                 <a href="{{ route('projects.show', $project) }}" class="flex items-center px-4 py-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-colors">
@@ -34,7 +34,7 @@
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <div class="card rounded-2xl p-6">
             <div class="flex items-center">
-                <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mr-4">
+                <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center ml-4">
                     <i class="fas fa-check-circle text-green-600 text-xl"></i>
                 </div>
                 <div>
@@ -48,7 +48,7 @@
 
         <div class="card rounded-2xl p-6">
             <div class="flex items-center">
-                <div class="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center mr-4">
+                <div class="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center ml-4">
                     <i class="fas fa-clock text-yellow-600 text-xl"></i>
                 </div>
                 <div>
@@ -62,7 +62,7 @@
 
         <div class="card rounded-2xl p-6">
             <div class="flex items-center">
-                <div class="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center mr-4">
+                <div class="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center ml-4">
                     <i class="fas fa-chart-line text-red-600 text-xl"></i>
                 </div>
                 <div>
@@ -151,7 +151,7 @@
                 <h3 class="text-lg font-medium text-gray-900 mb-2">لا يوجد مصروفات</h3>
                 <p class="text-gray-500 mb-6">ابدأ بإضافة مصروف جديد للمشروع</p>
                 <a href="{{ route('projects.expenses.create', $project) }}" class="btn-primary text-white px-6 py-3 rounded-xl inline-flex items-center hover:no-underline">
-                    <i class="fas fa-plus text-sm mr-2"></i>
+                    <i class="fas fa-plus text-sm ml-2"></i>
                     إضافة مصروف جديد
                 </a>
             </div>

@@ -19,7 +19,7 @@
                 </div>
             </div>
             <a href="{{ route('employees.create') }}" class="btn-primary text-white px-6 py-3 rounded-xl flex items-center hover:no-underline">
-                <i class="fas fa-user-plus text-sm mr-2"></i>
+                <i class="fas fa-user-plus text-sm ml-2"></i>
                 إضافة موظف جديد
             </a>
         </div>
@@ -97,7 +97,7 @@
                             <tr class="border-b border-gray-100 hover:bg-gray-50">
                                 <td class="py-4 px-4">
                                     <div class="flex items-center">
-                                        <div class="w-10 h-10 bg-gradient-to-r from-purple-500 to-blue-500 rounded-xl flex items-center justify-center mr-3">
+                                        <div class="w-10 h-10 bg-gradient-to-r from-purple-500 to-blue-500 rounded-xl flex items-center justify-center ml-3">
                                             <i class="fas fa-user text-white text-sm"></i>
                                         </div>
                                         <div>
@@ -151,7 +151,7 @@
                 <h3 class="text-lg font-medium text-gray-900 mb-2">لا يوجد موظفين</h3>
                 <p class="text-gray-500 mb-6">ابدأ بإضافة موظف جديد</p>
                 <a href="{{ route('employees.create') }}" class="btn-primary text-white px-6 py-3 rounded-xl inline-flex items-center hover:no-underline">
-                    <i class="fas fa-user-plus text-sm mr-2"></i>
+                    <i class="fas fa-user-plus text-sm ml-2"></i>
                     إضافة موظف جديد
                 </a>
             </div>

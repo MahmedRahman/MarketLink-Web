@@ -4,7 +4,7 @@
 
 ### 1. إصلاح الأيقونات للنظام العربي
 - ✅ تم إصلاح جميع الأيقونات لتكون RTL صحيحة
-- ✅ تم تغيير `ml-3` إلى `mr-3` للأيقونات
+- ✅ تم تغيير `ml-3` إلى `ml-3` للأيقونات
 - ✅ تم إصلاح مسافات الأيقونات في الأزرار
 - ✅ تم إصلاح مسافات الأيقونات في الـ sidebar
 
@@ -25,7 +25,7 @@
 ### 1. Sidebar Icons Fix
 ```html
 <!-- Before -->
-<i class="fas fa-tachometer-alt text-lg mr-3"></i>
+<i class="fas fa-tachometer-alt text-lg ml-3"></i>
 
 <!-- After -->
 <i class="fas fa-tachometer-alt text-lg ml-3"></i>
@@ -37,7 +37,7 @@
 <i class="fas fa-save text-lg ml-3"></i>
 
 <!-- After -->
-<i class="fas fa-save text-lg mr-3"></i>
+<i class="fas fa-save text-lg ml-3"></i>
 ```
 
 ### 3. Header Button Fix
@@ -46,7 +46,7 @@
 <i class="fas fa-arrow-right text-sm"></i>
 
 <!-- After -->
-<i class="fas fa-arrow-right text-sm mr-2"></i>
+<i class="fas fa-arrow-right text-sm ml-2"></i>
 ```
 
 ### 4. Table Actions Fix

@@ -32,7 +32,7 @@
 <!-- Action Buttons - Primary First -->
 <div class="flex items-center justify-center rtl-spacing pt-8 border-t border-gray-200">
     <button type="submit" class="action-button btn-primary text-white px-8 py-4 rounded-2xl flex items-center font-medium text-lg min-w-[160px] justify-center">
-        <i class="fas fa-save text-lg mr-3"></i>
+        <i class="fas fa-save text-lg ml-3"></i>
         حفظ 
     </button>   
     
@@ -54,13 +54,13 @@
 ### 2. Action Buttons Standards
 - **Primary Button First**: زر الحفظ أولاً
 - **Button Order**: حفظ، ثم إلغاء
-- **Icon Spacing**: `mr-3` للأيقونات في الأزرار
+- **Icon Spacing**: `ml-3` للأيقونات في الأزرار
 - **Button Size**: `px-8 py-4` للـ padding
 - **Button Width**: `min-w-[160px]` للحفظ، `min-w-[140px]` للإلغاء
 - **Spacing**: `rtl-spacing` class للمسافات
 
 ### 3. RTL Standards
-- **Icon Margins**: `mr-3` للأيقونات في الأزرار
+- **Icon Margins**: `ml-3` للأيقونات في الأزرار
 - **Icon Margins**: `ml-3` للأيقونات في الـ header
 - **Text Direction**: RTL للنصوص العربية
 - **Button Order**: زر الأساسي أولاً (حفظ)
@@ -106,7 +106,7 @@
 ### ✅ Action Buttons
 - [ ] زر الحفظ أولاً
 - [ ] زر الإلغاء ثانياً
-- [ ] أيقونات مع `mr-3` spacing
+- [ ] أيقونات مع `ml-3` spacing
 - [ ] `rtl-spacing` للمسافات
 - [ ] أحجام مناسبة للأزرار
 
@@ -142,7 +142,7 @@
 ```html
 <div class="flex items-center justify-center rtl-spacing pt-8 border-t border-gray-200">
     <button type="submit" class="action-button btn-primary text-white px-8 py-4 rounded-2xl flex items-center font-medium text-lg min-w-[160px] justify-center">
-        <i class="fas fa-save text-lg mr-3"></i>
+        <i class="fas fa-save text-lg ml-3"></i>
         [Primary Action]
     </button>   
     

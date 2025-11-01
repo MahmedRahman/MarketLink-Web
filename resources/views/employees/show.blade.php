@@ -21,7 +21,7 @@
                 </div>
                 <div class="flex items-center space-x-3 rtl:space-x-reverse">
                     <a href="{{ route('employees.edit', $employee) }}" class="flex items-center px-4 py-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-xl transition-colors icon-spacing">
-                        <i class="fas fa-edit text-sm mr-2"></i>
+                        <i class="fas fa-edit text-sm ml-2"></i>
                         تعديل
                     </a>
                     <a href="{{ route('employees.index') }}" class="flex items-center px-4 py-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-colors icon-spacing">
@@ -100,11 +100,11 @@
                         <div class="pt-4 border-t border-gray-200">
                             <div class="flex flex-col space-y-2">
                                 <a href="{{ route('employees.edit', $employee) }}" class="w-full btn-primary text-white px-4 py-2 rounded-xl flex items-center justify-center hover:no-underline">
-                                    <i class="fas fa-edit text-sm mr-2"></i>
+                                    <i class="fas fa-edit text-sm ml-2"></i>
                                     تعديل الموظف
                                 </a>
                                 <button onclick="confirmDelete('{{ route('employees.destroy', $employee) }}', 'تأكيد حذف الموظف', 'هل أنت متأكد من حذف الموظف {{ $employee->name }}؟')" class="w-full bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl flex items-center justify-center transition-colors">
-                                    <i class="fas fa-trash text-sm mr-2"></i>
+                                    <i class="fas fa-trash text-sm ml-2"></i>
                                     حذف الموظف
                                 </button>
                             </div>
@@ -180,7 +180,7 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-500 mb-2">البريد الإلكتروني</label>
                     <div class="flex items-center">
-                        <i class="fas fa-envelope text-gray-400 mr-2"></i>
+                        <i class="fas fa-envelope text-gray-400 ml-2"></i>
                         <a href="mailto:{{ $employee->email }}" class="text-blue-600 hover:text-blue-700">
                             {{ $employee->email }}
                         </a>
@@ -190,7 +190,7 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-500 mb-2">رقم الهاتف</label>
                     <div class="flex items-center">
-                        <i class="fas fa-phone text-gray-400 mr-2"></i>
+                        <i class="fas fa-phone text-gray-400 ml-2"></i>
                         @if($employee->phone)
                             <a href="tel:{{ $employee->phone }}" class="text-blue-600 hover:text-blue-700">
                                 {{ $employee->phone }}

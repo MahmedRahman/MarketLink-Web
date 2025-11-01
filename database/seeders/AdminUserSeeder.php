@@ -21,10 +21,19 @@ class AdminUserSeeder extends Seeder
                 'email' => 'admin@marketlink.com',
                 'password' => Hash::make('123456'),
                 'email_verified_at' => now(),
+                'is_admin' => true,
             ]
         );
 
         $this->command->info('Admin user created successfully!');
     }
 }
+
+
+
+
+
+
+
+
 

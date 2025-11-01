@@ -11,9 +11,10 @@ class ProjectController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $projects = Project::with('client')->latest()->paginate(10);
+        $organizationId = $request->user()->organization_id;
+        $projects = Project::where('organization_id', $organizationId)->with('client')->latest()->paginate(10);
         return view('projects.index', compact('projects'));
     }
 
@@ -22,7 +23,8 @@ class ProjectController extends Controller
      */
     public function create(Request $request)
     {
-        $clients = Client::where('status', 'active')->get();
+        $organizationId = $request->user()->organization_id;
+        $clients = Client::where('organization_id', $organizationId)->where('status', 'active')->get();
         $selectedClientId = $request->get('client_id');
         return view('projects.create', compact('clients', 'selectedClientId'));
     }
@@ -56,6 +58,7 @@ class ProjectController extends Controller
 
             // تحضير البيانات للـ JSON fields
             $data = $request->all();
+            $data['organization_id'] = $request->user()->organization_id;
             
             // تنظيف البيانات الفارغة للأشخاص الموثقين
             if (isset($data['authorized_persons']) && is_array($data['authorized_persons'])) {
@@ -92,8 +95,12 @@ class ProjectController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Project $project)
+    public function show(Request $request, Project $project)
     {
+        if ($project->organization_id !== $request->user()->organization_id) {
+            abort(403);
+        }
+
         $project->load('client');
         return view('projects.show', compact('project'));
     }
@@ -101,9 +108,14 @@ class ProjectController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Project $project)
+    public function edit(Request $request, Project $project)
     {
-        $clients = Client::where('status', 'active')->get();
+        if ($project->organization_id !== $request->user()->organization_id) {
+            abort(403);
+        }
+
+        $organizationId = $request->user()->organization_id;
+        $clients = Client::where('organization_id', $organizationId)->where('status', 'active')->get();
         return view('projects.edit', compact('project', 'clients'));
     }
 
@@ -112,6 +124,10 @@ class ProjectController extends Controller
      */
     public function update(Request $request, Project $project)
     {
+        if ($project->organization_id !== $request->user()->organization_id) {
+            abort(403);
+        }
+
         try {
             $request->validate([
                 'client_id' => 'required|exists:clients,id',
@@ -172,8 +188,12 @@ class ProjectController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Project $project)
+    public function destroy(Request $request, Project $project)
     {
+        if ($project->organization_id !== $request->user()->organization_id) {
+            abort(403);
+        }
+
         $project->delete();
 
         return redirect()->route('projects.index')

@@ -824,7 +824,7 @@
                     <div class="w-12 h-12 logo-gradient rounded-2xl flex items-center justify-center shadow-lg">
                         <span class="material-icons text-white text-xl">business</span>
                     </div>
-                    <div class="mr-4">
+                    <div class="ml-4">
                         <h1 class="text-xl font-bold text-gray-800">MarketLink</h1>
                         <p class="text-xs text-gray-500">نظام إدارة الشركات</p>
                     </div>
@@ -864,7 +864,13 @@
                         <span class="font-medium">التقارير</span>
                     </a>
                     
-             
+                    @if(Auth::check() && Auth::user()->is_admin)
+                    <!-- Admin Panel -->
+                    <a href="{{ route('admin.dashboard') }}" class="sidebar-item flex items-center px-4 py-3 rounded-xl {{ request()->routeIs('admin.*') ? 'active' : '' }}" style="background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%); color: white;">
+                        <i class="fas fa-shield-alt text-lg ml-3"></i>
+                        <span class="font-medium">لوحة تحكم المدير</span>
+                    </a>
+                    @endif
                     
                     <!-- Settings -->
                     <a href="#" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl">

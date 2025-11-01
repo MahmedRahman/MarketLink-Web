@@ -21,7 +21,7 @@
                 </div>
                 <div class="flex items-center space-x-3 rtl:space-x-reverse">
                     <a href="{{ route('clients.edit', $client) }}" class="flex items-center px-4 py-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-xl transition-colors icon-spacing">
-                        <i class="fas fa-edit text-sm mr-2"></i>
+                        <i class="fas fa-edit text-sm ml-2"></i>
                         تعديل
                     </a>
                     <a href="{{ route('clients.index') }}" class="flex items-center px-4 py-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-colors icon-spacing">
@@ -98,11 +98,11 @@
                         <div class="pt-4 border-t border-gray-200">
                             <div class="flex flex-col space-y-2">
                                 <a href="{{ route('clients.edit', $client) }}" class="w-full btn-primary text-white px-4 py-2 rounded-xl flex items-center justify-center hover:no-underline">
-                                    <i class="fas fa-edit text-sm mr-2"></i>
+                                    <i class="fas fa-edit text-sm ml-2"></i>
                                     تعديل العميل
                                 </a>
                                 <button onclick="confirmDelete('{{ route('clients.destroy', $client) }}', 'تأكيد حذف العميل', 'هل أنت متأكد من حذف العميل {{ $client->name }}؟')" class="w-full bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl flex items-center justify-center transition-colors">
-                                    <i class="fas fa-trash text-sm mr-2"></i>
+                                    <i class="fas fa-trash text-sm ml-2"></i>
                                     حذف العميل
                                 </button>
                             </div>
@@ -137,7 +137,7 @@
                     <h3 class="text-lg font-semibold text-gray-800">مشاريع العميل</h3>
                 </div>
                 <a href="{{ route('projects.create', ['client_id' => $client->id]) }}" class="btn-primary text-white px-4 py-2 rounded-xl flex items-center hover:no-underline">
-                    <i class="fas fa-plus text-sm mr-2"></i>
+                    <i class="fas fa-plus text-sm ml-2"></i>
                     إضافة مشروع جديد
                 </a>
             </div>
@@ -156,7 +156,7 @@
                             <div class="flex items-center justify-between">
                                 <span class="text-xs text-gray-500">{{ $project->created_at->format('Y-m-d') }}</span>
                                 <a href="{{ route('projects.show', $project) }}" class="text-blue-600 hover:text-blue-700 text-sm">
-                                    <i class="fas fa-eye mr-1"></i>
+                                    <i class="fas fa-eye ml-1"></i>
                                     عرض
                                 </a>
                             </div>
@@ -169,7 +169,7 @@
                     <h4 class="text-lg font-medium text-gray-900 mb-2">لا يوجد مشاريع</h4>
                     <p class="text-gray-500 mb-4">لم يتم إضافة أي مشاريع لهذا العميل بعد</p>
                     <a href="{{ route('projects.create', ['client_id' => $client->id]) }}" class="btn-primary text-white px-4 py-2 rounded-xl inline-flex items-center hover:no-underline">
-                        <i class="fas fa-plus text-sm mr-2"></i>
+                        <i class="fas fa-plus text-sm ml-2"></i>
                         إضافة مشروع جديد
                     </a>
                 </div>

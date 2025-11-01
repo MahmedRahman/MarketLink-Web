@@ -49,6 +49,22 @@ class LoginRequest extends FormRequest
             ]);
         }
 
+        // التحقق من حالة المستخدم
+        $user = Auth::user();
+        if ($user && $user->status === 'suspended') {
+            Auth::logout();
+            throw ValidationException::withMessages([
+                'email' => 'تم إيقاف حسابك. يرجى التواصل مع الدعم الفني.',
+            ]);
+        }
+
+        if ($user && $user->status === 'inactive') {
+            Auth::logout();
+            throw ValidationException::withMessages([
+                'email' => 'حسابك غير نشط. يرجى التواصل مع الدعم الفني.',
+            ]);
+        }
+
         RateLimiter::clear($this->throttleKey());
     }
 
