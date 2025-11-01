@@ -172,14 +172,14 @@
                                 class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors select2"
                             >
                                 <option value="">اختر فئة المصروف</option>
-                                <option value="marketing" {{ old('category', $expense->category') === 'marketing' ? 'selected' : '' }}>تسويق</option>
-                                <option value="advertising" {{ old('category', $expense->category') === 'advertising' ? 'selected' : '' }}>إعلانات</option>
-                                <option value="design" {{ old('category', $expense->category') === 'design' ? 'selected' : '' }}>تصميم</option>
-                                <option value="development" {{ old('category', $expense->category') === 'development' ? 'selected' : '' }}>تطوير</option>
-                                <option value="content" {{ old('category', $expense->category') === 'content' ? 'selected' : '' }}>محتوى</option>
-                                <option value="tools" {{ old('category', $expense->category') === 'tools' ? 'selected' : '' }}>أدوات</option>
-                                <option value="subscriptions" {{ old('category', $expense->category') === 'subscriptions' ? 'selected' : '' }}>اشتراكات</option>
-                                <option value="other" {{ old('category', $expense->category') === 'other' ? 'selected' : '' }}>أخرى</option>
+                                <option value="marketing" {{ old('category', $expense->category) === 'marketing' ? 'selected' : '' }}>تسويق</option>
+                                <option value="advertising" {{ old('category', $expense->category) === 'advertising' ? 'selected' : '' }}>إعلانات</option>
+                                <option value="design" {{ old('category', $expense->category) === 'design' ? 'selected' : '' }}>تصميم</option>
+                                <option value="development" {{ old('category', $expense->category) === 'development' ? 'selected' : '' }}>تطوير</option>
+                                <option value="content" {{ old('category', $expense->category) === 'content' ? 'selected' : '' }}>محتوى</option>
+                                <option value="tools" {{ old('category', $expense->category) === 'tools' ? 'selected' : '' }}>أدوات</option>
+                                <option value="subscriptions" {{ old('category', $expense->category) === 'subscriptions' ? 'selected' : '' }}>اشتراكات</option>
+                                <option value="other" {{ old('category', $expense->category) === 'other' ? 'selected' : '' }}>أخرى</option>
                             </select>
                             @error('category')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
