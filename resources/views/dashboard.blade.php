@@ -6,14 +6,6 @@
 
 @section('content')
 <div class="space-y-6">
-    @php
-        $user = Auth::user();
-        $organization = $user->organization;
-        $subscription = $organization ? $organization->activeSubscription() : null;
-        $isOnTrial = $user->organizationIsOnTrial();
-        $trialExpired = $user->organizationTrialExpired();
-        $hasActiveSubscription = $user->organizationHasActiveSubscription();
-    @endphp
 
     @if($isOnTrial && $subscription)
     <!-- Trial Alert -->
@@ -82,7 +74,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm font-medium text-gray-600">إجمالي العملاء</p>
-                    <p class="text-3xl font-bold text-gray-800">0</p>
+                    <p class="text-3xl font-bold text-gray-800">{{ number_format($stats['total_clients']) }}</p>
                 </div>
                 <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
                     <span class="material-icons text-blue-600">people</span>
@@ -90,28 +82,15 @@
             </div>
         </div>
 
-        <!-- Total Companies -->
+        <!-- Total Projects -->
         <div class="card rounded-2xl p-6">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm font-medium text-gray-600">إجمالي الشركات</p>
-                    <p class="text-3xl font-bold text-gray-800">0</p>
+                    <p class="text-sm font-medium text-gray-600">إجمالي المشاريع</p>
+                    <p class="text-3xl font-bold text-gray-800">{{ number_format($stats['total_projects']) }}</p>
                 </div>
                 <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
                     <span class="material-icons text-green-600">business</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Total Pages -->
-        <div class="card rounded-2xl p-6">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm font-medium text-gray-600">إجمالي الصفحات</p>
-                    <p class="text-3xl font-bold text-gray-800">0</p>
-                </div>
-                <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                    <span class="material-icons text-purple-600">web</span>
                 </div>
             </div>
         </div>
@@ -121,14 +100,73 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm font-medium text-gray-600">المشاريع النشطة</p>
-                    <p class="text-3xl font-bold text-gray-800">0</p>
+                    <p class="text-3xl font-bold text-gray-800">{{ number_format($stats['active_projects']) }}</p>
+                </div>
+                <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                    <span class="material-icons text-purple-600">work</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Employees -->
+        <div class="card rounded-2xl p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">إجمالي الموظفين</p>
+                    <p class="text-3xl font-bold text-gray-800">{{ number_format($stats['total_employees']) }}</p>
                 </div>
                 <div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
-                    <span class="material-icons text-orange-600">work</span>
+                    <span class="material-icons text-orange-600">people_outline</span>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Financial Stats -->
+    @if($stats['total_revenues'] > 0 || $stats['total_expenses'] > 0)
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Total Revenues -->
+        <div class="card rounded-2xl p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">إجمالي الإيرادات</p>
+                    <p class="text-2xl font-bold text-green-600">{{ number_format($stats['total_revenues'], 2) }} جنيه</p>
+                </div>
+                <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                    <span class="material-icons text-green-600">trending_up</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Expenses -->
+        <div class="card rounded-2xl p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">إجمالي المصروفات</p>
+                    <p class="text-2xl font-bold text-red-600">{{ number_format($stats['total_expenses'], 2) }} جنيه</p>
+                </div>
+                <div class="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
+                    <span class="material-icons text-red-600">trending_down</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Net Profit -->
+        <div class="card rounded-2xl p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">صافي الربح</p>
+                    <p class="text-2xl font-bold {{ $stats['net_profit'] >= 0 ? 'text-blue-600' : 'text-red-600' }}">
+                        {{ number_format($stats['net_profit'], 2) }} جنيه
+                    </p>
+                </div>
+                <div class="w-12 h-12 {{ $stats['net_profit'] >= 0 ? 'bg-blue-100' : 'bg-red-100' }} rounded-xl flex items-center justify-center">
+                    <span class="material-icons {{ $stats['net_profit'] >= 0 ? 'text-blue-600' : 'text-red-600' }}">account_balance</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
 
     <!-- Quick Actions -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -136,27 +174,77 @@
         <div class="card rounded-2xl p-6">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-lg font-semibold text-gray-800">العملاء الأخيرين</h3>
-                <a href="#" class="text-sm text-blue-600 hover:text-blue-500">عرض الكل</a>
+                <a href="{{ route('clients.index') }}" class="text-sm text-blue-600 hover:text-blue-500">عرض الكل</a>
             </div>
             <div class="space-y-3">
-                <div class="text-center py-8 text-gray-500">
-                    <span class="material-icons text-4xl mb-2">people_outline</span>
-                    <p>لا يوجد عملاء بعد</p>
-                </div>
+                @if($recent_clients->count() > 0)
+                    @foreach($recent_clients as $client)
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
+                                <i class="fas fa-user text-white text-sm"></i>
+                            </div>
+                            <div class="mr-3">
+                                <div class="text-sm font-medium text-gray-900">{{ $client->name }}</div>
+                                <div class="text-xs text-gray-500">{{ $client->email }}</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2 rtl:space-x-reverse">
+                            <span class="status-badge status-{{ $client->status_color }} text-xs">
+                                {{ $client->status_badge }}
+                            </span>
+                            <a href="{{ route('clients.show', $client) }}" class="text-blue-600 hover:text-blue-800">
+                                <i class="fas fa-eye text-sm"></i>
+                            </a>
+                        </div>
+                    </div>
+                    @endforeach
+                @else
+                    <div class="text-center py-8 text-gray-500">
+                        <span class="material-icons text-4xl mb-2">people_outline</span>
+                        <p>لا يوجد عملاء بعد</p>
+                    </div>
+                @endif
             </div>
         </div>
 
-        <!-- Recent Activity -->
+        <!-- Recent Projects -->
         <div class="card rounded-2xl p-6">
             <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-semibold text-gray-800">النشاط الأخير</h3>
-                <a href="#" class="text-sm text-blue-600 hover:text-blue-500">عرض الكل</a>
+                <h3 class="text-lg font-semibold text-gray-800">المشاريع الأخيرة</h3>
+                <a href="{{ route('projects.index') }}" class="text-sm text-blue-600 hover:text-blue-500">عرض الكل</a>
             </div>
             <div class="space-y-3">
-                <div class="text-center py-8 text-gray-500">
-                    <span class="material-icons text-4xl mb-2">timeline</span>
-                    <p>لا يوجد نشاط بعد</p>
-                </div>
+                @if($recent_projects->count() > 0)
+                    @foreach($recent_projects as $project)
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+                        <div class="flex items-center flex-1">
+                            <div class="w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center">
+                                <i class="fas fa-project-diagram text-white text-sm"></i>
+                            </div>
+                            <div class="mr-3 flex-1">
+                                <div class="text-sm font-medium text-gray-900">{{ $project->business_name }}</div>
+                                <div class="text-xs text-gray-500">
+                                    {{ $project->client->name ?? 'بدون عميل' }} • {{ $project->created_at->diffForHumans() }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2 rtl:space-x-reverse">
+                            <span class="status-badge status-{{ $project->status_color }} text-xs">
+                                {{ $project->status_badge }}
+                            </span>
+                            <a href="{{ route('projects.show', $project) }}" class="text-blue-600 hover:text-blue-800">
+                                <i class="fas fa-eye text-sm"></i>
+                            </a>
+                        </div>
+                    </div>
+                    @endforeach
+                @else
+                    <div class="text-center py-8 text-gray-500">
+                        <span class="material-icons text-4xl mb-2">business_center</span>
+                        <p>لا يوجد مشاريع بعد</p>
+                    </div>
+                @endif
             </div>
         </div>
     </div>
@@ -169,13 +257,13 @@
                 <span class="material-icons text-sm ml-2">person_add</span>
                 إدارة العملاء
             </a>
-            <a href="#" class="bg-gray-100 text-gray-700 px-6 py-3 rounded-xl flex items-center justify-center hover:bg-gray-200 transition-colors">
+            <a href="{{ route('projects.index') }}" class="bg-gray-100 text-gray-700 px-6 py-3 rounded-xl flex items-center justify-center hover:bg-gray-200 transition-colors">
                 <span class="material-icons text-sm ml-2">business</span>
-                إدارة الشركات
+                إدارة المشاريع
             </a>
-            <a href="#" class="bg-gray-100 text-gray-700 px-6 py-3 rounded-xl flex items-center justify-center hover:bg-gray-200 transition-colors">
-                <span class="material-icons text-sm ml-2">web</span>
-                إدارة الصفحات
+            <a href="{{ route('employees.index') }}" class="bg-gray-100 text-gray-700 px-6 py-3 rounded-xl flex items-center justify-center hover:bg-gray-200 transition-colors">
+                <span class="material-icons text-sm ml-2">people</span>
+                إدارة الموظفين
             </a>
         </div>
     </div>

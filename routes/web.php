@@ -8,6 +8,7 @@ use App\Http\Controllers\ProjectExpenseController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\SubscriptionController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\PlanController;
 use App\Http\Controllers\Admin\SubscriptionRequestController;
@@ -22,9 +23,7 @@ Route::get('/', function () {
     return view('welcome', compact('plans'));
 })->name('welcome');
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware(['auth', \App\Http\Middleware\CheckTrialStatus::class])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
