@@ -7,6 +7,7 @@ use App\Models\ProjectFile;
 use App\Models\ProjectRevenue;
 use App\Models\ProjectExpense;
 use App\Models\Client;
+use App\Models\Employee;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\RedirectResponse;
@@ -62,6 +63,8 @@ class ProjectController extends Controller
                 'project_accounts.*.password' => 'nullable|string|max:255',
                 'project_accounts.*.url' => 'nullable|string|max:500',
                 'project_accounts.*.notes' => 'nullable|string|max:1000',
+                'employee_ids' => 'nullable|array',
+                'employee_ids.*' => 'exists:employees,id',
                 'files' => 'nullable|array',
                 'files.*' => 'file|max:10240', // 10MB max per file
                 'file_descriptions' => 'nullable|array',
@@ -97,6 +100,11 @@ class ProjectController extends Controller
 
             // إنشاء المشروع
             $project = Project::create($data);
+
+            // ربط الموظفين بالمشروع
+            if ($request->has('employee_ids')) {
+                $project->employees()->attach($request->employee_ids);
+            }
 
             // رفع الملفات إن وجدت
             if ($request->hasFile('files')) {
@@ -146,7 +154,7 @@ class ProjectController extends Controller
             abort(403);
         }
 
-        $project->load(['client', 'files']);
+        $project->load(['client', 'files', 'employees']);
         return view('projects.show', compact('project'));
     }
 
@@ -161,7 +169,15 @@ class ProjectController extends Controller
 
         $organizationId = $request->user()->organization_id;
         $clients = Client::where('organization_id', $organizationId)->where('status', 'active')->get();
-        return view('projects.edit', compact('project', 'clients'));
+        $employees = Employee::where('organization_id', $organizationId)
+            ->where('status', 'active')
+            ->orderBy('name')
+            ->get();
+        
+        // تحميل الموظفين المرتبطين بالمشروع
+        $project->load('employees');
+        
+        return view('projects.edit', compact('project', 'clients', 'employees'));
     }
 
     /**
@@ -192,7 +208,9 @@ class ProjectController extends Controller
                 'project_accounts' => 'nullable|array',
                 'project_accounts.*.username' => 'nullable|string|max:255',
                 'project_accounts.*.password' => 'nullable|string|max:255',
-                'project_accounts.*.url' => 'nullable|string|max:500'
+                'project_accounts.*.url' => 'nullable|string|max:500',
+                'employee_ids' => 'nullable|array',
+                'employee_ids.*' => 'exists:employees,id'
             ]);
 
             // تحضير البيانات للـ JSON fields
@@ -222,6 +240,13 @@ class ProjectController extends Controller
             }
 
             $project->update($data);
+
+            // تحديث الموظفين المرتبطين بالمشروع
+            if ($request->has('employee_ids')) {
+                $project->employees()->sync($request->employee_ids);
+            } else {
+                $project->employees()->detach();
+            }
 
             return redirect()->route('projects.index')
                 ->with('success', 'تم تحديث المشروع بنجاح');

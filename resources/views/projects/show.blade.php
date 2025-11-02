@@ -233,6 +233,99 @@
         @endif
 
 
+        <!-- Employees Section -->
+        <div class="card rounded-2xl p-6">
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center icon-spacing ml-3">
+                        <i class="fas fa-users-cog text-green-600"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800">الموظفين الخاصين بالمشروع</h3>
+                        <p class="text-sm text-gray-600">الموظفين الذين يعملون على هذا المشروع</p>
+                    </div>
+                </div>
+                <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+                    {{ $project->employees->count() }} موظف
+                </span>
+            </div>
+            
+            @if($project->employees->count() > 0)
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    @foreach($project->employees as $employee)
+                    <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 border border-green-100">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center ml-3">
+                                    <i class="fas fa-user text-white text-sm"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-gray-800">{{ $employee->name }}</h4>
+                                    <span class="text-xs text-gray-500">{{ $employee->role_badge }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-2">
+                            @if($employee->email)
+                            <div class="bg-white rounded-lg p-2">
+                                <div class="flex items-center">
+                                    <i class="fas fa-envelope text-green-500 ml-2 text-xs"></i>
+                                    <a href="mailto:{{ $employee->email }}" class="text-green-600 hover:text-green-700 text-xs break-all">
+                                        {{ $employee->email }}
+                                    </a>
+                                </div>
+                            </div>
+                            @endif
+                            
+                            @if($employee->phone)
+                            <div class="bg-white rounded-lg p-2">
+                                <div class="flex items-center">
+                                    <i class="fas fa-phone text-green-500 ml-2 text-xs"></i>
+                                    <a href="tel:{{ $employee->phone }}" class="text-green-600 hover:text-green-700 text-xs font-medium">
+                                        {{ $employee->phone }}
+                                    </a>
+                                </div>
+                            </div>
+                            @endif
+                            
+                            <div class="flex items-center justify-between pt-2 border-t border-green-100">
+                                <span class="text-xs text-gray-500">
+                                    <span class="px-2 py-1 rounded-full bg-{{ $employee->role_color }}-100 text-{{ $employee->role_color }}-800">
+                                        {{ $employee->role_badge }}
+                                    </span>
+                                </span>
+                                @if($employee->status === 'active')
+                                    <span class="text-xs text-green-600 font-medium">
+                                        <i class="fas fa-circle text-xs ml-1"></i>
+                                        نشط
+                                    </span>
+                                @else
+                                    <span class="text-xs text-gray-500">
+                                        <i class="fas fa-circle text-xs ml-1"></i>
+                                        غير نشط
+                                    </span>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+            @else
+                <div class="text-center py-8">
+                    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-users text-gray-400 text-xl"></i>
+                    </div>
+                    <h4 class="text-lg font-medium text-gray-900 mb-2">لا يوجد موظفين</h4>
+                    <p class="text-gray-500 mb-4">لم يتم تعيين أي موظفين لهذا المشروع بعد</p>
+                    <a href="{{ route('projects.edit', $project) }}" class="inline-flex items-center px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
+                        <i class="fas fa-plus text-sm ml-2"></i>
+                        إضافة موظفين
+                    </a>
+                </div>
+            @endif
+        </div>
+
         <!-- Authorized Persons Section -->
         <div class="card rounded-2xl p-6">
             <div class="flex items-center justify-between mb-6">

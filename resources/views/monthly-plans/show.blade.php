@@ -113,9 +113,13 @@
                     <button id="toggle-fullscreen-btn" onclick="toggleFullscreen()" class="flex items-center px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors" title="تكبير/تصغير">
                         <span class="material-icons text-lg" id="fullscreen-icon">fullscreen</span>
                     </button>
+                    <a href="{{ route('monthly-plans.tasks.create', $monthlyPlan) }}" class="flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
+                        <span class="material-icons text-sm ml-2">add_task</span>
+                        إضافة مهمة جديدة
+                    </a>
                     <button onclick="showAddTaskModal()" class="btn-primary text-white px-4 py-2 rounded-lg flex items-center">
                         <span class="material-icons text-sm ml-2">add</span>
-                        إضافة مهمة
+                        إضافة مهمة سريعة
                     </button>
                 </div>
             </div>

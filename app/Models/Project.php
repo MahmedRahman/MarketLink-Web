@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Project extends Model
@@ -55,6 +56,12 @@ class Project extends Model
     public function files(): HasMany
     {
         return $this->hasMany(ProjectFile::class);
+    }
+
+    public function employees(): BelongsToMany
+    {
+        return $this->belongsToMany(Employee::class, 'project_employees')
+            ->withTimestamps();
     }
 
     public function getStatusBadgeAttribute()

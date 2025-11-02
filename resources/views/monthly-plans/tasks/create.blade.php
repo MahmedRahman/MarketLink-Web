@@ -1,8 +1,8 @@
 @extends('layouts.dashboard')
 
-@section('title', 'تعديل المهمة')
-@section('page-title', 'تعديل المهمة')
-@section('page-description', 'تعديل بيانات المهمة')
+@section('title', 'إضافة مهمة جديدة')
+@section('page-title', 'إضافة مهمة جديدة')
+@section('page-description', 'إضافة مهمة جديدة للخطة الشهرية')
 
 @section('content')
 <div class="container mx-auto px-4">
@@ -12,11 +12,11 @@
             <div class="flex items-center justify-between">
                 <div class="flex items-center">
                     <div class="w-12 h-12 logo-gradient rounded-2xl flex items-center justify-center shadow-lg icon-spacing ml-3">
-                        <span class="material-icons text-white text-xl">edit</span>
+                        <span class="material-icons text-white text-xl">add_task</span>
                     </div>
                     <div>
-                        <h2 class="text-2xl font-bold text-gray-800">تعديل المهمة</h2>
-                        <p class="text-gray-600">تعديل بيانات المهمة: {{ $task->title }}</p>
+                        <h2 class="text-2xl font-bold text-gray-800">إضافة مهمة جديدة</h2>
+                        <p class="text-gray-600">إضافة مهمة جديدة للخطة: {{ $monthlyPlan->month }} {{ $monthlyPlan->year }}</p>
                     </div>
                 </div>
                 <a href="{{ route('monthly-plans.show', $monthlyPlan) }}" class="flex items-center px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-xl transition-colors">
@@ -42,9 +42,8 @@
                 </div>
             @endif
 
-            <form id="edit-task-form" method="POST" action="{{ route('monthly-plans.tasks.update', [$monthlyPlan->id, $task->id]) }}" class="space-y-6">
+            <form id="create-task-form" method="POST" action="{{ route('monthly-plans.tasks.store', $monthlyPlan) }}" class="space-y-6">
                 @csrf
-                @method('PUT')
 
                 <!-- Title -->
                 <div>
@@ -55,7 +54,7 @@
                         type="text" 
                         id="title" 
                         name="title" 
-                        value="{{ old('title', $task->title) }}" 
+                        value="{{ old('title') }}" 
                         required
                         class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
                         placeholder="أدخل عنوان المهمة"
@@ -76,7 +75,7 @@
                         rows="6"
                         class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
                         placeholder="أدخل وصف المهمة (اختياري)"
-                    >{!! old('description', $task->description) !!}</textarea>
+                    >{!! old('description') !!}</textarea>
                     @error('description')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror
@@ -95,7 +94,7 @@
                         >
                             <option value="">قائمة المهام</option>
                             @foreach($employees as $employee)
-                                <option value="{{ $employee->id }}" {{ old('assigned_to', $task->assigned_to) == $employee->id ? 'selected' : '' }}>
+                                <option value="{{ $employee->id }}" {{ old('assigned_to') == $employee->id ? 'selected' : '' }}>
                                     {{ $employee->name }} - {{ $employee->role_badge }}
                                 </option>
                             @endforeach
@@ -114,7 +113,7 @@
                             type="date" 
                             id="due_date" 
                             name="due_date" 
-                            value="{{ old('due_date', $task->due_date ? $task->due_date->format('Y-m-d') : '') }}"
+                            value="{{ old('due_date') }}"
                             class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
                         >
                         @error('due_date')
@@ -127,18 +126,17 @@
                     <!-- Status -->
                     <div>
                         <label for="status" class="block text-sm font-medium text-gray-700 mb-2">
-                            الحالة <span class="text-red-500">*</span>
+                            الحالة
                         </label>
                         <select 
                             id="status" 
                             name="status"
-                            required
                             class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
                         >
-                            <option value="todo" {{ old('status', $task->status) == 'todo' ? 'selected' : '' }}>مهام</option>
-                            <option value="in_progress" {{ old('status', $task->status) == 'in_progress' ? 'selected' : '' }}>قيد التنفيذ</option>
-                            <option value="review" {{ old('status', $task->status) == 'review' ? 'selected' : '' }}>قيد المراجعة</option>
-                            <option value="done" {{ old('status', $task->status) == 'done' ? 'selected' : '' }}>مكتملة</option>
+                            <option value="todo" {{ old('status', 'todo') == 'todo' ? 'selected' : '' }}>مهام</option>
+                            <option value="in_progress" {{ old('status') == 'in_progress' ? 'selected' : '' }}>قيد التنفيذ</option>
+                            <option value="review" {{ old('status') == 'review' ? 'selected' : '' }}>قيد المراجعة</option>
+                            <option value="done" {{ old('status') == 'done' ? 'selected' : '' }}>مكتملة</option>
                         </select>
                         @error('status')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -155,13 +153,13 @@
                                 type="color" 
                                 id="color" 
                                 name="color" 
-                                value="{{ old('color', $task->color ?? '#6366f1') }}"
+                                value="{{ old('color', '#6366f1') }}"
                                 class="w-20 h-12 border border-gray-300 rounded-xl cursor-pointer"
                             >
                             <input 
                                 type="text" 
                                 id="color-hex" 
-                                value="{{ old('color', $task->color ?? '#6366f1') }}" 
+                                value="{{ old('color', '#6366f1') }}" 
                                 placeholder="#6366f1"
                                 class="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
                                 pattern="^#[A-Fa-f0-9]{6}$"
@@ -179,9 +177,9 @@
                     <a href="{{ route('monthly-plans.show', $monthlyPlan) }}" class="px-6 py-3 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors">
                         إلغاء
                     </a>
-                    <button type="submit" form="edit-task-form" class="btn-primary text-white px-8 py-3 rounded-xl flex items-center">
-                        <span class="material-icons text-sm ml-2">save</span>
-                        حفظ التغييرات
+                    <button type="submit" form="create-task-form" class="btn-primary text-white px-8 py-3 rounded-xl flex items-center">
+                        <span class="material-icons text-sm ml-2">add</span>
+                        إضافة المهمة
                     </button>
                 </div>
             </form>
@@ -249,9 +247,10 @@ document.addEventListener('DOMContentLoaded', function() {
         placeholder: 'أدخل وصف المهمة (اختياري)...'
     });
     
-    // Set initial content
+    // Set initial content if there's old input
     const initialContent = textarea.value || '';
     if (initialContent) {
+        // Check if content is HTML or plain text
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = initialContent;
         if (tempDiv.children.length > 0 || initialContent.includes('<')) {
@@ -262,18 +261,20 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Update textarea content before form submission
-    const form = document.getElementById('edit-task-form');
+    const form = document.getElementById('create-task-form');
     if (form) {
         form.addEventListener('submit', function(e) {
+            // تحديث محتوى textarea من Quill editor قبل الإرسال
             if (typeof quill !== 'undefined' && quill) {
                 const content = quill.root.innerHTML;
+                // تنظيف المحتوى الفارغ (Quill يضيف <p><br></p> إذا كان فارغاً)
                 if (content === '<p><br></p>' || content === '<p></p>' || !content.trim()) {
                     textarea.value = '';
                 } else {
                     textarea.value = content;
                 }
             }
-            // Sync color
+            // تحديث قيمة اللون من hex input إذا كانت مختلفة
             const colorHex = document.getElementById('color-hex');
             const colorPicker = document.getElementById('color');
             if (colorHex && colorPicker && colorHex.value) {
@@ -281,9 +282,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     colorPicker.value = colorHex.value;
                 }
             }
+            // التأكد من أن value موجودة في color input
             if (!colorPicker.value) {
                 colorPicker.value = '#6366f1';
             }
+            // السماح للنموذج بالإرسال بشكل طبيعي - لا نمنع default behavior
         });
     }
 

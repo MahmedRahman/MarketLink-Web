@@ -53,6 +53,7 @@ Route::middleware(['auth', \App\Http\Middleware\CheckTrialStatus::class])->group
            
            // Monthly Plans Routes
            Route::resource('monthly-plans', \App\Http\Controllers\MonthlyPlanController::class);
+           Route::get('monthly-plans/{monthlyPlan}/tasks/create', [\App\Http\Controllers\PlanTaskController::class, 'create'])->name('monthly-plans.tasks.create');
            Route::post('monthly-plans/{monthlyPlan}/tasks', [\App\Http\Controllers\PlanTaskController::class, 'store'])->name('monthly-plans.tasks.store');
            Route::get('monthly-plans/{monthlyPlan}/tasks/{task}/edit', [\App\Http\Controllers\PlanTaskController::class, 'edit'])->name('monthly-plans.tasks.edit');
            Route::put('monthly-plans/{monthlyPlan}/tasks/{task}', [\App\Http\Controllers\PlanTaskController::class, 'update'])->name('monthly-plans.tasks.update');

@@ -446,6 +446,57 @@
                     </button>
                 </div>
 
+                <!-- Employees Section -->
+                <div class="form-section space-y-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-800">الموظفين الخاصين بالمشروع</h3>
+                            <p class="text-sm text-gray-600">اختر الموظفين الذين سيعملون على هذا المشروع</p>
+                        </div>
+                        @if($employees->count() > 0)
+                            <button type="button" id="select-all-employees" class="text-sm text-primary hover:text-primary-700 font-medium">
+                                تحديد الكل
+                            </button>
+                        @endif
+                    </div>
+                    
+                    @if($employees->count() > 0)
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="employees-grid">
+                            @php
+                                $selectedEmployeeIds = old('employee_ids', $project->employees->pluck('id')->toArray());
+                            @endphp
+                            @foreach($employees as $employee)
+                                <label class="flex items-center justify-between p-4 border-2 {{ in_array($employee->id, $selectedEmployeeIds) ? 'border-primary bg-primary-50' : 'border-gray-200' }} rounded-xl hover:border-primary hover:bg-primary-50 transition-all cursor-pointer employee-checkbox-label group" style="position: relative;">
+                                    <input
+                                        type="checkbox"
+                                        name="employee_ids[]"
+                                        value="{{ $employee->id }}"
+                                        class="employee-checkbox w-6 h-6 rounded border-2 border-gray-300 text-primary focus:ring-2 focus:ring-primary cursor-pointer"
+                                        style="cursor: pointer; z-index: 10; position: relative;"
+                                        {{ in_array($employee->id, $selectedEmployeeIds) ? 'checked' : '' }}
+                                    />
+                                    <div class="mr-3 flex-1" style="cursor: pointer;">
+                                        <span class="block text-sm font-medium text-gray-800">{{ $employee->name }}</span>
+                                        <span class="text-xs text-gray-500">{{ $employee->role_badge }}</span>
+                                    </div>
+                                    <span class="material-icons text-primary employee-check-icon {{ in_array($employee->id, $selectedEmployeeIds) ? 'opacity-100' : 'opacity-0 group-hover:opacity-30' }} transition-opacity" style="{{ in_array($employee->id, $selectedEmployeeIds) ? 'opacity: 1 !important; color: #6366f1;' : '' }}">check_circle</span>
+                                </label>
+                            @endforeach
+                        </div>
+                    @else
+                        <div class="text-center py-8 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
+                            <span class="material-icons text-gray-400 text-5xl mb-3">people_outline</span>
+                            <p class="text-gray-600 mb-4">لا يوجد موظفين متاحين</p>
+                            <a href="{{ route('employees.create') }}" class="text-primary hover:text-primary-700 font-medium">
+                                إضافة موظف جديد
+                            </a>
+                        </div>
+                    @endif
+                    @error('employee_ids')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
                 <!-- Status Section -->
                 <div class="form-section space-y-6">
                     <h3 class="text-lg font-semibold text-gray-800">الحالة</h3>
@@ -626,6 +677,69 @@ $(document).ready(function() {
         console.log('Removing project account');
         $(this).closest('.project-account-item').remove();
     });
+
+    // Employee Selection Scripts
+    // تحديث مظهر checkbox عند التغيير
+    $(document).on('change', '.employee-checkbox', function() {
+        const label = $(this).closest('.employee-checkbox-label');
+        const icon = label.find('.employee-check-icon');
+        if ($(this).is(':checked')) {
+            label.addClass('border-primary bg-primary-50');
+            label.removeClass('border-gray-200');
+            icon.css({
+                'opacity': '1',
+                'color': '#6366f1'
+            });
+        } else {
+            label.removeClass('border-primary bg-primary-50');
+            label.addClass('border-gray-200');
+            icon.css({
+                'opacity': '0',
+                'color': ''
+            });
+        }
+    });
+
+    // تحديث الحالة الأولية للـ checkboxes
+    $('.employee-checkbox').each(function() {
+        if ($(this).is(':checked')) {
+            const label = $(this).closest('.employee-checkbox-label');
+            label.addClass('border-primary bg-primary-50');
+            label.removeClass('border-gray-200');
+            const icon = label.find('.employee-check-icon');
+            icon.css({
+                'opacity': '1',
+                'color': '#6366f1'
+            });
+        }
+    });
+
+    // تحديد/إلغاء تحديد الكل
+    let allSelected = false;
+    $('#select-all-employees').on('click', function(e) {
+        e.preventDefault();
+        allSelected = !allSelected;
+        $('.employee-checkbox').prop('checked', allSelected).trigger('change');
+        $(this).text(allSelected ? 'إلغاء تحديد الكل' : 'تحديد الكل');
+    });
 });
 </script>
+<style>
+.employee-checkbox-label {
+    user-select: none;
+    -webkit-user-select: none;
+}
+.employee-checkbox-label:hover {
+    border-color: #6366f1 !important;
+    background-color: #eef2ff !important;
+}
+.employee-checkbox {
+    accent-color: #6366f1;
+    cursor: pointer !important;
+}
+.employee-checkbox:checked {
+    background-color: #6366f1;
+    border-color: #6366f1;
+}
+</style>
 @endsection

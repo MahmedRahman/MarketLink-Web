@@ -124,13 +124,18 @@ class MonthlyPlanController extends Controller
         
         $monthlyPlan->load(['project', 'goals', 'employees', 'tasks.assignedEmployee']);
         
-        // تجميع المهام حسب القائمة (list_type)
+        // تجميع المهام حسب القائمة (list_type و assigned_to)
         $tasksByList = $monthlyPlan->tasks->groupBy(function($task) {
-            if ($task->list_type === 'tasks' || !$task->assigned_to) {
+            // إذا كانت list_type = 'tasks' أو لا يوجد assigned_to، فالقائمة هي 'tasks'
+            if ($task->list_type === 'tasks') {
                 return 'tasks';
-            } else {
+            }
+            // إذا كانت list_type = 'employee' و يوجد assigned_to، فالقائمة هي 'employee_{id}'
+            if ($task->list_type === 'employee' && $task->assigned_to) {
                 return 'employee_' . $task->assigned_to;
             }
+            // في حالة وجود أي مشكلة، نضعها في قائمة tasks
+            return 'tasks';
         });
         
         return view('monthly-plans.show', compact('monthlyPlan', 'tasksByList'));

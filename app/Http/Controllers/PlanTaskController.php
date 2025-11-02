@@ -12,10 +12,37 @@ use Illuminate\Http\RedirectResponse;
 
 class PlanTaskController extends Controller
 {
+    /**
+     * عرض صفحة إضافة مهمة جديدة
+     */
+    public function create(Request $request, MonthlyPlan $monthlyPlan): View
+    {
+        if ($monthlyPlan->organization_id !== $request->user()->organization_id) {
+            abort(403);
+        }
+
+        $organizationId = $request->user()->organization_id;
+        $employees = Employee::where('organization_id', $organizationId)
+            ->where('status', 'active')
+            ->orderBy('name')
+            ->get();
+
+        return view('monthly-plans.tasks.create', compact('monthlyPlan', 'employees'));
+    }
+
     public function store(Request $request, MonthlyPlan $monthlyPlan)
     {
         if ($monthlyPlan->organization_id !== $request->user()->organization_id) {
-            return response()->json(['error' => 'غير مصرح'], 403);
+            if ($request->expectsJson() || $request->header('Content-Type') === 'application/json') {
+                return response()->json(['error' => 'غير مصرح'], 403);
+            }
+            abort(403);
+        }
+
+        // تحديد list_type بناءً على assigned_to إذا لم يتم إرساله
+        $listType = $request->list_type;
+        if (!$listType) {
+            $listType = $request->assigned_to ? 'employee' : 'tasks';
         }
 
         $request->validate([
@@ -24,13 +51,13 @@ class PlanTaskController extends Controller
             'assigned_to' => 'nullable|exists:employees,id',
             'due_date' => 'nullable|date',
             'color' => ['nullable', 'string', 'regex:/^#[A-Fa-f0-9]{6}$/'],
-            'list_type' => 'required|in:tasks,employee',
+            'status' => 'nullable|in:todo,in_progress,review,done',
         ]);
 
         // الحصول على آخر ترتيب في القائمة
         $maxOrder = PlanTask::where('monthly_plan_id', $monthlyPlan->id)
-            ->where('list_type', $request->list_type)
-            ->when($request->list_type === 'employee', function($q) use ($request) {
+            ->where('list_type', $listType)
+            ->when($listType === 'employee', function($q) use ($request) {
                 $q->where('assigned_to', $request->assigned_to);
             })
             ->max('order') ?? 0;
@@ -40,8 +67,8 @@ class PlanTaskController extends Controller
             'assigned_to' => $request->assigned_to,
             'title' => $request->title,
             'description' => $request->description,
-            'status' => 'todo',
-            'list_type' => $request->list_type,
+            'status' => $request->status ?? 'todo',
+            'list_type' => $listType,
             'order' => $maxOrder + 1,
             'due_date' => $request->due_date,
             'color' => $request->color ?? '#6366f1',
@@ -49,97 +76,107 @@ class PlanTaskController extends Controller
 
         $task->load('assignedEmployee');
 
-        return response()->json([
-            'success' => true,
-            'task' => $task,
-        ]);
+        // للطلبات من صفحات HTML (form submissions)، نعيد redirect
+        $contentType = trim($request->header('Content-Type', ''));
+        if ($contentType === 'application/json' || $request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'task' => $task,
+            ]);
+        }
+
+        // Default: redirect للصفحة الرئيسية للخطة (للـ form submissions العادية)
+        return redirect()->route('monthly-plans.show', $monthlyPlan)
+            ->with('success', 'تم إضافة المهمة بنجاح');
     }
 
     /**
-     * عرض صفحة تعديل المهمة
+     * الخطوة 2: عرض صفحة تعديل المهمة
      */
     public function edit(Request $request, MonthlyPlan $monthlyPlan, $taskId): View
     {
+        // التحقق من الصلاحيات
         if ($monthlyPlan->organization_id !== $request->user()->organization_id) {
             abort(403);
         }
 
+        // الحصول على المهمة
         $task = PlanTask::findOrFail($taskId);
 
+        // التحقق من أن المهمة تتبع هذه الخطة
         if ($task->monthly_plan_id !== $monthlyPlan->id) {
             abort(404);
         }
 
+        // الحصول على الموظفين
         $organizationId = $request->user()->organization_id;
         $employees = Employee::where('organization_id', $organizationId)
             ->where('status', 'active')
             ->orderBy('name')
             ->get();
 
+        // تحميل الموظف المخصص
         $task->load('assignedEmployee');
 
         return view('monthly-plans.tasks.edit', compact('monthlyPlan', 'task', 'employees'));
     }
 
+    /**
+     * الخطوة 3: تحديث المهمة - بسيط في البداية (بدون التعامل مع list_type)
+     */
     public function update(Request $request, MonthlyPlan $monthlyPlan, $taskId)
     {
         try {
-            // Resolve PlanTask manually
-            $task = PlanTask::findOrFail($taskId);
-            
+            // التحقق من الصلاحيات
             if ($monthlyPlan->organization_id !== $request->user()->organization_id) {
-                if ($request->expectsJson() || $request->wantsJson()) {
-                    return response()->json(['success' => false, 'error' => 'غير مصرح'], 403);
-                }
                 abort(403);
             }
 
+            // الحصول على المهمة
+            $task = PlanTask::findOrFail($taskId);
+
+            // التحقق من أن المهمة تتبع هذه الخطة
             if ($task->monthly_plan_id !== $monthlyPlan->id) {
-                if ($request->expectsJson() || $request->wantsJson()) {
-                    return response()->json(['success' => false, 'error' => 'المهمة غير مرتبطة بهذه الخطة'], 404);
-                }
                 abort(404);
             }
 
-            // Different validation rules for JSON vs form requests
-            $validationRules = [
+            // التحقق من البيانات
+            $request->validate([
                 'title' => 'required|string|max:255',
                 'description' => 'nullable|string',
                 'assigned_to' => 'nullable|exists:employees,id',
                 'due_date' => 'nullable|date',
                 'color' => ['nullable', 'string', 'regex:/^#[A-Fa-f0-9]{6}$/'],
                 'status' => 'required|in:todo,in_progress,review,done',
-            ];
+            ]);
 
-            $request->validate($validationRules);
-
-            $updateData = [
+            // تحديث البيانات البسيطة فقط (بدون list_type أو order)
+            $task->update([
                 'title' => $request->title,
                 'description' => $request->description,
-                'assigned_to' => $request->assigned_to,
+                'assigned_to' => $request->assigned_to ?: null,
                 'due_date' => $request->due_date ?: null,
                 'status' => $request->status,
                 'color' => $request->color ?? '#6366f1',
-                'list_type' => $request->assigned_to ? 'employee' : 'tasks',
-            ];
+            ]);
 
-            $task->update($updateData);
-
+            // تحميل الموظف المخصص
             $task->load('assignedEmployee');
 
-            // إذا كان الطلب JSON (من AJAX) أرجع JSON، وإلا redirect
-            if ($request->expectsJson() || $request->wantsJson()) {
+            // للطلبات JSON
+            if ($request->expectsJson() || $request->header('Content-Type') === 'application/json') {
                 return response()->json([
                     'success' => true,
                     'task' => $task,
                 ]);
             }
 
+            // Redirect للصفحة الرئيسية
             return redirect()->route('monthly-plans.show', $monthlyPlan)
                 ->with('success', 'تم تحديث المهمة بنجاح');
-            
+
         } catch (\Illuminate\Validation\ValidationException $e) {
-            if ($request->expectsJson() || $request->wantsJson()) {
+            if ($request->expectsJson() || $request->header('Content-Type') === 'application/json') {
                 return response()->json([
                     'success' => false,
                     'error' => 'خطأ في التحقق من البيانات',
@@ -150,7 +187,7 @@ class PlanTaskController extends Controller
                 ->withErrors($e->validator)
                 ->withInput();
         } catch (\Exception $e) {
-            if ($request->expectsJson() || $request->wantsJson()) {
+            if ($request->expectsJson() || $request->header('Content-Type') === 'application/json') {
                 return response()->json([
                     'success' => false,
                     'error' => 'حدث خطأ أثناء تحديث المهمة: ' . $e->getMessage()
@@ -226,17 +263,23 @@ class PlanTaskController extends Controller
         }
     }
 
-    public function destroy(Request $request, MonthlyPlan $monthlyPlan, $taskId): JsonResponse
+    public function destroy(Request $request, MonthlyPlan $monthlyPlan, $taskId)
     {
         // Resolve PlanTask manually
         $task = PlanTask::findOrFail($taskId);
         
         if ($monthlyPlan->organization_id !== $request->user()->organization_id) {
-            return response()->json(['error' => 'غير مصرح'], 403);
+            if ($request->expectsJson() || $request->header('Content-Type') === 'application/json') {
+                return response()->json(['error' => 'غير مصرح'], 403);
+            }
+            abort(403);
         }
 
         if ($task->monthly_plan_id !== $monthlyPlan->id) {
-            return response()->json(['error' => 'المهمة غير مرتبطة بهذه الخطة'], 404);
+            if ($request->expectsJson() || $request->header('Content-Type') === 'application/json') {
+                return response()->json(['error' => 'المهمة غير مرتبطة بهذه الخطة'], 404);
+            }
+            abort(404);
         }
 
         $task->delete();
@@ -250,8 +293,16 @@ class PlanTaskController extends Controller
             ->where('order', '>', $task->order)
             ->decrement('order');
 
-        return response()->json([
-            'success' => true,
-        ]);
+        // للطلبات من صفحات HTML (form submissions)، نعيد redirect
+        $contentType = trim($request->header('Content-Type', ''));
+        if ($contentType === 'application/json' || $request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+            ]);
+        }
+
+        // Default: redirect للصفحة الرئيسية للخطة (للـ form submissions العادية)
+        return redirect()->route('monthly-plans.show', $monthlyPlan)
+            ->with('success', 'تم حذف المهمة بنجاح');
     }
 }
