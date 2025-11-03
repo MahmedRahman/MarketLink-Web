@@ -10,6 +10,7 @@ class PlanTask extends Model
 {
     protected $fillable = [
         'monthly_plan_id',
+        'goal_id',
         'assigned_to',
         'title',
         'description',
@@ -39,9 +40,19 @@ class PlanTask extends Model
         return $this->belongsTo(Employee::class, 'assigned_to');
     }
 
+    public function goal(): BelongsTo
+    {
+        return $this->belongsTo(MonthlyPlanGoal::class, 'goal_id');
+    }
+
     public function files(): HasMany
     {
         return $this->hasMany(PlanTaskFile::class, 'plan_task_id');
+    }
+
+    public function comments(): HasMany
+    {
+        return $this->hasMany(PlanTaskComment::class, 'plan_task_id')->orderBy('created_at', 'desc');
     }
 
     public function getStatusBadgeAttribute(): string

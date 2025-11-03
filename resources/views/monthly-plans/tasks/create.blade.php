@@ -84,6 +84,29 @@
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Goal -->
+                    <div>
+                        <label for="goal_id" class="block text-sm font-medium text-gray-700 mb-2">
+                            الهدف
+                        </label>
+                        <select 
+                            id="goal_id" 
+                            name="goal_id"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                        >
+                            <option value="">اختر الهدف (اختياري)</option>
+                            @foreach($goals as $goal)
+                                <option value="{{ $goal->id }}" {{ old('goal_id') == $goal->id ? 'selected' : '' }}>
+                                    {{ $goal->goal_name }} ({{ $goal->target_value }} {{ $goal->unit ?? '' }})
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('goal_id')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                        <p class="mt-1 text-xs text-gray-500">ربط المهمة بهدف من أهداف الخطة</p>
+                    </div>
+
                     <!-- Assigned To -->
                     <div>
                         <label for="assigned_to" class="block text-sm font-medium text-gray-700 mb-2">
@@ -105,7 +128,9 @@
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
+                </div>
 
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <!-- Due Date -->
                     <div>
                         <label for="due_date" class="block text-sm font-medium text-gray-700 mb-2">
@@ -190,15 +215,14 @@
                                 </button>
                             </div>
                             <div class="space-y-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">الرابط <span class="text-red-500">*</span></label>
-                                    <input
-                                        type="url"
-                                        name="links[0][url]"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-                                        placeholder="https://example.com"
-                                        required
-                                    />
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">الرابط</label>
+                                        <input
+                                            type="url"
+                                            name="links[0][url]"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                                            placeholder="https://example.com"
+                                        />
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">عنوان الرابط</label>
@@ -683,13 +707,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">الرابط <span class="text-red-500">*</span></label>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">الرابط</label>
                         <input
                             type="url"
                             name="links[${linkIndex}][url]"
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                             placeholder="https://example.com"
-                            required
                         />
                     </div>
                     <div>

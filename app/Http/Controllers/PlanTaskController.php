@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\PlanTask;
 use App\Models\PlanTaskFile;
+use App\Models\PlanTaskComment;
 use App\Models\MonthlyPlan;
+use App\Models\MonthlyPlanGoal;
 use App\Models\Employee;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -30,7 +32,10 @@ class PlanTaskController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('monthly-plans.tasks.create', compact('monthlyPlan', 'employees'));
+        // جلب الأهداف المرتبطة بهذه الخطة الشهرية
+        $goals = $monthlyPlan->goals()->orderBy('goal_name')->get();
+
+        return view('monthly-plans.tasks.create', compact('monthlyPlan', 'employees', 'goals'));
     }
 
     public function store(Request $request, MonthlyPlan $monthlyPlan)
@@ -69,7 +74,35 @@ class PlanTaskController extends Controller
             'links.*.url' => 'nullable|url|max:500',
             'attachments' => 'nullable|array',
             'attachments.*' => 'file|max:10240|mimes:jpg,jpeg,png,gif,pdf,doc,docx,xls,xlsx,zip,rar', // 10MB max
+            'goal_id' => ['nullable', 'sometimes', function ($attribute, $value, $fail) use ($monthlyPlan) {
+                if (empty($value)) {
+                    return;
+                }
+                $goal = MonthlyPlanGoal::where('id', $value)
+                    ->where('monthly_plan_id', $monthlyPlan->id)
+                    ->exists();
+                if (!$goal) {
+                    $fail('الهدف المحدد غير صحيح.');
+                }
+            }],
         ]);
+
+        // التحقق من أن الهدف ينتمي لهذه الخطة
+        if ($request->goal_id && $request->goal_id !== '') {
+            $goal = MonthlyPlanGoal::where('id', $request->goal_id)
+                ->where('monthly_plan_id', $monthlyPlan->id)
+                ->first();
+            if (!$goal) {
+                if ($request->expectsJson() || $request->header('Content-Type') === 'application/json') {
+                    return response()->json([
+                        'success' => false,
+                        'error' => 'الهدف المحدد غير صحيح',
+                        'errors' => ['goal_id' => ['الهدف المحدد غير صحيح']]
+                    ], 422);
+                }
+                return redirect()->back()->withErrors(['goal_id' => 'الهدف المحدد غير صحيح'])->withInput();
+            }
+        }
 
         // الحصول على آخر ترتيب في القائمة
         $maxOrder = PlanTask::where('monthly_plan_id', $monthlyPlan->id)
@@ -98,6 +131,7 @@ class PlanTaskController extends Controller
 
         $task = PlanTask::create([
             'monthly_plan_id' => $monthlyPlan->id,
+            'goal_id' => $request->goal_id && $request->goal_id !== '' ? $request->goal_id : null,
             'assigned_to' => $request->assigned_to,
             'title' => $request->title,
             'description' => $request->description,
@@ -108,6 +142,11 @@ class PlanTaskController extends Controller
             'color' => $request->color ?? '#6366f1',
             'task_data' => !empty($taskData) ? $taskData : null,
         ]);
+
+        // تحديث achieved_value إذا كانت المهمة في ready أو publish
+        if ($task->goal_id && in_array($listType, ['ready', 'publish'])) {
+            $this->updateGoalAchievedValue($task->goal_id);
+        }
 
         // رفع المرفقات إن وجدت
         if ($request->hasFile('attachments')) {
@@ -133,16 +172,42 @@ class PlanTaskController extends Controller
 
         // للطلبات من صفحات HTML (form submissions)، نعيد redirect
         $contentType = trim($request->header('Content-Type', ''));
-        if ($contentType === 'application/json' || $request->expectsJson()) {
+        $acceptHeader = trim($request->header('Accept', ''));
+        if ($contentType === 'application/json' || $request->expectsJson() || str_contains($acceptHeader, 'application/json')) {
             return response()->json([
                 'success' => true,
                 'task' => $task,
+                'message' => 'تم إضافة المهمة بنجاح',
             ]);
         }
 
         // Default: redirect للصفحة الرئيسية للخطة (للـ form submissions العادية)
         return redirect()->route('monthly-plans.show', $monthlyPlan)
             ->with('success', 'تم إضافة المهمة بنجاح');
+    }
+
+    /**
+     * عرض صفحة تفاصيل المهمة
+     */
+    public function show(Request $request, MonthlyPlan $monthlyPlan, $taskId): View
+    {
+        // التحقق من الصلاحيات
+        if ($monthlyPlan->organization_id !== $request->user()->organization_id) {
+            abort(403);
+        }
+
+        // الحصول على المهمة
+        $task = PlanTask::findOrFail($taskId);
+
+        // التحقق من أن المهمة تتبع هذه الخطة
+        if ($task->monthly_plan_id !== $monthlyPlan->id) {
+            abort(404);
+        }
+
+        // تحميل العلاقات
+        $task->load(['assignedEmployee', 'files', 'comments.user', 'goal']);
+
+        return view('monthly-plans.tasks.show', compact('monthlyPlan', 'task'));
     }
 
     /**
@@ -169,10 +234,13 @@ class PlanTaskController extends Controller
             ->orderBy('name')
             ->get();
 
-        // تحميل الموظف المخصص والمرفقات
-        $task->load('assignedEmployee', 'files');
+        // جلب الأهداف المرتبطة بهذه الخطة الشهرية
+        $goals = $monthlyPlan->goals()->orderBy('goal_name')->get();
 
-        return view('monthly-plans.tasks.edit', compact('monthlyPlan', 'task', 'employees'));
+        // تحميل الموظف المخصص والمرفقات والهدف
+        $task->load('assignedEmployee', 'files', 'goal');
+
+        return view('monthly-plans.tasks.edit', compact('monthlyPlan', 'task', 'employees', 'goals'));
     }
 
     /**
@@ -207,7 +275,35 @@ class PlanTaskController extends Controller
                 'links.*.url' => 'nullable|url|max:500',
                 'attachments' => 'nullable|array',
                 'attachments.*' => 'file|max:10240|mimes:jpg,jpeg,png,gif,pdf,doc,docx,xls,xlsx,zip,rar', // 10MB max
+                'goal_id' => ['nullable', 'sometimes', function ($attribute, $value, $fail) use ($monthlyPlan) {
+                if (empty($value)) {
+                    return;
+                }
+                $goal = MonthlyPlanGoal::where('id', $value)
+                    ->where('monthly_plan_id', $monthlyPlan->id)
+                    ->exists();
+                if (!$goal) {
+                    $fail('الهدف المحدد غير صحيح.');
+                }
+            }],
             ]);
+
+            // التحقق من أن الهدف ينتمي لهذه الخطة
+            if ($request->goal_id && $request->goal_id !== '') {
+                $goal = MonthlyPlanGoal::where('id', $request->goal_id)
+                    ->where('monthly_plan_id', $monthlyPlan->id)
+                    ->first();
+                if (!$goal) {
+                    if ($request->expectsJson() || $request->header('Content-Type') === 'application/json') {
+                        return response()->json([
+                            'success' => false,
+                            'error' => 'الهدف المحدد غير صحيح',
+                            'errors' => ['goal_id' => ['الهدف المحدد غير صحيح']]
+                        ], 422);
+                    }
+                    return redirect()->back()->withErrors(['goal_id' => 'الهدف المحدد غير صحيح'])->withInput();
+                }
+            }
 
             // تجهيز الروابط للـ task_data
             $taskData = $task->task_data ?? [];
@@ -229,6 +325,7 @@ class PlanTaskController extends Controller
             }
 
             // تحديث البيانات البسيطة فقط (بدون list_type أو order)
+            $oldGoalId = $task->goal_id;
             $task->update([
                 'title' => $request->title,
                 'description' => $request->description,
@@ -236,8 +333,17 @@ class PlanTaskController extends Controller
                 'due_date' => $request->due_date ?: null,
                 'status' => $request->status,
                 'color' => $request->color ?? '#6366f1',
+                'goal_id' => $request->goal_id && $request->goal_id !== '' ? $request->goal_id : null,
                 'task_data' => !empty($taskData) ? $taskData : null,
             ]);
+
+            // تحديث achieved_value للأهداف القديمة والجديدة
+            if ($oldGoalId) {
+                $this->updateGoalAchievedValue($oldGoalId);
+            }
+            if ($task->goal_id && $task->goal_id != $oldGoalId) {
+                $this->updateGoalAchievedValue($task->goal_id);
+            }
 
             // رفع المرفقات الجديدة إن وجدت
             if ($request->hasFile('attachments')) {
@@ -365,11 +471,24 @@ class PlanTaskController extends Controller
             $newListQuery->where('order', '>=', $newOrder)->increment('order');
 
             // تحديث المهمة
+            $oldGoalId = $task->goal_id;
             $task->update([
                 'list_type' => $newListType,
                 'assigned_to' => in_array($newListType, ['ready', 'publish', 'tasks']) ? null : ($newAssignedTo ?: null),
                 'order' => $newOrder,
             ]);
+
+            // تحديث achieved_value للهدف إذا كانت المهمة مرتبطة بهدف
+            if ($task->goal_id) {
+                // إذا انتقلت المهمة إلى ready أو publish، تحديث achieved_value
+                if (in_array($newListType, ['ready', 'publish'])) {
+                    $this->updateGoalAchievedValue($task->goal_id);
+                }
+                // إذا انتقلت المهمة من ready أو publish إلى مكان آخر، تحديث achieved_value
+                elseif (in_array($oldListType, ['ready', 'publish'])) {
+                    $this->updateGoalAchievedValue($task->goal_id);
+                }
+            }
 
             // إعادة تحميل المهمة مباشرة من قاعدة البيانات
             $task = PlanTask::findOrFail($taskId);
@@ -439,13 +558,19 @@ class PlanTaskController extends Controller
             abort(404);
         }
 
-        $oldListType = $task->list_type;
-        $oldAssignedTo = $task->assigned_to;
-        $oldOrder = $task->order;
+            $oldListType = $task->list_type;
+            $oldAssignedTo = $task->assigned_to;
+            $oldOrder = $task->order;
+            $oldGoalId = $task->goal_id;
 
-        $task->delete();
+            $task->delete();
 
-        // إعادة ترتيب المهام في نفس القائمة
+            // تحديث achieved_value للهدف إذا كانت المهمة المحذوفة مرتبطة بهدف وكانت في ready أو publish
+            if ($oldGoalId && in_array($oldListType, ['ready', 'publish'])) {
+                $this->updateGoalAchievedValue($oldGoalId);
+            }
+
+            // إعادة ترتيب المهام في نفس القائمة
         $reorderQuery = PlanTask::where('monthly_plan_id', $monthlyPlan->id)
             ->where('list_type', $oldListType);
         
@@ -530,6 +655,59 @@ class PlanTaskController extends Controller
         }
 
         return Storage::disk('public')->download($file->file_path, $file->file_name);
+    }
+
+    /**
+     * حفظ تعليق جديد على المهمة
+     */
+    public function storeComment(Request $request, MonthlyPlan $monthlyPlan, $taskId): RedirectResponse
+    {
+        // التحقق من الصلاحيات
+        if ($monthlyPlan->organization_id !== $request->user()->organization_id) {
+            abort(403);
+        }
+
+        // الحصول على المهمة
+        $task = PlanTask::findOrFail($taskId);
+
+        // التحقق من أن المهمة تتبع هذه الخطة
+        if ($task->monthly_plan_id !== $monthlyPlan->id) {
+            abort(404);
+        }
+
+        // التحقق من البيانات
+        $request->validate([
+            'comment' => 'required|string|max:5000',
+        ]);
+
+        // حفظ التعليق
+        PlanTaskComment::create([
+            'plan_task_id' => $task->id,
+            'user_id' => $request->user()->id,
+            'comment' => $request->comment,
+        ]);
+
+        return redirect()->route('monthly-plans.tasks.show', [$monthlyPlan, $task])
+            ->with('success', 'تم إضافة التعليق بنجاح');
+    }
+
+    /**
+     * تحديث القيمة المحققة للهدف بناءً على المهام المرتبطة به
+     */
+    private function updateGoalAchievedValue($goalId): void
+    {
+        $goal = MonthlyPlanGoal::find($goalId);
+        if (!$goal) {
+            return;
+        }
+
+        // حساب عدد المهام المرتبطة بهذا الهدف الموجودة في ready أو publish
+        $completedTasksCount = PlanTask::where('goal_id', $goalId)
+            ->whereIn('list_type', ['ready', 'publish'])
+            ->count();
+
+        // تحديث achieved_value (لا يمكن أن يتجاوز target_value)
+        $goal->update(['achieved_value' => min($goal->target_value, $completedTasksCount)]);
     }
 
     /**

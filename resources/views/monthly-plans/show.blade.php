@@ -611,11 +611,19 @@ document.getElementById('add-task-form').addEventListener('submit', function(e) 
     fetch(`/monthly-plans/${monthlyPlanId}/tasks`, {
         method: 'POST',
         headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json'
         },
         body: formData
     })
-    .then(response => response.json())
+    .then(response => {
+        return response.json().then(data => {
+            if (!response.ok) {
+                throw new Error(data.error || data.message || 'حدث خطأ أثناء إضافة المهمة');
+            }
+            return data;
+        });
+    })
     .then(data => {
         if (data.success) {
             location.reload();
@@ -625,7 +633,7 @@ document.getElementById('add-task-form').addEventListener('submit', function(e) 
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('حدث خطأ أثناء إضافة المهمة');
+        alert(error.message || 'حدث خطأ أثناء إضافة المهمة');
     });
 });
 

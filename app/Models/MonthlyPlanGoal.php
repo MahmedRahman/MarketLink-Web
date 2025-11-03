@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class MonthlyPlanGoal extends Model
 {
@@ -27,6 +28,11 @@ class MonthlyPlanGoal extends Model
     public function monthlyPlan(): BelongsTo
     {
         return $this->belongsTo(MonthlyPlan::class);
+    }
+
+    public function tasks(): HasMany
+    {
+        return $this->hasMany(PlanTask::class, 'goal_id');
     }
 
     public function getProgressPercentageAttribute(): float

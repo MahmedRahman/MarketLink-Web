@@ -55,8 +55,10 @@ Route::middleware(['auth', \App\Http\Middleware\CheckTrialStatus::class])->group
            Route::resource('monthly-plans', \App\Http\Controllers\MonthlyPlanController::class);
            Route::get('monthly-plans/{monthlyPlan}/tasks/create', [\App\Http\Controllers\PlanTaskController::class, 'create'])->name('monthly-plans.tasks.create');
            Route::post('monthly-plans/{monthlyPlan}/tasks', [\App\Http\Controllers\PlanTaskController::class, 'store'])->name('monthly-plans.tasks.store');
+           Route::get('monthly-plans/{monthlyPlan}/tasks/{task}', [\App\Http\Controllers\PlanTaskController::class, 'show'])->name('monthly-plans.tasks.show');
            Route::get('monthly-plans/{monthlyPlan}/tasks/{task}/edit', [\App\Http\Controllers\PlanTaskController::class, 'edit'])->name('monthly-plans.tasks.edit');
            Route::put('monthly-plans/{monthlyPlan}/tasks/{task}', [\App\Http\Controllers\PlanTaskController::class, 'update'])->name('monthly-plans.tasks.update');
+           Route::post('monthly-plans/{monthlyPlan}/tasks/{task}/comments', [\App\Http\Controllers\PlanTaskController::class, 'storeComment'])->name('monthly-plans.tasks.comments.store');
            Route::post('monthly-plans/{monthlyPlan}/tasks/{task}/move', [\App\Http\Controllers\PlanTaskController::class, 'move'])->name('monthly-plans.tasks.move');
            Route::delete('monthly-plans/{monthlyPlan}/tasks/{task}', [\App\Http\Controllers\PlanTaskController::class, 'destroy'])->name('monthly-plans.tasks.destroy');
            Route::get('monthly-plans/{monthlyPlan}/tasks/{task}/files/{file}/view', [\App\Http\Controllers\PlanTaskController::class, 'viewFile'])->name('monthly-plans.tasks.files.view');

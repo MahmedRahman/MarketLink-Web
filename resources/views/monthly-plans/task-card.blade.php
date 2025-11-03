@@ -3,14 +3,24 @@
      draggable="false"
      style="border-left-color: {{ $task->color ?? '#6366f1' }};">
     <div class="flex items-start justify-between mb-2">
-        <h5 class="font-semibold text-gray-800 text-sm flex-1">{{ $task->title }}</h5>
+        <a href="{{ route('monthly-plans.tasks.show', [$task->monthly_plan_id, $task->id]) }}" 
+           class="font-semibold text-gray-800 text-sm flex-1 hover:text-primary cursor-pointer">
+            {{ $task->title }}
+        </a>
         <div class="flex items-center space-x-2 rtl:space-x-reverse">
+            <a href="{{ route('monthly-plans.tasks.show', [$task->monthly_plan_id, $task->id]) }}" 
+               class="text-blue-400 hover:text-blue-600" 
+               title="عرض المهمة"
+               onclick="event.stopPropagation();">
+                <span class="material-icons text-sm">visibility</span>
+            </a>
             <a href="{{ route('monthly-plans.tasks.edit', [$task->monthly_plan_id, $task->id]) }}" 
                class="text-gray-400 hover:text-gray-600" 
-               title="تعديل المهمة">
+               title="تعديل المهمة"
+               onclick="event.stopPropagation();">
                 <span class="material-icons text-sm">edit</span>
             </a>
-            <button onclick="deleteTaskCard({{ $task->id }}, '{{ route('monthly-plans.tasks.destroy', [$task->monthly_plan_id, $task->id]) }}')" 
+            <button onclick="event.stopPropagation(); deleteTaskCard({{ $task->id }}, '{{ route('monthly-plans.tasks.destroy', [$task->monthly_plan_id, $task->id]) }}')" 
                     class="text-red-400 hover:text-red-600" 
                     title="حذف المهمة">
                 <span class="material-icons text-sm">delete</span>

@@ -83,6 +83,29 @@
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Goal -->
+                    <div>
+                        <label for="goal_id" class="block text-sm font-medium text-gray-700 mb-2">
+                            الهدف
+                        </label>
+                        <select 
+                            id="goal_id" 
+                            name="goal_id"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                        >
+                            <option value="">اختر الهدف (اختياري)</option>
+                            @foreach($goals as $goal)
+                                <option value="{{ $goal->id }}" {{ old('goal_id', $task->goal_id) == $goal->id ? 'selected' : '' }}>
+                                    {{ $goal->goal_name }} ({{ $goal->target_value }} {{ $goal->unit ?? '' }})
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('goal_id')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                        <p class="mt-1 text-xs text-gray-500">ربط المهمة بهدف من أهداف الخطة</p>
+                    </div>
+
                     <!-- Assigned To -->
                     <div>
                         <label for="assigned_to" class="block text-sm font-medium text-gray-700 mb-2">
@@ -104,7 +127,9 @@
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
+                </div>
 
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <!-- Due Date -->
                     <div>
                         <label for="due_date" class="block text-sm font-medium text-gray-700 mb-2">
@@ -198,14 +223,13 @@
                                 </div>
                                 <div class="space-y-4">
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">الرابط <span class="text-red-500">*</span></label>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">الرابط</label>
                                         <input
                                             type="url"
                                             name="links[{{ $index }}][url]"
                                             value="{{ old("links.{$index}.url", $link['url'] ?? '') }}"
                                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                                             placeholder="https://example.com"
-                                            required
                                         />
                                     </div>
                                     <div>
@@ -362,6 +386,12 @@
 <!-- Quill Editor CSS -->
 <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
 <style>
+    .ql-container.ql-snow {
+        direction: rtl;
+        font-family: 'Cairo', Arial, sans-serif;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.75rem;
+    }
     .ql-editor {
         min-height: 300px;
         font-family: 'Cairo', Arial, sans-serif;
@@ -372,12 +402,15 @@
         direction: rtl;
         font-family: 'Cairo', Arial, sans-serif;
     }
-    .ql-toolbar {
+    .ql-toolbar.ql-snow {
         direction: rtl;
+        border: 1px solid #e5e7eb;
         border-top-right-radius: 0.75rem;
         border-top-left-radius: 0.75rem;
+        border-bottom: none;
     }
-    #description-editor {
+    #description-editor .ql-container.ql-snow {
+        border-top: none;
         border-bottom-right-radius: 0.75rem;
         border-bottom-left-radius: 0.75rem;
     }
@@ -386,87 +419,131 @@
 
 @section('scripts')
 <!-- Quill Editor JS -->
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
 <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Hide the original textarea
-    const textarea = document.getElementById('description');
-    textarea.style.display = 'none';
-    
-    // Create Quill editor container
-    const editorContainer = document.createElement('div');
-    editorContainer.id = 'description-editor';
-    editorContainer.style.height = '300px';
-    textarea.parentNode.insertBefore(editorContainer, textarea);
-    
-    // Initialize Quill
-    const quill = new Quill('#description-editor', {
-        theme: 'snow',
-        modules: {
-            toolbar: [
-                [{ 'header': [1, 2, 3, false] }],
-                ['bold', 'italic', 'underline', 'strike'],
-                [{ 'color': [] }, { 'background': [] }],
-                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                [{ 'align': [] }],
-                ['link', 'image'],
-                ['clean']
-            ]
-        },
-        placeholder: 'أدخل وصف المهمة (اختياري)...'
-    });
-    
-    // Set initial content
-    const initialContent = textarea.value || '';
-    if (initialContent) {
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = initialContent;
-        if (tempDiv.children.length > 0 || initialContent.includes('<')) {
-            quill.root.innerHTML = initialContent;
-        } else {
-            quill.setText(initialContent);
+(function() {
+    // Wait for Quill to load
+    function initQuill() {
+        // Check if Quill is loaded
+        if (typeof Quill === 'undefined') {
+            console.error('Quill is not loaded! Retrying...');
+            setTimeout(initQuill, 100);
+            return;
+        }
+        
+        // Hide the original textarea
+        const textarea = document.getElementById('description');
+        if (!textarea) {
+            console.error('Description textarea not found!');
+            return;
+        }
+        
+        textarea.style.display = 'none';
+        
+        // Create Quill editor container
+        const editorContainer = document.createElement('div');
+        editorContainer.id = 'description-editor';
+        editorContainer.className = 'ql-container ql-snow';
+        editorContainer.style.height = '300px';
+        textarea.parentNode.insertBefore(editorContainer, textarea);
+        
+        // Initialize Quill
+        let quill;
+        try {
+            quill = new Quill('#description-editor', {
+            theme: 'snow',
+            modules: {
+                toolbar: [
+                    [{ 'header': [1, 2, 3, false] }],
+                    ['bold', 'italic', 'underline', 'strike'],
+                    [{ 'color': [] }, { 'background': [] }],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    [{ 'align': [] }],
+                    ['link', 'image'],
+                    ['clean']
+                ]
+            },
+            placeholder: 'أدخل وصف المهمة (اختياري)...'
+        });
+        
+        // Set initial content if there's old input
+        const initialContent = textarea.value || '';
+        if (initialContent) {
+            // Check if content is HTML or plain text
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = initialContent;
+            if (tempDiv.children.length > 0 || initialContent.includes('<')) {
+                quill.root.innerHTML = initialContent;
+            } else {
+                quill.setText(initialContent);
+            }
+        }
+        
+        // Update textarea content before form submission
+        const form = document.getElementById('edit-task-form');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                // تحديث محتوى textarea من Quill editor قبل الإرسال
+                if (typeof quill !== 'undefined' && quill) {
+                    const content = quill.root.innerHTML;
+                    // تنظيف المحتوى الفارغ (Quill يضيف <p><br></p> إذا كان فارغاً)
+                    if (content === '<p><br></p>' || content === '<p></p>' || !content.trim()) {
+                        textarea.value = '';
+                    } else {
+                        textarea.value = content;
+                    }
+                }
+                // تحديث قيمة اللون من hex input إذا كانت مختلفة
+                const colorHex = document.getElementById('color-hex');
+                const colorPicker = document.getElementById('color');
+                if (colorHex && colorPicker && colorHex.value) {
+                    if (colorHex.value !== colorPicker.value) {
+                        colorPicker.value = colorHex.value;
+                    }
+                }
+                // التأكد من أن value موجودة في color input
+                if (!colorPicker.value) {
+                    colorPicker.value = '#6366f1';
+                }
+            });
+        }
+        } catch (error) {
+            console.error('Error initializing Quill:', error);
+            // Show textarea if Quill fails
+            textarea.style.display = 'block';
         }
     }
     
-    // Update textarea content before form submission
-    const form = document.getElementById('edit-task-form');
-    if (form) {
-        form.addEventListener('submit', function(e) {
-            if (typeof quill !== 'undefined' && quill) {
-                const content = quill.root.innerHTML;
-                if (content === '<p><br></p>' || content === '<p></p>' || !content.trim()) {
-                    textarea.value = '';
-                } else {
-                    textarea.value = content;
-                }
-            }
-            // Sync color
-            const colorHex = document.getElementById('color-hex');
-            const colorPicker = document.getElementById('color');
-            if (colorHex && colorPicker && colorHex.value) {
-                if (colorHex.value !== colorPicker.value) {
-                    colorPicker.value = colorHex.value;
-                }
-            }
-            if (!colorPicker.value) {
-                colorPicker.value = '#6366f1';
+    // Initialize when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initQuill);
+    } else {
+        initQuill();
+    }
+})();
+
+// Sync color picker with hex input (run after DOM is ready)
+document.addEventListener('DOMContentLoaded', function() {
+    const colorInput = document.getElementById('color');
+    const colorHexInput = document.getElementById('color-hex');
+    
+    if (colorInput && colorHexInput) {
+        colorInput.addEventListener('input', function() {
+            colorHexInput.value = this.value;
+        });
+
+        colorHexInput.addEventListener('input', function() {
+            const hexValue = this.value;
+            if (/^#[A-Fa-f0-9]{6}$/.test(hexValue)) {
+                colorInput.value = hexValue;
             }
         });
     }
+});
 
-    // Sync color picker with hex input
-    document.getElementById('color').addEventListener('input', function() {
-        document.getElementById('color-hex').value = this.value;
-    });
-
-    document.getElementById('color-hex').addEventListener('input', function() {
-        const hexValue = this.value;
-        if (/^#[A-Fa-f0-9]{6}$/.test(hexValue)) {
-            document.getElementById('color').value = hexValue;
-        }
-    });
-
-    // Important Links Management
+// Important Links Management
+document.addEventListener('DOMContentLoaded', function() {
     let linkIndex = {{ count(old('links', $task->task_data['links'] ?? [])) }};
     
     function removeLink(index) {
@@ -519,13 +596,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">الرابط <span class="text-red-500">*</span></label>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">الرابط</label>
                         <input
                             type="url"
                             name="links[${linkIndex}][url]"
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                             placeholder="https://example.com"
-                            required
                         />
                     </div>
                     <div>
@@ -568,6 +644,7 @@ document.addEventListener('DOMContentLoaded', function() {
     attachFileEvents();
     
     function handleFileSelect(input, index) {
+        console.log('File selected:', index, input.files); // للتصحيح
         if (input.files && input.files[0]) {
             const file = input.files[0];
             const fileInfo = document.getElementById(`file-info-${index}`);
@@ -718,7 +795,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 const index = parseInt(this.dataset.index);
                 handleFileSelect(this, index);
             });
-            newInput.dataset.eventAttached = 'true';
         }
         
         attachmentIndex++;
