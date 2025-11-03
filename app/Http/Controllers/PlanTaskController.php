@@ -3,9 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\PlanTask;
+use App\Models\PlanTaskFile;
 use App\Models\MonthlyPlan;
 use App\Models\Employee;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Http\JsonResponse;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -21,8 +24,8 @@ class PlanTaskController extends Controller
             abort(403);
         }
 
-        $organizationId = $request->user()->organization_id;
-        $employees = Employee::where('organization_id', $organizationId)
+        // جلب الموظفين المرتبطين بهذه الخطة الشهرية فقط
+        $employees = $monthlyPlan->employees()
             ->where('status', 'active')
             ->orderBy('name')
             ->get();
@@ -44,23 +47,54 @@ class PlanTaskController extends Controller
         if (!$listType) {
             $listType = $request->assigned_to ? 'employee' : 'tasks';
         }
+        
+        // التأكد من أن list_type يتوافق مع assigned_to
+        if ($listType === 'employee' && !$request->assigned_to) {
+            $listType = 'tasks';
+        }
+        if ($listType === 'tasks' && $request->assigned_to) {
+            $listType = 'employee';
+        }
 
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'assigned_to' => 'nullable|exists:employees,id',
+            'list_type' => 'nullable|in:tasks,employee,ready,publish',
             'due_date' => 'nullable|date',
             'color' => ['nullable', 'string', 'regex:/^#[A-Fa-f0-9]{6}$/'],
             'status' => 'nullable|in:todo,in_progress,review,done',
+            'links' => 'nullable|array',
+            'links.*.title' => 'nullable|string|max:255',
+            'links.*.url' => 'nullable|url|max:500',
+            'attachments' => 'nullable|array',
+            'attachments.*' => 'file|max:10240|mimes:jpg,jpeg,png,gif,pdf,doc,docx,xls,xlsx,zip,rar', // 10MB max
         ]);
 
         // الحصول على آخر ترتيب في القائمة
         $maxOrder = PlanTask::where('monthly_plan_id', $monthlyPlan->id)
             ->where('list_type', $listType)
-            ->when($listType === 'employee', function($q) use ($request) {
+            ->when(in_array($listType, ['employee']), function($q) use ($request) {
                 $q->where('assigned_to', $request->assigned_to);
             })
             ->max('order') ?? 0;
+
+        // تجهيز الروابط للـ task_data
+        $taskData = [];
+        if ($request->has('links') && is_array($request->links)) {
+            $links = [];
+            foreach ($request->links as $link) {
+                if (!empty($link['url']) && filter_var($link['url'], FILTER_VALIDATE_URL)) {
+                    $links[] = [
+                        'title' => $link['title'] ?? '',
+                        'url' => $link['url'],
+                    ];
+                }
+            }
+            if (!empty($links)) {
+                $taskData['links'] = $links;
+            }
+        }
 
         $task = PlanTask::create([
             'monthly_plan_id' => $monthlyPlan->id,
@@ -72,9 +106,30 @@ class PlanTaskController extends Controller
             'order' => $maxOrder + 1,
             'due_date' => $request->due_date,
             'color' => $request->color ?? '#6366f1',
+            'task_data' => !empty($taskData) ? $taskData : null,
         ]);
 
-        $task->load('assignedEmployee');
+        // رفع المرفقات إن وجدت
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $file) {
+                if ($file->isValid()) {
+                    $fileName = $file->getClientOriginalName();
+                    $filePath = $file->store('task_files/' . $task->id, 'public');
+                    $fileType = $file->getClientMimeType();
+                    $fileSize = $file->getSize();
+
+                    PlanTaskFile::create([
+                        'plan_task_id' => $task->id,
+                        'file_name' => $fileName,
+                        'file_path' => $filePath,
+                        'file_type' => $fileType,
+                        'file_size' => $fileSize,
+                    ]);
+                }
+            }
+        }
+
+        $task->load('assignedEmployee', 'files');
 
         // للطلبات من صفحات HTML (form submissions)، نعيد redirect
         $contentType = trim($request->header('Content-Type', ''));
@@ -108,15 +163,14 @@ class PlanTaskController extends Controller
             abort(404);
         }
 
-        // الحصول على الموظفين
-        $organizationId = $request->user()->organization_id;
-        $employees = Employee::where('organization_id', $organizationId)
+        // جلب الموظفين المرتبطين بهذه الخطة الشهرية فقط
+        $employees = $monthlyPlan->employees()
             ->where('status', 'active')
             ->orderBy('name')
             ->get();
 
-        // تحميل الموظف المخصص
-        $task->load('assignedEmployee');
+        // تحميل الموظف المخصص والمرفقات
+        $task->load('assignedEmployee', 'files');
 
         return view('monthly-plans.tasks.edit', compact('monthlyPlan', 'task', 'employees'));
     }
@@ -148,7 +202,31 @@ class PlanTaskController extends Controller
                 'due_date' => 'nullable|date',
                 'color' => ['nullable', 'string', 'regex:/^#[A-Fa-f0-9]{6}$/'],
                 'status' => 'required|in:todo,in_progress,review,done',
+                'links' => 'nullable|array',
+                'links.*.title' => 'nullable|string|max:255',
+                'links.*.url' => 'nullable|url|max:500',
+                'attachments' => 'nullable|array',
+                'attachments.*' => 'file|max:10240|mimes:jpg,jpeg,png,gif,pdf,doc,docx,xls,xlsx,zip,rar', // 10MB max
             ]);
+
+            // تجهيز الروابط للـ task_data
+            $taskData = $task->task_data ?? [];
+            if ($request->has('links') && is_array($request->links)) {
+                $links = [];
+                foreach ($request->links as $link) {
+                    if (!empty($link['url']) && filter_var($link['url'], FILTER_VALIDATE_URL)) {
+                        $links[] = [
+                            'title' => $link['title'] ?? '',
+                            'url' => $link['url'],
+                        ];
+                    }
+                }
+                if (!empty($links)) {
+                    $taskData['links'] = $links;
+                } else {
+                    unset($taskData['links']);
+                }
+            }
 
             // تحديث البيانات البسيطة فقط (بدون list_type أو order)
             $task->update([
@@ -158,10 +236,31 @@ class PlanTaskController extends Controller
                 'due_date' => $request->due_date ?: null,
                 'status' => $request->status,
                 'color' => $request->color ?? '#6366f1',
+                'task_data' => !empty($taskData) ? $taskData : null,
             ]);
 
-            // تحميل الموظف المخصص
-            $task->load('assignedEmployee');
+            // رفع المرفقات الجديدة إن وجدت
+            if ($request->hasFile('attachments')) {
+                foreach ($request->file('attachments') as $file) {
+                    if ($file->isValid()) {
+                        $fileName = $file->getClientOriginalName();
+                        $filePath = $file->store('task_files/' . $task->id, 'public');
+                        $fileType = $file->getClientMimeType();
+                        $fileSize = $file->getSize();
+
+                        PlanTaskFile::create([
+                            'plan_task_id' => $task->id,
+                            'file_name' => $fileName,
+                            'file_path' => $filePath,
+                            'file_type' => $fileType,
+                            'file_size' => $fileSize,
+                        ]);
+                    }
+                }
+            }
+
+            // تحميل الموظف المخصص والمرفقات
+            $task->load('assignedEmployee', 'files');
 
             // للطلبات JSON
             if ($request->expectsJson() || $request->header('Content-Type') === 'application/json') {
@@ -209,8 +308,20 @@ class PlanTaskController extends Controller
         }
 
         $request->validate([
-            'list_type' => 'required|in:tasks,employee',
-            'assigned_to' => 'nullable|exists:employees,id',
+            'list_type' => 'required|in:tasks,employee,ready,publish',
+            'assigned_to' => [
+                'nullable',
+                function ($attribute, $value, $fail) use ($request) {
+                    // إذا كانت list_type هي employee، يجب أن يكون assigned_to موجوداً
+                    if ($request->list_type === 'employee' && empty($value)) {
+                        $fail('يجب تحديد موظف للقائمة من نوع employee.');
+                    }
+                    // إذا كانت list_type ليست employee و assigned_to موجود، يجب التحقق من وجود الموظف
+                    if (!empty($value) && !\App\Models\Employee::where('id', $value)->exists()) {
+                        $fail('الموظف المحدد غير موجود.');
+                    }
+                }
+            ],
             'new_order' => 'required|integer|min:0',
         ]);
 
@@ -224,38 +335,84 @@ class PlanTaskController extends Controller
             $newOrder = $request->new_order;
 
             // تحديث ترتيب المهام في القائمة القديمة
-            PlanTask::where('monthly_plan_id', $monthlyPlan->id)
-                ->where('list_type', $oldListType)
-                ->when($oldListType === 'employee', function($q) use ($oldAssignedTo) {
-                    $q->where('assigned_to', $oldAssignedTo);
-                })
-                ->where('order', '>', $oldOrder)
-                ->decrement('order');
+            $oldListQuery = PlanTask::where('monthly_plan_id', $monthlyPlan->id)
+                ->where('list_type', $oldListType);
+            
+            // إذا كانت القائمة القديمة من نوع employee، نحتاج إلى تصفية حسب assigned_to
+            if ($oldListType === 'employee' && $oldAssignedTo) {
+                $oldListQuery->where('assigned_to', $oldAssignedTo);
+            }
+            // إذا كانت القائمة القديمة من نوع tasks أو ready أو publish، يجب أن تكون assigned_to = null
+            elseif (in_array($oldListType, ['tasks', 'ready', 'publish'])) {
+                $oldListQuery->whereNull('assigned_to');
+            }
+            
+            $oldListQuery->where('order', '>', $oldOrder)->decrement('order');
 
             // تحديث ترتيب المهام في القائمة الجديدة
-            PlanTask::where('monthly_plan_id', $monthlyPlan->id)
-                ->where('list_type', $newListType)
-                ->when($newListType === 'employee', function($q) use ($newAssignedTo) {
-                    $q->where('assigned_to', $newAssignedTo);
-                })
-                ->where('order', '>=', $newOrder)
-                ->increment('order');
+            $newListQuery = PlanTask::where('monthly_plan_id', $monthlyPlan->id)
+                ->where('list_type', $newListType);
+            
+            // إذا كانت القائمة الجديدة من نوع employee، نحتاج إلى تصفية حسب assigned_to
+            if ($newListType === 'employee' && $newAssignedTo) {
+                $newListQuery->where('assigned_to', $newAssignedTo);
+            }
+            // إذا كانت القائمة الجديدة من نوع tasks أو ready أو publish، يجب أن تكون assigned_to = null
+            elseif (in_array($newListType, ['tasks', 'ready', 'publish'])) {
+                $newListQuery->whereNull('assigned_to');
+            }
+            
+            $newListQuery->where('order', '>=', $newOrder)->increment('order');
 
             // تحديث المهمة
             $task->update([
                 'list_type' => $newListType,
-                'assigned_to' => $newAssignedTo,
+                'assigned_to' => in_array($newListType, ['ready', 'publish', 'tasks']) ? null : ($newAssignedTo ?: null),
                 'order' => $newOrder,
             ]);
 
-            $task->load('assignedEmployee');
+            // إعادة تحميل المهمة مباشرة من قاعدة البيانات
+            $task = PlanTask::findOrFail($taskId);
+            $task->load('assignedEmployee:id,name');
+
+            // بناء array يدوياً لتجنب مشاكل casting
+            $taskArray = [
+                'id' => $task->id,
+                'title' => $task->title,
+                'description' => $task->description,
+                'status' => $task->status,
+                'list_type' => $task->list_type,
+                'assigned_to' => $task->assigned_to,
+                'due_date' => $task->due_date ? $task->due_date->format('Y-m-d') : null,
+                'color' => (string) $task->getRawOriginal('color'),
+                'order' => $task->order,
+            ];
+
+            if ($task->assignedEmployee) {
+                $taskArray['assigned_employee'] = [
+                    'id' => $task->assignedEmployee->id,
+                    'name' => $task->assignedEmployee->name,
+                ];
+            }
 
             return response()->json([
                 'success' => true,
-                'task' => $task,
+                'task' => $taskArray,
             ]);
 
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'error' => 'خطأ في التحقق من البيانات',
+                'errors' => $e->errors()
+            ], 422);
         } catch (\Exception $e) {
+            Log::error('Error moving task: ' . $e->getMessage(), [
+                'task_id' => $taskId,
+                'old_list_type' => $oldListType ?? null,
+                'new_list_type' => $newListType ?? null,
+                'trace' => $e->getTraceAsString()
+            ]);
             return response()->json([
                 'success' => false,
                 'error' => 'حدث خطأ أثناء نقل المهمة: ' . $e->getMessage(),
@@ -282,16 +439,26 @@ class PlanTaskController extends Controller
             abort(404);
         }
 
+        $oldListType = $task->list_type;
+        $oldAssignedTo = $task->assigned_to;
+        $oldOrder = $task->order;
+
         $task->delete();
 
         // إعادة ترتيب المهام في نفس القائمة
-        PlanTask::where('monthly_plan_id', $monthlyPlan->id)
-            ->where('list_type', $task->list_type)
-            ->when($task->list_type === 'employee', function($q) use ($task) {
-                $q->where('assigned_to', $task->assigned_to);
-            })
-            ->where('order', '>', $task->order)
-            ->decrement('order');
+        $reorderQuery = PlanTask::where('monthly_plan_id', $monthlyPlan->id)
+            ->where('list_type', $oldListType);
+        
+        // إذا كانت القائمة من نوع employee، نحتاج إلى تصفية حسب assigned_to
+        if ($oldListType === 'employee' && $oldAssignedTo) {
+            $reorderQuery->where('assigned_to', $oldAssignedTo);
+        }
+        // إذا كانت القائمة من نوع tasks أو ready أو publish، يجب أن تكون assigned_to = null
+        elseif (in_array($oldListType, ['tasks', 'ready', 'publish'])) {
+            $reorderQuery->whereNull('assigned_to');
+        }
+        
+        $reorderQuery->where('order', '>', $oldOrder)->decrement('order');
 
         // للطلبات من صفحات HTML (form submissions)، نعيد redirect
         $contentType = trim($request->header('Content-Type', ''));
@@ -304,5 +471,123 @@ class PlanTaskController extends Controller
         // Default: redirect للصفحة الرئيسية للخطة (للـ form submissions العادية)
         return redirect()->route('monthly-plans.show', $monthlyPlan)
             ->with('success', 'تم حذف المهمة بنجاح');
+    }
+
+    /**
+     * عرض ملف مرفق بالمهمة في المتصفح
+     */
+    public function viewFile(Request $request, MonthlyPlan $monthlyPlan, $taskId, $fileId)
+    {
+        if ($monthlyPlan->organization_id !== $request->user()->organization_id) {
+            abort(403);
+        }
+
+        $task = PlanTask::findOrFail($taskId);
+        if ($task->monthly_plan_id !== $monthlyPlan->id) {
+            abort(404);
+        }
+
+        $file = PlanTaskFile::findOrFail($fileId);
+        if ($file->plan_task_id !== $task->id) {
+            abort(404);
+        }
+
+        if (!Storage::disk('public')->exists($file->file_path)) {
+            abort(404, 'الملف غير موجود');
+        }
+
+        // عرض الملف في المتصفح (للصور و PDFs)
+        $filePath = Storage::disk('public')->path($file->file_path);
+        $mimeType = Storage::disk('public')->mimeType($file->file_path);
+        
+        return response()->file($filePath, [
+            'Content-Type' => $mimeType,
+            'Content-Disposition' => 'inline; filename="' . $file->file_name . '"',
+        ]);
+    }
+
+    /**
+     * تحميل ملف مرفق بالمهمة
+     */
+    public function downloadFile(Request $request, MonthlyPlan $monthlyPlan, $taskId, $fileId)
+    {
+        if ($monthlyPlan->organization_id !== $request->user()->organization_id) {
+            abort(403);
+        }
+
+        $task = PlanTask::findOrFail($taskId);
+        if ($task->monthly_plan_id !== $monthlyPlan->id) {
+            abort(404);
+        }
+
+        $file = PlanTaskFile::findOrFail($fileId);
+        if ($file->plan_task_id !== $task->id) {
+            abort(404);
+        }
+
+        if (!Storage::disk('public')->exists($file->file_path)) {
+            abort(404, 'الملف غير موجود');
+        }
+
+        return Storage::disk('public')->download($file->file_path, $file->file_name);
+    }
+
+    /**
+     * حذف ملف مرفق بالمهمة
+     */
+    public function deleteFile(Request $request, MonthlyPlan $monthlyPlan, $taskId, $fileId)
+    {
+        if ($monthlyPlan->organization_id !== $request->user()->organization_id) {
+            if ($request->expectsJson() || $request->header('Content-Type') === 'application/json') {
+                return response()->json(['error' => 'غير مصرح'], 403);
+            }
+            abort(403);
+        }
+
+        $task = PlanTask::findOrFail($taskId);
+        if ($task->monthly_plan_id !== $monthlyPlan->id) {
+            if ($request->expectsJson() || $request->header('Content-Type') === 'application/json') {
+                return response()->json(['error' => 'المهمة غير مرتبطة بهذه الخطة'], 404);
+            }
+            abort(404);
+        }
+
+        $file = PlanTaskFile::findOrFail($fileId);
+        if ($file->plan_task_id !== $task->id) {
+            if ($request->expectsJson() || $request->header('Content-Type') === 'application/json') {
+                return response()->json(['error' => 'الملف غير مرتبط بهذه المهمة'], 404);
+            }
+            abort(404);
+        }
+
+        try {
+            // حذف الملف من التخزين
+            if (Storage::disk('public')->exists($file->file_path)) {
+                Storage::disk('public')->delete($file->file_path);
+            }
+
+            // حذف السجل من قاعدة البيانات
+            $file->delete();
+
+            // للطلبات JSON
+            if ($request->expectsJson() || $request->header('Content-Type') === 'application/json') {
+                return response()->json([
+                    'success' => true,
+                ]);
+            }
+
+            // Default: redirect
+            return redirect()->back()
+                ->with('success', 'تم حذف الملف بنجاح');
+        } catch (\Exception $e) {
+            if ($request->expectsJson() || $request->header('Content-Type') === 'application/json') {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'حدث خطأ أثناء حذف الملف: ' . $e->getMessage()
+                ], 500);
+            }
+            return redirect()->back()
+                ->with('error', 'حدث خطأ أثناء حذف الملف: ' . $e->getMessage());
+        }
     }
 }

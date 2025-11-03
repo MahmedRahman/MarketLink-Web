@@ -4,11 +4,18 @@
      style="border-left-color: {{ $task->color ?? '#6366f1' }};">
     <div class="flex items-start justify-between mb-2">
         <h5 class="font-semibold text-gray-800 text-sm flex-1">{{ $task->title }}</h5>
-        <a href="{{ route('monthly-plans.tasks.edit', [$task->monthly_plan_id, $task->id]) }}" 
-           class="text-gray-400 hover:text-gray-600 ml-2" 
-           title="تعديل المهمة">
-            <span class="material-icons text-sm">edit</span>
-        </a>
+        <div class="flex items-center space-x-2 rtl:space-x-reverse">
+            <a href="{{ route('monthly-plans.tasks.edit', [$task->monthly_plan_id, $task->id]) }}" 
+               class="text-gray-400 hover:text-gray-600" 
+               title="تعديل المهمة">
+                <span class="material-icons text-sm">edit</span>
+            </a>
+            <button onclick="deleteTaskCard({{ $task->id }}, '{{ route('monthly-plans.tasks.destroy', [$task->monthly_plan_id, $task->id]) }}')" 
+                    class="text-red-400 hover:text-red-600" 
+                    title="حذف المهمة">
+                <span class="material-icons text-sm">delete</span>
+            </button>
+        </div>
     </div>
 
     @if($task->due_date)

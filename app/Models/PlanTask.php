@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PlanTask extends Model
 {
@@ -36,6 +37,11 @@ class PlanTask extends Model
     public function assignedEmployee(): BelongsTo
     {
         return $this->belongsTo(Employee::class, 'assigned_to');
+    }
+
+    public function files(): HasMany
+    {
+        return $this->hasMany(PlanTaskFile::class, 'plan_task_id');
     }
 
     public function getStatusBadgeAttribute(): string

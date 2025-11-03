@@ -161,6 +161,36 @@
                         </div>
                     </div>
                 @endforeach
+
+                <!-- Ready List -->
+                <div class="flex-shrink-0 w-80 bg-orange-50 rounded-xl p-4" data-list-type="ready" data-employee-id="">
+                    <div class="flex items-center justify-between mb-4">
+                        <h4 class="font-semibold text-gray-800">Ready</h4>
+                        <span class="bg-orange-200 text-orange-700 text-xs px-2 py-1 rounded-full ready-count">
+                            {{ $tasksByList->get('ready', collect())->count() }}
+                        </span>
+                    </div>
+                    <div class="sortable-list min-h-[400px] space-y-2" id="ready-list" data-list-type="ready" data-employee-id="">
+                        @foreach($tasksByList->get('ready', collect())->sortBy('order') as $task)
+                            @include('monthly-plans.task-card', ['task' => $task])
+                        @endforeach
+                    </div>
+                </div>
+
+                <!-- Publish List -->
+                <div class="flex-shrink-0 w-80 bg-green-50 rounded-xl p-4" data-list-type="publish" data-employee-id="">
+                    <div class="flex items-center justify-between mb-4">
+                        <h4 class="font-semibold text-gray-800">Publish</h4>
+                        <span class="bg-green-200 text-green-700 text-xs px-2 py-1 rounded-full publish-count">
+                            {{ $tasksByList->get('publish', collect())->count() }}
+                        </span>
+                    </div>
+                    <div class="sortable-list min-h-[400px] space-y-2" id="publish-list" data-list-type="publish" data-employee-id="">
+                        @foreach($tasksByList->get('publish', collect())->sortBy('order') as $task)
+                            @include('monthly-plans.task-card', ['task' => $task])
+                        @endforeach
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -396,6 +426,54 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Initialize sortable for ready list
+    const readyList = document.getElementById('ready-list');
+    if (readyList) {
+        new Sortable(readyList, {
+            group: 'tasks',
+            animation: 150,
+            ghostClass: 'opacity-50',
+            onEnd: function(evt) {
+                const fromList = evt.from.closest('[data-list-type]');
+                const toList = evt.to.closest('[data-list-type]');
+                if (fromList && toList) {
+                    handleTaskMove(
+                        evt.item.dataset.taskId,
+                        fromList.dataset.listType,
+                        fromList.dataset.employeeId || '',
+                        toList.dataset.listType,
+                        toList.dataset.employeeId || '',
+                        evt.newIndex
+                    );
+                }
+            }
+        });
+    }
+
+    // Initialize sortable for publish list
+    const publishList = document.getElementById('publish-list');
+    if (publishList) {
+        new Sortable(publishList, {
+            group: 'tasks',
+            animation: 150,
+            ghostClass: 'opacity-50',
+            onEnd: function(evt) {
+                const fromList = evt.from.closest('[data-list-type]');
+                const toList = evt.to.closest('[data-list-type]');
+                if (fromList && toList) {
+                    handleTaskMove(
+                        evt.item.dataset.taskId,
+                        fromList.dataset.listType,
+                        fromList.dataset.employeeId || '',
+                        toList.dataset.listType,
+                        toList.dataset.employeeId || '',
+                        evt.newIndex
+                    );
+                }
+            }
+        });
+    }
+
     // Initialize sortable for employee lists
     @foreach($monthlyPlan->employees as $employee)
         const employeeList{{ $employee->id }} = document.querySelector('.employee-list-{{ $employee->id }}');
@@ -425,33 +503,49 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function handleTaskMove(taskId, fromListType, fromEmployeeId, toListType, toEmployeeId, newIndex) {
-    const listType = toListType === 'tasks' ? 'tasks' : 'employee';
-    const assignedTo = toListType === 'tasks' ? '' : toEmployeeId;
+    let listType = toListType;
+    let assignedTo = '';
+    
+    if (toListType === 'tasks' || toListType === 'ready' || toListType === 'publish') {
+        listType = toListType;
+        assignedTo = '';
+    } else if (toListType === 'employee') {
+        listType = 'employee';
+        assignedTo = toEmployeeId;
+    }
 
     fetch(`/monthly-plans/${monthlyPlanId}/tasks/${taskId}/move`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json'
         },
         body: JSON.stringify({
             list_type: listType,
-            assigned_to: assignedTo,
+            assigned_to: assignedTo || null,
             new_order: newIndex
         })
     })
-    .then(response => response.json())
+    .then(response => {
+        return response.json().then(data => {
+            if (!response.ok) {
+                throw new Error(data.error || data.message || 'حدث خطأ أثناء نقل المهمة');
+            }
+            return data;
+        });
+    })
     .then(data => {
         if (data.success) {
             updateTaskCounts();
         } else {
-            alert('حدث خطأ أثناء نقل المهمة');
+            alert(data.error || 'حدث خطأ أثناء نقل المهمة');
             location.reload();
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('حدث خطأ أثناء نقل المهمة');
+        alert(error.message || 'حدث خطأ أثناء نقل المهمة');
         location.reload();
     });
 }
@@ -592,7 +686,8 @@ function deleteTask() {
     fetch(`/monthly-plans/${monthlyPlanId}/tasks/${currentEditTaskId}`, {
         method: 'DELETE',
         headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json'
         }
     })
     .then(response => response.json())
@@ -600,8 +695,55 @@ function deleteTask() {
         if (data.success) {
             location.reload();
         } else {
-            alert('حدث خطأ أثناء حذف المهمة');
+            alert(data.error || 'حدث خطأ أثناء حذف المهمة');
         }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('حدث خطأ أثناء حذف المهمة');
+    });
+}
+
+// حذف المهمة من الكارت
+function deleteTaskCard(taskId, deleteUrl) {
+    if (!confirm('هل أنت متأكد من حذف هذه المهمة؟')) return;
+
+    fetch(deleteUrl, {
+        method: 'DELETE',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => {
+        return response.json().then(data => {
+            if (!response.ok) {
+                throw new Error(data.error || data.message || 'حدث خطأ أثناء حذف المهمة');
+            }
+            return data;
+        });
+    })
+    .then(data => {
+        if (data.success) {
+            // إزالة الكارت من DOM
+            const taskCard = document.querySelector(`[data-task-id="${taskId}"]`);
+            if (taskCard) {
+                taskCard.style.transition = 'opacity 0.3s';
+                taskCard.style.opacity = '0';
+                setTimeout(() => {
+                    taskCard.remove();
+                    updateTaskCounts();
+                }, 300);
+            } else {
+                location.reload();
+            }
+        } else {
+            alert(data.error || 'حدث خطأ أثناء حذف المهمة');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert(error.message || 'حدث خطأ أثناء حذف المهمة');
     });
 }
 

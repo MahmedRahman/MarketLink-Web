@@ -7,6 +7,21 @@
 @section('content')
 <div class="container mx-auto px-4">
     <div class="max-w-7xl mx-auto space-y-6">
+        <!-- Success/Error Messages -->
+        @if(session('success'))
+            <div class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg flex items-center">
+                <span class="material-icons ml-2">check_circle</span>
+                {{ session('success') }}
+            </div>
+        @endif
+
+        @if(session('error'))
+            <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg flex items-center">
+                <span class="material-icons ml-2">error</span>
+                {{ session('error') }}
+            </div>
+        @endif
+
         <!-- Header -->
         <div class="card page-header rounded-2xl p-6">
             <div class="flex items-center justify-between">
@@ -62,8 +77,13 @@
                                         </span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        <a href="{{ route('monthly-plans.show', $plan) }}" class="text-blue-600 hover:text-blue-900 ml-3">عرض</a>
-                                        <a href="{{ route('monthly-plans.edit', $plan) }}" class="text-green-600 hover:text-green-900 ml-3">تعديل</a>
+                                        <div class="flex items-center space-x-3 rtl:space-x-reverse">
+                                            <a href="{{ route('monthly-plans.show', $plan) }}" class="text-blue-600 hover:text-blue-900">عرض</a>
+                                            <a href="{{ route('monthly-plans.edit', $plan) }}" class="text-green-600 hover:text-green-900">تعديل</a>
+                                            <button onclick="confirmDelete('{{ route('monthly-plans.destroy', $plan) }}', 'تأكيد حذف الخطة', 'هل أنت متأكد من حذف الخطة الشهرية {{ $plan->month }} {{ $plan->year }}؟')" class="text-red-600 hover:text-red-900" title="حذف">
+                                                <span class="material-icons text-sm">delete</span>
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             @endforeach
