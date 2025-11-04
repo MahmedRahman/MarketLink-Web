@@ -65,6 +65,8 @@ class ProjectController extends Controller
                 'project_accounts.*.notes' => 'nullable|string|max:1000',
                 'employee_ids' => 'nullable|array',
                 'employee_ids.*' => 'exists:employees,id',
+                'manager_ids' => 'nullable|array',
+                'manager_ids.*' => 'exists:employees,id',
                 'files' => 'nullable|array',
                 'files.*' => 'file|max:10240', // 10MB max per file
                 'file_descriptions' => 'nullable|array',
@@ -101,9 +103,20 @@ class ProjectController extends Controller
             // إنشاء المشروع
             $project = Project::create($data);
 
-            // ربط الموظفين بالمشروع
+            // ربط الموظفين بالمشروع مع صلاحيات المدير
             if ($request->has('employee_ids')) {
-                $project->employees()->attach($request->employee_ids);
+                $employeeIds = $request->employee_ids ?? [];
+                $managerIds = $request->manager_ids ?? [];
+                
+                // إعداد البيانات مع الصلاحيات
+                $attachData = [];
+                foreach ($employeeIds as $employeeId) {
+                    $attachData[$employeeId] = [
+                        'role' => in_array($employeeId, $managerIds) ? 'manager' : 'member'
+                    ];
+                }
+                
+                $project->employees()->attach($attachData);
             }
 
             // رفع الملفات إن وجدت
@@ -210,7 +223,9 @@ class ProjectController extends Controller
                 'project_accounts.*.password' => 'nullable|string|max:255',
                 'project_accounts.*.url' => 'nullable|string|max:500',
                 'employee_ids' => 'nullable|array',
-                'employee_ids.*' => 'exists:employees,id'
+                'employee_ids.*' => 'exists:employees,id',
+                'manager_ids' => 'nullable|array',
+                'manager_ids.*' => 'exists:employees,id'
             ]);
 
             // تحضير البيانات للـ JSON fields
@@ -241,9 +256,20 @@ class ProjectController extends Controller
 
             $project->update($data);
 
-            // تحديث الموظفين المرتبطين بالمشروع
+            // تحديث الموظفين المرتبطين بالمشروع مع صلاحيات المدير
             if ($request->has('employee_ids')) {
-                $project->employees()->sync($request->employee_ids);
+                $employeeIds = $request->employee_ids ?? [];
+                $managerIds = $request->manager_ids ?? [];
+                
+                // إعداد البيانات مع الصلاحيات
+                $syncData = [];
+                foreach ($employeeIds as $employeeId) {
+                    $syncData[$employeeId] = [
+                        'role' => in_array($employeeId, $managerIds) ? 'manager' : 'member'
+                    ];
+                }
+                
+                $project->employees()->sync($syncData);
             } else {
                 $project->employees()->detach();
             }

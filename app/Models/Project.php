@@ -58,9 +58,25 @@ class Project extends Model
         return $this->hasMany(ProjectFile::class);
     }
 
+    public function monthlyPlans(): HasMany
+    {
+        return $this->hasMany(MonthlyPlan::class);
+    }
+
     public function employees(): BelongsToMany
     {
         return $this->belongsToMany(Employee::class, 'project_employees')
+            ->withPivot('role')
+            ->withTimestamps();
+    }
+
+    /**
+     * الحصول على الموظفين المديرين للمشروع
+     */
+    public function managers(): BelongsToMany
+    {
+        return $this->belongsToMany(Employee::class, 'project_employees')
+            ->wherePivot('role', 'manager')
             ->withTimestamps();
     }
 

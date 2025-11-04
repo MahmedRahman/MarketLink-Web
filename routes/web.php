@@ -13,6 +13,12 @@ use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\PlanController;
 use App\Http\Controllers\Admin\SubscriptionRequestController;
 use App\Http\Controllers\WebhookController;
+use App\Http\Controllers\Employee\Auth\EmployeeAuthController;
+use App\Http\Controllers\Employee\EmployeeDashboardController;
+use App\Http\Controllers\Employee\EmployeeTaskController;
+use App\Http\Controllers\Employee\EmployeeProjectController;
+use App\Http\Controllers\Employee\EmployeeExpenseController;
+use App\Http\Controllers\Employee\EmployeeMonthlyPlanController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -108,6 +114,37 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/subscription-requests/{subscriptionRequest}', [SubscriptionRequestController::class, 'show'])->name('subscription-requests.show');
     Route::post('/subscription-requests/{subscriptionRequest}/approve', [SubscriptionRequestController::class, 'approve'])->name('subscription-requests.approve');
     Route::post('/subscription-requests/{subscriptionRequest}/reject', [SubscriptionRequestController::class, 'reject'])->name('subscription-requests.reject');
+});
+
+// Employee Routes (Authentication)
+Route::middleware('guest:employee')->prefix('employee')->name('employee.')->group(function () {
+    Route::get('/login', [EmployeeAuthController::class, 'create'])->name('login');
+    Route::post('/login', [EmployeeAuthController::class, 'store'])->name('login.store');
+});
+
+Route::middleware('auth:employee')->prefix('employee')->name('employee.')->group(function () {
+    Route::get('/dashboard', [EmployeeDashboardController::class, 'index'])->name('dashboard');
+    Route::post('/logout', [EmployeeAuthController::class, 'destroy'])->name('logout');
+    
+    // Tasks Routes
+    Route::get('/tasks/{task}', [EmployeeTaskController::class, 'show'])->name('tasks.show');
+    Route::get('/tasks/{task}/edit', [EmployeeTaskController::class, 'edit'])->name('tasks.edit');
+    Route::put('/tasks/{task}', [EmployeeTaskController::class, 'update'])->name('tasks.update');
+    
+    // Projects Routes
+    Route::get('/projects', [EmployeeProjectController::class, 'index'])->name('projects.index');
+    Route::get('/projects/{project}', [EmployeeProjectController::class, 'show'])->name('projects.show');
+    
+    // Expenses Routes
+    Route::get('/expenses', [EmployeeExpenseController::class, 'index'])->name('expenses.index');
+    Route::get('/expenses/{expense}', [EmployeeExpenseController::class, 'show'])->name('expenses.show');
+    
+    // Monthly Plans Routes (Only for Managers)
+    Route::get('/monthly-plans', [EmployeeMonthlyPlanController::class, 'index'])->name('monthly-plans.index');
+    Route::get('/monthly-plans/{monthlyPlan}', [EmployeeMonthlyPlanController::class, 'show'])->name('monthly-plans.show');
+    
+    // Tasks Routes - Update route to include destroy
+    Route::delete('/tasks/{task}', [EmployeeTaskController::class, 'destroy'])->name('tasks.destroy');
 });
 
 // Webhook routes (no authentication required)

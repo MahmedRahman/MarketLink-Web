@@ -451,7 +451,7 @@
                     <div class="flex items-center justify-between">
                         <div>
                             <h3 class="text-lg font-semibold text-gray-800">الموظفين الخاصين بالمشروع</h3>
-                            <p class="text-sm text-gray-600">اختر الموظفين الذين سيعملون على هذا المشروع</p>
+                            <p class="text-sm text-gray-600">اختر الموظفين الذين سيعملون على هذا المشروع وحدد من منهم لديه صلاحيات المدير</p>
                         </div>
                         @if($employees->count() > 0)
                             <button type="button" id="select-all-employees" class="text-sm text-primary hover:text-primary-700 font-medium">
@@ -464,23 +464,46 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="employees-grid">
                             @php
                                 $selectedEmployeeIds = old('employee_ids', $project->employees->pluck('id')->toArray());
+                                $managerIds = old('manager_ids', $project->employees->filter(function($employee) {
+                                    return isset($employee->pivot->role) && $employee->pivot->role === 'manager';
+                                })->pluck('id')->toArray());
                             @endphp
                             @foreach($employees as $employee)
-                                <label class="flex items-center justify-between p-4 border-2 {{ in_array($employee->id, $selectedEmployeeIds) ? 'border-primary bg-primary-50' : 'border-gray-200' }} rounded-xl hover:border-primary hover:bg-primary-50 transition-all cursor-pointer employee-checkbox-label group" style="position: relative;">
-                                    <input
-                                        type="checkbox"
-                                        name="employee_ids[]"
-                                        value="{{ $employee->id }}"
-                                        class="employee-checkbox w-6 h-6 rounded border-2 border-gray-300 text-primary focus:ring-2 focus:ring-primary cursor-pointer"
-                                        style="cursor: pointer; z-index: 10; position: relative;"
-                                        {{ in_array($employee->id, $selectedEmployeeIds) ? 'checked' : '' }}
-                                    />
-                                    <div class="mr-3 flex-1" style="cursor: pointer;">
-                                        <span class="block text-sm font-medium text-gray-800">{{ $employee->name }}</span>
-                                        <span class="text-xs text-gray-500">{{ $employee->role_badge }}</span>
-                                    </div>
-                                    <span class="material-icons text-primary employee-check-icon {{ in_array($employee->id, $selectedEmployeeIds) ? 'opacity-100' : 'opacity-0 group-hover:opacity-30' }} transition-opacity" style="{{ in_array($employee->id, $selectedEmployeeIds) ? 'opacity: 1 !important; color: #6366f1;' : '' }}">check_circle</span>
-                                </label>
+                                <div class="p-4 border-2 {{ in_array($employee->id, $selectedEmployeeIds) ? 'border-primary bg-primary-50' : 'border-gray-200' }} rounded-xl hover:border-primary hover:bg-primary-50 transition-all employee-item" style="position: relative;">
+                                    <label class="flex items-center justify-between cursor-pointer employee-checkbox-label group" style="position: relative;">
+                                        <input
+                                            type="checkbox"
+                                            name="employee_ids[]"
+                                            value="{{ $employee->id }}"
+                                            class="employee-checkbox w-6 h-6 rounded border-2 border-gray-300 text-primary focus:ring-2 focus:ring-primary cursor-pointer"
+                                            style="cursor: pointer; z-index: 10; position: relative;"
+                                            {{ in_array($employee->id, $selectedEmployeeIds) ? 'checked' : '' }}
+                                        />
+                                        <div class="mr-3 flex-1" style="cursor: pointer;">
+                                            <span class="block text-sm font-medium text-gray-800">{{ $employee->name }}</span>
+                                            <span class="text-xs text-gray-500">{{ $employee->role_badge }}</span>
+                                        </div>
+                                        <span class="material-icons text-primary employee-check-icon {{ in_array($employee->id, $selectedEmployeeIds) ? 'opacity-100' : 'opacity-0 group-hover:opacity-30' }} transition-opacity" style="{{ in_array($employee->id, $selectedEmployeeIds) ? 'opacity: 1 !important; color: #6366f1;' : '' }}">check_circle</span>
+                                    </label>
+                                    @if(in_array($employee->id, $selectedEmployeeIds))
+                                        <div class="mt-3 pt-3 border-t border-gray-200">
+                                            <label class="flex items-center cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    name="manager_ids[]"
+                                                    value="{{ $employee->id }}"
+                                                    class="manager-checkbox w-5 h-5 rounded border-2 border-gray-300 text-orange-600 focus:ring-2 focus:ring-orange-500 cursor-pointer"
+                                                    {{ in_array($employee->id, $managerIds) ? 'checked' : '' }}
+                                                    style="accent-color: #ea580c;"
+                                                />
+                                                <span class="mr-2 text-sm font-medium text-gray-700 flex items-center">
+                                                    <i class="fas fa-crown text-orange-500 text-xs ml-1"></i>
+                                                    صلاحيات المدير
+                                                </span>
+                                            </label>
+                                        </div>
+                                    @endif
+                                </div>
                             @endforeach
                         </div>
                     @else
@@ -493,6 +516,9 @@
                         </div>
                     @endif
                     @error('employee_ids')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                    @error('manager_ids')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror
                 </div>
@@ -681,22 +707,57 @@ $(document).ready(function() {
     // Employee Selection Scripts
     // تحديث مظهر checkbox عند التغيير
     $(document).on('change', '.employee-checkbox', function() {
+        const employeeItem = $(this).closest('.employee-item');
         const label = $(this).closest('.employee-checkbox-label');
         const icon = label.find('.employee-check-icon');
+        const managerCheckbox = employeeItem.find('.manager-checkbox');
+        const managerSection = employeeItem.find('div[class*="border-t"]');
+        
         if ($(this).is(':checked')) {
+            employeeItem.addClass('border-primary bg-primary-50');
+            employeeItem.removeClass('border-gray-200');
             label.addClass('border-primary bg-primary-50');
             label.removeClass('border-gray-200');
             icon.css({
                 'opacity': '1',
                 'color': '#6366f1'
             });
+            // إظهار خيار المدير
+            if (managerSection.length === 0) {
+                const employeeId = $(this).val();
+                const managerHtml = `
+                    <div class="mt-3 pt-3 border-t border-gray-200">
+                        <label class="flex items-center cursor-pointer">
+                            <input
+                                type="checkbox"
+                                name="manager_ids[]"
+                                value="${employeeId}"
+                                class="manager-checkbox w-5 h-5 rounded border-2 border-gray-300 text-orange-600 focus:ring-2 focus:ring-orange-500 cursor-pointer"
+                                style="accent-color: #ea580c;"
+                            />
+                            <span class="mr-2 text-sm font-medium text-gray-700 flex items-center">
+                                <i class="fas fa-crown text-orange-500 text-xs ml-1"></i>
+                                صلاحيات المدير
+                            </span>
+                        </label>
+                    </div>
+                `;
+                employeeItem.append(managerHtml);
+            } else {
+                managerSection.show();
+            }
         } else {
+            employeeItem.removeClass('border-primary bg-primary-50');
+            employeeItem.addClass('border-gray-200');
             label.removeClass('border-primary bg-primary-50');
             label.addClass('border-gray-200');
             icon.css({
                 'opacity': '0',
                 'color': ''
             });
+            // إخفاء خيار المدير وإلغاء تحديده
+            managerCheckbox.prop('checked', false);
+            managerSection.hide();
         }
     });
 
