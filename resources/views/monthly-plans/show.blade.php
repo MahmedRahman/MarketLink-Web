@@ -716,7 +716,19 @@ function deleteTask() {
 function deleteTaskCard(taskId, deleteUrl) {
     if (!confirm('هل أنت متأكد من حذف هذه المهمة؟')) return;
 
-    fetch(deleteUrl, {
+    // تحويل HTTP URLs إلى relative paths لتجنب مشاكل Mixed Content
+    let url = deleteUrl;
+    try {
+        const urlObj = new URL(deleteUrl, window.location.origin);
+        // إذا كان URL absolute، استخدم فقط المسار
+        if (urlObj.protocol === 'http:' || urlObj.protocol === 'https:') {
+            url = urlObj.pathname;
+        }
+    } catch (e) {
+        // إذا كان URL بالفعل relative، استخدمه كما هو
+    }
+
+    fetch(url, {
         method: 'DELETE',
         headers: {
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,

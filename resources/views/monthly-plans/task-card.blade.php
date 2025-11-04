@@ -20,7 +20,12 @@
                onclick="event.stopPropagation();">
                 <span class="material-icons text-sm">edit</span>
             </a>
-            <button onclick="event.stopPropagation(); deleteTaskCard({{ $task->id }}, '{{ route('monthly-plans.tasks.destroy', [$task->monthly_plan_id, $task->id]) }}')" 
+            @php
+                $deleteUrl = route('monthly-plans.tasks.destroy', [$task->monthly_plan_id, $task->id]);
+                $deletePath = parse_url($deleteUrl, PHP_URL_PATH);
+                $deletePath = $deletePath ?: $deleteUrl;
+            @endphp
+            <button onclick="event.stopPropagation(); deleteTaskCard({{ $task->id }}, '{{ $deletePath }}')" 
                     class="text-red-400 hover:text-red-600" 
                     title="حذف المهمة">
                 <span class="material-icons text-sm">delete</span>
