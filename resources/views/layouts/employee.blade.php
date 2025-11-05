@@ -134,6 +134,15 @@
                         <h1 class="text-2xl font-bold text-gray-800">@yield('page-title', 'لوحة التحكم')</h1>
                         <p class="text-sm text-gray-600">@yield('page-description', '')</p>
                     </div>
+                    <div class="flex items-center space-x-reverse space-x-4">
+                        <div class="text-right">
+                            <p class="text-sm font-medium text-gray-800">{{ Auth::guard('employee')->user()->name }}</p>
+                            <p class="text-xs text-gray-500">{{ Auth::guard('employee')->user()->role_badge }}</p>
+                        </div>
+                        <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                            <span class="material-icons text-purple-600 text-sm">person</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </header>

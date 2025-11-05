@@ -78,4 +78,14 @@ class PlanTaskFile extends Model
             default => 'attach_file'
         };
     }
+
+    /**
+     * Check if file is an image.
+     */
+    public function isImage(): bool
+    {
+        $extension = strtolower(pathinfo($this->file_name, PATHINFO_EXTENSION));
+        $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'];
+        return in_array($extension, $imageExtensions);
+    }
 }

@@ -145,6 +145,11 @@ Route::middleware('auth:employee')->prefix('employee')->name('employee.')->group
     
     // Tasks Routes - Update route to include destroy
     Route::delete('/tasks/{task}', [EmployeeTaskController::class, 'destroy'])->name('tasks.destroy');
+    
+    // Task Files Routes
+    Route::get('/tasks/{task}/files/{file}/view', [EmployeeTaskController::class, 'viewFile'])->name('tasks.files.view');
+    Route::get('/tasks/{task}/files/{file}/download', [EmployeeTaskController::class, 'downloadFile'])->name('tasks.files.download');
+    Route::delete('/tasks/{task}/files/{file}', [EmployeeTaskController::class, 'deleteFile'])->name('tasks.files.delete');
 });
 
 // Webhook routes (no authentication required)

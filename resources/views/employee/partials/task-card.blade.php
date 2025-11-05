@@ -2,9 +2,6 @@
     <div class="flex items-start justify-between mb-2">
         <div class="flex-1">
             <h4 class="font-semibold text-gray-800 text-sm mb-1">{{ $task->title }}</h4>
-            @if($task->description)
-                <p class="text-xs text-gray-600 line-clamp-2">{{ $task->description }}</p>
-            @endif
         </div>
     </div>
 

@@ -31,7 +31,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm font-medium text-gray-600">إجمالي الموظفين</p>
-                    <p class="text-3xl font-bold text-gray-800">{{ $employees->total() }}</p>
+                    <p class="text-3xl font-bold text-gray-800">{{ $employees->count() }}</p>
                 </div>
                 <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
                     <i class="fas fa-users text-blue-600"></i>
@@ -217,8 +217,9 @@ $(document).ready(function() {
             }
         ],
         order: [[5, 'desc']], // Sort by date descending
-        pageLength: 10,
-        lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]]
+        pageLength: -1, // Show all records
+        lengthMenu: [[-1, 10, 25, 50, 100], ['الكل', 10, 25, 50, 100]],
+        paging: false // Disable pagination completely
     });
 });
 </script>

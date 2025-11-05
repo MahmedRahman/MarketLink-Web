@@ -41,6 +41,15 @@
                 </div>
             @endif
 
+            @if (session('error'))
+                <div class="mb-6 bg-red-50 border border-red-200 rounded-xl p-4">
+                    <div class="flex items-center">
+                        <span class="material-icons text-red-500 ml-2">error</span>
+                        <span class="text-red-800">{{ session('error') }}</span>
+                    </div>
+                </div>
+            @endif
+
             <form method="POST" action="{{ route('monthly-plans.update', $monthlyPlan) }}" class="space-y-8">
                 @csrf
                 @method('PUT')

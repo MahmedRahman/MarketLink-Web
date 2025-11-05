@@ -14,7 +14,7 @@ class EmployeeController extends Controller
     public function index(Request $request)
     {
         $organizationId = $request->user()->organization_id;
-        $employees = Employee::where('organization_id', $organizationId)->latest()->paginate(10);
+        $employees = Employee::where('organization_id', $organizationId)->latest()->get();
         return view('employees.index', compact('employees'));
     }
 

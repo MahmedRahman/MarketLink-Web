@@ -69,6 +69,19 @@ class MonthlyPlanController extends Controller
                 ->where('organization_id', $organizationId)
                 ->firstOrFail();
             
+            // التحقق من عدم وجود خطة موجودة لنفس المشروع والشهر
+            $existingPlan = MonthlyPlan::where('project_id', $request->project_id)
+                ->where('organization_id', $organizationId)
+                ->where('year', $request->year)
+                ->where('month_number', $request->month_number)
+                ->first();
+            
+            if ($existingPlan) {
+                return redirect()->back()
+                    ->with('error', 'يوجد بالفعل خطة شهرية لنفس المشروع في نفس الشهر. يرجى اختيار شهر آخر أو مشروع آخر.')
+                    ->withInput();
+            }
+            
             // إنشاء الخطة الشهرية
             $plan = MonthlyPlan::create([
                 'project_id' => $request->project_id,
@@ -196,6 +209,20 @@ class MonthlyPlanController extends Controller
             $project = Project::where('id', $request->project_id)
                 ->where('organization_id', $organizationId)
                 ->firstOrFail();
+            
+            // التحقق من عدم وجود خطة أخرى موجودة لنفس المشروع والشهر (باستثناء الخطة الحالية)
+            $existingPlan = MonthlyPlan::where('project_id', $request->project_id)
+                ->where('organization_id', $organizationId)
+                ->where('year', $request->year)
+                ->where('month_number', $request->month_number)
+                ->where('id', '!=', $monthlyPlan->id)
+                ->first();
+            
+            if ($existingPlan) {
+                return redirect()->back()
+                    ->with('error', 'يوجد بالفعل خطة شهرية أخرى لنفس المشروع في نفس الشهر. يرجى اختيار شهر آخر أو مشروع آخر.')
+                    ->withInput();
+            }
             
             // تحديث الخطة الشهرية
             $monthlyPlan->update($request->only([

@@ -1,8 +1,8 @@
 @extends('layouts.employee')
 
 @section('title', 'تفاصيل المشروع')
-@section('page-title', 'تفاصيل المشروع')
-@section('page-description', $project->business_name)
+@section('page-title', $project->business_name)
+@section('page-description', 'تفاصيل المشروع')
 
 @section('content')
 <div class="space-y-6">
@@ -15,7 +15,6 @@
                 </div>
                 <div>
                     <h2 class="text-2xl font-bold text-gray-800">{{ $project->business_name }}</h2>
-                    <p class="text-gray-600">{{ $project->client->name ?? 'بدون عميل' }}</p>
                 </div>
             </div>
             <a href="{{ route('employee.projects.index') }}" class="flex items-center px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-xl transition-colors">
@@ -34,19 +33,16 @@
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
+                        <p class="text-sm text-gray-600">اسم البيزنس</p>
+                        <p class="text-gray-800 font-medium mt-1">{{ $project->business_name }}</p>
+                    </div>
+
+                    <div>
                         <p class="text-sm text-gray-600">الحالة</p>
                         <span class="px-3 py-1 text-sm rounded-full bg-{{ $project->status_color }}-100 text-{{ $project->status_color }}-800 mt-1 inline-block">
                             {{ $project->status_badge }}
                         </span>
                     </div>
-
-                    @if($project->client)
-                        <div>
-                            <p class="text-sm text-gray-600">العميل</p>
-                            <p class="text-gray-800 font-medium mt-1">{{ $project->client->name }}</p>
-                            <p class="text-xs text-gray-500">{{ $project->client->email }}</p>
-                        </div>
-                    @endif
 
                     <div>
                         <p class="text-sm text-gray-600">تاريخ الإنشاء</p>
@@ -56,11 +52,104 @@
 
                 @if($project->business_description)
                     <div class="mt-6">
-                        <p class="text-sm text-gray-600 mb-2">الوصف</p>
+                        <p class="text-sm text-gray-600 mb-2">وصف البيزنس</p>
                         <p class="text-gray-800">{{ $project->business_description }}</p>
                     </div>
                 @endif
             </div>
+
+            <!-- Social Media Links Section -->
+            @if($project->website_url || $project->facebook_url || $project->instagram_url || $project->twitter_url || $project->linkedin_url || $project->youtube_url || $project->tiktok_url)
+            <div class="card p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">روابط وسائل التواصل الاجتماعي</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    @if($project->website_url)
+                    <div class="bg-gray-50 rounded-xl p-4">
+                        <div class="flex items-center mb-2">
+                            <i class="fas fa-globe text-blue-600 ml-2"></i>
+                            <span class="font-medium text-gray-800">الموقع الإلكتروني</span>
+                        </div>
+                        <a href="{{ $project->website_url }}" target="_blank" class="text-blue-600 hover:text-blue-700 text-sm break-all">
+                            {{ $project->website_url }}
+                        </a>
+                    </div>
+                    @endif
+
+                    @if($project->facebook_url)
+                    <div class="bg-gray-50 rounded-xl p-4">
+                        <div class="flex items-center mb-2">
+                            <i class="fab fa-facebook text-blue-600 ml-2"></i>
+                            <span class="font-medium text-gray-800">فيسبوك</span>
+                        </div>
+                        <a href="{{ $project->facebook_url }}" target="_blank" class="text-blue-600 hover:text-blue-700 text-sm break-all">
+                            {{ $project->facebook_url }}
+                        </a>
+                    </div>
+                    @endif
+
+                    @if($project->instagram_url)
+                    <div class="bg-gray-50 rounded-xl p-4">
+                        <div class="flex items-center mb-2">
+                            <i class="fab fa-instagram text-pink-600 ml-2"></i>
+                            <span class="font-medium text-gray-800">انستغرام</span>
+                        </div>
+                        <a href="{{ $project->instagram_url }}" target="_blank" class="text-blue-600 hover:text-blue-700 text-sm break-all">
+                            {{ $project->instagram_url }}
+                        </a>
+                    </div>
+                    @endif
+
+                    @if($project->twitter_url)
+                    <div class="bg-gray-50 rounded-xl p-4">
+                        <div class="flex items-center mb-2">
+                            <i class="fab fa-twitter text-blue-400 ml-2"></i>
+                            <span class="font-medium text-gray-800">تويتر</span>
+                        </div>
+                        <a href="{{ $project->twitter_url }}" target="_blank" class="text-blue-600 hover:text-blue-700 text-sm break-all">
+                            {{ $project->twitter_url }}
+                        </a>
+                    </div>
+                    @endif
+
+                    @if($project->linkedin_url)
+                    <div class="bg-gray-50 rounded-xl p-4">
+                        <div class="flex items-center mb-2">
+                            <i class="fab fa-linkedin text-blue-700 ml-2"></i>
+                            <span class="font-medium text-gray-800">لينكدإن</span>
+                        </div>
+                        <a href="{{ $project->linkedin_url }}" target="_blank" class="text-blue-600 hover:text-blue-700 text-sm break-all">
+                            {{ $project->linkedin_url }}
+                        </a>
+                    </div>
+                    @endif
+
+                    @if($project->youtube_url)
+                    <div class="bg-gray-50 rounded-xl p-4">
+                        <div class="flex items-center mb-2">
+                            <i class="fab fa-youtube text-red-600 ml-2"></i>
+                            <span class="font-medium text-gray-800">يوتيوب</span>
+                        </div>
+                        <a href="{{ $project->youtube_url }}" target="_blank" class="text-blue-600 hover:text-blue-700 text-sm break-all">
+                            {{ $project->youtube_url }}
+                        </a>
+                    </div>
+                    @endif
+
+                    @if($project->tiktok_url)
+                    <div class="bg-gray-50 rounded-xl p-4">
+                        <div class="flex items-center mb-2">
+                            <i class="fab fa-tiktok text-gray-800 ml-2"></i>
+                            <span class="font-medium text-gray-800">تيك توك</span>
+                        </div>
+                        <a href="{{ $project->tiktok_url }}" target="_blank" class="text-blue-600 hover:text-blue-700 text-sm break-all">
+                            {{ $project->tiktok_url }}
+                        </a>
+                    </div>
+                    @endif
+                </div>
+            </div>
+            @endif
 
             <!-- My Expenses -->
             <div class="card p-6">
