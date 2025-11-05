@@ -1,0 +1,7 @@
+{
+    "code-runner.runInTerminal": true,
+    "code-runner.executorMapByFileExtension": {
+        ".sh": "bash"
+    },
+    "code-runner.saveAllFilesBeforeRun": true
+}
