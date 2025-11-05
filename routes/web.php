@@ -158,7 +158,6 @@ Route::post('/webhook/github', [WebhookController::class, 'github'])->name('webh
 Route::get('/webhook/status', [WebhookController::class, 'status'])->name('webhook.status');
 
 // API routes (no authentication required)
-Route::get('/api/tasks', [TasksController::class, 'getTasksByPhone'])->name('api.tasks.by-phone');
-Route::get('/api/tasks/{taskId}', [TasksController::class, 'getTaskDetails'])->name('api.tasks.details');
+Route::get('/api/tasks', [TasksController::class, 'getTasks'])->name('api.tasks');
 
 require __DIR__.'/auth.php';
