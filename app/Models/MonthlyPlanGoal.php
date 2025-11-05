@@ -14,13 +14,20 @@ class MonthlyPlanGoal extends Model
         'goal_name',
         'target_value',
         'achieved_value',
-        'unit',
+        'carousel',
+        'reels',
+        'video',
+        'photo',
         'description',
     ];
 
     protected $casts = [
         'target_value' => 'integer',
         'achieved_value' => 'integer',
+        'carousel' => 'integer',
+        'reels' => 'integer',
+        'video' => 'integer',
+        'photo' => 'integer',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];

@@ -47,7 +47,7 @@
                                 <div class="bg-blue-600 h-2 rounded-full" style="width: {{ min(100, $goal->progress_percentage) }}%"></div>
                             </div>
                             <div class="text-xs text-gray-600 mt-1">
-                                {{ $goal->achieved_value }} / {{ $goal->target_value }} {{ $goal->unit ?? '' }}
+                                {{ $goal->achieved_value }} / {{ $goal->target_value }}
                             </div>
                         </div>
                     @endforeach

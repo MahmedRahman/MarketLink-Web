@@ -19,6 +19,7 @@ use App\Http\Controllers\Employee\EmployeeTaskController;
 use App\Http\Controllers\Employee\EmployeeProjectController;
 use App\Http\Controllers\Employee\EmployeeExpenseController;
 use App\Http\Controllers\Employee\EmployeeMonthlyPlanController;
+use App\Http\Controllers\Api\TasksController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -155,5 +156,9 @@ Route::middleware('auth:employee')->prefix('employee')->name('employee.')->group
 // Webhook routes (no authentication required)
 Route::post('/webhook/github', [WebhookController::class, 'github'])->name('webhook.github')->middleware('verify.github.webhook');
 Route::get('/webhook/status', [WebhookController::class, 'status'])->name('webhook.status');
+
+// API routes (no authentication required)
+Route::get('/api/tasks', [TasksController::class, 'getTasksByPhone'])->name('api.tasks.by-phone');
+Route::get('/api/tasks/{taskId}', [TasksController::class, 'getTaskDetails'])->name('api.tasks.details');
 
 require __DIR__.'/auth.php';

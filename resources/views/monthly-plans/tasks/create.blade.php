@@ -97,7 +97,7 @@
                             <option value="">اختر الهدف (اختياري)</option>
                             @foreach($goals as $goal)
                                 <option value="{{ $goal->id }}" {{ old('goal_id') == $goal->id ? 'selected' : '' }}>
-                                    {{ $goal->goal_name }} ({{ $goal->target_value }} {{ $goal->unit ?? '' }})
+                                    {{ $goal->goal_name }} ({{ $goal->target_value }})
                                 </option>
                             @endforeach
                         </select>

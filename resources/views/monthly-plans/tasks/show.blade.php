@@ -79,7 +79,7 @@
                         @if($task->goal)
                             <div>
                                 <h4 class="text-sm font-medium text-gray-700 mb-2">الهدف</h4>
-                                <p class="text-gray-800">{{ $task->goal->goal_name }} ({{ $task->goal->target_value }} {{ $task->goal->unit ?? '' }})</p>
+                                <p class="text-gray-800">{{ $task->goal->goal_name }} ({{ $task->goal->target_value }})</p>
                                 <p class="text-xs text-gray-500 mt-1">المحقق: {{ $task->goal->achieved_value }} / {{ $task->goal->target_value }}</p>
                             </div>
                         @endif
