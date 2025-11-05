@@ -133,4 +133,83 @@ class TasksController extends Controller
             'data' => $tasks
         ], 200);
     }
+
+    /**
+     * تحديث حالة المهمة بناءً على رقم التليفون ورقم المهمة
+     */
+    public function updateTaskStatus(Request $request)
+    {
+        // التحقق من وجود رقم التليفون
+        $phone = $request->query('phone');
+        $taskId = $request->query('task_id');
+        $status = $request->query('status');
+        
+        if (!$phone) {
+            return response()->json([
+                'success' => false,
+                'message' => 'رقم التليفون مطلوب'
+            ], 400);
+        }
+
+        if (!$taskId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'رقم المهمة مطلوب'
+            ], 400);
+        }
+
+        if (!$status) {
+            return response()->json([
+                'success' => false,
+                'message' => 'الحالة مطلوبة'
+            ], 400);
+        }
+
+        // التحقق من صحة الحالة
+        $allowedStatuses = ['todo', 'in_progress', 'review', 'done'];
+        if (!in_array($status, $allowedStatuses)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'الحالة غير صحيحة. الحالات المتاحة: ' . implode(', ', $allowedStatuses)
+            ], 400);
+        }
+
+        // البحث عن الموظف بناءً على رقم التليفون
+        $employee = Employee::where('phone', $phone)->first();
+
+        if (!$employee) {
+            return response()->json([
+                'success' => false,
+                'message' => 'لم يتم العثور على موظف بهذا رقم التليفون'
+            ], 404);
+        }
+
+        // البحث عن المهمة
+        $task = PlanTask::where('id', $taskId)
+            ->where('assigned_to', $employee->id)
+            ->first();
+
+        if (!$task) {
+            return response()->json([
+                'success' => false,
+                'message' => 'لم يتم العثور على المهمة أو لا توجد صلاحية للوصول إليها'
+            ], 404);
+        }
+
+        // تحديث حالة المهمة
+        $task->update([
+            'status' => $status
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'تم تحديث حالة المهمة بنجاح',
+            'data' => [
+                'id' => $task->id,
+                'title' => $task->title,
+                'status' => $task->status,
+                'status_badge' => $task->status_badge,
+            ]
+        ], 200);
+    }
 }
