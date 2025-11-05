@@ -11,14 +11,14 @@ class TasksController extends Controller
 {
     /**
      * الحصول على المهام أو تفاصيل مهمة معينة بناءً على رقم التليفون
-     * إذا تم تمرير task_id في query parameters يرجع تفاصيل المهمة
-     * إذا لم يتم تمرير task_id يرجع قائمة المهام
+     * إذا تم تمرير title في query parameters يرجع تفاصيل المهمة
+     * إذا لم يتم تمرير title يرجع قائمة المهام
      */
     public function getTasks(Request $request)
     {
         // التحقق من وجود رقم التليفون
         $phone = $request->query('phone');
-        $taskId = $request->query('task_id');
+        $taskTitle = $request->query('title');
         
         if (!$phone) {
             return response()->json([
@@ -37,10 +37,10 @@ class TasksController extends Controller
             ], 404);
         }
 
-        // إذا تم تمرير task_id، إرجاع تفاصيل المهمة
-        if ($taskId) {
-            // جلب المهمة مع جميع العلاقات
-            $task = PlanTask::where('id', $taskId)
+        // إذا تم تمرير title، إرجاع تفاصيل المهمة
+        if ($taskTitle) {
+            // جلب المهمة مع جميع العلاقات بناءً على العنوان
+            $task = PlanTask::where('title', $taskTitle)
                 ->where('assigned_to', $employee->id)
                 ->with([
                     'monthlyPlan.project',
@@ -62,6 +62,8 @@ class TasksController extends Controller
             $data = [
                 'id' => $task->id,
                 'title' => $task->title,
+                'task_name' => $task->title,
+                'phone' => $phone,
                 'description' => $task->description,
                 'status' => $task->status,
                 'status_badge' => $task->status_badge,
@@ -80,6 +82,7 @@ class TasksController extends Controller
                 'assigned_employee' => $task->assignedEmployee ? [
                     'id' => $task->assignedEmployee->id,
                     'name' => $task->assignedEmployee->name,
+                    'phone' => $task->assignedEmployee->phone,
                 ] : null,
                 'files' => $task->files->map(function ($file) {
                     return [
