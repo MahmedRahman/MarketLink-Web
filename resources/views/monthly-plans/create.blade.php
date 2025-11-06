@@ -199,57 +199,6 @@
                                 </div>
                             </div>
                             
-                            <!-- Content Sections -->
-                            <div class="bg-gray-50 rounded-lg p-4 mb-4">
-                                <h4 class="text-sm font-semibold text-gray-700 mb-3">المحتوى</h4>
-                                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">كروسير</label>
-                                        <input
-                                            type="number"
-                                            name="goals[0][carousel]"
-                                            min="0"
-                                            value="0"
-                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-                                            placeholder="0"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">ريلز</label>
-                                        <input
-                                            type="number"
-                                            name="goals[0][reels]"
-                                            min="0"
-                                            value="0"
-                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-                                            placeholder="0"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">فيديو</label>
-                                        <input
-                                            type="number"
-                                            name="goals[0][video]"
-                                            min="0"
-                                            value="0"
-                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-                                            placeholder="0"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">صورة</label>
-                                        <input
-                                            type="number"
-                                            name="goals[0][photo]"
-                                            min="0"
-                                            value="0"
-                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-                                            placeholder="0"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                            
                             <div class="mt-3">
                                 <label class="block text-sm font-medium text-gray-700 mb-2">وصف الهدف (اختياري)</label>
                                 <textarea
@@ -400,57 +349,6 @@ $(document).ready(function() {
                             placeholder="12"
                             required
                         />
-                    </div>
-                </div>
-                
-                <!-- Content Sections -->
-                <div class="bg-gray-50 rounded-lg p-4 mb-4">
-                    <h4 class="text-sm font-semibold text-gray-700 mb-3">المحتوى</h4>
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">كروسير</label>
-                            <input
-                                type="number"
-                                name="goals[${goalIndex}][carousel]"
-                                min="0"
-                                value="0"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-                                placeholder="0"
-                            />
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">ريلز</label>
-                            <input
-                                type="number"
-                                name="goals[${goalIndex}][reels]"
-                                min="0"
-                                value="0"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-                                placeholder="0"
-                            />
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">فيديو</label>
-                            <input
-                                type="number"
-                                name="goals[${goalIndex}][video]"
-                                min="0"
-                                value="0"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-                                placeholder="0"
-                            />
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">صورة</label>
-                            <input
-                                type="number"
-                                name="goals[${goalIndex}][photo]"
-                                min="0"
-                                value="0"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-                                placeholder="0"
-                            />
-                        </div>
                     </div>
                 </div>
                 
