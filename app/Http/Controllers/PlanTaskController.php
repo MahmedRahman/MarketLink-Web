@@ -756,9 +756,7 @@ class PlanTaskController extends Controller
 
             // إضافة "2" في بداية رقم الهاتف إذا لم يكن موجوداً
             $phoneNumber = $employee->phone;
-            if (!str_starts_with($phoneNumber, '2')) {
-                $phoneNumber = '2' . $phoneNumber;
-            }
+         
 
             $webhookUrl = 'https://n8n.marketlink.app/webhook/ffd53780-5656-450a-b6d1-543b71bd2ae8';
 
