@@ -33,7 +33,7 @@ class EmployeeController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'phone' => 'nullable|string|max:20',
+            'phone' => ['nullable', 'string', 'max:20', 'unique:employees,phone'],
             'email' => 'required|email|unique:employees,email',
             'password' => 'required|string|min:6',
             'role' => 'required|in:content_writer,ad_manager,designer,video_editor,page_manager,account_manager,monitor,media_buyer',
@@ -44,6 +44,9 @@ class EmployeeController extends Controller
             'linkedin_url' => 'nullable|url|max:500',
             'portfolio_url' => 'nullable|url|max:500',
             'notes' => 'nullable|string|max:1000',
+        ], [
+            'phone.unique' => 'رقم الهاتف مستخدم بالفعل',
+            'email.unique' => 'البريد الإلكتروني مستخدم بالفعل',
         ]);
 
         $data = $request->all();
@@ -90,7 +93,7 @@ class EmployeeController extends Controller
         }
         $request->validate([
             'name' => 'required|string|max:255',
-            'phone' => 'nullable|string|max:20',
+            'phone' => ['nullable', 'string', 'max:20', 'unique:employees,phone,' . $employee->id],
             'email' => 'required|email|unique:employees,email,' . $employee->id,
             'password' => 'nullable|string|min:6',
             'role' => 'required|in:content_writer,ad_manager,designer,video_editor,page_manager,account_manager,monitor,media_buyer',
@@ -101,6 +104,9 @@ class EmployeeController extends Controller
             'linkedin_url' => 'nullable|url|max:500',
             'portfolio_url' => 'nullable|url|max:500',
             'notes' => 'nullable|string|max:1000',
+        ], [
+            'phone.unique' => 'رقم الهاتف مستخدم بالفعل',
+            'email.unique' => 'البريد الإلكتروني مستخدم بالفعل',
         ]);
 
         $data = $request->all();
