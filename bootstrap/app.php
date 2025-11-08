@@ -15,6 +15,11 @@ return Application::configure(basePath: dirname(__DIR__))
             'verify.github.webhook' => \App\Http\Middleware\VerifyGitHubWebhook::class,
             'admin' => \App\Http\Middleware\CheckAdmin::class,
         ]);
+        
+        // استثناء API routes من CSRF protection
+        $middleware->validateCsrfTokens(except: [
+            'api/*',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

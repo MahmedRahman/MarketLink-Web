@@ -195,8 +195,16 @@
                 </button>
             </form>
 
-            <!-- Register Link -->
+            <!-- Employee Login Link -->
             <div class="mt-6 text-center pt-6 border-t border-gray-200">
+                <a href="{{ route('employee.login') }}" class="inline-flex items-center justify-center w-full py-3 px-4 rounded-xl text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 transition-colors mb-3">
+                    <span class="material-icons text-sm ml-2">person</span>
+                    تسجيل دخول الموظف
+                </a>
+            </div>
+
+            <!-- Register Link -->
+            <div class="mt-4 text-center pt-4 border-t border-gray-200">
                 <p class="text-sm text-gray-600 mb-3">
                     ليس لديك حساب؟
                 </p>

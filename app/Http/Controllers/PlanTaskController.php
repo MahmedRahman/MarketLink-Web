@@ -11,6 +11,7 @@ use App\Models\Employee;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Http\JsonResponse;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -168,7 +169,12 @@ class PlanTaskController extends Controller
             }
         }
 
-        $task->load('assignedEmployee', 'files');
+        $task->load('assignedEmployee', 'files', 'monthlyPlan.project');
+
+        // إرسال webhook إذا كانت المهمة مخصصة لموظف
+        if ($task->assigned_to && $task->assignedEmployee) {
+            $this->sendTaskWebhook($task);
+        }
 
         // للطلبات من صفحات HTML (form submissions)، نعيد redirect
         $contentType = trim($request->header('Content-Type', ''));
@@ -492,7 +498,17 @@ class PlanTaskController extends Controller
 
             // إعادة تحميل المهمة مباشرة من قاعدة البيانات
             $task = PlanTask::findOrFail($taskId);
-            $task->load('assignedEmployee:id,name');
+            $task->load('assignedEmployee:id,name,phone', 'monthlyPlan.project');
+
+            // إرسال webhook إذا تم نقل المهمة إلى موظف (إما لأول مرة أو لموظف مختلف)
+            if ($newListType === 'employee' && $newAssignedTo) {
+                // إرسال webhook إذا:
+                // 1. المهمة لم تكن مخصصة لموظف من قبل (oldListType !== 'employee')
+                // 2. أو تم نقلها لموظف مختلف (oldAssignedTo !== newAssignedTo)
+                if ($oldListType !== 'employee' || $oldAssignedTo != $newAssignedTo) {
+                    $this->sendTaskWebhook($task);
+                }
+            }
 
             // بناء array يدوياً لتجنب مشاكل casting
             $taskArray = [
@@ -708,6 +724,77 @@ class PlanTaskController extends Controller
 
         // تحديث achieved_value (لا يمكن أن يتجاوز target_value)
         $goal->update(['achieved_value' => min($goal->target_value, $completedTasksCount)]);
+    }
+
+    /**
+     * إرسال webhook عند إضافة مهمة جديدة لموظف
+     */
+    private function sendTaskWebhook(PlanTask $task): void
+    {
+        try {
+            $employee = $task->assignedEmployee;
+            $project = $task->monthlyPlan->project ?? null;
+
+            // التحقق من وجود بيانات الموظف والمشروع
+            if (!$employee || !$project) {
+                Log::warning('Cannot send webhook: Missing employee or project data', [
+                    'task_id' => $task->id,
+                    'employee_id' => $task->assigned_to,
+                    'project_id' => $task->monthlyPlan->project_id ?? null,
+                ]);
+                return;
+            }
+
+            // التحقق من وجود رقم الهاتف
+            if (!$employee->phone) {
+                Log::warning('Cannot send webhook: Employee phone number is missing', [
+                    'task_id' => $task->id,
+                    'employee_id' => $employee->id,
+                ]);
+                return;
+            }
+
+            // إضافة "2" في بداية رقم الهاتف إذا لم يكن موجوداً
+            $phoneNumber = $employee->phone;
+            if (!str_starts_with($phoneNumber, '2')) {
+                $phoneNumber = '2' . $phoneNumber;
+            }
+
+            $webhookUrl = 'https://n8n.marketlink.app/webhook/ffd53780-5656-450a-b6d1-543b71bd2ae8';
+
+            $response = Http::timeout(10)
+                ->withHeaders([
+                    'Content-Type' => 'application/json',
+                ])
+                ->post($webhookUrl, [
+                    'phoneNumber' => $phoneNumber,
+                    'empName' => $employee->name,
+                    'TaskTitle' => $task->title,
+                    'ProjectName' => $project->business_name ?? 'غير محدد',
+                ]);
+
+            if ($response->successful()) {
+                Log::info('Webhook sent successfully', [
+                    'task_id' => $task->id,
+                    'employee_id' => $employee->id,
+                    'webhook_url' => $webhookUrl,
+                ]);
+            } else {
+                Log::error('Webhook request failed', [
+                    'task_id' => $task->id,
+                    'employee_id' => $employee->id,
+                    'status' => $response->status(),
+                    'response' => $response->body(),
+                ]);
+            }
+        } catch (\Exception $e) {
+            // تسجيل الخطأ ولكن عدم إيقاف عملية إنشاء المهمة
+            Log::error('Error sending webhook', [
+                'task_id' => $task->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+        }
     }
 
     /**

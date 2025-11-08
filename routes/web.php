@@ -19,6 +19,7 @@ use App\Http\Controllers\Employee\EmployeeTaskController;
 use App\Http\Controllers\Employee\EmployeeProjectController;
 use App\Http\Controllers\Employee\EmployeeExpenseController;
 use App\Http\Controllers\Employee\EmployeeMonthlyPlanController;
+use App\Http\Controllers\Employee\EmployeeProfileController;
 use App\Http\Controllers\Api\TasksController;
 use Illuminate\Support\Facades\Route;
 
@@ -126,6 +127,11 @@ Route::middleware('guest:employee')->prefix('employee')->name('employee.')->grou
 Route::middleware('auth:employee')->prefix('employee')->name('employee.')->group(function () {
     Route::get('/dashboard', [EmployeeDashboardController::class, 'index'])->name('dashboard');
     Route::post('/logout', [EmployeeAuthController::class, 'destroy'])->name('logout');
+    
+    // Profile Routes
+    Route::get('/profile', [EmployeeProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [EmployeeProfileController::class, 'update'])->name('profile.update');
+    Route::patch('/profile/password', [EmployeeProfileController::class, 'updatePassword'])->name('profile.password.update');
     
     // Tasks Routes
     Route::get('/tasks/{task}', [EmployeeTaskController::class, 'show'])->name('tasks.show');

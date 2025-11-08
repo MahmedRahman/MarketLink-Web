@@ -5,7 +5,10 @@
     <div class="flex items-start justify-between mb-2">
         <a href="{{ route('employee.tasks.show', $task->id) }}" 
            class="font-semibold text-gray-800 text-sm flex-1 hover:text-primary cursor-pointer">
-            {{ $task->title }}
+            <div class="flex items-center gap-2">
+                <span class="text-xs text-gray-400 font-mono">#{{ $task->id }}</span>
+                <span>{{ $task->title }}</span>
+            </div>
         </a>
         <div class="flex items-center space-x-2 rtl:space-x-reverse">
             <a href="{{ route('employee.tasks.show', $task->id) }}" 

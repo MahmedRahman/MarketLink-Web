@@ -98,6 +98,11 @@
                     <span class="font-medium">الخطط الشهرية</span>
                 </a>
             @endif
+            
+            <a href="{{ route('employee.profile.edit') }}" class="flex items-center px-4 py-3 text-gray-700 rounded-xl hover:bg-gray-100 {{ request()->routeIs('employee.profile.*') ? 'bg-purple-50 text-purple-700' : '' }}">
+                <span class="material-icons text-lg ml-3">settings</span>
+                <span class="font-medium">الملف الشخصي</span>
+            </a>
         </nav>
         
         <div class="p-4 border-t border-gray-200">
@@ -112,7 +117,7 @@
         
         <!-- Employee Info -->
         <div class="absolute bottom-0 w-full p-4 border-t border-gray-200">
-            <div class="flex items-center">
+            <a href="{{ route('employee.profile.edit') }}" class="flex items-center hover:opacity-80 transition-opacity">
                 <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center ml-3">
                     <span class="material-icons text-purple-600 text-sm">person</span>
                 </div>
@@ -120,7 +125,7 @@
                     <p class="text-sm font-medium text-gray-800">{{ Auth::guard('employee')->user()->name }}</p>
                     <p class="text-xs text-gray-500">{{ Auth::guard('employee')->user()->role_badge }}</p>
                 </div>
-            </div>
+            </a>
         </div>
     </div>
     
@@ -134,7 +139,7 @@
                         <h1 class="text-2xl font-bold text-gray-800">@yield('page-title', 'لوحة التحكم')</h1>
                         <p class="text-sm text-gray-600">@yield('page-description', '')</p>
                     </div>
-                    <div class="flex items-center space-x-reverse space-x-4">
+                    <a href="{{ route('employee.profile.edit') }}" class="flex items-center space-x-reverse space-x-4 hover:opacity-80 transition-opacity">
                         <div class="text-right">
                             <p class="text-sm font-medium text-gray-800">{{ Auth::guard('employee')->user()->name }}</p>
                             <p class="text-xs text-gray-500">{{ Auth::guard('employee')->user()->role_badge }}</p>
@@ -142,7 +147,7 @@
                         <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
                             <span class="material-icons text-purple-600 text-sm">person</span>
                         </div>
-                    </div>
+                    </a>
                 </div>
             </div>
         </header>

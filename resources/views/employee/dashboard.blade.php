@@ -18,8 +18,8 @@
                         إليك المهام المخصصة لك
                     @endif
                 </p>
-                @if($hasManagerRole)
-                    <div class="mt-3 flex items-center space-x-2 space-x-reverse">
+                <div class="mt-3 flex items-center space-x-2 space-x-reverse flex-wrap gap-2">
+                    @if($hasManagerRole)
                         <span class="px-3 py-1 text-xs rounded-full bg-orange-100 text-orange-700 flex items-center">
                             <span class="material-icons text-xs ml-1">admin_panel_settings</span>
                             لديك صلاحيات المدير على {{ $stats['managed_projects_count'] }} مشروع
@@ -27,8 +27,12 @@
                         <a href="{{ route('employee.monthly-plans.index') }}" class="text-sm text-purple-600 hover:text-purple-700 font-medium">
                             عرض الخطط الشهرية →
                         </a>
-                    </div>
-                @endif
+                    @endif
+                    <a href="{{ route('employee.profile.edit') }}" class="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center">
+                        <span class="material-icons text-xs ml-1">settings</span>
+                        الملف الشخصي →
+                    </a>
+                </div>
             </div>
             <div class="w-16 h-16 logo-gradient rounded-xl flex items-center justify-center">
                 <span class="material-icons text-white text-2xl">task</span>

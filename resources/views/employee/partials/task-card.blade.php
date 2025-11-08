@@ -1,7 +1,10 @@
 <div class="bg-white border-l-4 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow" style="border-left-color: {{ $task->color ?? '#6366f1' }};">
     <div class="flex items-start justify-between mb-2">
         <div class="flex-1">
-            <h4 class="font-semibold text-gray-800 text-sm mb-1">{{ $task->title }}</h4>
+            <div class="flex items-center gap-2 mb-1">
+                <span class="text-xs text-gray-400 font-mono">#{{ $task->id }}</span>
+                <h4 class="font-semibold text-gray-800 text-sm">{{ $task->title }}</h4>
+            </div>
         </div>
     </div>
 

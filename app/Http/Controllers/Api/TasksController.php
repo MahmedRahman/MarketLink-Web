@@ -174,26 +174,110 @@ class TasksController extends Controller
             ], 400);
         }
 
-        // البحث عن الموظف بناءً على رقم التليفون
-        $employee = Employee::where('phone', $phone)->first();
+        // تطبيع رقم الهاتف (إزالة المسافات والرموز)
+        $normalizedPhone = preg_replace('/[^0-9]/', '', $phone);
+        
+        // إزالة بادئة 2 إذا كانت موجودة للحصول على الرقم الأساسي
+        $basePhone = ltrim($normalizedPhone, '2');
+        
+        // تحويل task_id إلى integer أولاً للبحث عن المهمة
+        $taskIdInt = (int) $taskId;
+        
+        // البحث عن المهمة أولاً لمعرفة الموظف المخصص لها
+        $task = PlanTask::with('monthlyPlan.project')->find($taskIdInt);
+        
+        if (!$task) {
+            return response()->json([
+                'success' => false,
+                'message' => 'لم يتم العثور على المهمة',
+                'debug' => [
+                    'task_id' => $taskIdInt
+                ]
+            ], 404);
+        }
+        
+        // إذا كانت المهمة مخصصة لموظف، نبحث عن هذا الموظف تحديداً
+        $employee = null;
+        if ($task->assigned_to) {
+            $assignedEmployee = Employee::find($task->assigned_to);
+            if ($assignedEmployee) {
+                // التحقق من أن رقم الهاتف يطابق
+                $assignedPhoneNormalized = preg_replace('/[^0-9]/', '', $assignedEmployee->phone ?? '');
+                $assignedBasePhone = ltrim($assignedPhoneNormalized, '2');
+                
+                if ($assignedPhoneNormalized === $normalizedPhone || 
+                    $assignedBasePhone === $basePhone ||
+                    $assignedPhoneNormalized === $basePhone ||
+                    $assignedBasePhone === $normalizedPhone ||
+                    $assignedEmployee->phone === $phone) {
+                    $employee = $assignedEmployee;
+                }
+            }
+        }
+        
+        // إذا لم نجد الموظف المخصص، نبحث عن أي موظف برقم الهاتف
+        if (!$employee) {
+            $employee = Employee::where(function($query) use ($phone, $normalizedPhone, $basePhone) {
+                $query->where('phone', $phone)
+                      ->orWhere('phone', $normalizedPhone)
+                      ->orWhere('phone', '2' . $basePhone)
+                      ->orWhere('phone', $basePhone)
+                      ->orWhereRaw("REPLACE(REPLACE(phone, ' ', ''), '-', '') = ?", [$normalizedPhone])
+                      ->orWhereRaw("REPLACE(REPLACE(phone, ' ', ''), '-', '') = ?", ['2' . $basePhone])
+                      ->orWhereRaw("REPLACE(REPLACE(phone, ' ', ''), '-', '') = ?", [$basePhone]);
+            })->first();
+        }
 
         if (!$employee) {
             return response()->json([
                 'success' => false,
-                'message' => 'لم يتم العثور على موظف بهذا رقم التليفون'
+                'message' => 'لم يتم العثور على موظف بهذا رقم التليفون',
+                'debug' => [
+                    'phone_received' => $phone,
+                    'normalized_phone' => $normalizedPhone
+                ]
             ], 404);
         }
 
-        // البحث عن المهمة
-        $task = PlanTask::where('id', $taskId)
-            ->where('assigned_to', $employee->id)
-            ->first();
-
-        if (!$task) {
+        // التحقق من أن المهمة مخصصة لهذا الموظف أو في قائمة عامة
+        $hasAccess = false;
+        
+        // إذا كانت المهمة مخصصة لهذا الموظف
+        if ($task->assigned_to == $employee->id) {
+            $hasAccess = true;
+        }
+        // إذا كانت المهمة في قائمة عامة (list_type = 'tasks' و assigned_to = null)
+        elseif ($task->list_type === 'tasks' && $task->assigned_to === null) {
+            $hasAccess = true;
+        }
+        // إذا كان الموظف مدير على المشروع
+        elseif ($task->monthlyPlan && $task->monthlyPlan->project_id) {
+            $employee->load('projects');
+            $hasAccess = $employee->isManagerOfProject($task->monthlyPlan->project_id);
+        }
+        
+        if (!$hasAccess) {
+            // جلب معلومات الموظف المخصص للمهمة
+            $assignedEmployee = $task->assigned_to ? \App\Models\Employee::find($task->assigned_to) : null;
+            
             return response()->json([
                 'success' => false,
-                'message' => 'لم يتم العثور على المهمة أو لا توجد صلاحية للوصول إليها'
-            ], 404);
+                'message' => 'لا توجد صلاحية للوصول إلى هذه المهمة. المهمة مخصصة لموظف آخر',
+                'debug' => [
+                    'task_id' => $taskId,
+                    'task_title' => $task->title,
+                    'task_list_type' => $task->list_type,
+                    'task_assigned_to' => $task->assigned_to,
+                    'task_assigned_employee_name' => $assignedEmployee ? $assignedEmployee->name : 'غير مخصصة',
+                    'task_assigned_employee_phone' => $assignedEmployee ? $assignedEmployee->phone : 'غير مخصصة',
+                    'employee_id' => $employee->id,
+                    'employee_name' => $employee->name,
+                    'employee_phone' => $employee->phone,
+                    'phone_received' => $phone,
+                    'normalized_phone' => $normalizedPhone,
+                    'base_phone' => $basePhone ?? null
+                ]
+            ], 403);
         }
 
         // تحديث حالة المهمة
