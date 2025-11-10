@@ -14,9 +14,29 @@
                     <div class="w-12 h-12 logo-gradient rounded-2xl flex items-center justify-center shadow-lg icon-spacing ml-3">
                         <span class="material-icons text-white text-xl">calendar_month</span>
                     </div>
-                    <div>
-                        <h2 class="text-2xl font-bold text-gray-800">{{ $monthlyPlan->project->business_name }}</h2>
-                        <p class="text-gray-600">الخطة الشهرية: {{ $monthlyPlan->month }} {{ $monthlyPlan->year }}</p>
+                    <div class="flex items-center gap-4">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-800">{{ $monthlyPlan->project->business_name }}</h2>
+                            <p class="text-gray-600">الخطة الشهرية: {{ $monthlyPlan->month }} {{ $monthlyPlan->year }}</p>
+                        </div>
+                        <!-- Icons for Goals, Employees, and Status -->
+                        <div class="flex items-center gap-3 mr-4">
+                            <!-- Goals Icon -->
+                            <button onclick="showGoalsModal()" class="flex items-center gap-2 bg-blue-50 px-3 py-2 rounded-lg hover:bg-blue-100 transition-colors cursor-pointer" title="الأهداف">
+                                <span class="material-icons text-blue-600 text-lg">flag</span>
+                                <span class="text-sm font-semibold text-blue-700">{{ $monthlyPlan->goals->count() }}</span>
+                            </button>
+                            <!-- Employees Icon -->
+                            <button onclick="showEmployeesModal()" class="flex items-center gap-2 bg-green-50 px-3 py-2 rounded-lg hover:bg-green-100 transition-colors cursor-pointer" title="الموظفين">
+                                <span class="material-icons text-green-600 text-lg">people</span>
+                                <span class="text-sm font-semibold text-green-700">{{ $monthlyPlan->employees->count() }}</span>
+                            </button>
+                            <!-- Status Icon -->
+                            <div class="flex items-center gap-2 bg-purple-50 px-3 py-2 rounded-lg" title="الحالة">
+                                <span class="material-icons text-purple-600 text-lg">info</span>
+                                <span class="text-sm font-semibold text-purple-700">{{ $monthlyPlan->status_badge }}</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="flex items-center space-x-3 rtl:space-x-reverse">
@@ -27,75 +47,6 @@
                     <a href="{{ route('monthly-plans.index') }}" class="flex items-center px-4 py-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-colors">
                         العودة للقائمة
                     </a>
-                </div>
-            </div>
-        </div>
-
-        <!-- Plan Info Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <!-- Goals Card -->
-            <div class="card rounded-2xl p-6">
-                <div class="flex items-center mb-4">
-                    <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center icon-spacing ml-3">
-                        <span class="material-icons text-blue-600">flag</span>
-                    </div>
-                    <h3 class="text-lg font-semibold text-gray-800">الأهداف</h3>
-                </div>
-                <div class="space-y-3">
-                    @foreach($monthlyPlan->goals as $goal)
-                        <div class="bg-gray-50 rounded-lg p-3">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="text-sm font-medium text-gray-800">{{ $goal->goal_name }}</span>
-                                <span class="text-xs text-gray-500">{{ number_format($goal->progress_percentage, 0) }}%</span>
-                            </div>
-                            <div class="w-full bg-gray-200 rounded-full h-2">
-                                <div class="bg-blue-600 h-2 rounded-full" style="width: {{ min(100, $goal->progress_percentage) }}%"></div>
-                            </div>
-                            <div class="text-xs text-gray-600 mt-1">
-                                {{ $goal->achieved_value }} / {{ $goal->target_value }}
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-            </div>
-
-            <!-- Employees Card -->
-            <div class="card rounded-2xl p-6">
-                <div class="flex items-center mb-4">
-                    <div class="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center icon-spacing ml-3">
-                        <span class="material-icons text-green-600">people</span>
-                    </div>
-                    <h3 class="text-lg font-semibold text-gray-800">الموظفين</h3>
-                </div>
-                <div class="space-y-2">
-                    @foreach($monthlyPlan->employees as $employee)
-                        <div class="flex items-center p-2 bg-gray-50 rounded-lg">
-                            <div class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center ml-3">
-                                <span class="material-icons text-sm text-gray-600">person</span>
-                            </div>
-                            <span class="text-sm font-medium text-gray-800">{{ $employee->name }}</span>
-                        </div>
-                    @endforeach
-                </div>
-            </div>
-
-            <!-- Status Card -->
-            <div class="card rounded-2xl p-6">
-                <div class="flex items-center mb-4">
-                    <div class="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center icon-spacing ml-3">
-                        <span class="material-icons text-purple-600">info</span>
-                    </div>
-                    <h3 class="text-lg font-semibold text-gray-800">الحالة</h3>
-                </div>
-                <div class="space-y-3">
-                    <div>
-                        <span class="px-3 py-1 text-sm rounded-full bg-{{ $monthlyPlan->status_color }}-100 text-{{ $monthlyPlan->status_color }}-800">
-                            {{ $monthlyPlan->status_badge }}
-                        </span>
-                    </div>
-                    @if($monthlyPlan->description)
-                        <p class="text-sm text-gray-600">{{ $monthlyPlan->description }}</p>
-                    @endif
                 </div>
             </div>
         </div>
@@ -192,6 +143,76 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Goals Modal -->
+<div id="goals-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+    <div class="bg-white rounded-2xl p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center">
+                <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center ml-3">
+                    <span class="material-icons text-blue-600">flag</span>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800">الأهداف</h3>
+            </div>
+            <button onclick="hideGoalsModal()" class="text-gray-400 hover:text-gray-600">
+                <span class="material-icons">close</span>
+            </button>
+        </div>
+        <div class="space-y-3">
+            @forelse($monthlyPlan->goals as $goal)
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium text-gray-800">{{ $goal->goal_name }}</span>
+                        <span class="text-xs text-gray-500">{{ number_format($goal->progress_percentage, 0) }}%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="bg-blue-600 h-2 rounded-full" style="width: {{ min(100, $goal->progress_percentage) }}%"></div>
+                    </div>
+                    <div class="text-xs text-gray-600 mt-1">
+                        {{ $goal->achieved_value }} / {{ $goal->target_value }}
+                    </div>
+                </div>
+            @empty
+                <div class="text-center py-8 text-gray-500">
+                    <span class="material-icons text-4xl mb-2">flag</span>
+                    <p>لا توجد أهداف</p>
+                </div>
+            @endforelse
+        </div>
+    </div>
+</div>
+
+<!-- Employees Modal -->
+<div id="employees-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+    <div class="bg-white rounded-2xl p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center">
+                <div class="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center ml-3">
+                    <span class="material-icons text-green-600">people</span>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800">الموظفين</h3>
+            </div>
+            <button onclick="hideEmployeesModal()" class="text-gray-400 hover:text-gray-600">
+                <span class="material-icons">close</span>
+            </button>
+        </div>
+        <div class="space-y-2">
+            @forelse($monthlyPlan->employees as $employee)
+                <div class="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                    <div class="w-10 h-10 bg-gradient-to-r from-green-400 to-green-600 rounded-full flex items-center justify-center ml-3">
+                        <span class="material-icons text-white text-sm">person</span>
+                    </div>
+                    <span class="text-sm font-medium text-gray-800">{{ $employee->name }}</span>
+                </div>
+            @empty
+                <div class="text-center py-8 text-gray-500">
+                    <span class="material-icons text-4xl mb-2">people</span>
+                    <p>لا يوجد موظفين</p>
+                </div>
+            @endforelse
         </div>
     </div>
 </div>
@@ -793,6 +814,45 @@ document.getElementById('edit-task-color-hex').addEventListener('input', functio
     const hexValue = this.value;
     if (/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(hexValue)) {
         document.getElementById('edit-task-color').value = hexValue;
+    }
+});
+
+// Goals Modal Functions
+function showGoalsModal() {
+    document.getElementById('goals-modal').classList.remove('hidden');
+}
+
+function hideGoalsModal() {
+    document.getElementById('goals-modal').classList.add('hidden');
+}
+
+// Employees Modal Functions
+function showEmployeesModal() {
+    document.getElementById('employees-modal').classList.remove('hidden');
+}
+
+function hideEmployeesModal() {
+    document.getElementById('employees-modal').classList.add('hidden');
+}
+
+// Close modals when clicking outside
+document.getElementById('goals-modal')?.addEventListener('click', function(e) {
+    if (e.target === this) {
+        hideGoalsModal();
+    }
+});
+
+document.getElementById('employees-modal')?.addEventListener('click', function(e) {
+    if (e.target === this) {
+        hideEmployeesModal();
+    }
+});
+
+// Close modals on ESC key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        hideGoalsModal();
+        hideEmployeesModal();
     }
 });
 </script>

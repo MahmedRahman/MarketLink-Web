@@ -191,6 +191,16 @@
             background: rgba(255, 255, 255, 0.8);
             backdrop-filter: blur(20px);
             border-top: 1px solid var(--gray-200);
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            width: 100%;
+            z-index: 100;
+        }
+        
+        .main-content-area {
+            margin-bottom: 80px; /* Space for fixed footer */
         }
         
         .logo-gradient {
@@ -819,7 +829,7 @@
     
     <div class="flex h-screen">
         <!-- Sidebar -->
-        <div id="sidebar" class="sidebar sidebar-transition w-64">
+        <div id="sidebar" class="sidebar sidebar-transition w-64 flex flex-col h-screen">
             <!-- Logo -->
             <div class="p-6 border-b border-gray-200">
                 <div class="flex items-center">
@@ -834,7 +844,7 @@
             </div>
             
             <!-- Navigation -->
-            <nav class="mt-6">
+            <nav class="mt-6 flex-1 overflow-y-auto">
                 <div class="px-4 space-y-1">
                     <!-- Dashboard -->
                     <a href="{{ route('dashboard') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('dashboard') ? 'active' : '' }}">
@@ -942,8 +952,8 @@
             </nav>
         </div>
         
-        <!-- Main Content -->
-        <div class="flex-1 flex flex-col overflow-hidden">
+        <!-- Main Content Area -->
+        <div class="flex-1 flex flex-col overflow-hidden main-content-area">
             <!-- Header -->
             <header class="header">
                 <div class="flex items-center justify-between px-6 py-4">
@@ -989,20 +999,20 @@
                     @yield('content')
                 </div>
             </main>
-            
-            <!-- Footer -->
-            <footer class="footer px-6 py-4">
-                <div class="flex items-center justify-between">
-                    <div class="text-sm text-gray-500">
-                        © 2024 MarketLink. جميع الحقوق محفوظة.
-                    </div>
-                    <div class="text-sm text-gray-500">
-                        نظام إدارة شركات التسويق الإلكتروني
-                    </div>
-                </div>
-            </footer>
         </div>
     </div>
+    
+    <!-- Footer - Fixed at bottom, full width -->
+    <footer class="footer px-6 py-4">
+        <div class="flex items-center justify-between">
+            <div class="text-sm text-gray-500">
+                © 2024 MarketLink. جميع الحقوق محفوظة.
+            </div>
+            <div class="text-sm text-gray-500">
+                نظام إدارة شركات التسويق الإلكتروني
+            </div>
+        </div>
+    </footer>
     
     <!-- JavaScript Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
