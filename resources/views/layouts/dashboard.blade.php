@@ -896,6 +896,12 @@
                         <span class="font-medium">إجمالي التقرير المالي للموظفين</span>
                     </a>
                     
+                    <!-- Employees Data Report -->
+                    <a href="{{ route('reports.employees-data') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('reports.employees-data') ? 'active' : '' }}">
+                        <i class="fas fa-user-circle text-lg ml-3"></i>
+                        <span class="font-medium">بيانات الموظفين</span>
+                    </a>
+                    
                     @if(Auth::check() && Auth::user()->is_admin)
                     <!-- Admin Panel -->
                     <a href="{{ route('admin.dashboard') }}" class="sidebar-item flex items-center px-4 py-3 rounded-xl {{ request()->routeIs('admin.*') ? 'active' : '' }}" style="background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%); color: white;">

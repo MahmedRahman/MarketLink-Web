@@ -83,6 +83,7 @@ Route::middleware(['auth', \App\Http\Middleware\CheckTrialStatus::class])->group
            Route::get('reports/profits', [ReportsController::class, 'profits'])->name('reports.profits');
            Route::get('reports/total-employees-financial', [ReportsController::class, 'totalEmployeesFinancial'])->name('reports.total-employees-financial');
            Route::get('reports/employees/{employee}/paid-expenses', [ReportsController::class, 'employeePaidExpenses'])->name('reports.employee-paid-expenses');
+           Route::get('reports/employees-data', [ReportsController::class, 'employeesData'])->name('reports.employees-data');
        });
 
 // Subscription Routes

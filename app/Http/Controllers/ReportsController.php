@@ -579,4 +579,21 @@ class ReportsController extends Controller
             'dateTo'
         ));
     }
+
+    /**
+     * تقرير بيانات الموظفين - عرض بيانات الموظفين الفعلية
+     */
+    public function employeesData(Request $request)
+    {
+        // Get the current user's organization ID
+        $organizationId = $request->user()->organization_id;
+
+        // Get all employees with their projects count
+        $employees = Employee::where('organization_id', $organizationId)
+            ->withCount('projects')
+            ->orderBy('name')
+            ->get();
+
+        return view('reports.employees-data', compact('employees'));
+    }
 }
