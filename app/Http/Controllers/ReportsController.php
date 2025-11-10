@@ -588,9 +588,12 @@ class ReportsController extends Controller
         // Get the current user's organization ID
         $organizationId = $request->user()->organization_id;
 
-        // Get all employees with their projects count
+        // Get all employees with their projects
         $employees = Employee::where('organization_id', $organizationId)
-            ->withCount('projects')
+            ->with(['projects' => function($query) use ($organizationId) {
+                $query->where('organization_id', $organizationId)
+                      ->select('projects.id', 'projects.business_name');
+            }])
             ->orderBy('name')
             ->get();
 

@@ -158,12 +158,12 @@
                     <table class="min-w-full">
                         <thead>
                             <tr class="border-b border-gray-200">
-                                <th class="text-right py-3 px-4 font-medium text-gray-600">المشروع</th>
-                                <th class="text-right py-3 px-4 font-medium text-gray-600">العنوان</th>
-                                <th class="text-right py-3 px-4 font-medium text-gray-600">المبلغ</th>
-                                <th class="text-right py-3 px-4 font-medium text-gray-600">التاريخ</th>
-                                <th class="text-right py-3 px-4 font-medium text-gray-600">الحالة</th>
-                                <th class="text-right py-3 px-4 font-medium text-gray-600">طريقة الدفع</th>
+                                <th class="text-right py-3 px-4 font-medium text-gray-600" style="text-align: justify; padding-right: 33px;">المشروع</th>
+                                <th class="text-right py-3 px-4 font-medium text-gray-600" style="text-align: justify; padding-right: 33px;">العنوان</th>
+                                <th class="text-right py-3 px-4 font-medium text-gray-600" style="text-align: justify; padding-right: 33px;">المبلغ</th>
+                                <th class="text-right py-3 px-4 font-medium text-gray-600" style="text-align: justify; padding-right: 33px;">التاريخ</th>
+                                <th class="text-right py-3 px-4 font-medium text-gray-600" style="text-align: justify; padding-right: 33px;">الحالة</th>
+                                <th class="text-right py-3 px-4 font-medium text-gray-600" style="text-align: justify; padding-right: 33px;">طريقة الدفع</th>
                             </tr>
                         </thead>
                         <tbody>

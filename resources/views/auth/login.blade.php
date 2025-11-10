@@ -169,9 +169,17 @@
                             name="password" 
                             required 
                             autocomplete="current-password"
-                            class="material-3-input w-full pr-10 pl-4 py-3 rounded-xl text-sm"
+                            class="material-3-input w-full pr-10 pl-10 py-3 rounded-xl text-sm"
                             placeholder="أدخل كلمة المرور"
                         />
+                        <button 
+                            type="button" 
+                            id="togglePassword" 
+                            class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none transition-colors"
+                            onclick="togglePasswordVisibility()"
+                        >
+                            <span class="material-icons text-sm" id="passwordIcon">visibility</span>
+                        </button>
                     </div>
                 </div>
 
@@ -184,7 +192,7 @@
                             name="remember"
                             class="rounded border-gray-300 text-purple-600 shadow-sm focus:ring-purple-500"
                         />
-                        <span class="ml-2 text-sm text-gray-600">تذكرني</span>
+                        <span class="mr-2 text-sm text-gray-600">تذكرني</span>
                     </label>
                 </div>
 
@@ -224,6 +232,22 @@
             <p class="text-xs text-white/80">© 2024 MarketLink. جميع الحقوق محفوظة.</p>
         </div>
     </div>
+
+    <!-- Password Toggle Script -->
+    <script>
+        function togglePasswordVisibility() {
+            const passwordInput = document.getElementById('password');
+            const passwordIcon = document.getElementById('passwordIcon');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                passwordIcon.textContent = 'visibility_off';
+            } else {
+                passwordInput.type = 'password';
+                passwordIcon.textContent = 'visibility';
+            }
+        }
+    </script>
 
     <!-- SweetAlert Script -->
     <script>

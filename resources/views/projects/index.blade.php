@@ -18,87 +18,71 @@
                     <p class="text-gray-600">إدارة قائمة المشاريع والبيزنس</p>
                 </div>
             </div>
-            <a href="{{ route('projects.create') }}" class="btn-primary text-white px-6 py-3 rounded-xl flex items-center hover:no-underline">
-                <i class="fas fa-plus text-sm ml-2"></i>
-                إضافة مشروع جديد
-            </a>
-        </div>
-    </div>
-
-    <!-- Stats Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="card rounded-2xl p-6">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm font-medium text-gray-600">إجمالي المشاريع</p>
-                    <p class="text-3xl font-bold text-gray-800">{{ $projects->total() }}</p>
-                </div>
-                <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                    <i class="fas fa-project-diagram text-blue-600"></i>
-                </div>
-            </div>
-        </div>
-
-        <div class="card rounded-2xl p-6">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm font-medium text-gray-600">المشاريع النشطة</p>
-                    <p class="text-3xl font-bold text-green-600">{{ $projects->where('status', 'active')->count() }}</p>
-                </div>
-                <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                    <i class="fas fa-check-circle text-green-600"></i>
-                </div>
-            </div>
-        </div>
-
-        <div class="card rounded-2xl p-6">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm font-medium text-gray-600">في الانتظار</p>
-                    <p class="text-3xl font-bold text-yellow-600">{{ $projects->where('status', 'pending')->count() }}</p>
-                </div>
-                <div class="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center">
-                    <i class="fas fa-clock text-yellow-600"></i>
-                </div>
+            <div class="flex items-center space-x-3 rtl:space-x-reverse">
+                <button onclick="exportToExcel()" class="w-10 h-10 bg-green-500 hover:bg-green-600 text-white rounded-xl flex items-center justify-center transition-colors" title="تصدير Excel">
+                    <i class="fas fa-file-excel text-lg"></i>
+                </button>
+                <button onclick="exportToPDF()" class="w-10 h-10 bg-red-500 hover:bg-red-600 text-white rounded-xl flex items-center justify-center transition-colors" title="تصدير PDF">
+                    <i class="fas fa-file-pdf text-lg"></i>
+                </button>
+                <button onclick="printTable()" class="w-10 h-10 bg-blue-500 hover:bg-blue-600 text-white rounded-xl flex items-center justify-center transition-colors" title="طباعة">
+                    <i class="fas fa-print text-lg"></i>
+                </button>
+                <a href="{{ route('projects.create') }}" class="btn-primary text-white px-6 py-3 rounded-xl flex items-center hover:no-underline">
+                    <i class="fas fa-plus text-sm ml-2"></i>
+                    إضافة مشروع جديد
+                </a>
             </div>
         </div>
     </div>
 
     <!-- Projects Table -->
-    <div class="card rounded-2xl p-6">
+    <div class="card rounded-2xl overflow-hidden">
         @if($projects->count() > 0)
-            <div class="overflow-x-auto">
-                <table id="projectsTable" class="w-full">
+            <div class="overflow-x-auto p-6">
+                <table id="projectsTable" class="w-full" dir="rtl">
                     <thead>
-                        <tr class="border-b border-gray-200">
-                            <th class="text-right py-3 px-4 font-medium text-gray-700">اسم البيزنس</th>
-                            <th class="text-right py-3 px-4 font-medium text-gray-700">العميل</th>
-                            <th class="text-right py-3 px-4 font-medium text-gray-700">الموقع</th>
-                            <th class="text-right py-3 px-4 font-medium text-gray-700">الحالة</th>
-                            <th class="text-right py-3 px-4 font-medium text-gray-700">تاريخ الإنشاء</th>
-                            <th class="text-right py-3 px-4 font-medium text-gray-700">الإجراءات</th>
+                        <tr>
+                            <th class="text-right" style="text-align: justify; padding-right: 33px;">تاريخ الإنشاء</th>
+                            <th class="text-right" style="text-align: justify; padding-right: 33px;">اسم البيزنس</th>
+                            <th class="text-right" style="text-align: justify; padding-right: 33px;">العميل</th>
+                            <th class="text-right" style="text-align: justify; padding-right: 33px;">الموقع</th>
+                            <th class="text-right" style="text-align: justify; padding-right: 33px;">عدد الموظفين</th>
+                            <th class="text-right" style="text-align: justify; padding-right: 33px;">الحالة</th>
+                            <th class="text-center" style="text-align: justify; padding-right: 33px;">الإجراءات</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach($projects as $project)
-                            <tr class="border-b border-gray-100 hover:bg-gray-50">
-                                <td class="py-4 px-4">
-                                    <div class="flex items-center">
-                                        <div class="w-10 h-10 bg-gradient-to-r from-purple-500 to-blue-500 rounded-xl flex items-center justify-center ml-3">
-                                            <i class="fas fa-building text-white text-sm"></i>
-                                        </div>
-                                        <div>
-                                            <div class="text-sm font-medium text-gray-900">{{ $project->business_name }}</div>
-                                            <div class="text-xs text-gray-500">{{ Str::limit($project->business_description, 50) }}</div>
-                                        </div>
+                            <tr>
+                                <td>
+                                    <div class="text-right">
+                                        <div class="text-sm text-gray-500">{{ $project->created_at->format('Y-m-d') }}</div>
+                                        @php
+                                            $months = [1 => 'يناير', 2 => 'فبراير', 3 => 'مارس', 4 => 'أبريل', 5 => 'مايو', 6 => 'يونيو', 7 => 'يوليو', 8 => 'أغسطس', 9 => 'سبتمبر', 10 => 'أكتوبر', 11 => 'نوفمبر', 12 => 'ديسمبر'];
+                                            $month = $project->created_at->format('n');
+                                        @endphp
+                                        <div class="text-xs text-gray-400 mt-1">{{ $months[$month] }}</div>
                                     </div>
                                 </td>
                                 <td>
-                                    <div class="text-sm text-gray-900">{{ $project->client->name }}</div>
-                                    <div class="text-xs text-gray-500">{{ $project->client->email }}</div>
+                                    <div class="text-right">
+                                        <div class="text-sm font-medium text-gray-900">{{ $project->business_name }}</div>
+                                        @if($project->business_description)
+                                            <div class="text-xs text-gray-500">{{ Str::limit($project->business_description, 50) }}</div>
+                                        @endif
+                                    </div>
                                 </td>
                                 <td>
-                                    <div class="text-sm text-gray-900">
+                                    <div class="text-right">
+                                        <div class="text-sm text-gray-900">{{ $project->client->name ?? 'غير محدد' }}</div>
+                                        @if($project->client)
+                                            <div class="text-xs text-gray-500">{{ $project->client->email }}</div>
+                                        @endif
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="text-sm text-gray-900 text-right">
                                         @if($project->website_url)
                                             <a href="{{ $project->website_url }}" target="_blank" class="text-blue-600 hover:text-blue-900">
                                                 <i class="fas fa-globe text-sm ml-1"></i>
@@ -110,6 +94,11 @@
                                     </div>
                                 </td>
                                 <td>
+                                    <div class="text-sm font-semibold text-gray-900 text-right">
+                                        {{ $project->employees_count ?? 0 }}
+                                    </div>
+                                </td>
+                                <td>
                                     <span class="status-badge
                                         @if($project->status === 'active') status-active
                                         @elseif($project->status === 'inactive') status-inactive
@@ -118,10 +107,7 @@
                                     </span>
                                 </td>
                                 <td>
-                                    <div class="text-sm text-gray-500">{{ $project->created_at->format('Y-m-d') }}</div>
-                                </td>
-                                <td>
-                                    <div class="flex items-center space-x-2 rtl:space-x-reverse">
+                                    <div class="flex items-center justify-center space-x-2 rtl:space-x-reverse">
                                         <a href="{{ route('projects.show', $project) }}" class="text-blue-600 hover:text-blue-900 p-1" title="عرض التفاصيل">
                                             <i class="fas fa-eye text-sm"></i>
                                         </a>
@@ -129,10 +115,10 @@
                                             <i class="fas fa-edit text-sm"></i>
                                         </a>
                                         <a href="{{ route('projects.revenues.index', $project) }}" class="text-green-600 hover:text-green-900 p-1" title="الإيرادات ({{ $project->revenues_count }})">
-                                            <i class="fas fa-arrow-up text-sm"></i>
+                                            <i class="fas fa-coins text-sm"></i>
                                         </a>
                                         <a href="{{ route('projects.expenses.index', $project) }}" class="text-red-600 hover:text-red-900 p-1" title="المصروفات ({{ $project->expenses_count }})">
-                                            <i class="fas fa-arrow-down text-sm"></i>
+                                            <i class="fas fa-credit-card text-sm"></i>
                                         </a>
                                         <button onclick="confirmDelete('{{ route('projects.destroy', $project) }}', 'تأكيد حذف المشروع', 'هل أنت متأكد من حذف المشروع {{ $project->business_name }}؟')" class="text-red-600 hover:text-red-900 p-1" title="حذف">
                                             <i class="fas fa-trash text-sm"></i>
@@ -161,64 +147,66 @@
 
 @section('scripts')
 <script>
+var table;
+
 $(document).ready(function() {
-    $('#projectsTable').DataTable({
+    table = $('#projectsTable').DataTable({
         responsive: true,
+        paging: false,
+        searching: false,
         language: {
             "sProcessing": "جاري المعالجة...",
-            "sLengthMenu": "عرض _MENU_ سجل",
             "sZeroRecords": "لم يتم العثور على سجلات",
             "sInfo": "عرض _START_ إلى _END_ من _TOTAL_ سجل",
             "sInfoEmpty": "عرض 0 إلى 0 من 0 سجل",
-            "sInfoFiltered": "(تصفية من _MAX_ سجل)",
-            "sInfoPostFix": "",
-            "sSearch": "البحث:",
-            "sUrl": "",
-            "oPaginate": {
-                "sFirst": "الأول",
-                "sPrevious": "السابق",
-                "sNext": "التالي",
-                "sLast": "الأخير"
-            }
+            "sInfoPostFix": ""
         },
-        dom: 'Bfrtip',
-        buttons: [
-            {
-                extend: 'excel',
-                text: 'تصدير Excel',
-                className: 'btn btn-success',
-                exportOptions: {
-                    columns: [0, 1, 2, 3, 4]
-                }
-            },
-            {
-                extend: 'pdf',
-                text: 'تصدير PDF',
-                className: 'btn btn-danger',
-                exportOptions: {
-                    columns: [0, 1, 2, 3, 4]
-                }
-            },
-            {
-                extend: 'print',
-                text: 'طباعة',
-                className: 'btn btn-info',
-                exportOptions: {
-                    columns: [0, 1, 2, 3, 4]
-                }
-            }
-        ],
+        dom: 'rti',
         columnDefs: [
             {
-                targets: [5], // Actions column
+                targets: [6], // Actions column
                 orderable: false,
                 searchable: false
             }
         ],
-        order: [[4, 'desc']], // Sort by date descending
-        pageLength: 10,
-        lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]]
+        order: [[0, 'desc']], // Sort by date descending (first column now)
+        buttons: [
+            {
+                extend: 'excel',
+                text: 'Excel',
+                exportOptions: {
+                    columns: [0, 1, 2, 3, 4, 5]
+                }
+            },
+            {
+                extend: 'pdf',
+                text: 'PDF',
+                exportOptions: {
+                    columns: [0, 1, 2, 3, 4, 5]
+                }
+            },
+            {
+                extend: 'print',
+                text: 'Print',
+                exportOptions: {
+                    columns: [0, 1, 2, 3, 4, 5]
+                }
+            }
+        ]
     });
 });
+
+function exportToExcel() {
+    table.button(0).trigger();
+}
+
+function exportToPDF() {
+    table.button(1).trigger();
+}
+
+function printTable() {
+    table.button(2).trigger();
+}
 </script>
 @endsection
+

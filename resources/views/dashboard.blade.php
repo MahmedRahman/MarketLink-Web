@@ -68,7 +68,7 @@
     </div>
 
     <!-- Stats Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <!-- Total Clients -->
         <div class="card rounded-2xl p-6">
             <div class="flex items-center justify-between">
@@ -91,19 +91,6 @@
                 </div>
                 <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
                     <span class="material-icons text-green-600">business</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Active Projects -->
-        <div class="card rounded-2xl p-6">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm font-medium text-gray-600">المشاريع النشطة</p>
-                    <p class="text-3xl font-bold text-gray-800">{{ number_format($stats['active_projects']) }}</p>
-                </div>
-                <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                    <span class="material-icons text-purple-600">work</span>
                 </div>
             </div>
         </div>

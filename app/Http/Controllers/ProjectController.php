@@ -23,7 +23,7 @@ class ProjectController extends Controller
         $organizationId = $request->user()->organization_id;
         $projects = Project::where('organization_id', $organizationId)
             ->with('client')
-            ->withCount(['revenues', 'expenses'])
+            ->withCount(['revenues', 'expenses', 'employees'])
             ->latest()
             ->paginate(10);
         return view('projects.index', compact('projects'));

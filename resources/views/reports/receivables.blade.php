@@ -18,6 +18,17 @@
                     <p class="text-gray-600">عرض المبلغ المتبقي والمحصل لكل مشروع</p>
                 </div>
             </div>
+            <div class="flex items-center space-x-3 rtl:space-x-reverse">
+                <button onclick="exportToExcel()" class="w-10 h-10 bg-green-500 hover:bg-green-600 text-white rounded-xl flex items-center justify-center transition-colors" title="تصدير Excel">
+                    <i class="fas fa-file-excel text-lg"></i>
+                </button>
+                <button onclick="exportToPDF()" class="w-10 h-10 bg-red-500 hover:bg-red-600 text-white rounded-xl flex items-center justify-center transition-colors" title="تصدير PDF">
+                    <i class="fas fa-file-pdf text-lg"></i>
+                </button>
+                <button onclick="printTable()" class="w-10 h-10 bg-blue-500 hover:bg-blue-600 text-white rounded-xl flex items-center justify-center transition-colors" title="طباعة">
+                    <i class="fas fa-print text-lg"></i>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -86,19 +97,19 @@
                 <table id="receivablesTable" class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider" style="text-align: justify; padding-right: 33px;">
                                 اسم المشروع
                             </th>
-                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider" style="text-align: justify; padding-right: 33px;">
                                 العميل
                             </th>
-                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider" style="text-align: justify; padding-right: 33px;">
                                 المبلغ المحصل
                             </th>
-                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider" style="text-align: justify; padding-right: 33px;">
                                 المبلغ المتبقي
                             </th>
-                            <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider" style="text-align: justify; padding-right: 33px;">
                                 الإجراءات
                             </th>
                         </tr>
@@ -172,53 +183,21 @@
 
 @section('scripts')
 <script>
+var table;
+
 $(document).ready(function() {
-    $('#receivablesTable').DataTable({
+    table = $('#receivablesTable').DataTable({
         responsive: true,
+        paging: false,
+        searching: false,
         language: {
             "sProcessing": "جاري المعالجة...",
-            "sLengthMenu": "عرض _MENU_ سجل",
             "sZeroRecords": "لم يتم العثور على سجلات",
             "sInfo": "عرض _START_ إلى _END_ من _TOTAL_ سجل",
             "sInfoEmpty": "عرض 0 إلى 0 من 0 سجل",
-            "sInfoFiltered": "(تصفية من _MAX_ سجل)",
-            "sInfoPostFix": "",
-            "sSearch": "البحث:",
-            "sUrl": "",
-            "oPaginate": {
-                "sFirst": "الأول",
-                "sPrevious": "السابق",
-                "sNext": "التالي",
-                "sLast": "الأخير"
-            }
+            "sInfoPostFix": ""
         },
-        dom: 'Bfrtip',
-        buttons: [
-            {
-                extend: 'excel',
-                text: 'تصدير Excel',
-                className: 'btn btn-success',
-                exportOptions: {
-                    columns: [0, 1, 2, 3]
-                }
-            },
-            {
-                extend: 'pdf',
-                text: 'تصدير PDF',
-                className: 'btn btn-danger',
-                exportOptions: {
-                    columns: [0, 1, 2, 3]
-                }
-            },
-            {
-                extend: 'print',
-                text: 'طباعة',
-                className: 'btn btn-info',
-                exportOptions: {
-                    columns: [0, 1, 2, 3]
-                }
-            }
-        ],
+        dom: 'rti',
         columnDefs: [
             {
                 targets: [4], // Actions column
@@ -227,10 +206,43 @@ $(document).ready(function() {
             }
         ],
         order: [[2, 'desc']], // Sort by paid amount descending
-        pageLength: 10,
-        lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]]
+        buttons: [
+            {
+                extend: 'excel',
+                text: 'Excel',
+                exportOptions: {
+                    columns: [0, 1, 2, 3]
+                }
+            },
+            {
+                extend: 'pdf',
+                text: 'PDF',
+                exportOptions: {
+                    columns: [0, 1, 2, 3]
+                }
+            },
+            {
+                extend: 'print',
+                text: 'Print',
+                exportOptions: {
+                    columns: [0, 1, 2, 3]
+                }
+            }
+        ]
     });
 });
+
+function exportToExcel() {
+    table.button(0).trigger();
+}
+
+function exportToPDF() {
+    table.button(1).trigger();
+}
+
+function printTable() {
+    table.button(2).trigger();
+}
 </script>
 @endsection
 

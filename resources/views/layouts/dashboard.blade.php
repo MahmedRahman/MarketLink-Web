@@ -835,30 +835,43 @@
             
             <!-- Navigation -->
             <nav class="mt-6">
-                <div class="px-4 space-y-2">
+                <div class="px-4 space-y-1">
                     <!-- Dashboard -->
                     <a href="{{ route('dashboard') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('dashboard') ? 'active' : '' }}">
                         <i class="fas fa-tachometer-alt text-lg ml-3"></i>
                         <span class="font-medium">لوحة التحكم</span>
                     </a>
                     
+                    <!-- Divider -->
+                    <div class="my-6 mx-4 border-t border-gray-200"></div>
+                    
+                    <!-- Basic Data Section -->
+                    <div class="px-2 mb-3 mt-3">
+                        <div class="bg-gradient-to-r from-gray-50 to-gray-100 px-4 py-2.5 rounded-xl border-r-4 border-primary shadow-sm">
+                            <h3 class="text-sm font-bold text-gray-700 tracking-wide">بيانات أساسية</h3>
+                        </div>
+                    </div>
+                    
                     <!-- Clients -->
                     <a href="{{ route('clients.index') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('clients.*') ? 'active' : '' }}">
                         <i class="fas fa-users text-lg ml-3"></i>
                         <span class="font-medium">العملاء</span>
                     </a>
-                         <!-- Employees -->
-                         <a href="{{ route('employees.index') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('employees.*') ? 'active' : '' }}">
+                    
+                    <!-- Employees -->
+                    <a href="{{ route('employees.index') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('employees.*') ? 'active' : '' }}">
                         <i class="fas fa-users-cog text-lg ml-3"></i>
                         <span class="font-medium">الموظفين</span>
                     </a>
+                    
                     <!-- Projects -->
                     <a href="{{ route('projects.index') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('projects.*') ? 'active' : '' }}">
                         <i class="fas fa-project-diagram text-lg ml-3"></i>
                         <span class="font-medium">المشاريع</span>
                     </a>
                     
-               
+                    <!-- Divider -->
+                    <div class="my-6 mx-4 border-t border-gray-200"></div>
                     
                     <!-- Monthly Plans -->
                     <a href="{{ route('monthly-plans.index') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('monthly-plans.*') ? 'active' : '' }}">
@@ -866,34 +879,38 @@
                         <span class="font-medium">الخطط الشهرية</span>
                     </a>
                     
-                    <!-- Reports -->
-                    <a href="{{ route('reports.index') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('reports.index') || request()->routeIs('reports.export') ? 'active' : '' }}">
-                        <i class="fas fa-chart-line text-lg ml-3"></i>
-                        <span class="font-medium">التقارير</span>
-                    </a>
+                    <!-- Divider -->
+                    <div class="my-6 mx-4 border-t border-gray-200"></div>
+                    
+                    <!-- Reports Section -->
+                    <div class="px-2 mb-3 mt-3">
+                        <div class="bg-gradient-to-r from-gray-50 to-gray-100 px-4 py-2.5 rounded-xl border-r-4 border-primary shadow-sm">
+                            <h3 class="text-sm font-bold text-gray-700 tracking-wide">التقارير</h3>
+                        </div>
+                    </div>
                     
                     <!-- Receivables Report -->
                     <a href="{{ route('reports.receivables') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('reports.receivables') ? 'active' : '' }}">
                         <i class="fas fa-file-invoice-dollar text-lg ml-3"></i>
-                        <span class="font-medium">تقرير المديونية</span>
+                        <span class="font-medium">المديونية</span>
                     </a>
                     
                     <!-- Profits Report -->
                     <a href="{{ route('reports.profits') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('reports.profits') ? 'active' : '' }}">
                         <i class="fas fa-chart-pie text-lg ml-3"></i>
-                        <span class="font-medium">تقرير الأرباح</span>
+                        <span class="font-medium">الأرباح</span>
                     </a>
                     
                     <!-- Employee Financial Report -->
                     <a href="{{ route('reports.employee-financial') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('reports.employee-financial') ? 'active' : '' }}">
                         <i class="fas fa-user-tie text-lg ml-3"></i>
-                        <span class="font-medium">التقرير المالي للموظفين</span>
+                        <span class="font-medium">مالي الموظفين</span>
                     </a>
                     
                     <!-- Total Employees Financial Report -->
                     <a href="{{ route('reports.total-employees-financial') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('reports.total-employees-financial') ? 'active' : '' }}">
                         <i class="fas fa-users-cog text-lg ml-3"></i>
-                        <span class="font-medium">إجمالي التقرير المالي للموظفين</span>
+                        <span class="font-medium">إجمالي الموظفين</span>
                     </a>
                     
                     <!-- Employees Data Report -->
@@ -902,6 +919,9 @@
                         <span class="font-medium">بيانات الموظفين</span>
                     </a>
                     
+                    <!-- Divider -->
+                    <div class="my-6 mx-4 border-t border-gray-200"></div>
+                    
                     @if(Auth::check() && Auth::user()->is_admin)
                     <!-- Admin Panel -->
                     <a href="{{ route('admin.dashboard') }}" class="sidebar-item flex items-center px-4 py-3 rounded-xl {{ request()->routeIs('admin.*') ? 'active' : '' }}" style="background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%); color: white;">
@@ -909,6 +929,9 @@
                         <span class="font-medium">لوحة تحكم المدير</span>
                     </a>
                     @endif
+                    
+                    <!-- Divider -->
+                    <div class="my-6 mx-4 border-t border-gray-200"></div>
                     
                     <!-- Settings -->
                     <a href="{{ route('profile.edit') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('profile.*') ? 'active' : '' }}">

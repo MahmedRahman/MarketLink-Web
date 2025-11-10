@@ -18,6 +18,17 @@
                     <p class="text-gray-600">عرض بيانات الموظفين الفعلية</p>
                 </div>
             </div>
+            <div class="flex items-center space-x-3 rtl:space-x-reverse">
+                <button onclick="exportToExcel()" class="w-10 h-10 bg-green-500 hover:bg-green-600 text-white rounded-xl flex items-center justify-center transition-colors" title="تصدير Excel">
+                    <i class="fas fa-file-excel text-lg"></i>
+                </button>
+                <button onclick="exportToPDF()" class="w-10 h-10 bg-red-500 hover:bg-red-600 text-white rounded-xl flex items-center justify-center transition-colors" title="تصدير PDF">
+                    <i class="fas fa-file-pdf text-lg"></i>
+                </button>
+                <button onclick="printTable()" class="w-10 h-10 bg-blue-500 hover:bg-blue-600 text-white rounded-xl flex items-center justify-center transition-colors" title="طباعة">
+                    <i class="fas fa-print text-lg"></i>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -73,35 +84,20 @@
                 <table id="employeesDataTable" class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider" style="text-align: justify; padding-right: 33px;">
                                 الاسم
                             </th>
-                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider" style="text-align: justify; padding-right: 33px;">
                                 الهاتف
                             </th>
-                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider" style="text-align: justify; padding-right: 33px;">
                                 البريد الإلكتروني
                             </th>
-                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                الدور الوظيفي
-                            </th>
-                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                الحالة
-                            </th>
-                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                عدد المشاريع
-                            </th>
-                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider" style="text-align: justify; padding-right: 33px;">
                                 معلومات الدفع
                             </th>
-                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                الروابط الاجتماعية
-                            </th>
-                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                الملاحظات
-                            </th>
-                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                تاريخ الإنشاء
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider" style="text-align: justify; padding-right: 33px;">
+                                المشاريع
                             </th>
                         </tr>
                     </thead>
@@ -128,21 +124,6 @@
                                         {{ $employee->email }}
                                     </div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full status-badge status-{{ $employee->role_color }}">
-                                        {{ $employee->role_badge }}
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full status-badge status-{{ $employee->status }}">
-                                        {{ $employee->status_badge }}
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm font-semibold text-blue-600">
-                                        {{ $employee->projects_count }}
-                                    </div>
-                                </td>
                                 <td class="px-6 py-4">
                                     <div class="text-sm text-gray-900 space-y-1">
                                         @if($employee->instapay_number)
@@ -157,35 +138,18 @@
                                     </div>
                                 </td>
                                 <td class="px-6 py-4">
-                                    <div class="flex items-center gap-2 flex-wrap">
-                                        @if($employee->facebook_url)
-                                            <a href="{{ $employee->facebook_url }}" target="_blank" class="text-blue-600 hover:text-blue-800" title="فيسبوك">
-                                                <i class="fab fa-facebook text-lg"></i>
-                                            </a>
+                                    <div class="text-sm text-gray-900">
+                                        @if($employee->projects->count() > 0)
+                                            <div class="flex flex-wrap gap-2">
+                                                @foreach($employee->projects as $project)
+                                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                        {{ $project->business_name }}
+                                                    </span>
+                                                @endforeach
+                                            </div>
+                                        @else
+                                            <span class="text-gray-400">لا يوجد مشاريع</span>
                                         @endif
-                                        @if($employee->linkedin_url)
-                                            <a href="{{ $employee->linkedin_url }}" target="_blank" class="text-blue-700 hover:text-blue-900" title="لينكد إن">
-                                                <i class="fab fa-linkedin text-lg"></i>
-                                            </a>
-                                        @endif
-                                        @if($employee->portfolio_url)
-                                            <a href="{{ $employee->portfolio_url }}" target="_blank" class="text-purple-600 hover:text-purple-800" title="البورتفوليو">
-                                                <i class="fas fa-briefcase text-lg"></i>
-                                            </a>
-                                        @endif
-                                        @if(!$employee->facebook_url && !$employee->linkedin_url && !$employee->portfolio_url)
-                                            <span class="text-gray-400">-</span>
-                                        @endif
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <div class="text-sm text-gray-900 max-w-xs truncate" title="{{ $employee->notes }}">
-                                        {{ $employee->notes ?? '-' }}
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-gray-500">
-                                        {{ $employee->created_at->format('Y-m-d') }}
                                     </div>
                                 </td>
                             </tr>
@@ -206,63 +170,65 @@
 
 @section('scripts')
 <script>
+var table;
+
 $(document).ready(function() {
-    $('#employeesDataTable').DataTable({
+    table = $('#employeesDataTable').DataTable({
         responsive: true,
         paging: false,
+        searching: false,
         language: {
             "sProcessing": "جاري المعالجة...",
-            "sLengthMenu": "عرض _MENU_ سجل",
             "sZeroRecords": "لم يتم العثور على سجلات",
             "sInfo": "عرض _START_ إلى _END_ من _TOTAL_ سجل",
             "sInfoEmpty": "عرض 0 إلى 0 من 0 سجل",
-            "sInfoFiltered": "(تصفية من _MAX_ سجل)",
-            "sInfoPostFix": "",
-            "sSearch": "البحث:",
-            "sUrl": "",
-            "oPaginate": {
-                "sFirst": "الأول",
-                "sPrevious": "السابق",
-                "sNext": "التالي",
-                "sLast": "الأخير"
-            }
+            "sInfoPostFix": ""
         },
-        dom: 'Bfrtip',
+        dom: 'rti',
+        order: [[0, 'asc']], // Sort by name ascending
+        columnDefs: [
+            {
+                targets: [3, 4], // Payment info, Projects columns
+                orderable: false
+            }
+        ],
         buttons: [
             {
                 extend: 'excel',
-                text: 'تصدير Excel',
-                className: 'btn btn-success',
+                text: 'Excel',
                 exportOptions: {
-                    columns: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+                    columns: [0, 1, 2, 3, 4]
                 }
             },
             {
                 extend: 'pdf',
-                text: 'تصدير PDF',
-                className: 'btn btn-danger',
+                text: 'PDF',
                 exportOptions: {
-                    columns: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+                    columns: [0, 1, 2, 3, 4]
                 }
             },
             {
                 extend: 'print',
-                text: 'طباعة',
-                className: 'btn btn-info',
+                text: 'Print',
                 exportOptions: {
-                    columns: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+                    columns: [0, 1, 2, 3, 4]
                 }
-            }
-        ],
-        order: [[0, 'asc']], // Sort by name ascending
-        columnDefs: [
-            {
-                targets: [6, 7, 8], // Payment info, Social links, Notes columns
-                orderable: false
             }
         ]
     });
 });
+
+function exportToExcel() {
+    table.button(0).trigger();
+}
+
+function exportToPDF() {
+    table.button(1).trigger();
+}
+
+function printTable() {
+    table.button(2).trigger();
+}
 </script>
 @endsection
 
