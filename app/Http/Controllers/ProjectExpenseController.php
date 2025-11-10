@@ -6,13 +6,36 @@ use App\Models\Project;
 use App\Models\ProjectExpense;
 use App\Models\Employee;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class ProjectExpenseController extends Controller
 {
-    public function index(Project $project)
+    public function index(Request $request, Project $project)
     {
-        $expenses = $project->expenses()->with('employee')->latest()->get();
-        return view('projects.expenses.index', compact('project', 'expenses'));
+        $selectedMonth = $request->query('month');
+        
+        $expensesQuery = $project->expenses()->with('employee');
+        
+        // تطبيق فلتر الشهر إن وجد
+        if ($selectedMonth) {
+            try {
+                $monthDate = Carbon::createFromFormat('Y-m', $selectedMonth);
+                $startOfMonth = $monthDate->copy()->startOfMonth();
+                $endOfMonth = $monthDate->copy()->endOfMonth();
+                
+                $expensesQuery->whereBetween('expense_date', [
+                    $startOfMonth->toDateString(),
+                    $endOfMonth->toDateString()
+                ]);
+            } catch (\Exception $e) {
+                // في حالة خطأ في التاريخ، نستمر بدون فلتر
+                \Log::warning('Error filtering expenses by month: ' . $e->getMessage());
+            }
+        }
+        
+        $expenses = $expensesQuery->latest('expense_date')->get();
+        
+        return view('projects.expenses.index', compact('project', 'expenses', 'selectedMonth'));
     }
 
     public function create(Project $project, Request $request)
@@ -118,6 +141,26 @@ class ProjectExpenseController extends Controller
         } catch (\Exception $e) {
             return redirect()->back()
                 ->with('error', 'حدث خطأ أثناء حذف المصروف: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Duplicate an existing expense
+     */
+    public function duplicate(Project $project, ProjectExpense $expense)
+    {
+        try {
+            // Create a new expense with the same data (except id and timestamps)
+            $newExpense = $expense->replicate();
+            $newExpense->title = $expense->title . ' (نسخة)';
+            $newExpense->status = 'pending'; // Set status to pending for duplicate
+            $newExpense->save();
+
+            return redirect()->route('projects.expenses.index', $project)
+                ->with('success', 'تم نسخ المصروف بنجاح');
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->with('error', 'حدث خطأ أثناء نسخ المصروف: ' . $e->getMessage());
         }
     }
 }

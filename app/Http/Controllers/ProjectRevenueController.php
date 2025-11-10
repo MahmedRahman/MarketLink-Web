@@ -6,13 +6,36 @@ use App\Models\Project;
 use App\Models\ProjectRevenue;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Carbon\Carbon;
 
 class ProjectRevenueController extends Controller
 {
-    public function index(Project $project)
+    public function index(Request $request, Project $project)
     {
-        $revenues = $project->revenues()->latest()->paginate(10);
-        return view('projects.revenues.index', compact('project', 'revenues'));
+        $selectedMonth = $request->query('month');
+        
+        $revenuesQuery = $project->revenues();
+        
+        // تطبيق فلتر الشهر إن وجد
+        if ($selectedMonth) {
+            try {
+                $monthDate = Carbon::createFromFormat('Y-m', $selectedMonth);
+                $startOfMonth = $monthDate->copy()->startOfMonth();
+                $endOfMonth = $monthDate->copy()->endOfMonth();
+                
+                $revenuesQuery->whereBetween('revenue_date', [
+                    $startOfMonth->toDateString(),
+                    $endOfMonth->toDateString()
+                ]);
+            } catch (\Exception $e) {
+                // في حالة خطأ في التاريخ، نستمر بدون فلتر
+                \Log::warning('Error filtering revenues by month: ' . $e->getMessage());
+            }
+        }
+        
+        $revenues = $revenuesQuery->latest('revenue_date')->get();
+        
+        return view('projects.revenues.index', compact('project', 'revenues', 'selectedMonth'));
     }
 
     public function create(Project $project)
@@ -178,6 +201,28 @@ class ProjectRevenueController extends Controller
         } catch (\Exception $e) {
             return redirect()->back()
                 ->with('error', 'حدث خطأ أثناء حذف الإيراد: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Duplicate an existing revenue
+     */
+    public function duplicate(Project $project, ProjectRevenue $revenue)
+    {
+        try {
+            // Create a new revenue with the same data (except id and timestamps)
+            $newRevenue = $revenue->replicate();
+            $newRevenue->title = $revenue->title . ' (نسخة)';
+            $newRevenue->paid_amount = 0; // Reset paid amount for duplicate
+            $newRevenue->status = 'pending'; // Set status to pending for duplicate
+            $newRevenue->transfer_image = null; // Don't copy the image
+            $newRevenue->save();
+
+            return redirect()->route('projects.revenues.index', $project)
+                ->with('success', 'تم نسخ الإيراد بنجاح');
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->with('error', 'حدث خطأ أثناء نسخ الإيراد: ' . $e->getMessage());
         }
     }
 }

@@ -48,19 +48,6 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
         
-        // Calculate total revenues and expenses
-        $total_revenues = \App\Models\ProjectRevenue::whereHas('project', function($query) use ($organizationId) {
-            $query->where('organization_id', $organizationId);
-        })->sum('amount') ?? 0;
-        
-        $total_expenses = \App\Models\ProjectExpense::whereHas('project', function($query) use ($organizationId) {
-            $query->where('organization_id', $organizationId);
-        })->sum('amount') ?? 0;
-        
-        $stats['total_revenues'] = $total_revenues;
-        $stats['total_expenses'] = $total_expenses;
-        $stats['net_profit'] = $total_revenues - $total_expenses;
-        
         return view('dashboard', compact(
             'organization',
             'subscription',

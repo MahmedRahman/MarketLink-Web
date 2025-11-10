@@ -128,6 +128,12 @@
                                         <a href="{{ route('projects.edit', $project) }}" class="text-yellow-600 hover:text-yellow-900 p-1" title="تعديل">
                                             <i class="fas fa-edit text-sm"></i>
                                         </a>
+                                        <a href="{{ route('projects.revenues.index', $project) }}" class="text-green-600 hover:text-green-900 p-1" title="الإيرادات ({{ $project->revenues_count }})">
+                                            <i class="fas fa-arrow-up text-sm"></i>
+                                        </a>
+                                        <a href="{{ route('projects.expenses.index', $project) }}" class="text-red-600 hover:text-red-900 p-1" title="المصروفات ({{ $project->expenses_count }})">
+                                            <i class="fas fa-arrow-down text-sm"></i>
+                                        </a>
                                         <button onclick="confirmDelete('{{ route('projects.destroy', $project) }}', 'تأكيد حذف المشروع', 'هل أنت متأكد من حذف المشروع {{ $project->business_name }}؟')" class="text-red-600 hover:text-red-900 p-1" title="حذف">
                                             <i class="fas fa-trash text-sm"></i>
                                         </button>

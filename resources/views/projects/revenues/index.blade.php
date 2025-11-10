@@ -30,31 +30,44 @@
         </div>
     </div>
 
-    <!-- Summary Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <div class="card rounded-2xl p-6">
-            <div class="flex items-center">
-                <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center ml-4">
-                    <i class="fas fa-check-circle text-green-600 text-xl"></i>
-                </div>
-                <div>
-                    <p class="text-sm text-gray-600">إجمالي الإيرادات المستلمة</p>
-                    <p class="text-2xl font-bold text-gray-900">
-                        {{ number_format($revenues->where('status', 'received')->sum('amount'), 2) }} جنيه
-                    </p>
-                </div>
+    <!-- Month Filter -->
+    <div class="card rounded-2xl p-6 mb-6">
+        <form method="GET" action="{{ route('projects.revenues.index', $project) }}" class="flex items-center gap-4">
+            <div class="flex-1">
+                <label for="month" class="block text-sm font-medium text-gray-700 mb-2">
+                    فلترة بالشهر
+                </label>
+                <input
+                    type="month"
+                    id="month"
+                    name="month"
+                    value="{{ $selectedMonth ?? '' }}"
+                    class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                    onchange="this.form.submit()"
+                />
             </div>
-        </div>
+            @if($selectedMonth)
+            <div class="flex items-end">
+                <a href="{{ route('projects.revenues.index', $project) }}" class="btn-secondary text-white px-6 py-3 rounded-xl hover:no-underline">
+                    <i class="fas fa-times text-sm ml-2"></i>
+                    إلغاء الفلتر
+                </a>
+            </div>
+            @endif
+        </form>
+    </div>
 
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <div class="card rounded-2xl p-6">
             <div class="flex items-center">
                 <div class="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center ml-4">
                     <i class="fas fa-clock text-yellow-600 text-xl"></i>
                 </div>
                 <div>
-                    <p class="text-sm text-gray-600">إيرادات في الانتظار</p>
+                    <p class="text-sm text-gray-600">المتبقي</p>
                     <p class="text-2xl font-bold text-gray-900">
-                        {{ number_format($revenues->where('status', 'pending')->sum('amount'), 2) }} جنيه
+                        {{ number_format($revenues->sum(function($revenue) { return $revenue->calculated_remaining_amount; }), 2) }} جنيه
                     </p>
                 </div>
             </div>
@@ -62,13 +75,13 @@
 
         <div class="card rounded-2xl p-6">
             <div class="flex items-center">
-                <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center ml-4">
-                    <i class="fas fa-chart-line text-blue-600 text-xl"></i>
+                <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center ml-4">
+                    <i class="fas fa-check-circle text-green-600 text-xl"></i>
                 </div>
                 <div>
-                    <p class="text-sm text-gray-600">إجمالي الإيرادات</p>
+                    <p class="text-sm text-gray-600">تم تحصيله</p>
                     <p class="text-2xl font-bold text-gray-900">
-                        {{ number_format($revenues->sum('amount'), 2) }} جنيه
+                        {{ number_format($revenues->sum('paid_amount'), 2) }} جنيه
                     </p>
                 </div>
             </div>
@@ -83,6 +96,12 @@
                     <thead class="bg-gray-50">
                         <tr>
                             <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                الشهر
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                التاريخ
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 العنوان
                             </th>
                             <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -90,9 +109,6 @@
                             </th>
                             <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 المبلغ المتبقي
-                            </th>
-                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                التاريخ
                             </th>
                             <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 الحالة
@@ -109,6 +125,20 @@
                         @foreach($revenues as $revenue)
                             <tr>
                                 <td class="px-6 py-4 whitespace-nowrap">
+                                    @php
+                                        $months = [
+                                            1 => 'يناير', 2 => 'فبراير', 3 => 'مارس', 4 => 'أبريل',
+                                            5 => 'مايو', 6 => 'يونيو', 7 => 'يوليو', 8 => 'أغسطس',
+                                            9 => 'سبتمبر', 10 => 'أكتوبر', 11 => 'نوفمبر', 12 => 'ديسمبر'
+                                        ];
+                                        $month = $revenue->revenue_date->format('n');
+                                    @endphp
+                                    <div class="text-sm font-medium text-gray-900">{{ $months[$month] }}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500">{{ $revenue->revenue_date->format('Y-m-d') }}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm font-medium text-gray-900">{{ $revenue->title }}</div>
                                     @if($revenue->description)
                                         <div class="text-sm text-gray-500">{{ Str::limit($revenue->description, 50) }}</div>
@@ -119,9 +149,6 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm font-semibold text-orange-600">{{ $revenue->formatted_calculated_remaining_amount }}</div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-gray-500">{{ $revenue->revenue_date->format('Y-m-d') }}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <span class="status-badge status-{{ $revenue->status_color }}">
@@ -139,6 +166,12 @@
                                         <a href="{{ route('projects.revenues.edit', [$project, $revenue]) }}" class="text-yellow-600 hover:text-yellow-900 p-1" title="تعديل">
                                             <i class="fas fa-edit text-sm"></i>
                                         </a>
+                                        <form action="{{ route('projects.revenues.duplicate', [$project, $revenue]) }}" method="POST" class="inline">
+                                            @csrf
+                                            <button type="submit" class="text-purple-600 hover:text-purple-900 p-1" title="نسخ الإيراد" onclick="return confirm('هل تريد نسخ هذا الإيراد؟')">
+                                                <i class="fas fa-copy text-sm"></i>
+                                            </button>
+                                        </form>
                                         <button onclick="confirmDelete('{{ route('projects.revenues.destroy', [$project, $revenue]) }}', 'تأكيد حذف الإيراد', 'هل أنت متأكد من حذف الإيراد {{ $revenue->title }}؟')" class="text-red-600 hover:text-red-900 p-1" title="حذف">
                                             <i class="fas fa-trash text-sm"></i>
                                         </button>
@@ -193,7 +226,7 @@ $(document).ready(function() {
                 text: 'تصدير Excel',
                 className: 'btn btn-success',
                 exportOptions: {
-                    columns: [0, 1, 2, 3, 4, 5]
+                    columns: [0, 1, 2, 3, 4, 5, 6]
                 }
             },
             {
@@ -201,7 +234,7 @@ $(document).ready(function() {
                 text: 'تصدير PDF',
                 className: 'btn btn-danger',
                 exportOptions: {
-                    columns: [0, 1, 2, 3, 4, 5]
+                    columns: [0, 1, 2, 3, 4, 5, 6]
                 }
             },
             {
@@ -209,18 +242,18 @@ $(document).ready(function() {
                 text: 'طباعة',
                 className: 'btn btn-info',
                 exportOptions: {
-                    columns: [0, 1, 2, 3, 4, 5]
+                    columns: [0, 1, 2, 3, 4, 5, 6]
                 }
             }
         ],
         columnDefs: [
             {
-                targets: [6], // Actions column
+                targets: [7], // Actions column
                 orderable: false,
                 searchable: false
             }
         ],
-        order: [[2, 'desc']], // Sort by date descending
+        order: [[1, 'desc']], // Sort by date descending
         pageLength: 10,
         lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]]
     });

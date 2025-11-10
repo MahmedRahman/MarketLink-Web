@@ -2,7 +2,7 @@
 # deploy_pull.sh — simple: ssh -> cd -> git pull
 
 SSH_USER="test"
-SSH_HOST="192.168.0.103"
+SSH_HOST="192.168.0.100"
 REPO_DIR="/home/test/MarketLink-Web"
 SSH_OPTIONS="-o StrictHostKeyChecking=no -o ConnectTimeout=10"
 

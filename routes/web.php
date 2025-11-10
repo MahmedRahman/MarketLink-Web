@@ -49,9 +49,11 @@ Route::middleware(['auth', \App\Http\Middleware\CheckTrialStatus::class])->group
            
            // Project Revenues Routes
            Route::resource('projects.revenues', ProjectRevenueController::class);
+           Route::post('projects/{project}/revenues/{revenue}/duplicate', [ProjectRevenueController::class, 'duplicate'])->name('projects.revenues.duplicate');
            
            // Project Expenses Routes
            Route::resource('projects.expenses', ProjectExpenseController::class);
+           Route::post('projects/{project}/expenses/{expense}/duplicate', [ProjectExpenseController::class, 'duplicate'])->name('projects.expenses.duplicate');
            
            // Project Financial Report Routes
            Route::get('projects/{project}/financial-report', [ProjectController::class, 'financialReport'])->name('projects.financial-report');
@@ -77,6 +79,10 @@ Route::middleware(['auth', \App\Http\Middleware\CheckTrialStatus::class])->group
            Route::get('reports', [ReportsController::class, 'index'])->name('reports.index');
            Route::get('reports/export', [ReportsController::class, 'export'])->name('reports.export');
            Route::get('reports/employee-financial', [ReportsController::class, 'employeeFinancial'])->name('reports.employee-financial');
+           Route::get('reports/receivables', [ReportsController::class, 'receivables'])->name('reports.receivables');
+           Route::get('reports/profits', [ReportsController::class, 'profits'])->name('reports.profits');
+           Route::get('reports/total-employees-financial', [ReportsController::class, 'totalEmployeesFinancial'])->name('reports.total-employees-financial');
+           Route::get('reports/employees/{employee}/paid-expenses', [ReportsController::class, 'employeePaidExpenses'])->name('reports.employee-paid-expenses');
        });
 
 // Subscription Routes

@@ -335,4 +335,248 @@ class ReportsController extends Controller
             'dateTo'
         ));
     }
+
+    /**
+     * تقرير المديونية - عرض كل مشروع مع المبلغ المتبقي والمحصل
+     */
+    public function receivables(Request $request)
+    {
+        // Get the current user's organization ID
+        $organizationId = $request->user()->organization_id;
+
+        // Get selected month filter
+        $selectedMonth = $request->query('month');
+
+        // Get all projects with their revenues
+        $projects = Project::where('organization_id', $organizationId)
+            ->with(['client', 'revenues'])
+            ->get();
+
+        // Calculate totals for each project with month filter
+        $projectsData = $projects->map(function($project) use ($selectedMonth) {
+            $revenues = $project->revenues;
+            
+            // Filter revenues by month if selected
+            if ($selectedMonth) {
+                try {
+                    $monthDate = Carbon::createFromFormat('Y-m', $selectedMonth);
+                    $startOfMonth = $monthDate->copy()->startOfMonth();
+                    $endOfMonth = $monthDate->copy()->endOfMonth();
+                    
+                    $revenues = $revenues->filter(function($revenue) use ($startOfMonth, $endOfMonth) {
+                        return $revenue->revenue_date >= $startOfMonth && $revenue->revenue_date <= $endOfMonth;
+                    });
+                } catch (\Exception $e) {
+                    // If date parsing fails, use all revenues
+                }
+            }
+            
+            $totalPaid = $revenues->sum('paid_amount');
+            $totalRemaining = $revenues->sum(function($revenue) {
+                return $revenue->calculated_remaining_amount;
+            });
+            
+            return [
+                'project' => $project,
+                'total_paid' => $totalPaid,
+                'total_remaining' => $totalRemaining,
+            ];
+        })->filter(function($data) {
+            // Filter out projects with no revenues in the selected month
+            return $data['total_paid'] > 0 || $data['total_remaining'] > 0;
+        });
+
+        // Calculate grand totals
+        $grandTotalPaid = $projectsData->sum('total_paid');
+        $grandTotalRemaining = $projectsData->sum('total_remaining');
+
+        return view('reports.receivables', compact(
+            'projectsData',
+            'grandTotalPaid',
+            'grandTotalRemaining',
+            'selectedMonth'
+        ));
+    }
+
+    /**
+     * تقرير الأرباح - عرض كل مشروع مع الإيرادات المحصلة والمصروفات المدفوعة والربح
+     */
+    public function profits(Request $request)
+    {
+        // Get the current user's organization ID
+        $organizationId = $request->user()->organization_id;
+
+        // Get selected month filter
+        $selectedMonth = $request->query('month');
+
+        // Get all projects with their revenues and expenses
+        $projects = Project::where('organization_id', $organizationId)
+            ->with(['client', 'revenues', 'expenses'])
+            ->get();
+
+        // Calculate totals for each project with month filter
+        $projectsData = $projects->map(function($project) use ($selectedMonth) {
+            $revenues = $project->revenues;
+            $expenses = $project->expenses;
+            
+            // Filter revenues and expenses by month if selected
+            if ($selectedMonth) {
+                try {
+                    $monthDate = Carbon::createFromFormat('Y-m', $selectedMonth);
+                    $startOfMonth = $monthDate->copy()->startOfMonth();
+                    $endOfMonth = $monthDate->copy()->endOfMonth();
+                    
+                    $revenues = $revenues->filter(function($revenue) use ($startOfMonth, $endOfMonth) {
+                        return $revenue->revenue_date >= $startOfMonth && $revenue->revenue_date <= $endOfMonth;
+                    });
+                    
+                    $expenses = $expenses->filter(function($expense) use ($startOfMonth, $endOfMonth) {
+                        return $expense->expense_date >= $startOfMonth && $expense->expense_date <= $endOfMonth;
+                    });
+                } catch (\Exception $e) {
+                    // If date parsing fails, use all data
+                }
+            }
+            
+            $totalPaidRevenues = $revenues->sum('paid_amount');
+            $totalPaidExpenses = $expenses->where('status', 'paid')->sum('amount');
+            $profit = $totalPaidRevenues - $totalPaidExpenses;
+            
+            return [
+                'project' => $project,
+                'total_paid_revenues' => $totalPaidRevenues,
+                'total_paid_expenses' => $totalPaidExpenses,
+                'profit' => $profit,
+            ];
+        })->filter(function($data) {
+            // Filter out projects with no revenues or expenses in the selected month
+            return $data['total_paid_revenues'] > 0 || $data['total_paid_expenses'] > 0;
+        });
+
+        // Calculate grand totals
+        $grandTotalPaidRevenues = $projectsData->sum('total_paid_revenues');
+        $grandTotalPaidExpenses = $projectsData->sum('total_paid_expenses');
+        $grandTotalProfit = $projectsData->sum('profit');
+
+        return view('reports.profits', compact(
+            'projectsData',
+            'grandTotalPaidRevenues',
+            'grandTotalPaidExpenses',
+            'grandTotalProfit',
+            'selectedMonth'
+        ));
+    }
+
+    /**
+     * إجمالي التقرير المالي للموظفين - عرض كل موظف مع المبلغ المدفوع والمستحق
+     */
+    public function totalEmployeesFinancial(Request $request)
+    {
+        // Get the current user's organization ID
+        $organizationId = $request->user()->organization_id;
+
+        // Get filter parameters
+        $dateFrom = $request->query('date_from');
+        $dateTo = $request->query('date_to');
+
+        // Get all employees
+        $employees = Employee::where('organization_id', $organizationId)
+            ->where('status', 'active')
+            ->orderBy('name')
+            ->get();
+
+        // Calculate totals for each employee
+        $employeesData = $employees->map(function($employee) use ($organizationId, $dateFrom, $dateTo) {
+            $expensesQuery = \App\Models\ProjectExpense::where('employee_id', $employee->id)
+                ->whereHas('project', function($query) use ($organizationId) {
+                    $query->where('organization_id', $organizationId);
+                });
+
+            // Apply date filters
+            if ($dateFrom) {
+                $expensesQuery->where('expense_date', '>=', $dateFrom);
+            }
+
+            if ($dateTo) {
+                $expensesQuery->where('expense_date', '<=', $dateTo);
+            }
+
+            $expenses = $expensesQuery->get();
+
+            $totalPaid = $expenses->where('status', 'paid')->sum('amount');
+            $totalPending = $expenses->where('status', 'pending')->sum('amount');
+            
+            // Count projects the employee is assigned to
+            $projectsCount = $employee->projects()
+                ->where('organization_id', $organizationId)
+                ->count();
+            
+            return [
+                'employee' => $employee,
+                'total_paid' => $totalPaid,
+                'total_pending' => $totalPending,
+                'projects_count' => $projectsCount,
+            ];
+        })->filter(function($data) {
+            // Filter out employees with no expenses
+            return $data['total_paid'] > 0 || $data['total_pending'] > 0;
+        });
+
+        // Calculate grand totals
+        $grandTotalPaid = $employeesData->sum('total_paid');
+        $grandTotalPending = $employeesData->sum('total_pending');
+
+        return view('reports.total-employees-financial', compact(
+            'employeesData',
+            'grandTotalPaid',
+            'grandTotalPending',
+            'dateFrom',
+            'dateTo'
+        ));
+    }
+
+    /**
+     * عرض تفاصيل المصروفات المدفوعة للموظف
+     */
+    public function employeePaidExpenses(Request $request, Employee $employee)
+    {
+        // Verify employee belongs to the organization
+        $organizationId = $request->user()->organization_id;
+        
+        if ($employee->organization_id !== $organizationId) {
+            abort(403);
+        }
+
+        // Get filter parameters
+        $dateFrom = $request->query('date_from');
+        $dateTo = $request->query('date_to');
+
+        // Build query for paid expenses
+        $expensesQuery = \App\Models\ProjectExpense::where('employee_id', $employee->id)
+            ->where('status', 'paid')
+            ->with(['project'])
+            ->whereHas('project', function($query) use ($organizationId) {
+                $query->where('organization_id', $organizationId);
+            });
+
+        // Apply date filters
+        if ($dateFrom) {
+            $expensesQuery->where('expense_date', '>=', $dateFrom);
+        }
+
+        if ($dateTo) {
+            $expensesQuery->where('expense_date', '<=', $dateTo);
+        }
+
+        $expenses = $expensesQuery->orderBy('expense_date', 'desc')->get();
+        $totalPaid = $expenses->sum('amount');
+
+        return view('reports.employee-paid-expenses', compact(
+            'employee',
+            'expenses',
+            'totalPaid',
+            'dateFrom',
+            'dateTo'
+        ));
+    }
 }

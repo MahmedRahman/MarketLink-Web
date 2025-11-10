@@ -21,7 +21,11 @@ class ProjectController extends Controller
     public function index(Request $request)
     {
         $organizationId = $request->user()->organization_id;
-        $projects = Project::where('organization_id', $organizationId)->with('client')->latest()->paginate(10);
+        $projects = Project::where('organization_id', $organizationId)
+            ->with('client')
+            ->withCount(['revenues', 'expenses'])
+            ->latest()
+            ->paginate(10);
         return view('projects.index', compact('projects'));
     }
 

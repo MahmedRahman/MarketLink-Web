@@ -30,15 +30,42 @@
         </div>
     </div>
 
+    <!-- Month Filter -->
+    <div class="card rounded-2xl p-6 mb-6">
+        <form method="GET" action="{{ route('projects.expenses.index', $project) }}" class="flex items-center gap-4">
+            <div class="flex-1">
+                <label for="month" class="block text-sm font-medium text-gray-700 mb-2">
+                    فلترة بالشهر
+                </label>
+                <input
+                    type="month"
+                    id="month"
+                    name="month"
+                    value="{{ $selectedMonth ?? '' }}"
+                    class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                    onchange="this.form.submit()"
+                />
+            </div>
+            @if($selectedMonth)
+            <div class="flex items-end">
+                <a href="{{ route('projects.expenses.index', $project) }}" class="btn-secondary text-white px-6 py-3 rounded-xl hover:no-underline">
+                    <i class="fas fa-times text-sm ml-2"></i>
+                    إلغاء الفلتر
+                </a>
+            </div>
+            @endif
+        </form>
+    </div>
+
     <!-- Summary Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <div class="card rounded-2xl p-6">
             <div class="flex items-center">
                 <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center ml-4">
                     <i class="fas fa-check-circle text-green-600 text-xl"></i>
                 </div>
                 <div>
-                    <p class="text-sm text-gray-600">إجمالي المصروفات المدفوعة</p>
+                    <p class="text-sm text-gray-600">ما تم دفعه</p>
                     <p class="text-2xl font-bold text-gray-900">
                         {{ number_format($expenses->where('status', 'paid')->sum('amount'), 2) }} جنيه
                     </p>
@@ -52,23 +79,9 @@
                     <i class="fas fa-clock text-yellow-600 text-xl"></i>
                 </div>
                 <div>
-                    <p class="text-sm text-gray-600">مصروفات في الانتظار</p>
+                    <p class="text-sm text-gray-600">المبلغ المستحق</p>
                     <p class="text-2xl font-bold text-gray-900">
                         {{ number_format($expenses->where('status', 'pending')->sum('amount'), 2) }} جنيه
-                    </p>
-                </div>
-            </div>
-        </div>
-
-        <div class="card rounded-2xl p-6">
-            <div class="flex items-center">
-                <div class="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center ml-4">
-                    <i class="fas fa-chart-line text-red-600 text-xl"></i>
-                </div>
-                <div>
-                    <p class="text-sm text-gray-600">إجمالي المصروفات</p>
-                    <p class="text-2xl font-bold text-gray-900">
-                        {{ number_format($expenses->sum('amount'), 2) }} جنيه
                     </p>
                 </div>
             </div>
@@ -83,10 +96,10 @@
                     <thead class="bg-gray-50">
                         <tr>
                             <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                التاريخ
+                                الشهر
                             </th>
                             <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                الشهر
+                                التاريخ
                             </th>
                             <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 اسم الموظف
@@ -109,21 +122,18 @@
                         @foreach($expenses as $expense)
                             <tr>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-gray-500">{{ $expense->expense_date->format('Y-m-d') }}</div>
+                                    @php
+                                        $months = [
+                                            1 => 'يناير', 2 => 'فبراير', 3 => 'مارس', 4 => 'أبريل',
+                                            5 => 'مايو', 6 => 'يونيو', 7 => 'يوليو', 8 => 'أغسطس',
+                                            9 => 'سبتمبر', 10 => 'أكتوبر', 11 => 'نوفمبر', 12 => 'ديسمبر'
+                                        ];
+                                        $month = $expense->expense_date->format('n');
+                                    @endphp
+                                    <div class="text-sm font-medium text-gray-900">{{ $months[$month] }}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-gray-900">
-                                        @php
-                                            $months = [
-                                                1 => 'يناير', 2 => 'فبراير', 3 => 'مارس', 4 => 'أبريل',
-                                                5 => 'مايو', 6 => 'يونيو', 7 => 'يوليو', 8 => 'أغسطس',
-                                                9 => 'سبتمبر', 10 => 'أكتوبر', 11 => 'نوفمبر', 12 => 'ديسمبر'
-                                            ];
-                                            $month = $expense->expense_date->format('n');
-                                            $year = $expense->expense_date->format('Y');
-                                        @endphp
-                                        {{ $months[$month] }} {{ $year }}
-                                    </div>
+                                    <div class="text-sm text-gray-500">{{ $expense->expense_date->format('Y-m-d') }}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm text-gray-900">
@@ -152,6 +162,12 @@
                                         <a href="{{ route('projects.expenses.edit', [$project, $expense]) }}" class="text-yellow-600 hover:text-yellow-900 p-1" title="تعديل">
                                             <i class="fas fa-edit text-sm"></i>
                                         </a>
+                                        <form action="{{ route('projects.expenses.duplicate', [$project, $expense]) }}" method="POST" class="inline">
+                                            @csrf
+                                            <button type="submit" class="text-purple-600 hover:text-purple-900 p-1" title="نسخ المصروف" onclick="return confirm('هل تريد نسخ هذا المصروف؟')">
+                                                <i class="fas fa-copy text-sm"></i>
+                                            </button>
+                                        </form>
                                         <button onclick="confirmDelete('{{ route('projects.expenses.destroy', [$project, $expense]) }}', 'تأكيد حذف المصروف', 'هل أنت متأكد من حذف المصروف {{ $expense->title }}؟')" class="text-red-600 hover:text-red-900 p-1" title="حذف">
                                             <i class="fas fa-trash text-sm"></i>
                                         </button>
@@ -233,7 +249,7 @@ $(document).ready(function() {
                 searchable: false
             }
         ],
-        order: [[0, 'desc']], // Sort by date descending
+        order: [[1, 'desc']], // Sort by date descending
         pageLength: 10,
         lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]]
     });

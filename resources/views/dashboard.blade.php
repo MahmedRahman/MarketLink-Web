@@ -122,52 +122,6 @@
         </div>
     </div>
 
-    <!-- Financial Stats -->
-    @if($stats['total_revenues'] > 0 || $stats['total_expenses'] > 0)
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <!-- Total Revenues -->
-        <div class="card rounded-2xl p-6">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm font-medium text-gray-600">إجمالي الإيرادات</p>
-                    <p class="text-2xl font-bold text-green-600">{{ number_format($stats['total_revenues'], 2) }} جنيه</p>
-                </div>
-                <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                    <span class="material-icons text-green-600">trending_up</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Total Expenses -->
-        <div class="card rounded-2xl p-6">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm font-medium text-gray-600">إجمالي المصروفات</p>
-                    <p class="text-2xl font-bold text-red-600">{{ number_format($stats['total_expenses'], 2) }} جنيه</p>
-                </div>
-                <div class="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
-                    <span class="material-icons text-red-600">trending_down</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Net Profit -->
-        <div class="card rounded-2xl p-6">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm font-medium text-gray-600">صافي الربح</p>
-                    <p class="text-2xl font-bold {{ $stats['net_profit'] >= 0 ? 'text-blue-600' : 'text-red-600' }}">
-                        {{ number_format($stats['net_profit'], 2) }} جنيه
-                    </p>
-                </div>
-                <div class="w-12 h-12 {{ $stats['net_profit'] >= 0 ? 'bg-blue-100' : 'bg-red-100' }} rounded-xl flex items-center justify-center">
-                    <span class="material-icons {{ $stats['net_profit'] >= 0 ? 'text-blue-600' : 'text-red-600' }}">account_balance</span>
-                </div>
-            </div>
-        </div>
-    </div>
-    @endif
-
     <!-- Quick Actions -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Recent Clients -->

@@ -867,9 +867,33 @@
                     </a>
                     
                     <!-- Reports -->
-                    <a href="{{ route('reports.index') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('reports.*') ? 'active' : '' }}">
+                    <a href="{{ route('reports.index') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('reports.index') || request()->routeIs('reports.export') ? 'active' : '' }}">
                         <i class="fas fa-chart-line text-lg ml-3"></i>
                         <span class="font-medium">التقارير</span>
+                    </a>
+                    
+                    <!-- Receivables Report -->
+                    <a href="{{ route('reports.receivables') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('reports.receivables') ? 'active' : '' }}">
+                        <i class="fas fa-file-invoice-dollar text-lg ml-3"></i>
+                        <span class="font-medium">تقرير المديونية</span>
+                    </a>
+                    
+                    <!-- Profits Report -->
+                    <a href="{{ route('reports.profits') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('reports.profits') ? 'active' : '' }}">
+                        <i class="fas fa-chart-pie text-lg ml-3"></i>
+                        <span class="font-medium">تقرير الأرباح</span>
+                    </a>
+                    
+                    <!-- Employee Financial Report -->
+                    <a href="{{ route('reports.employee-financial') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('reports.employee-financial') ? 'active' : '' }}">
+                        <i class="fas fa-user-tie text-lg ml-3"></i>
+                        <span class="font-medium">التقرير المالي للموظفين</span>
+                    </a>
+                    
+                    <!-- Total Employees Financial Report -->
+                    <a href="{{ route('reports.total-employees-financial') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('reports.total-employees-financial') ? 'active' : '' }}">
+                        <i class="fas fa-users-cog text-lg ml-3"></i>
+                        <span class="font-medium">إجمالي التقرير المالي للموظفين</span>
                     </a>
                     
                     @if(Auth::check() && Auth::user()->is_admin)
