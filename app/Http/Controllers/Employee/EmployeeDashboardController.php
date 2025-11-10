@@ -45,6 +45,8 @@ class EmployeeDashboardController extends Controller
             'in_progress' => $allTasks->where('status', 'in_progress'),
             'review' => $allTasks->where('status', 'review'),
             'done' => $allTasks->where('status', 'done'),
+            'publish' => $allTasks->where('status', 'publish'),
+            'archived' => $allTasks->where('status', 'archived'),
         ];
 
         // إحصائيات
@@ -54,6 +56,8 @@ class EmployeeDashboardController extends Controller
             'in_progress' => $allTasks->where('status', 'in_progress')->count(),
             'review' => $allTasks->where('status', 'review')->count(),
             'done' => $allTasks->where('status', 'done')->count(),
+            'publish' => $allTasks->where('status', 'publish')->count(),
+            'archived' => $allTasks->where('status', 'archived')->count(),
             'assigned_only' => $assignedTasks->count(),
             'managed_projects_count' => count($managedProjectIds),
         ];

@@ -7,6 +7,21 @@
 @section('content')
 <div class="container mx-auto px-4">
     <div class="max-w-4xl mx-auto space-y-6">
+        <!-- Success/Error Messages at Top -->
+        @if (session('success'))
+            <div class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg flex items-center shadow-sm">
+                <span class="material-icons ml-2">check_circle</span>
+                <span class="font-semibold">{{ session('success') }}</span>
+            </div>
+        @endif
+
+        @if (session('error'))
+            <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg flex items-center shadow-sm">
+                <span class="material-icons ml-2">error</span>
+                <span class="font-semibold">{{ session('error') }}</span>
+            </div>
+        @endif
+
         <!-- Header -->
         <div class="card page-header rounded-2xl p-6">
             <div class="flex items-center justify-between">
@@ -28,6 +43,24 @@
 
         <!-- Form Card -->
         <div class="card rounded-2xl p-8">
+            @if (session('success'))
+                <div class="mb-6 bg-green-50 border border-green-200 rounded-xl p-4">
+                    <div class="flex items-center">
+                        <span class="material-icons text-green-500 ml-2">check_circle</span>
+                        <span class="text-green-800 font-semibold">{{ session('success') }}</span>
+                    </div>
+                </div>
+            @endif
+
+            @if (session('error'))
+                <div class="mb-6 bg-red-50 border border-red-200 rounded-xl p-4">
+                    <div class="flex items-center">
+                        <span class="material-icons text-red-500 ml-2">error</span>
+                        <span class="text-red-800 font-semibold">{{ session('error') }}</span>
+                    </div>
+                </div>
+            @endif
+
             @if ($errors->any())
                 <div class="mb-6 bg-red-50 border border-red-200 rounded-xl p-4">
                     <div class="flex items-center mb-2">
@@ -164,6 +197,8 @@
                             <option value="in_progress" {{ old('status', $task->status) == 'in_progress' ? 'selected' : '' }}>قيد التنفيذ</option>
                             <option value="review" {{ old('status', $task->status) == 'review' ? 'selected' : '' }}>قيد المراجعة</option>
                             <option value="done" {{ old('status', $task->status) == 'done' ? 'selected' : '' }}>مكتملة</option>
+                            <option value="publish" {{ old('status', $task->status) == 'publish' ? 'selected' : '' }}>نشر</option>
+                            <option value="archived" {{ old('status', $task->status) == 'archived' ? 'selected' : '' }}>أرشيف</option>
                         </select>
                         @error('status')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -506,6 +541,13 @@
                 if (!colorPicker.value) {
                     colorPicker.value = '#6366f1';
                 }
+                
+                // إظهار رسالة تحميل
+                const submitButton = form.querySelector('button[type="submit"]');
+                if (submitButton) {
+                    submitButton.disabled = true;
+                    submitButton.innerHTML = '<span class="material-icons text-sm ml-2 animate-spin">sync</span> جاري الحفظ...';
+                }
             });
         }
         } catch (error) {
@@ -826,6 +868,33 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+// إظهار رسائل النجاح والخطأ باستخدام SweetAlert إذا كان متاحاً
+@if (session('success'))
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: 'تم بنجاح!',
+                text: '{{ session('success') }}',
+                icon: 'success',
+                confirmButtonText: 'حسناً'
+            });
+        }
+    });
+@endif
+
+@if (session('error'))
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: 'خطأ!',
+                text: '{{ session('error') }}',
+                icon: 'error',
+                confirmButtonText: 'حسناً'
+            });
+        }
+    });
+@endif
 </script>
 @endsection
 

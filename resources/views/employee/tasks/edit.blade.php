@@ -104,6 +104,8 @@
                         <option value="in_progress" {{ old('status', $task->status) == 'in_progress' ? 'selected' : '' }}>قيد التنفيذ</option>
                         <option value="review" {{ old('status', $task->status) == 'review' ? 'selected' : '' }}>قيد المراجعة</option>
                         <option value="done" {{ old('status', $task->status) == 'done' ? 'selected' : '' }}>مكتملة</option>
+                        <option value="publish" {{ old('status', $task->status) == 'publish' ? 'selected' : '' }}>نشر</option>
+                        <option value="archived" {{ old('status', $task->status) == 'archived' ? 'selected' : '' }}>أرشيف</option>
                     </select>
                     @error('status')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>

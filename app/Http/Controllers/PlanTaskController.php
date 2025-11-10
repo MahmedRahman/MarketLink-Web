@@ -69,7 +69,7 @@ class PlanTaskController extends Controller
             'list_type' => 'nullable|in:tasks,employee,ready,publish',
             'due_date' => 'nullable|date',
             'color' => ['nullable', 'string', 'regex:/^#[A-Fa-f0-9]{6}$/'],
-            'status' => 'nullable|in:todo,in_progress,review,done',
+            'status' => 'nullable|in:todo,in_progress,review,done,publish,archived',
             'links' => 'nullable|array',
             'links.*.title' => 'nullable|string|max:255',
             'links.*.url' => 'nullable|url|max:500',
@@ -269,13 +269,17 @@ class PlanTaskController extends Controller
             }
 
             // التحقق من البيانات
-            $request->validate([
-                'title' => 'required|string|max:255',
+            // إذا كان الطلب JSON وتم إرسال status فقط، نسمح بالتحديث الجزئي
+            $isJsonRequest = $request->expectsJson() || $request->header('Content-Type') === 'application/json';
+            $isPartialUpdate = $isJsonRequest && $request->has('status') && !$request->has('title');
+            
+            $validationRules = [
+                'title' => $isPartialUpdate ? 'nullable|string|max:255' : 'required|string|max:255',
                 'description' => 'nullable|string',
                 'assigned_to' => 'nullable|exists:employees,id',
                 'due_date' => 'nullable|date',
                 'color' => ['nullable', 'string', 'regex:/^#[A-Fa-f0-9]{6}$/'],
-                'status' => 'required|in:todo,in_progress,review,done',
+                'status' => $isPartialUpdate ? 'required|in:todo,in_progress,review,done,publish,archived' : 'required|in:todo,in_progress,review,done,publish,archived',
                 'links' => 'nullable|array',
                 'links.*.title' => 'nullable|string|max:255',
                 'links.*.url' => 'nullable|url|max:500',
@@ -292,7 +296,9 @@ class PlanTaskController extends Controller
                     $fail('الهدف المحدد غير صحيح.');
                 }
             }],
-            ]);
+            ];
+            
+            $request->validate($validationRules);
 
             // التحقق من أن الهدف ينتمي لهذه الخطة
             if ($request->goal_id && $request->goal_id !== '') {
@@ -332,19 +338,98 @@ class PlanTaskController extends Controller
 
             // تحديث البيانات البسيطة فقط (بدون list_type أو order)
             $oldGoalId = $task->goal_id;
-            $task->update([
-                'title' => $request->title,
-                'description' => $request->description,
-                'assigned_to' => $request->assigned_to ?: null,
-                'due_date' => $request->due_date ?: null,
-                'status' => $request->status,
-                'color' => $request->color ?? '#6366f1',
-                'goal_id' => $request->goal_id && $request->goal_id !== '' ? $request->goal_id : null,
-                'task_data' => !empty($taskData) ? $taskData : null,
-            ]);
-
+            $oldStatus = $task->status;
+            $oldListType = $task->list_type;
+            $oldAssignedTo = $task->assigned_to;
+            
+            // تحديث list_type بناءً على الحالة الجديدة
+            $newListType = $task->list_type;
+            $newAssignedTo = $request->has('assigned_to') ? ($request->assigned_to ?: null) : $task->assigned_to;
+            
+            // إذا تغيرت الحالة إلى publish أو ready، يجب تحديث list_type
+            if ($request->has('status') && in_array($request->status, ['publish', 'ready'])) {
+                $newListType = $request->status;
+                // إذا كانت الحالة publish أو ready، يجب إزالة assigned_to
+                $newAssignedTo = null;
+            } elseif ($request->has('status') && $request->status === 'archived') {
+                // إذا كانت الحالة archived، نحتفظ بـ list_type الحالي
+                $newListType = $task->list_type;
+            } elseif ($request->has('assigned_to')) {
+                // إذا تم تغيير assigned_to فقط (بدون تغيير الحالة)، نحدد list_type بناءً على ذلك
+                if ($newAssignedTo) {
+                    $newListType = 'employee';
+                } else {
+                    $newListType = 'tasks';
+                }
+            }
+            
+            // إذا كان تحديث جزئي (مثل تحديث الحالة فقط)، نحدث الحقول المرسلة فقط
+            if ($isPartialUpdate) {
+                $updateData = [];
+                if ($request->has('status')) {
+                    $updateData['status'] = $request->status;
+                    // تحديث list_type إذا تغيرت الحالة
+                    if ($newListType !== $oldListType) {
+                        $updateData['list_type'] = $newListType;
+                    }
+                    // تحديث assigned_to إذا تغيرت الحالة إلى publish أو ready
+                    if (in_array($request->status, ['publish', 'ready'])) {
+                        $updateData['assigned_to'] = null;
+                    }
+                }
+                if ($request->has('title')) {
+                    $updateData['title'] = $request->title;
+                }
+                if ($request->has('description')) {
+                    $updateData['description'] = $request->description;
+                }
+                if ($request->has('assigned_to')) {
+                    $updateData['assigned_to'] = $newAssignedTo;
+                    if ($newListType !== $oldListType) {
+                        $updateData['list_type'] = $newListType;
+                    }
+                }
+                if ($request->has('due_date')) {
+                    $updateData['due_date'] = $request->due_date ?: null;
+                }
+                if ($request->has('color')) {
+                    $updateData['color'] = $request->color;
+                }
+                if ($request->has('goal_id')) {
+                    $updateData['goal_id'] = $request->goal_id && $request->goal_id !== '' ? $request->goal_id : null;
+                }
+                if ($request->has('links')) {
+                    $updateData['task_data'] = !empty($taskData) ? $taskData : null;
+                }
+                $task->update($updateData);
+            } else {
+                // تحديث كامل - نستخدم القيم المحسوبة
+                $updateData = [
+                    'title' => $request->title,
+                    'description' => $request->description,
+                    'assigned_to' => $newAssignedTo,
+                    'due_date' => $request->due_date ?: null,
+                    'status' => $request->status,
+                    'list_type' => $newListType,
+                    'color' => $request->color ?? '#6366f1',
+                    'goal_id' => $request->goal_id && $request->goal_id !== '' ? $request->goal_id : null,
+                    'task_data' => !empty($taskData) ? $taskData : null,
+                ];
+                $task->update($updateData);
+            }
+            
+            // تحديث achieved_value للهدف إذا تغيرت الحالة أو list_type
+            if ($task->goal_id) {
+                if ($oldStatus !== $request->status || $oldListType !== $newListType) {
+                    if (in_array($request->status, ['ready', 'publish']) || in_array($newListType, ['ready', 'publish']) ||
+                        in_array($oldStatus, ['ready', 'publish']) || in_array($oldListType, ['ready', 'publish'])) {
+                        $this->updateGoalAchievedValue($task->goal_id);
+                    }
+                }
+            }
+            
             // تحديث achieved_value للأهداف القديمة والجديدة
-            if ($oldGoalId) {
+            if ($oldGoalId && $oldGoalId != $task->goal_id) {
                 $this->updateGoalAchievedValue($oldGoalId);
             }
             if ($task->goal_id && $task->goal_id != $oldGoalId) {
@@ -398,6 +483,13 @@ class PlanTaskController extends Controller
                 ->withErrors($e->validator)
                 ->withInput();
         } catch (\Exception $e) {
+            \Log::error('Error updating task: ' . $e->getMessage(), [
+                'task_id' => $taskId,
+                'monthly_plan_id' => $monthlyPlan->id,
+                'request_data' => $request->all(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
             if ($request->expectsJson() || $request->header('Content-Type') === 'application/json') {
                 return response()->json([
                     'success' => false,
@@ -551,6 +643,94 @@ class PlanTaskController extends Controller
             return response()->json([
                 'success' => false,
                 'error' => 'حدث خطأ أثناء نقل المهمة: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Quick assign employee to task
+     */
+    public function quickAssign(Request $request, MonthlyPlan $monthlyPlan, $taskId): JsonResponse
+    {
+        // Resolve PlanTask manually
+        $task = PlanTask::findOrFail($taskId);
+        
+        if ($monthlyPlan->organization_id !== $request->user()->organization_id) {
+            return response()->json(['error' => 'غير مصرح'], 403);
+        }
+
+        if ($task->monthly_plan_id !== $monthlyPlan->id) {
+            return response()->json(['error' => 'المهمة غير مرتبطة بهذه الخطة'], 404);
+        }
+
+        $request->validate([
+            'assigned_to' => 'nullable|exists:employees,id',
+            'list_type' => 'required|in:tasks,employee,ready,publish',
+        ]);
+
+        try {
+            $oldListType = $task->list_type;
+            $oldAssignedTo = $task->assigned_to;
+            $oldOrder = $task->order;
+
+            $newListType = $request->list_type;
+            $newAssignedTo = $request->assigned_to;
+
+            // تحديث المهمة
+            $task->list_type = $newListType;
+            $task->assigned_to = $newAssignedTo ?: null;
+            
+            // إذا تم نقل المهمة من قائمة إلى أخرى، نحتاج إلى تحديث الترتيب
+            if ($oldListType !== $newListType || $oldAssignedTo != $newAssignedTo) {
+                // تحديث ترتيب المهام في القائمة القديمة
+                $oldListQuery = PlanTask::where('monthly_plan_id', $monthlyPlan->id)
+                    ->where('list_type', $oldListType);
+                
+                if ($oldListType === 'employee' && $oldAssignedTo) {
+                    $oldListQuery->where('assigned_to', $oldAssignedTo);
+                } elseif (in_array($oldListType, ['tasks', 'ready', 'publish'])) {
+                    $oldListQuery->whereNull('assigned_to');
+                }
+                
+                $oldListQuery->where('order', '>', $oldOrder)->decrement('order');
+
+                // إضافة المهمة في نهاية القائمة الجديدة
+                $newListQuery = PlanTask::where('monthly_plan_id', $monthlyPlan->id)
+                    ->where('list_type', $newListType);
+                
+                if ($newListType === 'employee' && $newAssignedTo) {
+                    $newListQuery->where('assigned_to', $newAssignedTo);
+                } elseif (in_array($newListType, ['tasks', 'ready', 'publish'])) {
+                    $newListQuery->whereNull('assigned_to');
+                }
+                
+                $maxOrder = $newListQuery->max('order') ?? 0;
+                $task->order = $maxOrder + 1;
+            }
+
+            $task->save();
+
+            // إرسال webhook إذا تم تعيين المهمة لموظف
+            if ($newListType === 'employee' && $newAssignedTo) {
+                if ($oldListType !== 'employee' || $oldAssignedTo != $newAssignedTo) {
+                    $task->load('assignedEmployee:id,name,phone', 'monthlyPlan.project');
+                    $this->sendTaskWebhook($task);
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'تم تحديث الموظف المسؤول بنجاح',
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error in quick assign: ' . $e->getMessage(), [
+                'task_id' => $taskId,
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'success' => false,
+                'error' => 'حدث خطأ أثناء تحديث الموظف: ' . $e->getMessage(),
             ], 500);
         }
     }

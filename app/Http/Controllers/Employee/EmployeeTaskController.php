@@ -118,7 +118,7 @@ class EmployeeTaskController extends Controller
         if ($isManager) {
             $request->validate([
                 'title' => 'sometimes|required|string|max:255',
-                'status' => 'required|in:todo,in_progress,review,done',
+                'status' => 'required|in:todo,in_progress,review,done,publish,archived',
                 'description' => 'nullable|string',
                 'assigned_to' => 'nullable|exists:employees,id',
                 'due_date' => 'nullable|date',
@@ -179,7 +179,7 @@ class EmployeeTaskController extends Controller
         } else {
             // الموظف العادي يمكنه تعديل الحالة والوصف والروابط والمرفقات
             $request->validate([
-                'status' => 'required|in:todo,in_progress,review,done',
+                'status' => 'required|in:todo,in_progress,review,done,publish,archived',
                 'description' => 'nullable|string',
                 'links' => 'nullable|array',
                 'links.*.title' => 'nullable|string|max:255',

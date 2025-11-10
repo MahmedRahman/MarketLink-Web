@@ -51,19 +51,16 @@
             </div>
         </div>
 
-        <!-- Trello Board Section -->
-        <div id="kanban-section" class="card rounded-2xl p-6">
+        <!-- Tasks Section -->
+        <div id="tasks-section" class="card rounded-2xl p-6">
             <div class="flex items-center justify-between mb-6">
                 <div class="flex items-center">
                     <div class="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center icon-spacing ml-3">
-                        <span class="material-icons text-indigo-600">view_kanban</span>
+                        <span class="material-icons text-indigo-600">view_module</span>
                     </div>
                     <h3 class="text-lg font-semibold text-gray-800">متابعة الخطة</h3>
                 </div>
                 <div class="flex items-center space-x-2 rtl:space-x-reverse">
-                    <button id="toggle-fullscreen-btn" onclick="toggleFullscreen()" class="flex items-center px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors" title="تكبير/تصغير">
-                        <span class="material-icons text-lg" id="fullscreen-icon">fullscreen</span>
-                    </button>
                     <a href="{{ route('monthly-plans.tasks.create', $monthlyPlan) }}" class="flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
                         <span class="material-icons text-sm ml-2">add_task</span>
                         إضافة مهمة جديدة
@@ -75,73 +72,153 @@
                 </div>
             </div>
 
-            <!-- Board -->
-            <div id="kanban-board" class="flex gap-4 overflow-x-auto pb-4 kanban-board-container" style="min-height: 500px;">
-                <!-- Tasks List -->
-                <div class="flex-shrink-0 w-80 bg-gray-50 rounded-xl p-4" data-list-type="tasks" data-employee-id="">
-                    <div class="flex items-center justify-between mb-4">
-                        <h4 class="font-semibold text-gray-800">مهام</h4>
-                        <span class="bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded-full tasks-count">
-                            {{ $tasksByList->get('tasks', collect())->count() }}
-                        </span>
-                    </div>
-                    <div class="sortable-list min-h-[400px] space-y-2" id="tasks-list" data-list-type="tasks" data-employee-id="">
-                        @foreach($tasksByList->get('tasks', collect())->sortBy('order') as $task)
-                            @include('monthly-plans.task-card', ['task' => $task])
-                        @endforeach
-                    </div>
-                </div>
-
-                <!-- Employee Lists -->
-                @foreach($monthlyPlan->employees as $employee)
-                    @php
-                        $employeeTasksKey = 'employee_' . $employee->id;
-                        $employeeTasks = $tasksByList->get($employeeTasksKey, collect())->sortBy('order');
-                    @endphp
-                    <div class="flex-shrink-0 w-80 bg-gray-50 rounded-xl p-4" data-list-type="employee" data-employee-id="{{ $employee->id }}">
-                        <div class="flex items-center justify-between mb-4">
-                            <h4 class="font-semibold text-gray-800">{{ $employee->name }}</h4>
-                            <span class="bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded-full employee-tasks-count employee-tasks-count-{{ $employee->id }}" data-employee-id="{{ $employee->id }}">
-                                {{ $employeeTasks->count() }}
-                            </span>
+            <!-- Tasks Rows -->
+            <div class="space-y-6">
+                <!-- General Tasks Row -->
+                @php
+                    $generalTasks = $tasksByList->get('tasks', collect())->where('status', '!=', 'archived')->where('status', '!=', 'publish')->sortBy('order');
+                    $readyTasks = $tasksByList->get('ready', collect())->where('status', '!=', 'archived')->where('status', '!=', 'publish')->sortBy('order');
+                    $allGeneralTasks = $generalTasks->merge($readyTasks);
+                @endphp
+                
+                @if($allGeneralTasks->count() > 0)
+                    <div class="bg-gray-50 rounded-xl p-4">
+                        <!-- General Tasks Header -->
+                        <div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-200">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-gradient-to-r from-gray-400 to-gray-600 rounded-full flex items-center justify-center">
+                                    <span class="material-icons text-white text-sm">folder</span>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-gray-800 text-lg">مهام عامة</h4>
+                                    <p class="text-xs text-gray-500">مهام غير مخصصة لموظف محدد</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="px-3 py-1 text-sm rounded-full bg-gray-100 text-gray-700">
+                                    {{ $allGeneralTasks->count() }} مهمة
+                                </span>
+                            </div>
                         </div>
-                        <div class="sortable-list min-h-[400px] space-y-2 employee-list employee-list-{{ $employee->id }}" data-list-type="employee" data-employee-id="{{ $employee->id }}">
-                            @foreach($employeeTasks as $task)
+                        
+                        <!-- General Tasks Grid -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                            @foreach($allGeneralTasks as $task)
                                 @include('monthly-plans.task-card', ['task' => $task])
                             @endforeach
                         </div>
                     </div>
+                @endif
+
+                <!-- Publish Tasks Row -->
+                @php
+                    $publishTasks = $monthlyPlan->tasks()->where('status', 'publish')->orderBy('order')->get();
+                @endphp
+                
+                @if($publishTasks->count() > 0)
+                    <div class="bg-green-50 rounded-xl p-4">
+                        <!-- Publish Tasks Header -->
+                        <div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-200">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-gradient-to-r from-green-400 to-green-600 rounded-full flex items-center justify-center">
+                                    <span class="material-icons text-white text-sm">publish</span>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-gray-800 text-lg">نشر</h4>
+                                    <p class="text-xs text-gray-500">المهام المنشورة</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="px-3 py-1 text-sm rounded-full bg-green-100 text-green-700">
+                                    {{ $publishTasks->count() }} مهمة
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <!-- Publish Tasks Grid -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                            @foreach($publishTasks as $task)
+                                @include('monthly-plans.task-card', ['task' => $task])
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+
+                <!-- Archived Tasks Row -->
+                @php
+                    $archivedTasks = $monthlyPlan->tasks()->where('status', 'archived')->orderBy('order')->get();
+                @endphp
+                
+                @if($archivedTasks->count() > 0)
+                    <div class="bg-slate-50 rounded-xl p-4">
+                        <!-- Archived Tasks Header -->
+                        <div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-200">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-gradient-to-r from-slate-400 to-slate-600 rounded-full flex items-center justify-center">
+                                    <span class="material-icons text-white text-sm">archive</span>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-gray-800 text-lg">أرشيف</h4>
+                                    <p class="text-xs text-gray-500">المهام المؤرشفة</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="px-3 py-1 text-sm rounded-full bg-slate-100 text-slate-700">
+                                    {{ $archivedTasks->count() }} مهمة
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <!-- Archived Tasks Grid -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                            @foreach($archivedTasks as $task)
+                                @include('monthly-plans.task-card', ['task' => $task])
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+
+                <!-- Employees Rows -->
+                @foreach($monthlyPlan->employees as $employee)
+                    @php
+                        $employeeTasksKey = 'employee_' . $employee->id;
+                        // عرض جميع مهام الموظف بما فيها المنشورة (لكن بدون المؤرشفة)
+                        $employeeTasks = $tasksByList->get($employeeTasksKey, collect())->where('status', '!=', 'archived')->sortBy('order');
+                    @endphp
+                    <div class="bg-gray-50 rounded-xl p-4">
+                        <!-- Employee Header -->
+                        <div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-200">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-gradient-to-r from-green-400 to-green-600 rounded-full flex items-center justify-center">
+                                    <span class="material-icons text-white text-sm">person</span>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-gray-800 text-lg">{{ $employee->name }}</h4>
+                                    <p class="text-xs text-gray-500">{{ $employee->email ?? '' }}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="px-3 py-1 text-sm rounded-full bg-green-100 text-green-700">
+                                    {{ $employeeTasks->count() }} مهمة
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <!-- Employee Tasks Grid -->
+                        @if($employeeTasks->count() > 0)
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                                @foreach($employeeTasks as $task)
+                                    @include('monthly-plans.task-card', ['task' => $task])
+                                @endforeach
+                            </div>
+                        @else
+                            <div class="text-center py-8 text-gray-400">
+                                <span class="material-icons text-4xl mb-2">task_alt</span>
+                                <p class="text-sm">لا توجد مهام لهذا الموظف</p>
+                            </div>
+                        @endif
+                    </div>
                 @endforeach
-
-                <!-- Ready List -->
-                <div class="flex-shrink-0 w-80 bg-orange-50 rounded-xl p-4" data-list-type="ready" data-employee-id="">
-                    <div class="flex items-center justify-between mb-4">
-                        <h4 class="font-semibold text-gray-800">Ready</h4>
-                        <span class="bg-orange-200 text-orange-700 text-xs px-2 py-1 rounded-full ready-count">
-                            {{ $tasksByList->get('ready', collect())->count() }}
-                        </span>
-                    </div>
-                    <div class="sortable-list min-h-[400px] space-y-2" id="ready-list" data-list-type="ready" data-employee-id="">
-                        @foreach($tasksByList->get('ready', collect())->sortBy('order') as $task)
-                            @include('monthly-plans.task-card', ['task' => $task])
-                        @endforeach
-                    </div>
-                </div>
-
-                <!-- Publish List -->
-                <div class="flex-shrink-0 w-80 bg-green-50 rounded-xl p-4" data-list-type="publish" data-employee-id="">
-                    <div class="flex items-center justify-between mb-4">
-                        <h4 class="font-semibold text-gray-800">Publish</h4>
-                        <span class="bg-green-200 text-green-700 text-xs px-2 py-1 rounded-full publish-count">
-                            {{ $tasksByList->get('publish', collect())->count() }}
-                        </span>
-                    </div>
-                    <div class="sortable-list min-h-[400px] space-y-2" id="publish-list" data-list-type="publish" data-employee-id="">
-                        @foreach($tasksByList->get('publish', collect())->sortBy('order') as $task)
-                            @include('monthly-plans.task-card', ['task' => $task])
-                        @endforeach
-                    </div>
-                </div>
             </div>
         </div>
     </div>
@@ -276,6 +353,54 @@
     </div>
 </div>
 
+<!-- Quick Assign Employee Modal -->
+<div id="quick-assign-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+    <div class="bg-white rounded-2xl p-6 max-w-md w-full mx-4">
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center">
+                <div class="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center ml-3">
+                    <span class="material-icons text-purple-600">person_add</span>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800">تعديل الموظف المسؤول</h3>
+            </div>
+            <button onclick="hideQuickAssignModal()" class="text-gray-400 hover:text-gray-600">
+                <span class="material-icons">close</span>
+            </button>
+        </div>
+        <form id="quick-assign-form" class="space-y-4">
+            @csrf
+            <input type="hidden" id="quick-assign-task-id">
+            <input type="hidden" id="quick-assign-task-status">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">اختر الموظف</label>
+                <select id="quick-assign-employee" name="assigned_to"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary">
+                    <option value="">مهام عامة (بدون موظف)</option>
+                    @foreach($monthlyPlan->employees as $employee)
+                        <option value="{{ $employee->id }}">{{ $employee->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="flex justify-end space-x-3 rtl:space-x-reverse">
+                <button type="button" id="publish-task-btn" onclick="publishTask()" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg flex items-center gap-2 hidden">
+                    <span class="material-icons text-sm">publish</span>
+                    نشر
+                </button>
+                <button type="button" onclick="archiveTask()" class="px-4 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg flex items-center gap-2">
+                    <span class="material-icons text-sm">archive</span>
+                    أرشيف
+                </button>
+                <button type="button" onclick="hideQuickAssignModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                    إلغاء
+                </button>
+                <button type="submit" class="btn-primary text-white px-4 py-2 rounded-lg">
+                    حفظ
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- Edit Task Modal -->
 <div id="edit-task-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
     <div class="bg-white rounded-2xl p-6 max-w-md w-full mx-4">
@@ -332,6 +457,7 @@
                     <option value="in_progress">قيد التنفيذ</option>
                     <option value="review">قيد المراجعة</option>
                     <option value="done">مكتملة</option>
+                    <option value="archived">أرشيف</option>
                 </select>
             </div>
             <div class="flex justify-end space-x-3 rtl:space-x-reverse">
@@ -853,6 +979,173 @@ document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
         hideGoalsModal();
         hideEmployeesModal();
+        hideQuickAssignModal();
+    }
+});
+
+// Quick Assign Employee Modal Functions
+let currentQuickAssignTaskId = null;
+let currentQuickAssignTaskStatus = null;
+
+function showQuickAssignModal(taskId, currentAssignedTo, currentStatus) {
+    currentQuickAssignTaskId = taskId;
+    currentQuickAssignTaskStatus = currentStatus || null;
+    document.getElementById('quick-assign-task-id').value = taskId;
+    document.getElementById('quick-assign-task-status').value = currentStatus || '';
+    document.getElementById('quick-assign-employee').value = currentAssignedTo || '';
+    
+    // إظهار زر "نشر" فقط إذا كانت الحالة "archived"
+    const publishBtn = document.getElementById('publish-task-btn');
+    if (currentStatus === 'archived') {
+        publishBtn.classList.remove('hidden');
+    } else {
+        publishBtn.classList.add('hidden');
+    }
+    
+    document.getElementById('quick-assign-modal').classList.remove('hidden');
+}
+
+function hideQuickAssignModal() {
+    document.getElementById('quick-assign-modal').classList.add('hidden');
+    currentQuickAssignTaskId = null;
+    currentQuickAssignTaskStatus = null;
+    document.getElementById('quick-assign-form').reset();
+    document.getElementById('publish-task-btn').classList.add('hidden');
+}
+
+// Archive Task Function
+function archiveTask() {
+    if (!currentQuickAssignTaskId) return;
+    
+    if (!confirm('هل أنت متأكد من نقل هذه المهمة إلى الأرشيف؟')) {
+        return;
+    }
+
+    // Update task status to archived and remove assigned employee
+    fetch(`/monthly-plans/${monthlyPlanId}/tasks/${currentQuickAssignTaskId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+            status: 'archived',
+            assigned_to: null,
+            _method: 'PUT'
+        })
+    })
+    .then(response => {
+        return response.json().then(data => {
+            if (!response.ok) {
+                throw new Error(data.error || data.message || 'حدث خطأ أثناء نقل المهمة إلى الأرشيف');
+            }
+            return data;
+        });
+    })
+    .then(data => {
+        if (data.success) {
+            hideQuickAssignModal();
+            location.reload();
+        } else {
+            alert(data.error || 'حدث خطأ أثناء نقل المهمة إلى الأرشيف');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert(error.message || 'حدث خطأ أثناء نقل المهمة إلى الأرشيف');
+    });
+}
+
+// Publish Task Function (from archive)
+function publishTask() {
+    if (!currentQuickAssignTaskId) return;
+    
+    if (!confirm('هل أنت متأكد من نقل هذه المهمة من الأرشيف إلى النشر؟')) {
+        return;
+    }
+
+    // Update task status to publish
+    fetch(`/monthly-plans/${monthlyPlanId}/tasks/${currentQuickAssignTaskId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+            status: 'publish',
+            _method: 'PUT'
+        })
+    })
+    .then(response => {
+        return response.json().then(data => {
+            if (!response.ok) {
+                throw new Error(data.error || data.message || 'حدث خطأ أثناء نقل المهمة إلى النشر');
+            }
+            return data;
+        });
+    })
+    .then(data => {
+        if (data.success) {
+            hideQuickAssignModal();
+            location.reload();
+        } else {
+            alert(data.error || 'حدث خطأ أثناء نقل المهمة إلى النشر');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert(error.message || 'حدث خطأ أثناء نقل المهمة إلى النشر');
+    });
+}
+
+// Quick Assign Form Submit
+document.getElementById('quick-assign-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    if (!currentQuickAssignTaskId) return;
+
+    const assignedTo = document.getElementById('quick-assign-employee').value || null;
+    const listType = assignedTo ? 'employee' : 'tasks';
+
+    fetch(`/monthly-plans/${monthlyPlanId}/tasks/${currentQuickAssignTaskId}/quick-assign`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+            assigned_to: assignedTo,
+            list_type: listType
+        })
+    })
+    .then(response => {
+        return response.json().then(data => {
+            if (!response.ok) {
+                throw new Error(data.error || data.message || 'حدث خطأ أثناء تحديث الموظف');
+            }
+            return data;
+        });
+    })
+    .then(data => {
+        if (data.success) {
+            hideQuickAssignModal();
+            location.reload();
+        } else {
+            alert(data.error || 'حدث خطأ أثناء تحديث الموظف');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert(error.message || 'حدث خطأ أثناء تحديث الموظف');
+    });
+});
+
+// Close quick assign modal when clicking outside
+document.getElementById('quick-assign-modal')?.addEventListener('click', function(e) {
+    if (e.target === this) {
+        hideQuickAssignModal();
     }
 });
 </script>

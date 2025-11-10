@@ -62,6 +62,8 @@ class PlanTask extends Model
             'in_progress' => 'قيد التنفيذ',
             'review' => 'قيد المراجعة',
             'done' => 'مكتملة',
+            'publish' => 'نشر',
+            'archived' => 'أرشيف',
             default => 'غير محدد'
         };
     }
@@ -73,6 +75,30 @@ class PlanTask extends Model
             'in_progress' => 'blue',
             'review' => 'yellow',
             'done' => 'green',
+            'publish' => 'green',
+            'archived' => 'slate',
+            default => 'gray'
+        };
+    }
+
+    public function getListTypeBadgeAttribute(): string
+    {
+        return match($this->list_type) {
+            'tasks' => 'مهام',
+            'employee' => 'موظف',
+            'ready' => 'جاهز',
+            'publish' => 'نشر',
+            default => 'غير محدد'
+        };
+    }
+
+    public function getListTypeColorAttribute(): string
+    {
+        return match($this->list_type) {
+            'tasks' => 'gray',
+            'employee' => 'blue',
+            'ready' => 'yellow',
+            'publish' => 'green',
             default => 'gray'
         };
     }

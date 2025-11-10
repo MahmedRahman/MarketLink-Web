@@ -70,6 +70,7 @@ Route::middleware(['auth', \App\Http\Middleware\CheckTrialStatus::class])->group
            Route::put('monthly-plans/{monthlyPlan}/tasks/{task}', [\App\Http\Controllers\PlanTaskController::class, 'update'])->name('monthly-plans.tasks.update');
            Route::post('monthly-plans/{monthlyPlan}/tasks/{task}/comments', [\App\Http\Controllers\PlanTaskController::class, 'storeComment'])->name('monthly-plans.tasks.comments.store');
            Route::post('monthly-plans/{monthlyPlan}/tasks/{task}/move', [\App\Http\Controllers\PlanTaskController::class, 'move'])->name('monthly-plans.tasks.move');
+           Route::post('monthly-plans/{monthlyPlan}/tasks/{task}/quick-assign', [\App\Http\Controllers\PlanTaskController::class, 'quickAssign'])->name('monthly-plans.tasks.quick-assign');
            Route::delete('monthly-plans/{monthlyPlan}/tasks/{task}', [\App\Http\Controllers\PlanTaskController::class, 'destroy'])->name('monthly-plans.tasks.destroy');
            Route::get('monthly-plans/{monthlyPlan}/tasks/{task}/files/{file}/view', [\App\Http\Controllers\PlanTaskController::class, 'viewFile'])->name('monthly-plans.tasks.files.view');
            Route::get('monthly-plans/{monthlyPlan}/tasks/{task}/files/{file}/download', [\App\Http\Controllers\PlanTaskController::class, 'downloadFile'])->name('monthly-plans.tasks.files.download');

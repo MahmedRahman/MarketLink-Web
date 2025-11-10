@@ -166,7 +166,7 @@ class TasksController extends Controller
         }
 
         // التحقق من صحة الحالة
-        $allowedStatuses = ['todo', 'in_progress', 'review', 'done'];
+        $allowedStatuses = ['todo', 'in_progress', 'review', 'done', 'publish', 'archived'];
         if (!in_array($status, $allowedStatuses)) {
             return response()->json([
                 'success' => false,
