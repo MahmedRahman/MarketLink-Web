@@ -17,7 +17,8 @@ class Client extends Model
         'address',
         'notes',
         'status',
-        'organization_id'
+        'organization_id',
+        'created_by'
     ];
 
     protected $casts = [
@@ -53,5 +54,10 @@ class Client extends Model
     public function organization(): BelongsTo
     {
         return $this->belongsTo(Organization::class);
+    }
+
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 }

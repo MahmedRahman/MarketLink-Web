@@ -65,6 +65,7 @@ class PlanTaskController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'idea' => 'nullable|string',
             'assigned_to' => 'nullable|exists:employees,id',
             'list_type' => 'nullable|in:tasks,employee,ready,publish',
             'due_date' => 'nullable|date',
@@ -136,6 +137,7 @@ class PlanTaskController extends Controller
             'assigned_to' => $request->assigned_to,
             'title' => $request->title,
             'description' => $request->description,
+            'idea' => $request->idea,
             'status' => $request->status ?? 'todo',
             'list_type' => $listType,
             'order' => $maxOrder + 1,
@@ -276,6 +278,7 @@ class PlanTaskController extends Controller
             $validationRules = [
                 'title' => $isPartialUpdate ? 'nullable|string|max:255' : 'required|string|max:255',
                 'description' => 'nullable|string',
+                'idea' => 'nullable|string',
                 'assigned_to' => 'nullable|exists:employees,id',
                 'due_date' => 'nullable|date',
                 'color' => ['nullable', 'string', 'regex:/^#[A-Fa-f0-9]{6}$/'],
@@ -383,6 +386,9 @@ class PlanTaskController extends Controller
                 if ($request->has('description')) {
                     $updateData['description'] = $request->description;
                 }
+                if ($request->has('idea')) {
+                    $updateData['idea'] = $request->idea;
+                }
                 if ($request->has('assigned_to')) {
                     $updateData['assigned_to'] = $newAssignedTo;
                     if ($newListType !== $oldListType) {
@@ -407,6 +413,7 @@ class PlanTaskController extends Controller
                 $updateData = [
                     'title' => $request->title,
                     'description' => $request->description,
+                    'idea' => $request->idea,
                     'assigned_to' => $newAssignedTo,
                     'due_date' => $request->due_date ?: null,
                     'status' => $request->status,
@@ -1031,6 +1038,121 @@ class PlanTaskController extends Controller
             }
             return redirect()->back()
                 ->with('error', 'حدث خطأ أثناء حذف الملف: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Generate description from idea using webhook
+     */
+    public function generateDescription(Request $request): JsonResponse
+    {
+        try {
+            $request->validate([
+                'idea' => 'required|string',
+            ]);
+
+            $idea = $request->input('idea');
+
+            // Call the webhook
+            $response = Http::timeout(120)
+                ->withHeaders([
+                    'Content-Type' => 'application/json',
+                    'Accept' => 'application/json',
+                ])
+                ->post('https://n8n.marketlink.app/webhook/ef5551bb-1201-4b39-8731-8976da6ea273', [
+                    'idea' => $idea
+                ]);
+
+            if (!$response->successful()) {
+                Log::error('Webhook error', [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+                
+                return response()->json([
+                    'success' => false,
+                    'error' => 'فشل في إنشاء الوصف. يرجى المحاولة مرة أخرى.',
+                ], $response->status());
+            }
+
+            // Get response body as text first
+            $responseBody = $response->body();
+            Log::info('Webhook response', [
+                'status' => $response->status(),
+                'content_type' => $response->header('Content-Type'),
+                'body_length' => strlen($responseBody),
+            ]);
+            
+            // Try to parse as JSON
+            $data = null;
+            $contentType = $response->header('Content-Type', '');
+            
+            if (str_contains($contentType, 'application/json')) {
+                $data = $response->json();
+            } else {
+                // Try to parse as JSON anyway
+                $jsonData = json_decode($responseBody, true);
+                if (json_last_error() === JSON_ERROR_NONE) {
+                    $data = $jsonData;
+                } else {
+                    // If not JSON, treat as plain text
+                    $data = $responseBody;
+                }
+            }
+            
+            // Extract description from response
+            $description = '';
+            if (is_string($data)) {
+                // If it's a string, use it directly
+                $description = $data;
+            } elseif (is_array($data)) {
+                // Try common field names
+                if (isset($data['description'])) {
+                    $description = $data['description'];
+                } elseif (isset($data['content'])) {
+                    $description = $data['content'];
+                } elseif (isset($data['text'])) {
+                    $description = $data['text'];
+                } elseif (isset($data['result'])) {
+                    $description = $data['result'];
+                } elseif (isset($data['output'])) {
+                    $description = $data['output'];
+                } elseif (isset($data['message'])) {
+                    $description = $data['message'];
+                } elseif (isset($data['body'])) {
+                    $description = $data['body'];
+                } elseif (is_array($data) && count($data) > 0) {
+                    // If it's an array, try to get first item
+                    $firstItem = reset($data);
+                    $description = is_string($firstItem) ? $firstItem : json_encode($firstItem, JSON_UNESCAPED_UNICODE);
+                } else {
+                    // Last resort: stringify the whole object
+                    $description = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+                }
+            }
+
+            if (empty($description)) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'لم يتم إرجاع وصف من الخادم',
+                ], 500);
+            }
+
+            return response()->json([
+                'success' => true,
+                'description' => $description,
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error generating description', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'error' => 'حدث خطأ أثناء إنشاء الوصف: ' . $e->getMessage(),
+            ], 500);
         }
     }
 }

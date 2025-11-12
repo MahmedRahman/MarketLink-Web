@@ -76,6 +76,9 @@ Route::middleware(['auth', \App\Http\Middleware\CheckTrialStatus::class])->group
            Route::get('monthly-plans/{monthlyPlan}/tasks/{task}/files/{file}/download', [\App\Http\Controllers\PlanTaskController::class, 'downloadFile'])->name('monthly-plans.tasks.files.download');
            Route::delete('monthly-plans/{monthlyPlan}/tasks/{task}/files/{file}', [\App\Http\Controllers\PlanTaskController::class, 'deleteFile'])->name('monthly-plans.tasks.files.delete');
            
+           // Generate Description Route
+           Route::post('/tasks/generate-description', [\App\Http\Controllers\PlanTaskController::class, 'generateDescription'])->name('tasks.generate-description');
+           
            // Reports Routes
            Route::get('reports', [ReportsController::class, 'index'])->name('reports.index');
            Route::get('reports/export', [ReportsController::class, 'export'])->name('reports.export');

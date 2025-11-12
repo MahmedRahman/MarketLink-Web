@@ -14,6 +14,7 @@ class PlanTask extends Model
         'assigned_to',
         'title',
         'description',
+        'idea',
         'status',
         'list_type',
         'order',

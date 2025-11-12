@@ -406,8 +406,8 @@
                 
                 <div>
                     <h4 class="font-bold mb-4">تواصل معنا</h4>
-                    <p class="text-sm text-gray-400 mb-2">info@marketlink.com</p>
-                    <p class="text-sm text-gray-400">+966 50 123 4567</p>
+                    <p class="text-sm text-gray-400 mb-2">atpfreelancer@gmail.com</p>
+                    <p class="text-sm text-gray-400">+201002089079</p>
                 </div>
             </div>
             

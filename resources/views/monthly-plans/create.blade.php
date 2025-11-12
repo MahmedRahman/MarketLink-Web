@@ -5,28 +5,29 @@
 @section('page-description', 'إنشاء خطة شهرية جديدة لمشروع')
 
 @section('content')
-<div class="container mx-auto px-4">
-    <div class="max-w-5xl mx-auto space-y-6">
+<div class="container mx-auto px-3 md:px-4">
+    <div class="max-w-5xl mx-auto space-y-4 md:space-y-6">
         <!-- Header -->
-        <div class="card page-header rounded-2xl p-6">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center">
-                    <div class="w-12 h-12 logo-gradient rounded-2xl flex items-center justify-center shadow-lg icon-spacing ml-3">
-                        <span class="material-icons text-white text-xl">calendar_month</span>
+        <div class="card page-header rounded-xl md:rounded-2xl p-4 md:p-6">
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div class="flex items-center flex-1">
+                    <div class="w-10 h-10 md:w-12 md:h-12 logo-gradient rounded-xl md:rounded-2xl flex items-center justify-center shadow-lg icon-spacing ml-2 md:ml-3 flex-shrink-0">
+                        <span class="material-icons text-white text-lg md:text-xl">calendar_month</span>
                     </div>
                     <div>
-                        <h2 class="text-2xl font-bold text-gray-800">إضافة خطة شهرية جديدة</h2>
-                        <p class="text-gray-600">املأ البيانات التالية لإنشاء خطة شهرية جديدة</p>
+                        <h2 class="text-xl md:text-2xl font-bold text-gray-800">إضافة خطة شهرية جديدة</h2>
+                        <p class="text-sm md:text-base text-gray-600 hidden md:block">املأ البيانات التالية لإنشاء خطة شهرية جديدة</p>
                     </div>
                 </div>
-                <a href="{{ route('monthly-plans.index') }}" class="flex items-center px-4 py-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-colors icon-spacing">
+                <a href="{{ route('monthly-plans.index') }}" class="flex items-center px-3 md:px-4 py-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-colors text-sm md:text-base w-full md:w-auto justify-center">
+                    <i class="fas fa-arrow-right text-xs md:text-sm ml-2"></i>
                     العودة للقائمة
                 </a>
             </div>
         </div>
 
         <!-- Form Card -->
-        <div class="card rounded-2xl p-8">
+        <div class="card rounded-xl md:rounded-2xl p-4 md:p-8">
             @if ($errors->any())
                 <div class="mb-6 bg-red-50 border border-red-200 rounded-xl p-4">
                     <div class="flex items-center mb-2">
@@ -54,10 +55,10 @@
                 @csrf
                 
                 <!-- Basic Information Section -->
-                <div class="form-section space-y-6">
-                    <h3 class="text-lg font-semibold text-gray-800">المعلومات الأساسية</h3>
+                <div class="form-section space-y-4 md:space-y-6">
+                    <h3 class="text-base md:text-lg font-semibold text-gray-800">المعلومات الأساسية</h3>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
                         <!-- Project -->
                         <div>
                             <label for="project_id" class="block text-sm font-medium text-gray-700 mb-2">
@@ -152,18 +153,18 @@
                 </div>
 
                 <!-- Goals Section -->
-                <div class="form-section space-y-6">
-                    <div class="flex items-center justify-between">
-                        <h3 class="text-lg font-semibold text-gray-800">أهداف الخطة</h3>
-                        <button type="button" id="add-goal" class="btn-primary text-white px-4 py-2 rounded-lg flex items-center">
-                            <span class="material-icons text-sm ml-2">add</span>
+                <div class="form-section space-y-4 md:space-y-6">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                        <h3 class="text-base md:text-lg font-semibold text-gray-800">أهداف الخطة</h3>
+                        <button type="button" id="add-goal" class="btn-primary text-white px-3 md:px-4 py-2 rounded-lg flex items-center justify-center text-sm md:text-base w-full sm:w-auto">
+                            <span class="material-icons text-xs md:text-sm ml-2">add</span>
                             إضافة هدف
                         </button>
                     </div>
                     
-                    <div id="goals-container" class="space-y-4">
-                        <div class="goal-item p-4 border border-gray-200 rounded-xl">
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div id="goals-container" class="space-y-3 md:space-y-4">
+                        <div class="goal-item p-3 md:p-4 border border-gray-200 rounded-xl">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 mb-3 md:mb-4">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">نوع الهدف</label>
                                     <select
@@ -213,21 +214,21 @@
                 </div>
 
                 <!-- Employees Section -->
-                <div class="form-section space-y-6">
-                    <div class="flex items-center justify-between">
+                <div class="form-section space-y-4 md:space-y-6">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                         <div>
-                            <h3 class="text-lg font-semibold text-gray-800">الموظفين المشاركين <span class="text-red-500">*</span></h3>
-                            <p class="text-sm text-gray-600">اختر الموظفين الذين سيعملون على هذه الخطة</p>
+                            <h3 class="text-base md:text-lg font-semibold text-gray-800">الموظفين المشاركين <span class="text-red-500">*</span></h3>
+                            <p class="text-xs md:text-sm text-gray-600 hidden md:block">اختر الموظفين الذين سيعملون على هذه الخطة</p>
                         </div>
                         @if($employees->count() > 0)
-                            <button type="button" id="select-all-employees" class="text-sm text-primary hover:text-primary-700 font-medium">
+                            <button type="button" id="select-all-employees" class="text-xs md:text-sm text-primary hover:text-primary-700 font-medium w-full sm:w-auto text-center sm:text-right">
                                 تحديد الكل
                             </button>
                         @endif
                     </div>
                     
                     @if($employees->count() > 0)
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="employees-grid">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4" id="employees-grid">
                             @foreach($employees as $employee)
                                 <label class="flex items-center justify-between p-4 border-2 border-gray-200 rounded-xl hover:border-primary hover:bg-primary-50 transition-all cursor-pointer employee-checkbox-label group" style="position: relative;">
                                     <input
@@ -261,13 +262,13 @@
                 </div>
 
                 <!-- Actions -->
-                <div class="flex items-center justify-center rtl-spacing pt-8 border-t border-gray-200">
-                    <button type="submit" class="action-button btn-primary text-white px-8 py-4 rounded-2xl flex items-center font-medium text-lg min-w-[160px] justify-center">
-                        <span class="material-icons text-lg ml-3">save</span>
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 md:gap-4 pt-6 md:pt-8 border-t border-gray-200">
+                    <button type="submit" class="action-button btn-primary text-white px-6 md:px-8 py-3 md:py-4 rounded-xl md:rounded-2xl flex items-center justify-center font-medium text-base md:text-lg w-full sm:w-auto sm:min-w-[160px]">
+                        <span class="material-icons text-base md:text-lg ml-2 md:ml-3">save</span>
                         حفظ الخطة
                     </button>   
                     
-                    <a href="{{ route('monthly-plans.index') }}" class="action-button cancel-button flex items-center px-8 py-4 rounded-2xl font-medium text-lg min-w-[140px] justify-center">
+                    <a href="{{ route('monthly-plans.index') }}" class="action-button cancel-button flex items-center justify-center px-6 md:px-8 py-3 md:py-4 rounded-xl md:rounded-2xl font-medium text-base md:text-lg w-full sm:w-auto sm:min-w-[140px]">
                         إلغاء
                     </a>
                 </div>

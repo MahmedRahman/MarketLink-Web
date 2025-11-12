@@ -7,41 +7,42 @@
 @section('content')
 <div class="space-y-6">
     <!-- Header Actions -->
-    <div class="card rounded-2xl p-6 mb-6">
-        <div class="flex items-center justify-between">
-            <div class="flex items-center">
-                <div class="w-12 h-12 logo-gradient rounded-2xl flex items-center justify-center shadow-lg ml-4">
-                    <i class="fas fa-users text-white text-xl"></i>
+    <div class="card rounded-xl md:rounded-2xl p-4 md:p-6 mb-4 md:mb-6">
+        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div class="flex items-center flex-1">
+                <div class="w-10 h-10 md:w-12 md:h-12 logo-gradient rounded-xl md:rounded-2xl flex items-center justify-center shadow-lg ml-3 md:ml-4 flex-shrink-0">
+                    <i class="fas fa-users text-white text-lg md:text-xl"></i>
                 </div>
                 <div>
-                    <h2 class="text-2xl font-bold text-gray-800">العملاء</h2>
-                    <p class="text-gray-600">إدارة قائمة العملاء والشركات</p>
+                    <h2 class="text-xl md:text-2xl font-bold text-gray-800">العملاء</h2>
+                    <p class="text-sm md:text-base text-gray-600 hidden md:block">إدارة قائمة العملاء والشركات</p>
                 </div>
             </div>
-            <div class="flex items-center space-x-3 rtl:space-x-reverse">
-                <button onclick="exportToExcel()" class="w-10 h-10 bg-green-500 hover:bg-green-600 text-white rounded-xl flex items-center justify-center transition-colors" title="تصدير Excel">
-                    <i class="fas fa-file-excel text-lg"></i>
+            <div class="flex items-center gap-2 md:gap-3 w-full md:w-auto">
+                <button onclick="exportToExcel()" class="w-9 h-9 md:w-10 md:h-10 bg-green-500 hover:bg-green-600 text-white rounded-xl flex items-center justify-center transition-colors flex-shrink-0" title="تصدير Excel">
+                    <i class="fas fa-file-excel text-sm md:text-lg"></i>
                 </button>
-                <button onclick="exportToPDF()" class="w-10 h-10 bg-red-500 hover:bg-red-600 text-white rounded-xl flex items-center justify-center transition-colors" title="تصدير PDF">
-                    <i class="fas fa-file-pdf text-lg"></i>
+                <button onclick="exportToPDF()" class="w-9 h-9 md:w-10 md:h-10 bg-red-500 hover:bg-red-600 text-white rounded-xl flex items-center justify-center transition-colors flex-shrink-0" title="تصدير PDF">
+                    <i class="fas fa-file-pdf text-sm md:text-lg"></i>
                 </button>
-                <button onclick="printTable()" class="w-10 h-10 bg-blue-500 hover:bg-blue-600 text-white rounded-xl flex items-center justify-center transition-colors" title="طباعة">
-                    <i class="fas fa-print text-lg"></i>
+                <button onclick="printTable()" class="w-9 h-9 md:w-10 md:h-10 bg-blue-500 hover:bg-blue-600 text-white rounded-xl flex items-center justify-center transition-colors flex-shrink-0" title="طباعة">
+                    <i class="fas fa-print text-sm md:text-lg"></i>
                 </button>
-                <a href="{{ route('clients.create') }}" class="btn-primary text-white px-6 py-3 rounded-xl flex items-center hover:no-underline">
-                    <i class="fas fa-user-plus text-sm ml-2"></i>
-                    إضافة عميل جديد
+                <a href="{{ route('clients.create') }}" class="btn-primary text-white px-4 md:px-6 py-2 md:py-3 rounded-xl flex items-center justify-center hover:no-underline text-sm md:text-base flex-1 md:flex-initial">
+                    <i class="fas fa-user-plus text-xs md:text-sm ml-2"></i>
+                    <span class="hidden sm:inline">إضافة عميل جديد</span>
+                    <span class="sm:hidden">إضافة</span>
                 </a>
             </div>
         </div>
     </div>
 
     <!-- Clients Table -->
-    <div class="card rounded-2xl overflow-hidden">
+    <div class="card rounded-xl md:rounded-2xl overflow-hidden">
    
         
         @if($clients->count() > 0)
-            <div class="overflow-x-auto p-6">
+            <div class="overflow-x-auto p-3 md:p-6">
                 <table id="clientsTable" class="w-full" dir="rtl">
                     <thead>
                         <tr>
@@ -57,7 +58,15 @@
                         @foreach($clients as $client)
                             <tr>
                                 <td>
-                                    <div class="text-sm text-gray-500 text-right">{{ $client->created_at->format('Y-m-d') }}</div>
+                                    <div class="text-sm text-gray-500 text-right">
+                                        <div>{{ $client->created_at->format('Y-m-d') }}</div>
+                                        @if($client->creator)
+                                            <div class="text-xs text-gray-400 mt-1 md:hidden">
+                                                <i class="fas fa-user text-xs ml-1"></i>
+                                                {{ $client->creator->name }}
+                                            </div>
+                                        @endif
+                                    </div>
                                 </td>
                                 <td>
                                     <div class="text-right">
@@ -98,12 +107,12 @@
                 </table>
             </div>
         @else
-            <div class="text-center py-12">
-                <span class="material-icons text-6xl text-gray-300 mb-4">people_outline</span>
-                <h3 class="text-lg font-medium text-gray-900 mb-2">لا يوجد عملاء</h3>
-                <p class="text-gray-500 mb-6">ابدأ بإضافة عميل جديد</p>
-                <a href="{{ route('clients.create') }}" class="btn-primary text-white px-6 py-3 rounded-xl inline-flex items-center hover:no-underline">
-                    <i class="fas fa-user-plus text-sm ml-2"></i>
+            <div class="text-center py-8 md:py-12 px-4">
+                <span class="material-icons text-4xl md:text-6xl text-gray-300 mb-3 md:mb-4">people_outline</span>
+                <h3 class="text-base md:text-lg font-medium text-gray-900 mb-2">لا يوجد عملاء</h3>
+                <p class="text-sm md:text-base text-gray-500 mb-4 md:mb-6">ابدأ بإضافة عميل جديد</p>
+                <a href="{{ route('clients.create') }}" class="btn-primary text-white px-4 md:px-6 py-2.5 md:py-3 rounded-xl inline-flex items-center hover:no-underline text-sm md:text-base">
+                    <i class="fas fa-user-plus text-xs md:text-sm ml-2"></i>
                     إضافة عميل جديد
                 </a>
             </div>

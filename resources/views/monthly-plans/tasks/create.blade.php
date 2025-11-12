@@ -5,7 +5,7 @@
 @section('page-description', 'إضافة مهمة جديدة للخطة الشهرية')
 
 @section('content')
-<div class="container mx-auto px-4">
+<div class="container mx-auto px-4" data-generate-description-url="{{ route('tasks.generate-description') }}">
     <div class="max-w-4xl mx-auto space-y-6">
         <!-- Header -->
         <div class="card page-header rounded-2xl p-6">
@@ -66,18 +66,48 @@
                     @enderror
                 </div>
 
-                <!-- Description -->
+                <!-- Idea -->
                 <div>
+                    <label for="idea" class="block text-sm font-medium text-gray-700 mb-2">
+                        الفكرة
+                    </label>
+                    <textarea 
+                        id="idea" 
+                        name="idea" 
+                        rows="6"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                        placeholder="أدخل فكرة المهمة (اختياري)"
+                    >{!! old('idea') !!}</textarea>
+                    @error('idea')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                    <button 
+                        type="button" 
+                        id="generate-description-btn" 
+                        class="mt-3 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        onclick="generateDescription()"
+                    >
+                        <span class="material-icons text-sm" id="generate-icon">auto_awesome</span>
+                        <span id="generate-text">إنشاء الوصف تلقائياً</span>
+                        <span class="material-icons text-sm animate-spin hidden" id="generate-spinner">sync</span>
+                    </button>
+                </div>
+
+                <!-- Description -->
+                <div id="description-container">
                     <label for="description" class="block text-sm font-medium text-gray-700 mb-2">
                         الوصف
                     </label>
-                    <textarea 
-                        id="description" 
-                        name="description" 
-                        rows="6"
-                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
-                        placeholder="أدخل وصف المهمة (اختياري)"
-                    >{!! old('description') !!}</textarea>
+                    <div id="description-wrapper" class="relative">
+                        <textarea 
+                            id="description" 
+                            name="description" 
+                            rows="6"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                            placeholder="أدخل وصف المهمة (اختياري)"
+                        >{!! old('description') !!}</textarea>
+                        <div id="description-shimmer" class="hidden absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent animate-shimmer rounded-xl pointer-events-none"></div>
+                    </div>
                     @error('description')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror
@@ -344,6 +374,44 @@
         border-bottom-right-radius: 0.75rem;
         border-bottom-left-radius: 0.75rem;
     }
+    #idea-editor {
+        border-bottom-right-radius: 0.75rem;
+        border-bottom-left-radius: 0.75rem;
+    }
+    
+    /* Shimmer Effect */
+    @keyframes shimmer {
+        0% {
+            transform: translateX(-100%);
+        }
+        100% {
+            transform: translateX(100%);
+        }
+    }
+    
+    .animate-shimmer {
+        animation: shimmer 2s infinite;
+    }
+    
+    #description-wrapper.shimmer-active {
+        position: relative;
+        overflow: hidden;
+    }
+    
+    #description-wrapper.shimmer-active textarea {
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: shimmer-bg 1.5s infinite;
+    }
+    
+    @keyframes shimmer-bg {
+        0% {
+            background-position: 200% 0;
+        }
+        100% {
+            background-position: -200% 0;
+        }
+    }
 </style>
 @endsection
 
@@ -352,43 +420,87 @@
 <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Hide the original textarea
-    const textarea = document.getElementById('description');
-    textarea.style.display = 'none';
+    // Initialize Description Quill Editor
+    const descriptionTextarea = document.getElementById('description');
+    let descriptionQuill = null;
+    if (descriptionTextarea) {
+        descriptionTextarea.style.display = 'none';
+        
+        // Create Quill editor container
+        const descriptionEditorContainer = document.createElement('div');
+        descriptionEditorContainer.id = 'description-editor';
+        descriptionEditorContainer.style.height = '300px';
+        descriptionTextarea.parentNode.insertBefore(descriptionEditorContainer, descriptionTextarea);
+        
+        // Initialize Quill
+        window.descriptionQuill = new Quill('#description-editor', {
+            theme: 'snow',
+            modules: {
+                toolbar: [
+                    [{ 'header': [1, 2, 3, false] }],
+                    ['bold', 'italic', 'underline', 'strike'],
+                    [{ 'color': [] }, { 'background': [] }],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    [{ 'align': [] }],
+                    ['link', 'image'],
+                    ['clean']
+                ]
+            },
+            placeholder: 'أدخل وصف المهمة (اختياري)...'
+        });
+        
+        // Set initial content if there's old input
+        const descriptionInitialContent = descriptionTextarea.value || '';
+        if (descriptionInitialContent) {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = descriptionInitialContent;
+            if (tempDiv.children.length > 0 || descriptionInitialContent.includes('<')) {
+                window.descriptionQuill.root.innerHTML = descriptionInitialContent;
+            } else {
+                window.descriptionQuill.setText(descriptionInitialContent);
+            }
+        }
+    }
     
-    // Create Quill editor container
-    const editorContainer = document.createElement('div');
-    editorContainer.id = 'description-editor';
-    editorContainer.style.height = '300px';
-    textarea.parentNode.insertBefore(editorContainer, textarea);
-    
-    // Initialize Quill
-    const quill = new Quill('#description-editor', {
-        theme: 'snow',
-        modules: {
-            toolbar: [
-                [{ 'header': [1, 2, 3, false] }],
-                ['bold', 'italic', 'underline', 'strike'],
-                [{ 'color': [] }, { 'background': [] }],
-                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                [{ 'align': [] }],
-                ['link', 'image'],
-                ['clean']
-            ]
-        },
-        placeholder: 'أدخل وصف المهمة (اختياري)...'
-    });
-    
-    // Set initial content if there's old input
-    const initialContent = textarea.value || '';
-    if (initialContent) {
-        // Check if content is HTML or plain text
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = initialContent;
-        if (tempDiv.children.length > 0 || initialContent.includes('<')) {
-            quill.root.innerHTML = initialContent;
-        } else {
-            quill.setText(initialContent);
+    // Initialize Idea Quill Editor
+    const ideaTextarea = document.getElementById('idea');
+    let ideaQuill = null;
+    if (ideaTextarea) {
+        ideaTextarea.style.display = 'none';
+        
+        // Create Quill editor container
+        const ideaEditorContainer = document.createElement('div');
+        ideaEditorContainer.id = 'idea-editor';
+        ideaEditorContainer.style.height = '300px';
+        ideaTextarea.parentNode.insertBefore(ideaEditorContainer, ideaTextarea);
+        
+        // Initialize Quill
+        ideaQuill = new Quill('#idea-editor', {
+            theme: 'snow',
+            modules: {
+                toolbar: [
+                    [{ 'header': [1, 2, 3, false] }],
+                    ['bold', 'italic', 'underline', 'strike'],
+                    [{ 'color': [] }, { 'background': [] }],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    [{ 'align': [] }],
+                    ['link', 'image'],
+                    ['clean']
+                ]
+            },
+            placeholder: 'أدخل فكرة المهمة (اختياري)...'
+        });
+        
+        // Set initial content if there's old input
+        const ideaInitialContent = ideaTextarea.value || '';
+        if (ideaInitialContent) {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = ideaInitialContent;
+            if (tempDiv.children.length > 0 || ideaInitialContent.includes('<')) {
+                ideaQuill.root.innerHTML = ideaInitialContent;
+            } else {
+                ideaQuill.setText(ideaInitialContent);
+            }
         }
     }
     
@@ -419,14 +531,23 @@ document.addEventListener('DOMContentLoaded', function() {
             // تحديث list_type قبل الإرسال بناءً على assigned_to
             updateListType();
             
-            // تحديث محتوى textarea من Quill editor قبل الإرسال
-            if (typeof quill !== 'undefined' && quill) {
-                const content = quill.root.innerHTML;
-                // تنظيف المحتوى الفارغ (Quill يضيف <p><br></p> إذا كان فارغاً)
-                if (content === '<p><br></p>' || content === '<p></p>' || !content.trim()) {
-                    textarea.value = '';
+            // تحديث محتوى description textarea من Quill editor قبل الإرسال
+            if (window.descriptionQuill && descriptionTextarea) {
+                const descriptionContent = window.descriptionQuill.root.innerHTML;
+                if (descriptionContent === '<p><br></p>' || descriptionContent === '<p></p>' || !descriptionContent.trim()) {
+                    descriptionTextarea.value = '';
                 } else {
-                    textarea.value = content;
+                    descriptionTextarea.value = descriptionContent;
+                }
+            }
+            
+            // تحديث محتوى idea textarea من Quill editor قبل الإرسال
+            if (ideaQuill && ideaTextarea) {
+                const ideaContent = ideaQuill.root.innerHTML;
+                if (ideaContent === '<p><br></p>' || ideaContent === '<p></p>' || !ideaContent.trim()) {
+                    ideaTextarea.value = '';
+                } else {
+                    ideaTextarea.value = ideaContent;
                 }
             }
             // تحديث قيمة اللون من hex input إذا كانت مختلفة
@@ -737,6 +858,111 @@ document.addEventListener('DOMContentLoaded', function() {
     // تحديث الأرقام عند التحميل
     updateLinkNumbers();
 });
+
+// Generate Description Function
+async function generateDescription() {
+    const ideaTextarea = document.getElementById('idea');
+    const descriptionTextarea = document.getElementById('description');
+    const descriptionWrapper = document.getElementById('description-wrapper');
+    const descriptionShimmer = document.getElementById('description-shimmer');
+    const generateBtn = document.getElementById('generate-description-btn');
+    const generateIcon = document.getElementById('generate-icon');
+    const generateText = document.getElementById('generate-text');
+    const generateSpinner = document.getElementById('generate-spinner');
+    
+    // Get idea content from Quill editor if it exists
+    let ideaContent = '';
+    const ideaEditor = document.querySelector('#idea-editor .ql-editor');
+    if (ideaEditor) {
+        ideaContent = ideaEditor.innerHTML;
+        // Convert HTML to plain text if needed
+        if (ideaContent) {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = ideaContent;
+            ideaContent = tempDiv.textContent || tempDiv.innerText || '';
+        }
+    } else if (ideaTextarea) {
+        ideaContent = ideaTextarea.value;
+    }
+    
+    if (!ideaContent || ideaContent.trim() === '') {
+        alert('يرجى إدخال فكرة أولاً');
+        return;
+    }
+    
+    // Disable button and show loading
+    generateBtn.disabled = true;
+    generateIcon.classList.add('hidden');
+    generateText.textContent = 'جاري الإنشاء...';
+    generateSpinner.classList.remove('hidden');
+    
+    // Show shimmer effect
+    descriptionWrapper.classList.add('shimmer-active');
+    descriptionShimmer.classList.remove('hidden');
+    
+    try {
+        const url = document.querySelector('[data-generate-description-url]')?.dataset.generateDescriptionUrl || '/tasks/generate-description';
+        console.log('Request URL:', url);
+        
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            },
+            body: JSON.stringify({
+                idea: ideaContent
+            })
+        });
+        
+        // Check if response is ok
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ error: 'فشل في إنشاء الوصف' }));
+            console.error('Response error:', response.status, errorData);
+            throw new Error(errorData.error || `فشل في إنشاء الوصف (${response.status})`);
+        }
+        
+        const data = await response.json();
+        console.log('Response data:', data);
+        
+        if (!data.success) {
+            throw new Error(data.error || 'فشل في إنشاء الوصف');
+        }
+        
+        const generatedDescription = data.description;
+        
+        if (!generatedDescription || generatedDescription.trim() === '') {
+            throw new Error('لم يتم إرجاع وصف من الخادم');
+        }
+        
+        // Update description field
+        // If Quill editor exists, update it
+        const descriptionEditor = document.querySelector('#description-editor .ql-editor');
+        if (descriptionEditor && window.descriptionQuill) {
+            window.descriptionQuill.root.innerHTML = generatedDescription;
+            descriptionTextarea.value = generatedDescription;
+        } else {
+            descriptionTextarea.value = generatedDescription;
+        }
+        
+    } catch (error) {
+        console.error('Error generating description:', error);
+        let errorMessage = 'حدث خطأ أثناء إنشاء الوصف. يرجى المحاولة مرة أخرى.';
+        if (error.message) {
+            errorMessage = error.message;
+        }
+        alert(errorMessage);
+    } finally {
+        // Hide shimmer and re-enable button
+        descriptionWrapper.classList.remove('shimmer-active');
+        descriptionShimmer.classList.add('hidden');
+        generateBtn.disabled = false;
+        generateIcon.classList.remove('hidden');
+        generateText.textContent = 'إنشاء الوصف تلقائياً';
+        generateSpinner.classList.add('hidden');
+    }
+}
 </script>
 @endsection
 

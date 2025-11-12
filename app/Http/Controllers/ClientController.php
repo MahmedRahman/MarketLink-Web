@@ -13,7 +13,10 @@ class ClientController extends Controller
     public function index(Request $request)
     {
         $organizationId = $request->user()->organization_id;
-        $clients = Client::where('organization_id', $organizationId)->latest()->paginate(10);
+        $clients = Client::where('organization_id', $organizationId)
+            ->with('creator')
+            ->latest()
+            ->paginate(10);
         return view('clients.index', compact('clients'));
     }
 
@@ -42,6 +45,7 @@ class ClientController extends Controller
 
         $data = $request->all();
         $data['organization_id'] = $request->user()->organization_id;
+        $data['created_by'] = $request->user()->id;
 
         Client::create($data);
 

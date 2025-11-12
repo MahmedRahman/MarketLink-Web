@@ -817,6 +817,145 @@
             border-color: #3b82f6 !important;
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
         }
+        
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                top: 0;
+                right: 0;
+                z-index: 1000;
+                transform: translateX(100%);
+                box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+            }
+            
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+            
+            .sidebar-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 999;
+            }
+            
+            .sidebar-overlay.active {
+                display: block;
+            }
+            
+            .main-content-area {
+                width: 100%;
+                margin-right: 0;
+            }
+            
+            .header {
+                padding: 1rem;
+            }
+            
+            .header h1 {
+                font-size: 1.25rem;
+            }
+            
+            .header p {
+                font-size: 0.75rem;
+            }
+            
+            .mobile-menu-btn {
+                display: block;
+            }
+            
+            .footer {
+                flex-direction: column;
+                text-align: center;
+                padding: 1rem;
+                font-size: 0.75rem;
+            }
+            
+            .footer > div {
+                margin: 0.25rem 0;
+            }
+            
+            .container {
+                padding: 0.5rem;
+            }
+            
+            .card {
+                padding: 1rem;
+            }
+            
+            .page-header {
+                padding: 1rem;
+            }
+            
+            .page-header h1 {
+                font-size: 1.25rem;
+            }
+            
+            .page-header p {
+                font-size: 0.75rem;
+            }
+            
+            /* Hide user profile details on mobile */
+            .user-profile-details {
+                display: none;
+            }
+            
+            /* Simplify stats cards on mobile */
+            .stats-card-icon {
+                width: 2.5rem;
+                height: 2.5rem;
+            }
+            
+            .stats-card-number {
+                font-size: 1.5rem;
+            }
+            
+            /* Stack action buttons on mobile */
+            .action-buttons-mobile {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .action-buttons-mobile > * {
+                width: 100%;
+            }
+        }
+        
+        @media (min-width: 769px) {
+            .mobile-menu-btn {
+                display: none;
+            }
+            
+            .sidebar-overlay {
+                display: none !important;
+            }
+        }
+        
+        .mobile-menu-btn {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            border: none;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        
+        .mobile-menu-btn:hover {
+            transform: scale(1.05);
+        }
+        
+        .mobile-menu-btn:active {
+            transform: scale(0.95);
+        }
     </style>
 </head>
 <body>
@@ -826,6 +965,9 @@
         <div class="shape"></div>
         <div class="shape"></div>
     </div>
+    
+    <!-- Mobile Sidebar Overlay -->
+    <div id="sidebarOverlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
     
     <div class="flex h-screen">
         <!-- Sidebar -->
@@ -956,37 +1098,42 @@
         <div class="flex-1 flex flex-col overflow-hidden main-content-area">
             <!-- Header -->
             <header class="header">
-                <div class="flex items-center justify-between px-6 py-4">
-                    <!-- Page Title -->
-                    <div>
-                        <h1 class="text-2xl font-bold text-gray-800">@yield('page-title', 'لوحة التحكم')</h1>
-                        <p class="text-sm text-gray-500">@yield('page-description', 'مرحباً بك في نظام إدارة شركات التسويق الإلكتروني')</p>
+                <div class="flex items-center justify-between px-4 md:px-6 py-3 md:py-4">
+                    <!-- Mobile Menu Button & Page Title -->
+                    <div class="flex items-center gap-3 flex-1">
+                        <button id="mobileMenuBtn" class="mobile-menu-btn" onclick="toggleSidebar()">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                        <div class="flex-1">
+                            <h1 class="text-xl md:text-2xl font-bold text-gray-800">@yield('page-title', 'لوحة التحكم')</h1>
+                            <p class="text-xs md:text-sm text-gray-500 hidden md:block">@yield('page-description', 'مرحباً بك في نظام إدارة شركات التسويق الإلكتروني')</p>
+                        </div>
                     </div>
                     
                     <!-- User Menu -->
-                    <div class="flex items-center space-x-4">
+                    <div class="flex items-center gap-2 md:gap-4">
                         <!-- Notifications -->
-                        <button class="relative p-3 text-gray-400 hover:text-gray-600 transition-colors rounded-xl hover:bg-gray-100">
-                            <i class="fas fa-bell"></i>
-                            <span class="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full notification-dot"></span>
+                        <button class="relative p-2 md:p-3 text-gray-400 hover:text-gray-600 transition-colors rounded-xl hover:bg-gray-100">
+                            <i class="fas fa-bell text-sm md:text-base"></i>
+                            <span class="absolute -top-1 -right-1 w-2 h-2 md:w-3 md:h-3 bg-red-500 rounded-full notification-dot"></span>
                         </button>
                         
                         <!-- User Profile -->
-                        <a href="{{ route('profile.edit') }}" class="flex items-center space-x-3 bg-gray-50 rounded-xl p-2 hover:bg-gray-100 transition-colors">
-                            <div class="w-10 h-10 logo-gradient rounded-xl flex items-center justify-center shadow-md ml-4">
-                                <i class="fas fa-user text-white text-sm"></i>
+                        <a href="{{ route('profile.edit') }}" class="flex items-center bg-gray-50 rounded-xl p-2 hover:bg-gray-100 transition-colors">
+                            <div class="w-8 h-8 md:w-10 md:h-10 logo-gradient rounded-xl flex items-center justify-center shadow-md">
+                                <i class="fas fa-user text-white text-xs md:text-sm"></i>
                             </div>
-                            <div class="text-right">
-                                <p class="text-sm font-medium text-gray-800">{{ Auth::user()->name }}</p>
-                                <p class="text-xs text-gray-500">مدير النظام</p>
+                            <div class="text-right user-profile-details mr-2">
+                                <p class="text-xs md:text-sm font-medium text-gray-800">{{ Auth::user()->name }}</p>
+                                <p class="text-xs text-gray-500 hidden lg:block">مدير النظام</p>
                             </div>
                         </a>
                         
                         <!-- Logout -->
                         <form method="POST" action="{{ route('logout') }}" class="inline">
                             @csrf
-                            <button type="submit" class="p-3 text-gray-400 hover:text-red-600 transition-colors rounded-xl hover:bg-red-50" title="تسجيل الخروج">
-                                <i class="fas fa-sign-out-alt"></i>
+                            <button type="submit" class="p-2 md:p-3 text-gray-400 hover:text-red-600 transition-colors rounded-xl hover:bg-red-50" title="تسجيل الخروج">
+                                <i class="fas fa-sign-out-alt text-sm md:text-base"></i>
                             </button>
                         </form>
                     </div>
@@ -995,7 +1142,7 @@
             
             <!-- Page Content -->
             <main class="flex-1 overflow-y-auto bg-gray-50 main-content-wrapper">
-                <div class="p-6 content-container">
+                <div class="p-3 md:p-6 content-container">
                     @yield('content')
                 </div>
             </main>
@@ -1003,12 +1150,12 @@
     </div>
     
     <!-- Footer - Fixed at bottom, full width -->
-    <footer class="footer px-6 py-4">
-        <div class="flex items-center justify-between">
-            <div class="text-sm text-gray-500">
+    <footer class="footer px-4 md:px-6 py-3 md:py-4">
+        <div class="flex flex-col md:flex-row items-center justify-between gap-2">
+            <div class="text-xs md:text-sm text-gray-500">
                 © 2024 MarketLink. جميع الحقوق محفوظة.
             </div>
-            <div class="text-sm text-gray-500">
+            <div class="text-xs md:text-sm text-gray-500 hidden md:block">
                 نظام إدارة شركات التسويق الإلكتروني
             </div>
         </div>
@@ -1058,12 +1205,50 @@
         // Sidebar toggle functionality
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('-translate-x-full');
+            const overlay = document.getElementById('sidebarOverlay');
+            
+            if (window.innerWidth < 768) {
+                sidebar.classList.toggle('mobile-open');
+                overlay.classList.toggle('active');
+            }
         }
         
-        // Mobile responsive
+        function closeSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.remove('mobile-open');
+            overlay.classList.remove('active');
+        }
+        
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('sidebar');
+            const menuBtn = document.getElementById('mobileMenuBtn');
+            const overlay = document.getElementById('sidebarOverlay');
+            
+            if (window.innerWidth < 768) {
+                if (sidebar.classList.contains('mobile-open') && 
+                    !sidebar.contains(event.target) && 
+                    !menuBtn.contains(event.target)) {
+                    closeSidebar();
+                }
+            }
+        });
+        
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            
+            if (window.innerWidth >= 768) {
+                sidebar.classList.remove('mobile-open');
+                overlay.classList.remove('active');
+            }
+        });
+        
+        // Initialize mobile sidebar state
         if (window.innerWidth < 768) {
-            document.getElementById('sidebar').classList.add('-translate-x-full');
+            closeSidebar();
         }
         
         // SweetAlert2 configuration

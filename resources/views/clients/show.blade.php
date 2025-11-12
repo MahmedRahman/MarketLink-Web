@@ -5,45 +5,46 @@
 @section('page-description', 'عرض تفاصيل العميل: ' . $client->name)
 
 @section('content')
-<div class="container mx-auto px-4">
-    <div class="max-w-6xl mx-auto space-y-6">
+<div class="container mx-auto px-3 md:px-4">
+    <div class="max-w-6xl mx-auto space-y-4 md:space-y-6">
         <!-- Header -->
-        <div class="card page-header rounded-2xl p-6">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center">
-                    <div class="w-12 h-12 logo-gradient rounded-2xl flex items-center justify-center shadow-lg icon-spacing ml-3">
-                        <i class="fas fa-user text-white text-xl"></i>
+        <div class="card page-header rounded-xl md:rounded-2xl p-4 md:p-6">
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div class="flex items-center flex-1">
+                    <div class="w-10 h-10 md:w-12 md:h-12 logo-gradient rounded-xl md:rounded-2xl flex items-center justify-center shadow-lg icon-spacing ml-2 md:ml-3 flex-shrink-0">
+                        <i class="fas fa-user text-white text-lg md:text-xl"></i>
                     </div>
                     <div>
-                        <h2 class="text-2xl font-bold text-gray-800">عرض بيانات العميل</h2>
-                        <p class="text-gray-600">تفاصيل العميل: {{ $client->name }}</p>
+                        <h2 class="text-xl md:text-2xl font-bold text-gray-800">عرض بيانات العميل</h2>
+                        <p class="text-sm md:text-base text-gray-600 hidden md:block">تفاصيل العميل: {{ $client->name }}</p>
                     </div>
                 </div>
-                <div class="flex items-center space-x-3 rtl:space-x-reverse">
-                    <a href="{{ route('clients.edit', $client) }}" class="flex items-center px-4 py-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-xl transition-colors icon-spacing">
-                        <i class="fas fa-edit text-sm ml-2"></i>
+                <div class="flex items-center gap-2 md:gap-3 w-full md:w-auto">
+                    <a href="{{ route('clients.edit', $client) }}" class="flex items-center justify-center px-3 md:px-4 py-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-xl transition-colors text-sm md:text-base flex-1 md:flex-initial">
+                        <i class="fas fa-edit text-xs md:text-sm ml-2"></i>
                         تعديل
                     </a>
-                    <a href="{{ route('clients.index') }}" class="flex items-center px-4 py-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-colors icon-spacing">
-                        العودة للقائمة
+                    <a href="{{ route('clients.index') }}" class="flex items-center justify-center px-3 md:px-4 py-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-colors text-sm md:text-base flex-1 md:flex-initial">
+                        <i class="fas fa-arrow-right text-xs md:text-sm ml-2"></i>
+                        العودة
                     </a>
                 </div>
             </div>
         </div>
 
         <!-- Client Information Cards -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
             <!-- Basic Information Card -->
             <div class="lg:col-span-2">
-                <div class="card rounded-2xl p-6">
-                    <div class="flex items-center mb-6">
-                        <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center icon-spacing ml-3">
-                            <i class="fas fa-user text-blue-600"></i>
+                <div class="card rounded-xl md:rounded-2xl p-4 md:p-6">
+                    <div class="flex items-center mb-4 md:mb-6">
+                        <div class="w-8 h-8 md:w-10 md:h-10 bg-blue-100 rounded-xl flex items-center justify-center icon-spacing ml-2 md:ml-3 flex-shrink-0">
+                            <i class="fas fa-user text-blue-600 text-sm md:text-base"></i>
                         </div>
-                        <h3 class="text-lg font-semibold text-gray-800">المعلومات الأساسية</h3>
+                        <h3 class="text-base md:text-lg font-semibold text-gray-800">المعلومات الأساسية</h3>
                     </div>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                         <div>
                             <label class="block text-sm font-medium text-gray-500 mb-2">اسم العميل</label>
                             <p class="text-lg font-semibold text-gray-900">{{ $client->name }}</p>
@@ -69,12 +70,12 @@
 
             <!-- Status and Actions Card -->
             <div class="lg:col-span-1">
-                <div class="card rounded-2xl p-6">
-                    <div class="flex items-center mb-6">
-                        <div class="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center icon-spacing ml-3">
-                            <i class="fas fa-info-circle text-green-600"></i>
+                <div class="card rounded-xl md:rounded-2xl p-4 md:p-6">
+                    <div class="flex items-center mb-4 md:mb-6">
+                        <div class="w-8 h-8 md:w-10 md:h-10 bg-green-100 rounded-xl flex items-center justify-center icon-spacing ml-2 md:ml-3 flex-shrink-0">
+                            <i class="fas fa-info-circle text-green-600 text-sm md:text-base"></i>
                         </div>
-                        <h3 class="text-lg font-semibold text-gray-800">الحالة والإجراءات</h3>
+                        <h3 class="text-base md:text-lg font-semibold text-gray-800">الحالة والإجراءات</h3>
                     </div>
                     
                     <div class="space-y-4">
@@ -114,36 +115,36 @@
 
         <!-- Notes Section -->
         @if($client->notes)
-        <div class="card rounded-2xl p-6">
-            <div class="flex items-center mb-4">
-                <div class="w-10 h-10 bg-yellow-100 rounded-xl flex items-center justify-center icon-spacing ml-3">
-                    <i class="fas fa-sticky-note text-yellow-600"></i>
+        <div class="card rounded-xl md:rounded-2xl p-4 md:p-6">
+            <div class="flex items-center mb-3 md:mb-4">
+                <div class="w-8 h-8 md:w-10 md:h-10 bg-yellow-100 rounded-xl flex items-center justify-center icon-spacing ml-2 md:ml-3 flex-shrink-0">
+                    <i class="fas fa-sticky-note text-yellow-600 text-sm md:text-base"></i>
                 </div>
-                <h3 class="text-lg font-semibold text-gray-800">الملاحظات</h3>
+                <h3 class="text-base md:text-lg font-semibold text-gray-800">الملاحظات</h3>
             </div>
-            <div class="bg-gray-50 rounded-xl p-4">
-                <p class="text-gray-700 leading-relaxed">{{ $client->notes }}</p>
+            <div class="bg-gray-50 rounded-xl p-3 md:p-4">
+                <p class="text-sm md:text-base text-gray-700 leading-relaxed">{{ $client->notes }}</p>
             </div>
         </div>
         @endif
 
         <!-- Projects Section -->
-        <div class="card rounded-2xl p-6">
-            <div class="flex items-center justify-between mb-6">
+        <div class="card rounded-xl md:rounded-2xl p-4 md:p-6">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 md:gap-4 mb-4 md:mb-6">
                 <div class="flex items-center">
-                    <div class="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center icon-spacing ml-3">
-                        <i class="fas fa-project-diagram text-purple-600"></i>
+                    <div class="w-8 h-8 md:w-10 md:h-10 bg-purple-100 rounded-xl flex items-center justify-center icon-spacing ml-2 md:ml-3 flex-shrink-0">
+                        <i class="fas fa-project-diagram text-purple-600 text-sm md:text-base"></i>
                     </div>
-                    <h3 class="text-lg font-semibold text-gray-800">مشاريع العميل</h3>
+                    <h3 class="text-base md:text-lg font-semibold text-gray-800">مشاريع العميل</h3>
                 </div>
-                <a href="{{ route('projects.create', ['client_id' => $client->id]) }}" class="btn-primary text-white px-4 py-2 rounded-xl flex items-center hover:no-underline">
-                    <i class="fas fa-plus text-sm ml-2"></i>
+                <a href="{{ route('projects.create', ['client_id' => $client->id]) }}" class="btn-primary text-white px-3 md:px-4 py-2 rounded-xl flex items-center justify-center hover:no-underline text-sm md:text-base w-full sm:w-auto">
+                    <i class="fas fa-plus text-xs md:text-sm ml-2"></i>
                     إضافة مشروع جديد
                 </a>
             </div>
             
             @if($client->projects->count() > 0)
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
                     @foreach($client->projects as $project)
                         <div class="bg-gray-50 rounded-xl p-4 hover:bg-gray-100 transition-colors">
                             <div class="flex items-center justify-between mb-2">
@@ -164,12 +165,12 @@
                     @endforeach
                 </div>
             @else
-                <div class="text-center py-8">
-                    <i class="fas fa-project-diagram text-4xl text-gray-300 mb-4"></i>
-                    <h4 class="text-lg font-medium text-gray-900 mb-2">لا يوجد مشاريع</h4>
-                    <p class="text-gray-500 mb-4">لم يتم إضافة أي مشاريع لهذا العميل بعد</p>
-                    <a href="{{ route('projects.create', ['client_id' => $client->id]) }}" class="btn-primary text-white px-4 py-2 rounded-xl inline-flex items-center hover:no-underline">
-                        <i class="fas fa-plus text-sm ml-2"></i>
+                <div class="text-center py-6 md:py-8 px-4">
+                    <i class="fas fa-project-diagram text-3xl md:text-4xl text-gray-300 mb-3 md:mb-4"></i>
+                    <h4 class="text-base md:text-lg font-medium text-gray-900 mb-2">لا يوجد مشاريع</h4>
+                    <p class="text-sm md:text-base text-gray-500 mb-3 md:mb-4">لم يتم إضافة أي مشاريع لهذا العميل بعد</p>
+                    <a href="{{ route('projects.create', ['client_id' => $client->id]) }}" class="btn-primary text-white px-4 py-2 rounded-xl inline-flex items-center justify-center hover:no-underline text-sm md:text-base">
+                        <i class="fas fa-plus text-xs md:text-sm ml-2"></i>
                         إضافة مشروع جديد
                     </a>
                 </div>

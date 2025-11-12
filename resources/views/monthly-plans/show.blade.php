@@ -5,75 +5,82 @@
 @section('page-description', 'متابعة وتنظيم الخطة الشهرية')
 
 @section('content')
-<div class="container mx-auto px-4">
-    <div class="max-w-7xl mx-auto space-y-6">
+<div class="container mx-auto px-3 md:px-4">
+    <div class="max-w-7xl mx-auto space-y-4 md:space-y-6">
         <!-- Header -->
-        <div class="card page-header rounded-2xl p-6">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center">
-                    <div class="w-12 h-12 logo-gradient rounded-2xl flex items-center justify-center shadow-lg icon-spacing ml-3">
-                        <span class="material-icons text-white text-xl">calendar_month</span>
-                    </div>
-                    <div class="flex items-center gap-4">
+        <div class="card page-header rounded-xl md:rounded-2xl p-4 md:p-6">
+            <div class="flex flex-col gap-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center flex-1">
+                        <div class="w-10 h-10 md:w-12 md:h-12 logo-gradient rounded-xl md:rounded-2xl flex items-center justify-center shadow-lg icon-spacing ml-2 md:ml-3 flex-shrink-0">
+                            <span class="material-icons text-white text-lg md:text-xl">calendar_month</span>
+                        </div>
                         <div>
-                            <h2 class="text-2xl font-bold text-gray-800">{{ $monthlyPlan->project->business_name }}</h2>
-                            <p class="text-gray-600">الخطة الشهرية: {{ $monthlyPlan->month }} {{ $monthlyPlan->year }}</p>
+                            <h2 class="text-lg md:text-2xl font-bold text-gray-800">{{ $monthlyPlan->project->business_name }}</h2>
+                            <p class="text-xs md:text-base text-gray-600 hidden md:block">الخطة الشهرية: {{ $monthlyPlan->month }} {{ $monthlyPlan->year }}</p>
                         </div>
-                        <!-- Icons for Goals, Employees, and Status -->
-                        <div class="flex items-center gap-3 mr-4">
-                            <!-- Goals Icon -->
-                            <button onclick="showGoalsModal()" class="flex items-center gap-2 bg-blue-50 px-3 py-2 rounded-lg hover:bg-blue-100 transition-colors cursor-pointer" title="الأهداف">
-                                <span class="material-icons text-blue-600 text-lg">flag</span>
-                                <span class="text-sm font-semibold text-blue-700">{{ $monthlyPlan->goals->count() }}</span>
-                            </button>
-                            <!-- Employees Icon -->
-                            <button onclick="showEmployeesModal()" class="flex items-center gap-2 bg-green-50 px-3 py-2 rounded-lg hover:bg-green-100 transition-colors cursor-pointer" title="الموظفين">
-                                <span class="material-icons text-green-600 text-lg">people</span>
-                                <span class="text-sm font-semibold text-green-700">{{ $monthlyPlan->employees->count() }}</span>
-                            </button>
-                            <!-- Status Icon -->
-                            <div class="flex items-center gap-2 bg-purple-50 px-3 py-2 rounded-lg" title="الحالة">
-                                <span class="material-icons text-purple-600 text-lg">info</span>
-                                <span class="text-sm font-semibold text-purple-700">{{ $monthlyPlan->status_badge }}</span>
-                            </div>
-                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 md:gap-3">
+                        <a href="{{ route('monthly-plans.edit', $monthlyPlan) }}" class="flex items-center px-3 md:px-4 py-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-xl transition-colors text-sm md:text-base">
+                            <span class="material-icons text-xs md:text-sm ml-1 md:ml-2">edit</span>
+                            <span class="hidden sm:inline">تعديل</span>
+                        </a>
+                        <a href="{{ route('monthly-plans.index') }}" class="flex items-center px-3 md:px-4 py-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-colors text-sm md:text-base">
+                            <span class="material-icons text-xs md:text-sm ml-1 md:ml-2">arrow_back</span>
+                            <span class="hidden sm:inline">العودة</span>
+                        </a>
                     </div>
                 </div>
-                <div class="flex items-center space-x-3 rtl:space-x-reverse">
-                    <a href="{{ route('monthly-plans.edit', $monthlyPlan) }}" class="flex items-center px-4 py-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-xl transition-colors">
-                        <span class="material-icons text-sm ml-2">edit</span>
-                        تعديل
-                    </a>
-                    <a href="{{ route('monthly-plans.index') }}" class="flex items-center px-4 py-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-colors">
-                        العودة للقائمة
-                    </a>
+                <!-- Icons for Goals, Employees, and Status -->
+                <div class="flex items-center gap-2 md:gap-3 flex-wrap">
+                    <!-- Goals Icon -->
+                    <button onclick="showGoalsModal()" class="flex items-center gap-1 md:gap-2 bg-blue-50 px-2 md:px-3 py-1.5 md:py-2 rounded-lg hover:bg-blue-100 transition-colors cursor-pointer" title="الأهداف">
+                        <span class="material-icons text-blue-600 text-base md:text-lg">flag</span>
+                        <span class="text-xs md:text-sm font-semibold text-blue-700">{{ $monthlyPlan->goals->count() }}</span>
+                    </button>
+                    <!-- Employees Icon -->
+                    <button onclick="showEmployeesModal()" class="flex items-center gap-1 md:gap-2 bg-green-50 px-2 md:px-3 py-1.5 md:py-2 rounded-lg hover:bg-green-100 transition-colors cursor-pointer" title="الموظفين">
+                        <span class="material-icons text-green-600 text-base md:text-lg">people</span>
+                        <span class="text-xs md:text-sm font-semibold text-green-700">{{ $monthlyPlan->employees->count() }}</span>
+                    </button>
+                    <!-- Status Icon -->
+                    <div class="flex items-center gap-1 md:gap-2 bg-purple-50 px-2 md:px-3 py-1.5 md:py-2 rounded-lg" title="الحالة">
+                        <span class="material-icons text-purple-600 text-base md:text-lg">info</span>
+                        <span class="text-xs md:text-sm font-semibold text-purple-700">{{ $monthlyPlan->status_badge }}</span>
+                    </div>
+                    <!-- Month/Year Info on Mobile -->
+                    <div class="md:hidden flex items-center gap-1 bg-gray-50 px-2 py-1.5 rounded-lg">
+                        <span class="text-xs text-gray-700">{{ $monthlyPlan->month }} {{ $monthlyPlan->year }}</span>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Tasks Section -->
-        <div id="tasks-section" class="card rounded-2xl p-6">
-            <div class="flex items-center justify-between mb-6">
+        <div id="tasks-section" class="card rounded-xl md:rounded-2xl p-4 md:p-6">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 md:gap-4 mb-4 md:mb-6">
                 <div class="flex items-center">
-                    <div class="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center icon-spacing ml-3">
-                        <span class="material-icons text-indigo-600">view_module</span>
+                    <div class="w-8 h-8 md:w-10 md:h-10 bg-indigo-100 rounded-xl flex items-center justify-center icon-spacing ml-2 md:ml-3 flex-shrink-0">
+                        <span class="material-icons text-indigo-600 text-base md:text-lg">view_module</span>
                     </div>
-                    <h3 class="text-lg font-semibold text-gray-800">متابعة الخطة</h3>
+                    <h3 class="text-base md:text-lg font-semibold text-gray-800">متابعة الخطة</h3>
                 </div>
-                <div class="flex items-center space-x-2 rtl:space-x-reverse">
-                    <a href="{{ route('monthly-plans.tasks.create', $monthlyPlan) }}" class="flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
-                        <span class="material-icons text-sm ml-2">add_task</span>
-                        إضافة مهمة جديدة
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <a href="{{ route('monthly-plans.tasks.create', $monthlyPlan) }}" class="flex items-center justify-center px-3 md:px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm md:text-base flex-1 sm:flex-initial">
+                        <span class="material-icons text-xs md:text-sm ml-1 md:ml-2">add_task</span>
+                        <span class="hidden sm:inline">إضافة مهمة جديدة</span>
+                        <span class="sm:hidden">مهمة جديدة</span>
                     </a>
-                    <button onclick="showAddTaskModal()" class="btn-primary text-white px-4 py-2 rounded-lg flex items-center">
-                        <span class="material-icons text-sm ml-2">add</span>
-                        إضافة مهمة سريعة
+                    <button onclick="showAddTaskModal()" class="btn-primary text-white px-3 md:px-4 py-2 rounded-lg flex items-center justify-center text-sm md:text-base flex-1 sm:flex-initial">
+                        <span class="material-icons text-xs md:text-sm ml-1 md:ml-2">add</span>
+                        <span class="hidden sm:inline">إضافة مهمة سريعة</span>
+                        <span class="sm:hidden">سريعة</span>
                     </button>
                 </div>
             </div>
 
             <!-- Tasks Rows -->
-            <div class="space-y-6">
+            <div class="space-y-4 md:space-y-6">
                 <!-- General Tasks Row -->
                 @php
                     $generalTasks = $tasksByList->get('tasks', collect())->where('status', '!=', 'archived')->where('status', '!=', 'publish')->sortBy('order');
@@ -82,27 +89,27 @@
                 @endphp
                 
                 @if($allGeneralTasks->count() > 0)
-                    <div class="bg-gray-50 rounded-xl p-4">
+                    <div class="bg-gray-50 rounded-xl p-3 md:p-4">
                         <!-- General Tasks Header -->
-                        <div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-200">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 bg-gradient-to-r from-gray-400 to-gray-600 rounded-full flex items-center justify-center">
-                                    <span class="material-icons text-white text-sm">folder</span>
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-3 md:mb-4 pb-3 border-b border-gray-200">
+                            <div class="flex items-center gap-2 md:gap-3">
+                                <div class="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-r from-gray-400 to-gray-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <span class="material-icons text-white text-xs md:text-sm">folder</span>
                                 </div>
                                 <div>
-                                    <h4 class="font-semibold text-gray-800 text-lg">مهام عامة</h4>
-                                    <p class="text-xs text-gray-500">مهام غير مخصصة لموظف محدد</p>
+                                    <h4 class="font-semibold text-gray-800 text-base md:text-lg">مهام عامة</h4>
+                                    <p class="text-xs text-gray-500 hidden md:block">مهام غير مخصصة لموظف محدد</p>
                                 </div>
                             </div>
                             <div class="flex items-center gap-2">
-                                <span class="px-3 py-1 text-sm rounded-full bg-gray-100 text-gray-700">
+                                <span class="px-2 md:px-3 py-1 text-xs md:text-sm rounded-full bg-gray-100 text-gray-700">
                                     {{ $allGeneralTasks->count() }} مهمة
                                 </span>
                             </div>
                         </div>
                         
                         <!-- General Tasks Grid -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
                             @foreach($allGeneralTasks as $task)
                                 @include('monthly-plans.task-card', ['task' => $task])
                             @endforeach
@@ -116,27 +123,27 @@
                 @endphp
                 
                 @if($publishTasks->count() > 0)
-                    <div class="bg-green-50 rounded-xl p-4">
+                    <div class="bg-green-50 rounded-xl p-3 md:p-4">
                         <!-- Publish Tasks Header -->
-                        <div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-200">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 bg-gradient-to-r from-green-400 to-green-600 rounded-full flex items-center justify-center">
-                                    <span class="material-icons text-white text-sm">publish</span>
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-3 md:mb-4 pb-3 border-b border-gray-200">
+                            <div class="flex items-center gap-2 md:gap-3">
+                                <div class="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-r from-green-400 to-green-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <span class="material-icons text-white text-xs md:text-sm">publish</span>
                                 </div>
                                 <div>
-                                    <h4 class="font-semibold text-gray-800 text-lg">نشر</h4>
-                                    <p class="text-xs text-gray-500">المهام المنشورة</p>
+                                    <h4 class="font-semibold text-gray-800 text-base md:text-lg">نشر</h4>
+                                    <p class="text-xs text-gray-500 hidden md:block">المهام المنشورة</p>
                                 </div>
                             </div>
                             <div class="flex items-center gap-2">
-                                <span class="px-3 py-1 text-sm rounded-full bg-green-100 text-green-700">
+                                <span class="px-2 md:px-3 py-1 text-xs md:text-sm rounded-full bg-green-100 text-green-700">
                                     {{ $publishTasks->count() }} مهمة
                                 </span>
                             </div>
                         </div>
                         
                         <!-- Publish Tasks Grid -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
                             @foreach($publishTasks as $task)
                                 @include('monthly-plans.task-card', ['task' => $task])
                             @endforeach
@@ -150,27 +157,27 @@
                 @endphp
                 
                 @if($archivedTasks->count() > 0)
-                    <div class="bg-slate-50 rounded-xl p-4">
+                    <div class="bg-slate-50 rounded-xl p-3 md:p-4">
                         <!-- Archived Tasks Header -->
-                        <div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-200">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 bg-gradient-to-r from-slate-400 to-slate-600 rounded-full flex items-center justify-center">
-                                    <span class="material-icons text-white text-sm">archive</span>
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-3 md:mb-4 pb-3 border-b border-gray-200">
+                            <div class="flex items-center gap-2 md:gap-3">
+                                <div class="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-r from-slate-400 to-slate-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <span class="material-icons text-white text-xs md:text-sm">archive</span>
                                 </div>
                                 <div>
-                                    <h4 class="font-semibold text-gray-800 text-lg">أرشيف</h4>
-                                    <p class="text-xs text-gray-500">المهام المؤرشفة</p>
+                                    <h4 class="font-semibold text-gray-800 text-base md:text-lg">أرشيف</h4>
+                                    <p class="text-xs text-gray-500 hidden md:block">المهام المؤرشفة</p>
                                 </div>
                             </div>
                             <div class="flex items-center gap-2">
-                                <span class="px-3 py-1 text-sm rounded-full bg-slate-100 text-slate-700">
+                                <span class="px-2 md:px-3 py-1 text-xs md:text-sm rounded-full bg-slate-100 text-slate-700">
                                     {{ $archivedTasks->count() }} مهمة
                                 </span>
                             </div>
                         </div>
                         
                         <!-- Archived Tasks Grid -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
                             @foreach($archivedTasks as $task)
                                 @include('monthly-plans.task-card', ['task' => $task])
                             @endforeach
@@ -185,20 +192,20 @@
                         // عرض جميع مهام الموظف بما فيها المنشورة (لكن بدون المؤرشفة)
                         $employeeTasks = $tasksByList->get($employeeTasksKey, collect())->where('status', '!=', 'archived')->sortBy('order');
                     @endphp
-                    <div class="bg-gray-50 rounded-xl p-4">
+                    <div class="bg-gray-50 rounded-xl p-3 md:p-4">
                         <!-- Employee Header -->
-                        <div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-200">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 bg-gradient-to-r from-green-400 to-green-600 rounded-full flex items-center justify-center">
-                                    <span class="material-icons text-white text-sm">person</span>
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-3 md:mb-4 pb-3 border-b border-gray-200">
+                            <div class="flex items-center gap-2 md:gap-3">
+                                <div class="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-r from-green-400 to-green-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <span class="material-icons text-white text-xs md:text-sm">person</span>
                                 </div>
                                 <div>
-                                    <h4 class="font-semibold text-gray-800 text-lg">{{ $employee->name }}</h4>
-                                    <p class="text-xs text-gray-500">{{ $employee->email ?? '' }}</p>
+                                    <h4 class="font-semibold text-gray-800 text-base md:text-lg">{{ $employee->name }}</h4>
+                                    <p class="text-xs text-gray-500 hidden md:block">{{ $employee->email ?? '' }}</p>
                                 </div>
                             </div>
                             <div class="flex items-center gap-2">
-                                <span class="px-3 py-1 text-sm rounded-full bg-green-100 text-green-700">
+                                <span class="px-2 md:px-3 py-1 text-xs md:text-sm rounded-full bg-green-100 text-green-700">
                                     {{ $employeeTasks->count() }} مهمة
                                 </span>
                             </div>
@@ -206,7 +213,7 @@
                         
                         <!-- Employee Tasks Grid -->
                         @if($employeeTasks->count() > 0)
-                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
                                 @foreach($employeeTasks as $task)
                                     @include('monthly-plans.task-card', ['task' => $task])
                                 @endforeach
@@ -225,17 +232,17 @@
 </div>
 
 <!-- Goals Modal -->
-<div id="goals-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
-    <div class="bg-white rounded-2xl p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
-        <div class="flex items-center justify-between mb-4">
+<div id="goals-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-3 md:p-4">
+    <div class="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 max-w-2xl w-full max-h-[90vh] md:max-h-[80vh] overflow-y-auto">
+        <div class="flex items-center justify-between mb-3 md:mb-4">
             <div class="flex items-center">
-                <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center ml-3">
-                    <span class="material-icons text-blue-600">flag</span>
+                <div class="w-8 h-8 md:w-10 md:h-10 bg-blue-100 rounded-xl flex items-center justify-center ml-2 md:ml-3 flex-shrink-0">
+                    <span class="material-icons text-blue-600 text-base md:text-lg">flag</span>
                 </div>
-                <h3 class="text-xl font-bold text-gray-800">الأهداف</h3>
+                <h3 class="text-lg md:text-xl font-bold text-gray-800">الأهداف</h3>
             </div>
-            <button onclick="hideGoalsModal()" class="text-gray-400 hover:text-gray-600">
-                <span class="material-icons">close</span>
+            <button onclick="hideGoalsModal()" class="text-gray-400 hover:text-gray-600 p-1">
+                <span class="material-icons text-lg md:text-xl">close</span>
             </button>
         </div>
         <div class="space-y-3">
@@ -263,17 +270,17 @@
 </div>
 
 <!-- Employees Modal -->
-<div id="employees-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
-    <div class="bg-white rounded-2xl p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
-        <div class="flex items-center justify-between mb-4">
+<div id="employees-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-3 md:p-4">
+    <div class="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 max-w-2xl w-full max-h-[90vh] md:max-h-[80vh] overflow-y-auto">
+        <div class="flex items-center justify-between mb-3 md:mb-4">
             <div class="flex items-center">
-                <div class="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center ml-3">
-                    <span class="material-icons text-green-600">people</span>
+                <div class="w-8 h-8 md:w-10 md:h-10 bg-green-100 rounded-xl flex items-center justify-center ml-2 md:ml-3 flex-shrink-0">
+                    <span class="material-icons text-green-600 text-base md:text-lg">people</span>
                 </div>
-                <h3 class="text-xl font-bold text-gray-800">الموظفين</h3>
+                <h3 class="text-lg md:text-xl font-bold text-gray-800">الموظفين</h3>
             </div>
-            <button onclick="hideEmployeesModal()" class="text-gray-400 hover:text-gray-600">
-                <span class="material-icons">close</span>
+            <button onclick="hideEmployeesModal()" class="text-gray-400 hover:text-gray-600 p-1">
+                <span class="material-icons text-lg md:text-xl">close</span>
             </button>
         </div>
         <div class="space-y-2">
