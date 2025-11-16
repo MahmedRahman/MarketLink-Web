@@ -273,8 +273,7 @@ class ReportsController extends Controller
 
         // Get filter parameters
         $employeeId = $request->get('employee_id');
-        $dateFrom = $request->get('date_from');
-        $dateTo = $request->get('date_to');
+        $recordMonth = $request->get('record_month');
 
         // Get all employees for filter
         $employees = Employee::where('organization_id', $organizationId)
@@ -303,13 +302,9 @@ class ReportsController extends Controller
                         $query->where('organization_id', $organizationId);
                     });
 
-                // Apply date filters
-                if ($dateFrom) {
-                    $expensesQuery->where('expense_date', '>=', $dateFrom);
-                }
-
-                if ($dateTo) {
-                    $expensesQuery->where('expense_date', '<=', $dateTo);
+                // Apply record_month_year filter
+                if ($recordMonth) {
+                    $expensesQuery->where('record_month_year', $recordMonth);
                 }
 
                 $expenses = $expensesQuery->orderBy('expense_date', 'desc')->get();
@@ -331,8 +326,7 @@ class ReportsController extends Controller
             'totalPending',
             'totalCancelled',
             'employeeId',
-            'dateFrom',
-            'dateTo'
+            'recordMonth'
         ));
     }
 
@@ -344,7 +338,7 @@ class ReportsController extends Controller
         // Get the current user's organization ID
         $organizationId = $request->user()->organization_id;
 
-        // Get selected month filter
+        // Get selected month filter (for record_month_year)
         $selectedMonth = $request->query('month');
 
         // Get all projects with their revenues
@@ -356,19 +350,11 @@ class ReportsController extends Controller
         $projectsData = $projects->map(function($project) use ($selectedMonth) {
             $revenues = $project->revenues;
             
-            // Filter revenues by month if selected
+            // Filter revenues by record_month_year if selected
             if ($selectedMonth) {
-                try {
-                    $monthDate = Carbon::createFromFormat('Y-m', $selectedMonth);
-                    $startOfMonth = $monthDate->copy()->startOfMonth();
-                    $endOfMonth = $monthDate->copy()->endOfMonth();
-                    
-                    $revenues = $revenues->filter(function($revenue) use ($startOfMonth, $endOfMonth) {
-                        return $revenue->revenue_date >= $startOfMonth && $revenue->revenue_date <= $endOfMonth;
-                    });
-                } catch (\Exception $e) {
-                    // If date parsing fails, use all revenues
-                }
+                $revenues = $revenues->filter(function($revenue) use ($selectedMonth) {
+                    return $revenue->record_month_year === $selectedMonth;
+                });
             }
             
             $totalPaid = $revenues->sum('paid_amount');
@@ -381,9 +367,6 @@ class ReportsController extends Controller
                 'total_paid' => $totalPaid,
                 'total_remaining' => $totalRemaining,
             ];
-        })->filter(function($data) {
-            // Filter out projects with no revenues in the selected month
-            return $data['total_paid'] > 0 || $data['total_remaining'] > 0;
         });
 
         // Calculate grand totals
@@ -406,7 +389,7 @@ class ReportsController extends Controller
         // Get the current user's organization ID
         $organizationId = $request->user()->organization_id;
 
-        // Get selected month filter
+        // Get selected month filter (for record_month_year)
         $selectedMonth = $request->query('month');
 
         // Get all projects with their revenues and expenses
@@ -419,23 +402,15 @@ class ReportsController extends Controller
             $revenues = $project->revenues;
             $expenses = $project->expenses;
             
-            // Filter revenues and expenses by month if selected
+            // Filter revenues and expenses by record_month_year if selected
             if ($selectedMonth) {
-                try {
-                    $monthDate = Carbon::createFromFormat('Y-m', $selectedMonth);
-                    $startOfMonth = $monthDate->copy()->startOfMonth();
-                    $endOfMonth = $monthDate->copy()->endOfMonth();
-                    
-                    $revenues = $revenues->filter(function($revenue) use ($startOfMonth, $endOfMonth) {
-                        return $revenue->revenue_date >= $startOfMonth && $revenue->revenue_date <= $endOfMonth;
-                    });
-                    
-                    $expenses = $expenses->filter(function($expense) use ($startOfMonth, $endOfMonth) {
-                        return $expense->expense_date >= $startOfMonth && $expense->expense_date <= $endOfMonth;
-                    });
-                } catch (\Exception $e) {
-                    // If date parsing fails, use all data
-                }
+                $revenues = $revenues->filter(function($revenue) use ($selectedMonth) {
+                    return $revenue->record_month_year === $selectedMonth;
+                });
+                
+                $expenses = $expenses->filter(function($expense) use ($selectedMonth) {
+                    return $expense->record_month_year === $selectedMonth;
+                });
             }
             
             $totalPaidRevenues = $revenues->sum('paid_amount');
@@ -448,9 +423,6 @@ class ReportsController extends Controller
                 'total_paid_expenses' => $totalPaidExpenses,
                 'profit' => $profit,
             ];
-        })->filter(function($data) {
-            // Filter out projects with no revenues or expenses in the selected month
-            return $data['total_paid_revenues'] > 0 || $data['total_paid_expenses'] > 0;
         });
 
         // Calculate grand totals
@@ -476,8 +448,7 @@ class ReportsController extends Controller
         $organizationId = $request->user()->organization_id;
 
         // Get filter parameters
-        $dateFrom = $request->query('date_from');
-        $dateTo = $request->query('date_to');
+        $recordMonth = $request->query('record_month');
 
         // Get all employees
         $employees = Employee::where('organization_id', $organizationId)
@@ -486,19 +457,15 @@ class ReportsController extends Controller
             ->get();
 
         // Calculate totals for each employee
-        $employeesData = $employees->map(function($employee) use ($organizationId, $dateFrom, $dateTo) {
+        $employeesData = $employees->map(function($employee) use ($organizationId, $recordMonth) {
             $expensesQuery = \App\Models\ProjectExpense::where('employee_id', $employee->id)
                 ->whereHas('project', function($query) use ($organizationId) {
                     $query->where('organization_id', $organizationId);
                 });
 
-            // Apply date filters
-            if ($dateFrom) {
-                $expensesQuery->where('expense_date', '>=', $dateFrom);
-            }
-
-            if ($dateTo) {
-                $expensesQuery->where('expense_date', '<=', $dateTo);
+            // Apply record_month_year filter
+            if ($recordMonth) {
+                $expensesQuery->where('record_month_year', $recordMonth);
             }
 
             $expenses = $expensesQuery->get();
@@ -530,8 +497,7 @@ class ReportsController extends Controller
             'employeesData',
             'grandTotalPaid',
             'grandTotalPending',
-            'dateFrom',
-            'dateTo'
+            'recordMonth'
         ));
     }
 
@@ -548,8 +514,7 @@ class ReportsController extends Controller
         }
 
         // Get filter parameters
-        $dateFrom = $request->query('date_from');
-        $dateTo = $request->query('date_to');
+        $recordMonth = $request->query('record_month');
 
         // Build query for paid expenses
         $expensesQuery = \App\Models\ProjectExpense::where('employee_id', $employee->id)
@@ -559,13 +524,9 @@ class ReportsController extends Controller
                 $query->where('organization_id', $organizationId);
             });
 
-        // Apply date filters
-        if ($dateFrom) {
-            $expensesQuery->where('expense_date', '>=', $dateFrom);
-        }
-
-        if ($dateTo) {
-            $expensesQuery->where('expense_date', '<=', $dateTo);
+        // Apply record_month_year filter
+        if ($recordMonth) {
+            $expensesQuery->where('record_month_year', $recordMonth);
         }
 
         $expenses = $expensesQuery->orderBy('expense_date', 'desc')->get();
@@ -575,8 +536,7 @@ class ReportsController extends Controller
             'employee',
             'expenses',
             'totalPaid',
-            'dateFrom',
-            'dateTo'
+            'recordMonth'
         ));
     }
 

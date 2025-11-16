@@ -51,9 +51,27 @@ Route::middleware(['auth', \App\Http\Middleware\CheckTrialStatus::class])->group
            Route::resource('projects.revenues', ProjectRevenueController::class);
            Route::post('projects/{project}/revenues/{revenue}/duplicate', [ProjectRevenueController::class, 'duplicate'])->name('projects.revenues.duplicate');
            
+           // All Project Revenues Routes (إيرادات المشاريع)
+           Route::get('revenues', [ProjectRevenueController::class, 'all'])->name('revenues.all');
+           Route::get('revenues/create', [ProjectRevenueController::class, 'createAll'])->name('revenues.create');
+           Route::post('revenues', [ProjectRevenueController::class, 'storeAll'])->name('revenues.store');
+           Route::get('revenues/{revenue}/edit', [ProjectRevenueController::class, 'editAll'])->name('revenues.edit');
+           Route::put('revenues/{revenue}', [ProjectRevenueController::class, 'updateAll'])->name('revenues.update');
+           Route::delete('revenues/{revenue}', [ProjectRevenueController::class, 'destroyAll'])->name('revenues.destroy');
+           Route::post('revenues/{revenue}/duplicate', [ProjectRevenueController::class, 'duplicateAll'])->name('revenues.duplicate');
+           
            // Project Expenses Routes
            Route::resource('projects.expenses', ProjectExpenseController::class);
            Route::post('projects/{project}/expenses/{expense}/duplicate', [ProjectExpenseController::class, 'duplicate'])->name('projects.expenses.duplicate');
+           
+           // All Project Expenses Routes (مصروفات المشاريع)
+           Route::get('expenses', [ProjectExpenseController::class, 'all'])->name('expenses.all');
+           Route::get('expenses/create', [ProjectExpenseController::class, 'createAll'])->name('expenses.create');
+           Route::post('expenses', [ProjectExpenseController::class, 'storeAll'])->name('expenses.store');
+           Route::get('expenses/{expense}/edit', [ProjectExpenseController::class, 'editAll'])->name('expenses.edit');
+           Route::put('expenses/{expense}', [ProjectExpenseController::class, 'updateAll'])->name('expenses.update');
+           Route::delete('expenses/{expense}', [ProjectExpenseController::class, 'destroyAll'])->name('expenses.destroy');
+           Route::post('expenses/{expense}/duplicate', [ProjectExpenseController::class, 'duplicateAll'])->name('expenses.duplicate');
            
            // Project Financial Report Routes
            Route::get('projects/{project}/financial-report', [ProjectController::class, 'financialReport'])->name('projects.financial-report');

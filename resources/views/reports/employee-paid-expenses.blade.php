@@ -28,7 +28,7 @@
                 <button onclick="printTable()" class="w-10 h-10 bg-blue-500 hover:bg-blue-600 text-white rounded-xl flex items-center justify-center transition-colors" title="طباعة">
                     <i class="fas fa-print text-lg"></i>
                 </button>
-                <a href="{{ route('reports.total-employees-financial', ['date_from' => $dateFrom, 'date_to' => $dateTo]) }}" class="flex items-center px-4 py-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-colors">
+                <a href="{{ route('reports.total-employees-financial', ['record_month' => $recordMonth]) }}" class="flex items-center px-4 py-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-colors">
                     <i class="fas fa-arrow-right text-sm ml-2"></i>
                     العودة للتقرير
                 </a>
@@ -59,6 +59,9 @@
                     <thead class="bg-gray-50">
                         <tr>
                             <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider" style="text-align: justify; padding-right: 33px;">
+                                السجلات الشهرية
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider" style="text-align: justify; padding-right: 33px;">
                                 التاريخ
                             </th>
                             <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider" style="text-align: justify; padding-right: 33px;">
@@ -81,6 +84,25 @@
                     <tbody class="bg-white divide-y divide-gray-200">
                         @foreach($expenses as $expense)
                             <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    @if($expense->record_month_year)
+                                        @php
+                                            $months = [
+                                                1 => 'يناير', 2 => 'فبراير', 3 => 'مارس', 4 => 'أبريل',
+                                                5 => 'مايو', 6 => 'يونيو', 7 => 'يوليو', 8 => 'أغسطس',
+                                                9 => 'سبتمبر', 10 => 'أكتوبر', 11 => 'نوفمبر', 12 => 'ديسمبر'
+                                            ];
+                                            $parts = explode('-', $expense->record_month_year);
+                                            $year = $parts[0] ?? '';
+                                            $monthNum = isset($parts[1]) ? (int)$parts[1] : 0;
+                                            $monthName = $months[$monthNum] ?? '';
+                                        @endphp
+                                        <div class="text-sm font-medium text-gray-900">{{ $monthName }} {{ $year }}</div>
+                                        <div class="text-xs text-gray-500">{{ $expense->record_month_year }}</div>
+                                    @else
+                                        <div class="text-sm font-medium text-gray-400 italic">فاضي</div>
+                                    @endif
+                                </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm text-gray-500">{{ $expense->expense_date->format('Y-m-d') }}</div>
                                 </td>
@@ -110,7 +132,7 @@
                     </tbody>
                     <tfoot class="bg-gray-50">
                         <tr>
-                            <td colspan="3" class="px-6 py-4 text-right font-bold text-gray-900">
+                            <td colspan="4" class="px-6 py-4 text-right font-bold text-gray-900">
                                 الإجمالي
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
@@ -118,7 +140,7 @@
                                     {{ number_format($totalPaid, 2) }} جنيه
                                 </div>
                             </td>
-                            <td colspan="2"></td>
+                            <td colspan="1"></td>
                         </tr>
                     </tfoot>
                 </table>
@@ -153,32 +175,32 @@ $(document).ready(function() {
         dom: 'rti',
         columnDefs: [
             {
-                targets: [5], // Actions column
+                targets: [6], // Actions column
                 orderable: false,
                 searchable: false
             }
         ],
-        order: [[0, 'desc']], // Sort by date descending
+        order: [[1, 'desc']], // Sort by date descending
         buttons: [
             {
                 extend: 'excel',
                 text: 'Excel',
                 exportOptions: {
-                    columns: [0, 1, 2, 3, 4]
+                    columns: [0, 1, 2, 3, 4, 5]
                 }
             },
             {
                 extend: 'pdf',
                 text: 'PDF',
                 exportOptions: {
-                    columns: [0, 1, 2, 3, 4]
+                    columns: [0, 1, 2, 3, 4, 5]
                 }
             },
             {
                 extend: 'print',
                 text: 'Print',
                 exportOptions: {
-                    columns: [0, 1, 2, 3, 4]
+                    columns: [0, 1, 2, 3, 4, 5]
                 }
             }
         ]

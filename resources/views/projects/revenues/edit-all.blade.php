@@ -19,8 +19,8 @@
                         <p class="text-gray-600">تعديل الإيراد: {{ $revenue->title }}</p>
                     </div>
                 </div>
-                <a href="{{ route('projects.revenues.show', [$project, $revenue]) }}" class="flex items-center px-4 py-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-colors icon-spacing">
-                    العودة للتفاصيل
+                <a href="{{ route('revenues.all') }}" class="flex items-center px-4 py-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-colors icon-spacing">
+                    العودة للقائمة
                 </a>
             </div>
         </div>
@@ -50,7 +50,7 @@
                 </div>
             @endif
 
-            <form method="POST" action="{{ route('projects.revenues.update', [$project, $revenue]) }}" class="space-y-8" enctype="multipart/form-data">
+            <form method="POST" action="{{ route('revenues.update', $revenue) }}" class="space-y-8" enctype="multipart/form-data">
                 @csrf
                 @method('PUT')
 
@@ -59,6 +59,29 @@
                     <h3 class="text-lg font-semibold text-gray-800">المعلومات الأساسية</h3>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Project -->
+                        <div>
+                            <label for="project_id" class="block text-sm font-medium text-gray-700 mb-2">
+                                المشروع <span class="text-red-500">*</span>
+                            </label>
+                            <select
+                                id="project_id"
+                                name="project_id"
+                                required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors select2"
+                            >
+                                <option value="">اختر المشروع</option>
+                                @foreach($projects as $project)
+                                    <option value="{{ $project->id }}" {{ old('project_id', $revenue->project_id) == $project->id ? 'selected' : '' }}>
+                                        {{ $project->business_name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('project_id')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
                         <!-- Title -->
                         <div>
                             <label for="title" class="block text-sm font-medium text-gray-700 mb-2">
@@ -338,7 +361,7 @@
                         <i class="fas fa-save text-lg ml-3"></i>
                         حفظ التعديلات
                     </button>
-                    <a href="{{ route('projects.revenues.show', [$project, $revenue]) }}" class="action-button cancel-button flex items-center px-8 py-4 rounded-2xl font-medium text-lg min-w-[140px] justify-center">
+                    <a href="{{ route('revenues.all') }}" class="action-button cancel-button flex items-center px-8 py-4 rounded-2xl font-medium text-lg min-w-[140px] justify-center">
                         إلغاء
                     </a>
                 </div>

@@ -37,7 +37,7 @@
         <form method="GET" action="{{ route('reports.profits') }}" class="flex items-center gap-4">
             <div class="flex-1">
                 <label for="month" class="block text-sm font-medium text-gray-700 mb-2">
-                    فلترة بالشهر
+                    فلترة بالسجلات الشهرية
                 </label>
                 <input
                     type="month"
@@ -47,6 +47,7 @@
                     class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
                     onchange="this.form.submit()"
                 />
+                <p class="mt-1 text-xs text-gray-500">البحث يعتمد على السجلات الشهرية وليس تاريخ الإيراد/المصروف</p>
             </div>
             @if($selectedMonth)
             <div class="flex items-end">

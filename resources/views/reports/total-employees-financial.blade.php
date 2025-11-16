@@ -32,45 +32,31 @@
         </div>
     </div>
 
-    <!-- Date Filters -->
+    <!-- Record Month Filter -->
     <div class="card rounded-2xl p-6">
-        <form method="GET" action="{{ route('reports.total-employees-financial') }}" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-                <label for="date_from" class="block text-sm font-medium text-gray-700 mb-2">
-                    من تاريخ
+        <form method="GET" action="{{ route('reports.total-employees-financial') }}" class="flex items-center gap-4">
+            <div class="flex-1">
+                <label for="record_month" class="block text-sm font-medium text-gray-700 mb-2">
+                    السجلات الشهرية
                 </label>
                 <input
-                    type="date"
-                    id="date_from"
-                    name="date_from"
-                    value="{{ $dateFrom ?? '' }}"
+                    type="month"
+                    id="record_month"
+                    name="record_month"
+                    value="{{ $recordMonth ?? '' }}"
                     class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                    onchange="this.form.submit()"
                 />
+                <p class="mt-1 text-xs text-gray-500">البحث يعتمد على السجلات الشهرية وليس تاريخ المصروف</p>
             </div>
-            <div>
-                <label for="date_to" class="block text-sm font-medium text-gray-700 mb-2">
-                    إلى تاريخ
-                </label>
-                <input
-                    type="date"
-                    id="date_to"
-                    name="date_to"
-                    value="{{ $dateTo ?? '' }}"
-                    class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
-                />
-            </div>
-            <div class="flex items-end gap-3">
-                <button type="submit" class="btn-primary text-white px-6 py-3 rounded-xl hover:no-underline flex items-center">
-                    <i class="fas fa-search text-sm ml-2"></i>
-                    بحث
-                </button>
-                @if($dateFrom || $dateTo)
-                <a href="{{ route('reports.total-employees-financial') }}" class="btn-secondary text-white px-6 py-3 rounded-xl hover:no-underline flex items-center">
+            @if($recordMonth)
+            <div class="flex items-end">
+                <a href="{{ route('reports.total-employees-financial') }}" class="btn-secondary text-white px-6 py-3 rounded-xl hover:no-underline">
                     <i class="fas fa-times text-sm ml-2"></i>
-                    إلغاء
+                    إلغاء الفلتر
                 </a>
-                @endif
             </div>
+            @endif
         </form>
     </div>
 
@@ -150,7 +136,7 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     @if($data['total_paid'] > 0)
-                                    <a href="{{ route('reports.employee-paid-expenses', ['employee' => $data['employee']->id, 'date_from' => $dateFrom, 'date_to' => $dateTo]) }}" class="text-sm font-semibold text-green-600 hover:text-green-800 hover:underline cursor-pointer">
+                                    <a href="{{ route('reports.employee-paid-expenses', ['employee' => $data['employee']->id, 'record_month' => $recordMonth]) }}" class="text-sm font-semibold text-green-600 hover:text-green-800 hover:underline cursor-pointer">
                                         {{ number_format($data['total_paid'], 2) }} جنيه
                                     </a>
                                     @else
@@ -165,7 +151,7 @@
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                                    <a href="{{ route('reports.employee-financial', ['employee_id' => $data['employee']->id, 'date_from' => $dateFrom, 'date_to' => $dateTo]) }}" class="text-blue-600 hover:text-blue-900 p-1" title="عرض التفاصيل">
+                                    <a href="{{ route('reports.employee-financial', ['employee_id' => $data['employee']->id, 'record_month' => $recordMonth]) }}" class="text-blue-600 hover:text-blue-900 p-1" title="عرض التفاصيل">
                                         <i class="fas fa-eye text-sm"></i>
                                     </a>
                                 </td>

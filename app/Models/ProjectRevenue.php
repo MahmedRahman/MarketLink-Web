@@ -16,6 +16,7 @@ class ProjectRevenue extends Model
         'paid_amount',
         'currency',
         'revenue_date',
+        'record_month_year',
         'payment_method',
         'payment_reference',
         'transfer_image',

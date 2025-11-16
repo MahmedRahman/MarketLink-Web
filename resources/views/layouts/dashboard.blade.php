@@ -1022,6 +1022,18 @@
                         <span class="font-medium">المشاريع</span>
                     </a>
                     
+                    <!-- Project Revenues -->
+                    <a href="{{ route('revenues.all') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('revenues.*') ? 'active' : '' }}">
+                        <i class="fas fa-money-bill-wave text-lg ml-3"></i>
+                        <span class="font-medium">إيرادات المشاريع</span>
+                    </a>
+                    
+                    <!-- Project Expenses -->
+                    <a href="{{ route('expenses.all') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('expenses.*') ? 'active' : '' }}">
+                        <i class="fas fa-receipt text-lg ml-3"></i>
+                        <span class="font-medium">مصروفات المشاريع</span>
+                    </a>
+                    
                     <!-- Divider -->
                     <div class="my-6 mx-4 border-t border-gray-200"></div>
                     

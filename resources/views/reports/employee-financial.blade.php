@@ -48,18 +48,12 @@
                     </select>
                 </div>
 
-                <!-- Date From -->
+                <!-- Record Month -->
                 <div>
-                    <label for="date_from" class="block text-sm font-medium text-gray-700 mb-2">من تاريخ</label>
-                    <input type="date" name="date_from" id="date_from" value="{{ $dateFrom }}"
+                    <label for="record_month" class="block text-sm font-medium text-gray-700 mb-2">السجلات الشهرية</label>
+                    <input type="month" name="record_month" id="record_month" value="{{ $recordMonth ?? '' }}"
                         class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors">
-                </div>
-
-                <!-- Date To -->
-                <div>
-                    <label for="date_to" class="block text-sm font-medium text-gray-700 mb-2">إلى تاريخ</label>
-                    <input type="date" name="date_to" id="date_to" value="{{ $dateTo }}"
-                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors">
+                    <p class="mt-1 text-xs text-gray-500">البحث يعتمد على السجلات الشهرية</p>
                 </div>
 
                 <!-- Filter Buttons -->
@@ -158,6 +152,7 @@
                     <table class="min-w-full">
                         <thead>
                             <tr class="border-b border-gray-200">
+                                <th class="text-right py-3 px-4 font-medium text-gray-600" style="text-align: justify; padding-right: 33px;">السجلات الشهرية</th>
                                 <th class="text-right py-3 px-4 font-medium text-gray-600" style="text-align: justify; padding-right: 33px;">المشروع</th>
                                 <th class="text-right py-3 px-4 font-medium text-gray-600" style="text-align: justify; padding-right: 33px;">العنوان</th>
                                 <th class="text-right py-3 px-4 font-medium text-gray-600" style="text-align: justify; padding-right: 33px;">المبلغ</th>
@@ -169,6 +164,25 @@
                         <tbody>
                             @foreach($expenses as $expense)
                             <tr class="border-b border-gray-100 hover:bg-gray-50">
+                                <td class="py-3 px-4 text-sm text-gray-900">
+                                    @if($expense->record_month_year)
+                                        @php
+                                            $months = [
+                                                1 => 'يناير', 2 => 'فبراير', 3 => 'مارس', 4 => 'أبريل',
+                                                5 => 'مايو', 6 => 'يونيو', 7 => 'يوليو', 8 => 'أغسطس',
+                                                9 => 'سبتمبر', 10 => 'أكتوبر', 11 => 'نوفمبر', 12 => 'ديسمبر'
+                                            ];
+                                            $parts = explode('-', $expense->record_month_year);
+                                            $year = $parts[0] ?? '';
+                                            $monthNum = isset($parts[1]) ? (int)$parts[1] : 0;
+                                            $monthName = $months[$monthNum] ?? '';
+                                        @endphp
+                                        <div class="text-sm font-medium text-gray-900">{{ $monthName }} {{ $year }}</div>
+                                        <div class="text-xs text-gray-500">{{ $expense->record_month_year }}</div>
+                                    @else
+                                        <div class="text-sm font-medium text-gray-400 italic">فاضي</div>
+                                    @endif
+                                </td>
                                 <td class="py-3 px-4 text-sm text-gray-900">
                                     {{ $expense->project->business_name ?? 'غير محدد' }}
                                 </td>
@@ -192,7 +206,7 @@
                         </tbody>
                         <tfoot>
                             <tr class="bg-gray-50 font-semibold">
-                                <td colspan="2" class="py-3 px-4 text-right">الإجمالي:</td>
+                                <td colspan="3" class="py-3 px-4 text-right">الإجمالي:</td>
                                 <td class="py-3 px-4 text-lg text-gray-900">
                                     {{ number_format($totalAmount, 2) }} جنيه
                                 </td>

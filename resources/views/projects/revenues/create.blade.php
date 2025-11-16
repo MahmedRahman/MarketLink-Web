@@ -165,6 +165,24 @@
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
+
+                        <!-- Record Month Year -->
+                        <div>
+                            <label for="record_month_year" class="block text-sm font-medium text-gray-700 mb-2">
+                                السجلات الشهرية (الشهر والسنة)
+                            </label>
+                            <input
+                                type="month"
+                                id="record_month_year"
+                                name="record_month_year"
+                                value="{{ old('record_month_year', date('Y-m')) }}"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                            />
+                            <p class="mt-1 text-xs text-gray-500">الشهر والسنة للسجل الشهري</p>
+                            @error('record_month_year')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
                     </div>
 
                     <!-- Description -->
@@ -353,6 +371,17 @@ $(document).ready(function() {
 
     // حساب عند تحميل الصفحة
     calculateRemaining();
+
+    // تحديث السجلات الشهرية تلقائياً عند تغيير تاريخ الإيراد
+    $('#revenue_date').on('change', function() {
+        const dateValue = $(this).val();
+        if (dateValue) {
+            const date = new Date(dateValue);
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            $('#record_month_year').val(year + '-' + month);
+        }
+    });
 });
 </script>
 @endsection

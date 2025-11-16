@@ -15,6 +15,7 @@ class ProjectExpense extends Model
         'amount',
         'currency',
         'expense_date',
+        'record_month_year',
         'category',
         'payment_method',
         'payment_reference',
