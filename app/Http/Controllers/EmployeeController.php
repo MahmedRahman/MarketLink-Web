@@ -14,8 +14,20 @@ class EmployeeController extends Controller
     public function index(Request $request)
     {
         $organizationId = $request->user()->organization_id;
-        $employees = Employee::where('organization_id', $organizationId)->latest()->get();
-        return view('employees.index', compact('employees'));
+        
+        // الحصول على جميع الموظفين لعرض الأرقام في الكروت
+        $allEmployees = Employee::where('organization_id', $organizationId)->get();
+        
+        // فلترة حسب الدور الوظيفي للجدول
+        $employeesQuery = Employee::where('organization_id', $organizationId);
+        
+        if ($request->has('role') && $request->role) {
+            $employeesQuery->where('role', $request->role);
+        }
+        
+        $employees = $employeesQuery->latest()->get();
+        
+        return view('employees.index', compact('employees', 'allEmployees'));
     }
 
     /**

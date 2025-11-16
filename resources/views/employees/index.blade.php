@@ -40,11 +40,11 @@
     <!-- Stats Cards -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-4 md:mb-6">
         <!-- Total Employees -->
-        <div class="card rounded-xl md:rounded-2xl p-4 md:p-6">
+        <div class="card rounded-xl md:rounded-2xl p-4 md:p-6 cursor-pointer hover:shadow-lg transition-all duration-300 {{ !request('role') ? 'ring-2 ring-gray-400' : '' }}" onclick="filterByRole(null)">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-xs md:text-sm font-medium text-gray-600">إجمالي الموظفين</p>
-                    <p class="text-2xl md:text-3xl font-bold text-gray-800">{{ $employees->count() }}</p>
+                    <p class="text-2xl md:text-3xl font-bold text-gray-800">{{ $allEmployees->count() }}</p>
                 </div>
                 <div class="w-10 h-10 md:w-12 md:h-12 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
                     <i class="fas fa-users text-blue-600 text-lg md:text-xl"></i>
@@ -53,11 +53,11 @@
         </div>
 
         <!-- Content Writers -->
-        <div class="card rounded-xl md:rounded-2xl p-4 md:p-6">
+        <div class="card rounded-xl md:rounded-2xl p-4 md:p-6 cursor-pointer hover:shadow-lg transition-all duration-300 {{ request('role') == 'content_writer' ? 'ring-2 ring-blue-500' : '' }}" onclick="filterByRole('content_writer')">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-xs md:text-sm font-medium text-gray-600">كتاب المحتوى</p>
-                    <p class="text-2xl md:text-3xl font-bold text-blue-600">{{ $employees->where('role', 'content_writer')->count() }}</p>
+                    <p class="text-2xl md:text-3xl font-bold text-blue-600">{{ $allEmployees->where('role', 'content_writer')->count() }}</p>
                 </div>
                 <div class="w-10 h-10 md:w-12 md:h-12 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
                     <i class="fas fa-pen text-blue-600 text-lg md:text-xl"></i>
@@ -66,11 +66,11 @@
         </div>
 
         <!-- Designers -->
-        <div class="card rounded-xl md:rounded-2xl p-4 md:p-6">
+        <div class="card rounded-xl md:rounded-2xl p-4 md:p-6 cursor-pointer hover:shadow-lg transition-all duration-300 {{ request('role') == 'designer' ? 'ring-2 ring-purple-500' : '' }}" onclick="filterByRole('designer')">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-xs md:text-sm font-medium text-gray-600">المصممين</p>
-                    <p class="text-2xl md:text-3xl font-bold text-purple-600">{{ $employees->where('role', 'designer')->count() }}</p>
+                    <p class="text-2xl md:text-3xl font-bold text-purple-600">{{ $allEmployees->where('role', 'designer')->count() }}</p>
                 </div>
                 <div class="w-10 h-10 md:w-12 md:h-12 bg-purple-100 rounded-xl flex items-center justify-center flex-shrink-0">
                     <i class="fas fa-palette text-purple-600 text-lg md:text-xl"></i>
@@ -79,11 +79,11 @@
         </div>
 
         <!-- Ad Managers -->
-        <div class="card rounded-xl md:rounded-2xl p-4 md:p-6">
+        <div class="card rounded-xl md:rounded-2xl p-4 md:p-6 cursor-pointer hover:shadow-lg transition-all duration-300 {{ request('role') == 'ad_manager' ? 'ring-2 ring-green-500' : '' }}" onclick="filterByRole('ad_manager')">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-xs md:text-sm font-medium text-gray-600">إدارة إعلانات</p>
-                    <p class="text-2xl md:text-3xl font-bold text-green-600">{{ $employees->where('role', 'ad_manager')->count() }}</p>
+                    <p class="text-2xl md:text-3xl font-bold text-green-600">{{ $allEmployees->where('role', 'ad_manager')->count() }}</p>
                 </div>
                 <div class="w-10 h-10 md:w-12 md:h-12 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0">
                     <i class="fas fa-bullhorn text-green-600 text-lg md:text-xl"></i>
@@ -92,11 +92,11 @@
         </div>
 
         <!-- Video Editors -->
-        <div class="card rounded-xl md:rounded-2xl p-4 md:p-6">
+        <div class="card rounded-xl md:rounded-2xl p-4 md:p-6 cursor-pointer hover:shadow-lg transition-all duration-300 {{ request('role') == 'video_editor' ? 'ring-2 ring-red-500' : '' }}" onclick="filterByRole('video_editor')">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-xs md:text-sm font-medium text-gray-600">مصمم فيديوهات</p>
-                    <p class="text-2xl md:text-3xl font-bold text-red-600">{{ $employees->where('role', 'video_editor')->count() }}</p>
+                    <p class="text-2xl md:text-3xl font-bold text-red-600">{{ $allEmployees->where('role', 'video_editor')->count() }}</p>
                 </div>
                 <div class="w-10 h-10 md:w-12 md:h-12 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
                     <i class="fas fa-video text-red-600 text-lg md:text-xl"></i>
@@ -105,11 +105,11 @@
         </div>
 
         <!-- Page Managers -->
-        <div class="card rounded-xl md:rounded-2xl p-4 md:p-6">
+        <div class="card rounded-xl md:rounded-2xl p-4 md:p-6 cursor-pointer hover:shadow-lg transition-all duration-300 {{ request('role') == 'page_manager' ? 'ring-2 ring-yellow-500' : '' }}" onclick="filterByRole('page_manager')">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-xs md:text-sm font-medium text-gray-600">إدارة الصفحة</p>
-                    <p class="text-2xl md:text-3xl font-bold text-yellow-600">{{ $employees->where('role', 'page_manager')->count() }}</p>
+                    <p class="text-2xl md:text-3xl font-bold text-yellow-600">{{ $allEmployees->where('role', 'page_manager')->count() }}</p>
                 </div>
                 <div class="w-10 h-10 md:w-12 md:h-12 bg-yellow-100 rounded-xl flex items-center justify-center flex-shrink-0">
                     <i class="fas fa-file-alt text-yellow-600 text-lg md:text-xl"></i>
@@ -118,11 +118,11 @@
         </div>
 
         <!-- Account Managers -->
-        <div class="card rounded-xl md:rounded-2xl p-4 md:p-6">
+        <div class="card rounded-xl md:rounded-2xl p-4 md:p-6 cursor-pointer hover:shadow-lg transition-all duration-300 {{ request('role') == 'account_manager' ? 'ring-2 ring-indigo-500' : '' }}" onclick="filterByRole('account_manager')">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-xs md:text-sm font-medium text-gray-600">أكونت منجر</p>
-                    <p class="text-2xl md:text-3xl font-bold text-indigo-600">{{ $employees->where('role', 'account_manager')->count() }}</p>
+                    <p class="text-2xl md:text-3xl font-bold text-indigo-600">{{ $allEmployees->where('role', 'account_manager')->count() }}</p>
                 </div>
                 <div class="w-10 h-10 md:w-12 md:h-12 bg-indigo-100 rounded-xl flex items-center justify-center flex-shrink-0">
                     <i class="fas fa-user-tie text-indigo-600 text-lg md:text-xl"></i>
@@ -131,11 +131,11 @@
         </div>
 
         <!-- Monitors -->
-        <div class="card rounded-xl md:rounded-2xl p-4 md:p-6">
+        <div class="card rounded-xl md:rounded-2xl p-4 md:p-6 cursor-pointer hover:shadow-lg transition-all duration-300 {{ request('role') == 'monitor' ? 'ring-2 ring-pink-500' : '' }}" onclick="filterByRole('monitor')">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-xs md:text-sm font-medium text-gray-600">مونتير</p>
-                    <p class="text-2xl md:text-3xl font-bold text-pink-600">{{ $employees->where('role', 'monitor')->count() }}</p>
+                    <p class="text-2xl md:text-3xl font-bold text-pink-600">{{ $allEmployees->where('role', 'monitor')->count() }}</p>
                 </div>
                 <div class="w-10 h-10 md:w-12 md:h-12 bg-pink-100 rounded-xl flex items-center justify-center flex-shrink-0">
                     <i class="fas fa-cut text-pink-600 text-lg md:text-xl"></i>
@@ -144,11 +144,11 @@
         </div>
 
         <!-- Media Buyers -->
-        <div class="card rounded-xl md:rounded-2xl p-4 md:p-6">
+        <div class="card rounded-xl md:rounded-2xl p-4 md:p-6 cursor-pointer hover:shadow-lg transition-all duration-300 {{ request('role') == 'media_buyer' ? 'ring-2 ring-teal-500' : '' }}" onclick="filterByRole('media_buyer')">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-xs md:text-sm font-medium text-gray-600">ميديا بايرز</p>
-                    <p class="text-2xl md:text-3xl font-bold text-teal-600">{{ $employees->where('role', 'media_buyer')->count() }}</p>
+                    <p class="text-2xl md:text-3xl font-bold text-teal-600">{{ $allEmployees->where('role', 'media_buyer')->count() }}</p>
                 </div>
                 <div class="w-10 h-10 md:w-12 md:h-12 bg-teal-100 rounded-xl flex items-center justify-center flex-shrink-0">
                     <i class="fas fa-shopping-cart text-teal-600 text-lg md:text-xl"></i>
@@ -156,6 +156,39 @@
             </div>
         </div>
     </div>
+
+    <!-- Role Filter (if active) -->
+    @if(request('role'))
+    <div class="card rounded-xl md:rounded-2xl p-4 md:p-6 mb-4 md:mb-6">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center">
+                <i class="fas fa-filter text-gray-600 ml-2"></i>
+                <span class="text-sm md:text-base text-gray-700">
+                    يتم عرض الموظفين حسب الدور: 
+                    <span class="font-bold text-primary">
+                        @php
+                            $roleNames = [
+                                'content_writer' => 'كتاب المحتوى',
+                                'designer' => 'المصممين',
+                                'ad_manager' => 'إدارة إعلانات',
+                                'video_editor' => 'مصمم فيديوهات',
+                                'page_manager' => 'إدارة الصفحة',
+                                'account_manager' => 'أكونت منجر',
+                                'monitor' => 'مونتير',
+                                'media_buyer' => 'ميديا بايرز'
+                            ];
+                        @endphp
+                        {{ $roleNames[request('role')] ?? request('role') }}
+                    </span>
+                </span>
+            </div>
+            <a href="{{ route('employees.index') }}" class="btn-secondary text-white px-4 md:px-6 py-2 md:py-3 rounded-xl hover:no-underline flex items-center text-sm md:text-base">
+                <i class="fas fa-times text-xs md:text-sm ml-2"></i>
+                إلغاء الفلتر
+            </a>
+        </div>
+    </div>
+    @endif
 
     <!-- Employees Table -->
     <div class="card rounded-xl md:rounded-2xl overflow-hidden">
@@ -293,6 +326,17 @@ function exportToPDF() {
 
 function printTable() {
     table.button(2).trigger();
+}
+
+// دالة فلترة حسب الدور الوظيفي
+function filterByRole(role) {
+    const url = new URL(window.location.href);
+    if (role) {
+        url.searchParams.set('role', role);
+    } else {
+        url.searchParams.delete('role');
+    }
+    window.location.href = url.toString();
 }
 </script>
 @endsection
