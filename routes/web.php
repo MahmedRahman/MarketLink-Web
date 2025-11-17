@@ -116,6 +116,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/subscription/subscribe', [SubscriptionController::class, 'subscribe'])->name('subscription.subscribe');
 });
 
+// Stop Impersonating Route (accessible when impersonating)
+Route::middleware('auth')->post('/admin/stop-impersonating', [App\Http\Controllers\Admin\AdminController::class, 'stopImpersonating'])->name('admin.stop-impersonating');
+
 // Admin Routes
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
@@ -125,6 +128,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/users/{user}', [AdminController::class, 'showUser'])->name('users.show');
     Route::patch('/users/{user}/status', [AdminController::class, 'updateUserStatus'])->name('users.updateStatus');
     Route::patch('/users/{user}/password', [AdminController::class, 'updateUserPassword'])->name('users.updatePassword');
+    Route::post('/users/{user}/impersonate', [AdminController::class, 'impersonate'])->name('users.impersonate');
     Route::delete('/users/{user}', [AdminController::class, 'deleteUser'])->name('users.delete');
     
     // Organizations Routes

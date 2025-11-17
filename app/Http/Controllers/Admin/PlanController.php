@@ -21,7 +21,14 @@ class PlanController extends Controller
             ->ordered()
             ->paginate(10);
 
-        return view('admin.plans.index', compact('plans'));
+        // حساب الإحصائيات من جميع الخطط
+        $stats = [
+            'total' => Plan::count(),
+            'active' => Plan::where('is_active', true)->count(),
+            'inactive' => Plan::where('is_active', false)->count(),
+        ];
+
+        return view('admin.plans.index', compact('plans', 'stats'));
     }
 
     /**

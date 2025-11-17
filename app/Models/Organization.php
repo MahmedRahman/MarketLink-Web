@@ -96,4 +96,28 @@ class Organization extends Model
     {
         return $this->hasMany(SubscriptionRequest::class);
     }
+
+    /**
+     * Get the clients that belong to this organization.
+     */
+    public function clients(): HasMany
+    {
+        return $this->hasMany(Client::class);
+    }
+
+    /**
+     * Get the employees that belong to this organization.
+     */
+    public function employees(): HasMany
+    {
+        return $this->hasMany(Employee::class);
+    }
+
+    /**
+     * Get the projects that belong to this organization.
+     */
+    public function projects(): HasMany
+    {
+        return $this->hasMany(Project::class);
+    }
 }

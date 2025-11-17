@@ -71,17 +71,9 @@
                         <span class="material-icons ml-3">people</span>
                         المستخدمين
                     </a>
-                    <a href="{{ route('admin.organizations.index') }}" class="flex items-center px-4 py-3 rounded-lg hover:bg-gray-800 transition-colors {{ request()->routeIs('admin.organizations.*') ? 'bg-gray-800' : '' }}">
-                        <span class="material-icons ml-3">business</span>
-                        المنظمات
-                    </a>
                     <a href="{{ route('admin.subscriptions.index') }}" class="flex items-center px-4 py-3 rounded-lg hover:bg-gray-800 transition-colors {{ request()->routeIs('admin.subscriptions.*') ? 'bg-gray-800' : '' }}">
                         <span class="material-icons ml-3">subscriptions</span>
                         الاشتراكات
-                    </a>
-                    <a href="{{ route('admin.plans.index') }}" class="flex items-center px-4 py-3 rounded-lg hover:bg-gray-800 transition-colors {{ request()->routeIs('admin.plans.*') ? 'bg-gray-800' : '' }}">
-                        <span class="material-icons ml-3">card_membership</span>
-                        خطط الاشتراك
                     </a>
                     <a href="{{ route('admin.subscription-requests.index') }}" class="flex items-center px-4 py-3 rounded-lg hover:bg-gray-800 transition-colors {{ request()->routeIs('admin.subscription-requests.*') ? 'bg-gray-800' : '' }}">
                         <span class="material-icons ml-3">pending_actions</span>
@@ -92,6 +84,10 @@
                         @if($pendingCount > 0)
                             <span class="bg-red-500 text-white text-xs rounded-full px-2 py-0.5 mr-2">{{ $pendingCount }}</span>
                         @endif
+                    </a>
+                    <a href="{{ route('admin.plans.index') }}" class="flex items-center px-4 py-3 rounded-lg hover:bg-gray-800 transition-colors {{ request()->routeIs('admin.plans.*') ? 'bg-gray-800' : '' }}">
+                        <span class="material-icons ml-3">card_membership</span>
+                        خطط الاشتراك
                     </a>
                 </nav>
             </div>

@@ -1124,6 +1124,17 @@
                     
                     <!-- User Menu -->
                     <div class="flex items-center gap-2 md:gap-4">
+                        @if(session('impersonating'))
+                            <!-- Stop Impersonating Button -->
+                            <form method="POST" action="{{ route('admin.stop-impersonating') }}" class="inline">
+                                @csrf
+                                <button type="submit" class="px-4 py-2 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors flex items-center text-sm font-medium">
+                                    <i class="fas fa-arrow-right ml-2"></i>
+                                    العودة للمدير
+                                </button>
+                            </form>
+                        @endif
+                        
                         <!-- Notifications -->
                         <button class="relative p-2 md:p-3 text-gray-400 hover:text-gray-600 transition-colors rounded-xl hover:bg-gray-100">
                             <i class="fas fa-bell text-sm md:text-base"></i>
@@ -1137,7 +1148,13 @@
                             </div>
                             <div class="text-right user-profile-details mr-2">
                                 <p class="text-xs md:text-sm font-medium text-gray-800">{{ Auth::user()->name }}</p>
-                                <p class="text-xs text-gray-500 hidden lg:block">مدير النظام</p>
+                                <p class="text-xs text-gray-500 hidden lg:block">
+                                    @if(session('impersonating'))
+                                        <span class="text-red-600">دخول كالمستخدم</span>
+                                    @else
+                                        مدير النظام
+                                    @endif
+                                </p>
                             </div>
                         </a>
                         

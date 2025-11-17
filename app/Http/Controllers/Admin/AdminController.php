@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rules\Password;
 
 class AdminController extends Controller
@@ -48,7 +49,7 @@ class AdminController extends Controller
      */
     public function users(Request $request): View
     {
-        $query = User::with('organization');
+        $query = User::with(['organization.clients', 'organization.employees', 'organization.projects']);
 
         // فلترة حسب نوع المستخدم
         if ($request->has('user_type')) {
@@ -131,7 +132,15 @@ class AdminController extends Controller
 
         $subscriptions = $query->latest()->paginate(15);
 
-        return view('admin.subscriptions.index', compact('subscriptions'));
+        // حساب الإحصائيات من جميع الاشتراكات (غير مفلترة)
+        $stats = [
+            'total' => Subscription::count(),
+            'active' => Subscription::where('status', 'active')->count(),
+            'trial' => Subscription::where('status', 'trial')->count(),
+            'expired' => Subscription::where('status', 'expired')->count(),
+        ];
+
+        return view('admin.subscriptions.index', compact('subscriptions', 'stats'));
     }
 
     /**
@@ -238,5 +247,56 @@ class AdminController extends Controller
 
         return redirect()->back()
             ->with('success', 'تم تحديث كلمة المرور بنجاح');
+    }
+
+    /**
+     * الدخول كالمستخدم (Impersonate)
+     */
+    public function impersonate(User $user): RedirectResponse
+    {
+        // منع الدخول كمدير آخر
+        if ($user->is_admin) {
+            abort(403, 'لا يمكن الدخول كمدير آخر');
+        }
+
+        // حفظ معلومات المدير الحالي في session
+        session()->put('admin_id', Auth::id());
+        session()->put('impersonating', true);
+
+        // تسجيل الدخول كالمستخدم المحدد
+        Auth::login($user);
+
+        return redirect()->route('dashboard')
+            ->with('success', "تم الدخول كالمستخدم: {$user->name}");
+    }
+
+    /**
+     * العودة للمدير (Stop Impersonating)
+     */
+    public function stopImpersonating(): RedirectResponse
+    {
+        if (!session('impersonating')) {
+            // إذا لم يكن في وضع impersonation، إعادة توجيه حسب نوع المستخدم
+            if (Auth::check() && Auth::user()->is_admin) {
+                return redirect()->route('admin.dashboard');
+            }
+            return redirect()->route('dashboard');
+        }
+
+        $adminId = session('admin_id');
+        session()->forget(['admin_id', 'impersonating']);
+
+        if ($adminId) {
+            $admin = User::find($adminId);
+            if ($admin && $admin->is_admin) {
+                Auth::login($admin);
+                return redirect()->route('admin.users.index')
+                    ->with('success', 'تم العودة إلى حساب المدير');
+            }
+        }
+
+        // في حالة فشل استعادة المدير، إعادة توجيه للصفحة الرئيسية
+        return redirect()->route('dashboard')
+            ->with('error', 'حدث خطأ أثناء العودة إلى حساب المدير');
     }
 }
