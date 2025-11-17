@@ -48,7 +48,16 @@ class AdminController extends Controller
      */
     public function users(Request $request): View
     {
-        $query = User::where('is_admin', false)->with('organization');
+        $query = User::with('organization');
+
+        // فلترة حسب نوع المستخدم
+        if ($request->has('user_type')) {
+            if ($request->user_type === 'admin') {
+                $query->where('is_admin', true);
+            } elseif ($request->user_type === 'organization') {
+                $query->where('is_admin', false);
+            }
+        }
 
         if ($request->has('search')) {
             $search = $request->search;
@@ -68,11 +77,10 @@ class AdminController extends Controller
      */
     public function showUser(User $user): View
     {
-        if ($user->is_admin) {
-            abort(404);
+        // تحميل العلاقات حسب نوع المستخدم
+        if (!$user->is_admin) {
+            $user->load('organization.subscription');
         }
-
-        $user->load('organization.subscription');
 
         return view('admin.users.show', compact('user'));
     }

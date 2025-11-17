@@ -21,6 +21,20 @@
                 <p class="font-medium">{{ $user->created_at->format('Y-m-d H:i') }}</p>
             </div>
             <div>
+                <p class="text-sm text-gray-600">نوع المستخدم</p>
+                @if($user->is_admin)
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
+                        <i class="fas fa-user-shield ml-1"></i>
+                        مدير
+                    </span>
+                @else
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                        <i class="fas fa-building ml-1"></i>
+                        مستخدم منظمة
+                    </span>
+                @endif
+            </div>
+            <div>
                 <p class="text-sm text-gray-600">الحالة</p>
                 @php
                     $statusColors = [
@@ -43,6 +57,11 @@
                 <div>
                     <p class="text-sm text-gray-600">المنظمة</p>
                     <a href="{{ route('admin.organizations.show', $user->organization) }}" class="font-medium text-blue-600 hover:text-blue-500">{{ $user->organization->name }}</a>
+                </div>
+            @else
+                <div>
+                    <p class="text-sm text-gray-600">المنظمة</p>
+                    <p class="text-gray-400 italic">لا يوجد</p>
                 </div>
             @endif
         </div>

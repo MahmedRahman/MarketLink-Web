@@ -5,11 +5,19 @@
 
 @section('content')
 <div class="space-y-6">
-    <!-- Search -->
+    <!-- Search and Filter -->
     <div class="card">
         <form method="GET" action="{{ route('admin.users.index') }}" class="flex gap-4">
             <input type="text" name="search" value="{{ request('search') }}" placeholder="ابحث عن مستخدم..." class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+            <select name="user_type" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                <option value="">جميع المستخدمين</option>
+                <option value="admin" {{ request('user_type') == 'admin' ? 'selected' : '' }}>مديرين</option>
+                <option value="organization" {{ request('user_type') == 'organization' ? 'selected' : '' }}>مستخدمي المنظمات</option>
+            </select>
             <button type="submit" class="btn-primary">بحث</button>
+            @if(request('search') || request('user_type'))
+                <a href="{{ route('admin.users.index') }}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">إلغاء</a>
+            @endif
         </form>
     </div>
     
@@ -19,11 +27,12 @@
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">تاريخ التسجيل</th>
                         <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">الاسم</th>
                         <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">البريد</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">نوع المستخدم</th>
                         <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">المنظمة</th>
                         <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">الحالة</th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">تاريخ التسجيل</th>
                         <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">إجراءات</th>
                     </tr>
                 </thead>
@@ -31,13 +40,36 @@
                     @forelse($users as $user)
                         <tr>
                             <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-500">{{ $user->created_at->format('Y-m-d') }}</div>
+                                <div class="text-xs text-gray-400">{{ $user->created_at->format('H:i') }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-sm font-medium text-gray-900">{{ $user->name }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-sm text-gray-500">{{ $user->email }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-500">{{ $user->organization->name ?? 'لا يوجد' }}</div>
+                                @if($user->is_admin)
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                        <i class="fas fa-user-shield ml-1"></i>
+                                        مدير
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                        <i class="fas fa-building ml-1"></i>
+                                        مستخدم منظمة
+                                    </span>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-500">
+                                    @if($user->organization)
+                                        {{ $user->organization->name }}
+                                    @else
+                                        <span class="text-gray-400 italic">لا يوجد</span>
+                                    @endif
+                                </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 @php
@@ -56,9 +88,6 @@
                                 <span class="px-2 py-1 text-xs rounded-full {{ $statusColors[$currentStatus] ?? 'bg-gray-100 text-gray-800' }}">
                                     {{ $statusText[$currentStatus] ?? $currentStatus }}
                                 </span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-500">{{ $user->created_at->format('Y-m-d') }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                 <div class="flex items-center gap-2">
@@ -83,7 +112,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-6 py-4 text-center text-gray-500">لا يوجد مستخدمين</td>
+                            <td colspan="7" class="px-6 py-4 text-center text-gray-500">لا يوجد مستخدمين</td>
                         </tr>
                     @endforelse
                 </tbody>
