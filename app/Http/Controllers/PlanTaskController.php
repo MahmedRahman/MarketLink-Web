@@ -956,6 +956,7 @@ class PlanTaskController extends Controller
                     'empName' => $employee->name,
                     'TaskTitle' => $task->title,
                     'ProjectName' => $project->business_name ?? 'غير محدد',
+                    'TaskID' => $task->id,
                 ]);
 
             if ($response->successful()) {
