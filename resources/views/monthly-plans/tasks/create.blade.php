@@ -67,7 +67,7 @@
                 </div>
 
                 <!-- Idea -->
-                <div>
+                <div class="hidden">
                     <label for="idea" class="block text-sm font-medium text-gray-700 mb-2">
                         الفكرة
                     </label>
