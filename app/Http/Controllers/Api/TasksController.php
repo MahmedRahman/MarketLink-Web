@@ -300,6 +300,7 @@ class TasksController extends Controller
     /**
      * الحصول على جميع الموظفين مع أرقام التليفون والمهام المرتبطة بهم
      * لكل مهمة: العنوان، المشروع التابع له، والحالة
+     * الموظفون الذين لا يملكون مهام لن يظهروا في النتيجة
      */
     public function getEmployeesWithTasks(Request $request)
     {
@@ -311,6 +312,7 @@ class TasksController extends Controller
             }
         ])
         ->whereNotNull('phone')
+        ->has('tasks') // فقط الموظفين الذين لديهم مهام
         ->get()
         ->map(function ($employee) {
             return [
