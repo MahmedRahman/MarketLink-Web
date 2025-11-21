@@ -199,5 +199,6 @@ Route::get('/webhook/status', [WebhookController::class, 'status'])->name('webho
 // API routes (no authentication required)
 Route::get('/api/tasks', [TasksController::class, 'getTasks'])->name('api.tasks');
 Route::put('/api/tasks/status', [TasksController::class, 'updateTaskStatus'])->name('api.tasks.update-status');
+Route::get('/api/employees-with-tasks', [TasksController::class, 'getEmployeesWithTasks'])->name('api.employees-with-tasks');
 
 require __DIR__.'/auth.php';

@@ -296,4 +296,42 @@ class TasksController extends Controller
             ]
         ], 200);
     }
+
+    /**
+     * الحصول على جميع الموظفين مع أرقام التليفون والمهام المرتبطة بهم
+     * لكل مهمة: العنوان، المشروع التابع له، والحالة
+     */
+    public function getEmployeesWithTasks(Request $request)
+    {
+        // جلب جميع الموظفين مع مهامهم
+        $employees = Employee::with([
+            'tasks' => function($query) {
+                $query->with(['monthlyPlan.project'])
+                    ->orderBy('created_at', 'desc');
+            }
+        ])
+        ->whereNotNull('phone')
+        ->get()
+        ->map(function ($employee) {
+            return [
+                'id' => $employee->id,
+                'name' => $employee->name,
+                'phone' => $employee->phone,
+                'tasks' => $employee->tasks->map(function ($task) {
+                    return [
+                        'id' => $task->id,
+                        'title' => $task->title,
+                        'project_name' => $task->monthlyPlan->project->business_name ?? 'غير محدد',
+                        'status' => $task->status,
+                        'status_badge' => $task->status_badge,
+                    ];
+                })
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => $employees
+        ], 200);
+    }
 }
