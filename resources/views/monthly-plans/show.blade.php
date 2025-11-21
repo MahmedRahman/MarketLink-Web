@@ -165,8 +165,8 @@
                                     <span class="material-icons text-white text-xs md:text-sm">archive</span>
                                 </div>
                                 <div>
-                                    <h4 class="font-semibold text-gray-800 text-base md:text-lg">أرشيف</h4>
-                                    <p class="text-xs text-gray-500 hidden md:block">المهام المؤرشفة</p>
+                                    <h4 class="font-semibold text-gray-800 text-base md:text-lg">Ready</h4>
+                                    <p class="text-xs text-gray-500 hidden md:block">المهام الجاهزة</p>
                                 </div>
                             </div>
                             <div class="flex items-center gap-2">
@@ -395,7 +395,7 @@
                 </button>
                 <button type="button" onclick="archiveTask()" class="px-4 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg flex items-center gap-2">
                     <span class="material-icons text-sm">archive</span>
-                    أرشيف
+                    Ready
                 </button>
                 <button type="button" onclick="hideQuickAssignModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
                     إلغاء
@@ -464,7 +464,7 @@
                     <option value="in_progress">قيد التنفيذ</option>
                     <option value="review">قيد المراجعة</option>
                     <option value="done">مكتملة</option>
-                    <option value="archived">أرشيف</option>
+                    <option value="archived">Ready</option>
                 </select>
             </div>
             <div class="flex justify-end space-x-3 rtl:space-x-reverse">

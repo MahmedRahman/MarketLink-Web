@@ -30,6 +30,13 @@ class ProfileController extends Controller
         $validated = $request->validated();
         unset($validated['email']); // Remove email from update data
         
+        // Handle checkbox: if not present in request, set to false
+        if (!isset($validated['auto_follow_tasks'])) {
+            $validated['auto_follow_tasks'] = false;
+        } else {
+            $validated['auto_follow_tasks'] = (bool) $validated['auto_follow_tasks'];
+        }
+        
         $request->user()->fill($validated);
         $request->user()->save();
 

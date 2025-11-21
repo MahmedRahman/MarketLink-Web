@@ -84,6 +84,25 @@
                     @enderror
                 </div>
 
+                <!-- Auto Follow Tasks -->
+                <div class="flex items-center">
+                    <input 
+                        type="checkbox" 
+                        id="auto_follow_tasks" 
+                        name="auto_follow_tasks" 
+                        value="1"
+                        {{ old('auto_follow_tasks', $user->auto_follow_tasks) ? 'checked' : '' }}
+                        class="w-4 h-4 text-primary bg-gray-100 border-gray-300 rounded focus:ring-primary focus:ring-2"
+                    >
+                    <label for="auto_follow_tasks" class="mr-2 text-sm font-medium text-gray-700 cursor-pointer">
+                        متابعة التاسكات بشكل تلقائي
+                    </label>
+                </div>
+                <p class="text-xs text-gray-500 mb-4">عند تفعيل هذا الخيار، سيتم متابعة التاسكات الجديدة تلقائياً</p>
+                @error('auto_follow_tasks')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+
                 <!-- Submit Button -->
                 <div class="flex items-center justify-end rtl-spacing pt-4">
                     <button type="submit" class="btn-primary text-white px-8 py-3 rounded-xl flex items-center">

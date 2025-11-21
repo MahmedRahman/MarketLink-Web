@@ -25,6 +25,7 @@ class User extends Authenticatable
         'organization_id',
         'is_admin',
         'status',
+        'auto_follow_tasks',
     ];
 
     /**
@@ -48,6 +49,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_admin' => 'boolean',
+            'auto_follow_tasks' => 'boolean',
         ];
     }
 

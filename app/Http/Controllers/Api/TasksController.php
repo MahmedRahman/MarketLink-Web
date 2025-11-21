@@ -302,10 +302,12 @@ class TasksController extends Controller
      * لكل مهمة: العنوان، المشروع التابع له، والحالة
      * الموظفون الذين لا يملكون مهام لن يظهروا في النتيجة
      * المهام بحالة "review" و "archived" لن تظهر
+     * فقط الموظفين التابعين لمنظمات يملكها مستخدمون لديهم auto_follow_tasks مفعل
      */
     public function getEmployeesWithTasks(Request $request)
     {
         // جلب جميع الموظفين مع مهامهم (استثناء المهام بحالة review و archived)
+        // فقط الموظفين التابعين لمنظمات يملكها مستخدمون لديهم auto_follow_tasks = true
         $employees = Employee::with([
             'tasks' => function($query) {
                 $query->with(['monthlyPlan.project'])
@@ -314,6 +316,12 @@ class TasksController extends Controller
             }
         ])
         ->whereNotNull('phone')
+        ->whereHas('organization', function($query) {
+            // التحقق من أن المنظمة لديها مستخدمون لديهم auto_follow_tasks = true
+            $query->whereHas('users', function($userQuery) {
+                $userQuery->where('auto_follow_tasks', true);
+            });
+        })
         ->has('tasks') // فقط الموظفين الذين لديهم مهام
         ->get()
         ->map(function ($employee) {
@@ -346,6 +354,78 @@ class TasksController extends Controller
         return response()->json([
             'success' => true,
             'data' => $employees
+        ], 200);
+    }
+
+    /**
+     * الحصول على جميع الموظفين الذين لديهم صلاحيات المدير (account_manager) مع مهامهم
+     * لكل موظف: رقم التليفون، التاسكات المكتملة، والتاسكات غير المكتملة
+     * لكل مهمة: اسم الموظف، المشروع، الحالة، الرابط
+     * فقط الموظفين التابعين لمنظمات يملكها مستخدمون لديهم auto_follow_tasks مفعل
+     */
+    public function getAccountManagersWithTasks(Request $request)
+    {
+        // جلب جميع الموظفين الذين لديهم role = 'account_manager' وهم مديرون على مشاريع
+        // فقط الموظفين التابعين لمنظمات يملكها مستخدمون لديهم auto_follow_tasks = true
+        $accountManagers = Employee::where('role', 'account_manager')
+            ->whereNotNull('phone')
+            ->whereHas('organization', function($query) {
+                // التحقق من أن المنظمة لديها مستخدمون لديهم auto_follow_tasks = true
+                $query->whereHas('users', function($userQuery) {
+                    $userQuery->where('auto_follow_tasks', true);
+                });
+            })
+            ->with(['managedProjects'])
+            ->get()
+            ->filter(function ($employee) {
+                // فقط الموظفين الذين هم مديرون على مشاريع
+                return $employee->managedProjects()->count() > 0;
+            });
+
+        $result = $accountManagers->map(function ($manager) {
+            // جلب جميع المشاريع التي يديرها
+            $managedProjectIds = $manager->managedProjects()->pluck('projects.id')->toArray();
+
+            // جلب جميع المهام في المشاريع التي يديرها
+            $allTasks = \App\Models\PlanTask::whereHas('monthlyPlan', function($query) use ($managedProjectIds) {
+                    $query->whereIn('project_id', $managedProjectIds);
+                })
+                ->with(['monthlyPlan.project', 'assignedEmployee'])
+                ->whereNotIn('status', ['review', 'archived'])
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            // تقسيم المهام إلى مكتملة وغير مكتملة
+            $completedTasks = $allTasks->where('status', 'done');
+            $incompleteTasks = $allTasks->filter(function ($task) {
+                return $task->status !== 'done';
+            });
+
+            // تحويل المهام إلى الصيغة المطلوبة
+            $formatTask = function ($task) {
+                return [
+                    'id' => $task->id,
+                    'title' => $task->title,
+                    'employee_name' => $task->assignedEmployee->name ?? 'غير مخصص',
+                    'project_name' => $task->monthlyPlan->project->business_name ?? 'غير محدد',
+                    'status' => $task->status,
+                    'status_badge' => $task->status_badge,
+                    'url' => route('monthly-plans.tasks.show', [$task->monthlyPlan->id, $task->id]),
+                ];
+            };
+
+            return [
+                'id' => $manager->id,
+                'name' => $manager->name,
+                'phone' => $manager->phone,
+                'completed_tasks' => $completedTasks->map($formatTask)->values(),
+                'incomplete_tasks' => $incompleteTasks->map($formatTask)->values(),
+            ];
+        })->values();
+
+        return response()->json([
+            'success' => true,
+            'data' => $result
         ], 200);
     }
 }

@@ -3,10 +3,10 @@
 namespace App\Http\Requests;
 
 use App\Models\User;
-use Illuminate\Foundation\Http\Formlequest;
+use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class ProfileUpdateRequest extends Formlequest
+class ProfileUpdateRequest extends FormRequest
 {
     /**
      * Get the validation rules that apply to the request.
@@ -17,6 +17,7 @@ class ProfileUpdateRequest extends Formlequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
+            'auto_follow_tasks' => ['nullable', 'boolean'],
             // Email is not updatable, so we don't validate it
         ];
     }
