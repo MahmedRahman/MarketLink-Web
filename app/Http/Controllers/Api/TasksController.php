@@ -298,84 +298,10 @@ class TasksController extends Controller
     }
 
     /**
-     * التحقق من صحة رقم التليفون
-     * يستبعد الأرقام الوهمية والمتكررة
-     */
-    private function isValidPhoneNumber($phone)
-    {
-        if (empty($phone)) {
-            return false;
-        }
-
-        // إزالة المسافات والرموز
-        $cleanPhone = preg_replace('/[^0-9]/', '', $phone);
-
-        // التحقق من أن الرقم يحتوي على أرقام فقط
-        if (!ctype_digit($cleanPhone)) {
-            return false;
-        }
-
-        // استبعاد الأرقام القصيرة جداً (أقل من 10 أرقام)
-        if (strlen($cleanPhone) < 10) {
-            return false;
-        }
-
-        // استبعاد الأرقام الطويلة جداً (أكثر من 12 رقم)
-        if (strlen($cleanPhone) > 12) {
-            return false;
-        }
-
-        // استبعاد الأرقام الوهمية الشائعة
-        $invalidPatterns = [
-            '123456789',
-            '0123456789',
-            '1234567890',
-            '111111111',
-            '222222222',
-            '333333333',
-            '444444444',
-            '555555555',
-            '666666666',
-            '777777777',
-            '888888888',
-            '999999999',
-            '000000000',
-            '12345678',
-            '1234567',
-            '123456',
-            '12345',
-            '1234',
-            '123',
-            '12',
-            '1',
-        ];
-
-        // التحقق من الأرقام المتكررة (مثل 111111111)
-        if (preg_match('/^(\d)\1{8,}$/', $cleanPhone)) {
-            return false;
-        }
-
-        // التحقق من الأرقام المتتالية (مثل 123456789)
-        if (preg_match('/^(0123456789|1234567890|9876543210|0987654321)$/', $cleanPhone)) {
-            return false;
-        }
-
-        // التحقق من الأرقام الوهمية المعروفة
-        foreach ($invalidPatterns as $pattern) {
-            if (strpos($cleanPhone, $pattern) !== false || $cleanPhone === $pattern) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    /**
      * الحصول على جميع الموظفين مع أرقام التليفون والمهام المرتبطة بهم
      * لكل مهمة: العنوان، المشروع التابع له، والحالة
      * الموظفون الذين لا يملكون مهام لن يظهروا في النتيجة
      * المهام بحالة "review" و "archived" لن تظهر
-     * الموظفون الذين لديهم أرقام تليفون غير صحيحة لن يظهروا
      */
     public function getEmployeesWithTasks(Request $request)
     {
@@ -390,10 +316,6 @@ class TasksController extends Controller
         ->whereNotNull('phone')
         ->has('tasks') // فقط الموظفين الذين لديهم مهام
         ->get()
-        ->filter(function ($employee) {
-            // استبعاد الموظفين الذين لديهم أرقام تليفون غير صحيحة
-            return $this->isValidPhoneNumber($employee->phone);
-        })
         ->map(function ($employee) {
             // تصفية المهام مرة أخرى للتأكد (في حالة وجود مهام محملة مسبقاً)
             $filteredTasks = $employee->tasks->filter(function ($task) {
