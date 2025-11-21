@@ -301,13 +301,15 @@ class TasksController extends Controller
      * الحصول على جميع الموظفين مع أرقام التليفون والمهام المرتبطة بهم
      * لكل مهمة: العنوان، المشروع التابع له، والحالة
      * الموظفون الذين لا يملكون مهام لن يظهروا في النتيجة
+     * المهام بحالة "review" و "archived" لن تظهر
      */
     public function getEmployeesWithTasks(Request $request)
     {
-        // جلب جميع الموظفين مع مهامهم
+        // جلب جميع الموظفين مع مهامهم (استثناء المهام بحالة review و archived)
         $employees = Employee::with([
             'tasks' => function($query) {
                 $query->with(['monthlyPlan.project'])
+                    ->whereNotIn('status', ['review', 'archived'])
                     ->orderBy('created_at', 'desc');
             }
         ])
@@ -315,11 +317,16 @@ class TasksController extends Controller
         ->has('tasks') // فقط الموظفين الذين لديهم مهام
         ->get()
         ->map(function ($employee) {
+            // تصفية المهام مرة أخرى للتأكد (في حالة وجود مهام محملة مسبقاً)
+            $filteredTasks = $employee->tasks->filter(function ($task) {
+                return !in_array($task->status, ['review', 'archived']);
+            });
+
             return [
                 'id' => $employee->id,
                 'name' => $employee->name,
                 'phone' => $employee->phone,
-                'tasks' => $employee->tasks->map(function ($task) {
+                'tasks' => $filteredTasks->map(function ($task) {
                     return [
                         'id' => $task->id,
                         'title' => $task->title,
@@ -329,7 +336,12 @@ class TasksController extends Controller
                     ];
                 })
             ];
-        });
+        })
+        ->filter(function ($employee) {
+            // إزالة الموظفين الذين لا يملكون مهام بعد التصفية
+            return $employee['tasks']->count() > 0;
+        })
+        ->values(); // إعادة ترقيم المصفوفة بعد التصفية
 
         return response()->json([
             'success' => true,
