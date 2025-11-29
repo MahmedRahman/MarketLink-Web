@@ -1034,6 +1034,18 @@
                         <span class="font-medium">مصروفات المشاريع</span>
                     </a>
                     
+                    <!-- Receivables Report -->
+                    <a href="{{ route('reports.receivables') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('reports.receivables') ? 'active' : '' }}">
+                        <i class="fas fa-file-invoice-dollar text-lg ml-3"></i>
+                        <span class="font-medium">تحصيلات العملاء</span>
+                    </a>
+                    
+                    <!-- Total Employees Financial Report -->
+                    <a href="{{ route('reports.total-employees-financial') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('reports.total-employees-financial') ? 'active' : '' }}">
+                        <i class="fas fa-users-cog text-lg ml-3"></i>
+                        <span class="font-medium">إجمالي الموظفين</span>
+                    </a>
+                    
                     <!-- Divider -->
                     <div class="my-6 mx-4 border-t border-gray-200"></div>
                     
@@ -1053,12 +1065,6 @@
                         </div>
                     </div>
                     
-                    <!-- Receivables Report -->
-                    <a href="{{ route('reports.receivables') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('reports.receivables') ? 'active' : '' }}">
-                        <i class="fas fa-file-invoice-dollar text-lg ml-3"></i>
-                        <span class="font-medium">المديونية</span>
-                    </a>
-                    
                     <!-- Profits Report -->
                     <a href="{{ route('reports.profits') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('reports.profits') ? 'active' : '' }}">
                         <i class="fas fa-chart-pie text-lg ml-3"></i>
@@ -1069,12 +1075,6 @@
                     <a href="{{ route('reports.employee-financial') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('reports.employee-financial') ? 'active' : '' }}">
                         <i class="fas fa-user-tie text-lg ml-3"></i>
                         <span class="font-medium">مالي الموظفين</span>
-                    </a>
-                    
-                    <!-- Total Employees Financial Report -->
-                    <a href="{{ route('reports.total-employees-financial') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('reports.total-employees-financial') ? 'active' : '' }}">
-                        <i class="fas fa-users-cog text-lg ml-3"></i>
-                        <span class="font-medium">إجمالي الموظفين</span>
                     </a>
                     
                     <!-- Employees Data Report -->

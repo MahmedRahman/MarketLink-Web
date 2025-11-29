@@ -278,14 +278,37 @@ class ProjectExpenseController extends Controller
             $expensesQuery->where('category', $request->category);
         }
 
-        $expenses = $expensesQuery->latest('expense_date')->get();
+        $expenses = $expensesQuery->latest('id')->get();
         
         // جلب جميع المشاريع للمنظمة للفلترة
         $projects = Project::where('organization_id', $organizationId)
             ->orderBy('business_name')
             ->get();
 
-        return view('projects.expenses.all', compact('expenses', 'projects'));
+        // جلب جميع السجلات الشهرية الفريدة مع عدد السجلات لكل شهر
+        $monthlyRecordsData = ProjectExpense::whereHas('project', function($query) use ($organizationId) {
+                $query->where('organization_id', $organizationId);
+            })
+            ->whereNotNull('record_month_year')
+            ->select('record_month_year')
+            ->selectRaw('COUNT(*) as count')
+            ->groupBy('record_month_year')
+            ->orderBy('record_month_year', 'desc')
+            ->get();
+
+        $monthlyRecords = $monthlyRecordsData->map(function($item) {
+            return [
+                'record_month_year' => $item->record_month_year,
+                'count' => $item->count
+            ];
+        });
+
+        // حساب إجمالي عدد السجلات
+        $totalCount = ProjectExpense::whereHas('project', function($query) use ($organizationId) {
+            $query->where('organization_id', $organizationId);
+        })->count();
+
+        return view('projects.expenses.all', compact('expenses', 'projects', 'monthlyRecords', 'totalCount'));
     }
 
     /**

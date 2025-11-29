@@ -373,11 +373,36 @@ class ReportsController extends Controller
         $grandTotalPaid = $projectsData->sum('total_paid');
         $grandTotalRemaining = $projectsData->sum('total_remaining');
 
+        // جلب جميع السجلات الشهرية الفريدة مع عدد السجلات لكل شهر
+        $monthlyRecordsData = ProjectRevenue::whereHas('project', function($query) use ($organizationId) {
+                $query->where('organization_id', $organizationId);
+            })
+            ->whereNotNull('record_month_year')
+            ->select('record_month_year')
+            ->selectRaw('COUNT(*) as count')
+            ->groupBy('record_month_year')
+            ->orderBy('record_month_year', 'desc')
+            ->get();
+
+        $monthlyRecords = $monthlyRecordsData->map(function($item) {
+            return [
+                'record_month_year' => $item->record_month_year,
+                'count' => $item->count
+            ];
+        });
+
+        // حساب إجمالي عدد السجلات
+        $totalCount = ProjectRevenue::whereHas('project', function($query) use ($organizationId) {
+            $query->where('organization_id', $organizationId);
+        })->count();
+
         return view('reports.receivables', compact(
             'projectsData',
             'grandTotalPaid',
             'grandTotalRemaining',
-            'selectedMonth'
+            'selectedMonth',
+            'monthlyRecords',
+            'totalCount'
         ));
     }
 
@@ -473,31 +498,58 @@ class ReportsController extends Controller
             $totalPaid = $expenses->where('status', 'paid')->sum('amount');
             $totalPending = $expenses->where('status', 'pending')->sum('amount');
             
-            // Count projects the employee is assigned to
-            $projectsCount = $employee->projects()
+            // Get projects the employee is assigned to
+            $projects = $employee->projects()
                 ->where('organization_id', $organizationId)
-                ->count();
+                ->with('client')
+                ->get();
+            
+            $projectsCount = $projects->count();
             
             return [
                 'employee' => $employee,
                 'total_paid' => $totalPaid,
                 'total_pending' => $totalPending,
                 'projects_count' => $projectsCount,
+                'projects' => $projects,
+                'has_expenses' => ($totalPaid > 0 || $totalPending > 0),
             ];
-        })->filter(function($data) {
-            // Filter out employees with no expenses
-            return $data['total_paid'] > 0 || $data['total_pending'] > 0;
         });
 
         // Calculate grand totals
         $grandTotalPaid = $employeesData->sum('total_paid');
         $grandTotalPending = $employeesData->sum('total_pending');
 
+        // جلب جميع السجلات الشهرية الفريدة مع عدد السجلات لكل شهر
+        $monthlyRecordsData = \App\Models\ProjectExpense::whereHas('project', function($query) use ($organizationId) {
+                $query->where('organization_id', $organizationId);
+            })
+            ->whereNotNull('record_month_year')
+            ->select('record_month_year')
+            ->selectRaw('COUNT(*) as count')
+            ->groupBy('record_month_year')
+            ->orderBy('record_month_year', 'desc')
+            ->get();
+
+        $monthlyRecords = $monthlyRecordsData->map(function($item) {
+            return [
+                'record_month_year' => $item->record_month_year,
+                'count' => $item->count
+            ];
+        });
+
+        // حساب إجمالي عدد السجلات
+        $totalCount = \App\Models\ProjectExpense::whereHas('project', function($query) use ($organizationId) {
+            $query->where('organization_id', $organizationId);
+        })->count();
+
         return view('reports.total-employees-financial', compact(
             'employeesData',
             'grandTotalPaid',
             'grandTotalPending',
-            'recordMonth'
+            'recordMonth',
+            'monthlyRecords',
+            'totalCount'
         ));
     }
 

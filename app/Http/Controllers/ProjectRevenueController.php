@@ -290,7 +290,30 @@ class ProjectRevenueController extends Controller
             ->orderBy('business_name')
             ->get();
 
-        return view('projects.revenues.all', compact('revenues', 'projects'));
+        // جلب جميع السجلات الشهرية الفريدة مع عدد السجلات لكل شهر
+        $monthlyRecordsData = ProjectRevenue::whereHas('project', function($query) use ($organizationId) {
+                $query->where('organization_id', $organizationId);
+            })
+            ->whereNotNull('record_month_year')
+            ->select('record_month_year')
+            ->selectRaw('COUNT(*) as count')
+            ->groupBy('record_month_year')
+            ->orderBy('record_month_year', 'desc')
+            ->get();
+
+        $monthlyRecords = $monthlyRecordsData->map(function($item) {
+            return [
+                'record_month_year' => $item->record_month_year,
+                'count' => $item->count
+            ];
+        });
+
+        // حساب إجمالي عدد السجلات
+        $totalCount = ProjectRevenue::whereHas('project', function($query) use ($organizationId) {
+            $query->where('organization_id', $organizationId);
+        })->count();
+
+        return view('projects.revenues.all', compact('revenues', 'projects', 'monthlyRecords', 'totalCount'));
     }
 
     /**

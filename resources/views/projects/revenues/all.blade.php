@@ -45,82 +45,49 @@
         </div>
     </div>
 
-    <!-- Filters -->
+    <!-- Monthly Records Cards -->
     <div class="card rounded-2xl p-6">
-        <form method="GET" action="{{ route('revenues.all') }}" class="grid grid-cols-1 md:grid-cols-5 gap-4">
-            <div>
-                <label for="project_id" class="block text-sm font-medium text-gray-700 mb-2">
-                    المشروع
-                </label>
-                <select
-                    id="project_id"
-                    name="project_id"
-                    class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors select2"
-                    onchange="this.form.submit()"
-                >
-                    <option value="">جميع المشاريع</option>
-                    @foreach($projects as $project)
-                        <option value="{{ $project->id }}" {{ request('project_id') == $project->id ? 'selected' : '' }}>
-                            {{ $project->business_name }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
+        <h3 class="text-lg font-bold text-gray-800 mb-4">السجلات الشهرية</h3>
+        <div class="flex flex-wrap gap-4">
+            <!-- All Card -->
+            <a href="{{ route('revenues.all') }}" class="monthly-record-card flex-1 min-w-[150px] max-w-[200px] p-4 rounded-xl border-2 transition-all cursor-pointer {{ !request('record_month_year') ? 'border-primary bg-primary-50' : 'border-gray-200 hover:border-primary hover:bg-gray-50' }}">
+                <div class="text-center">
+                    <div class="w-12 h-12 bg-primary rounded-xl flex items-center justify-center mx-auto mb-2">
+                        <i class="fas fa-calendar-alt text-white text-xl"></i>
+                    </div>
+                    <h4 class="font-bold text-gray-800">الكل</h4>
+                    <p class="text-sm text-gray-600 mt-1">{{ $totalCount }} سجل</p>
+                </div>
+            </a>
 
-            <div>
-                <label for="record_month_year" class="block text-sm font-medium text-gray-700 mb-2">
-                    السجلات الشهرية
-                </label>
-                <input
-                    type="month"
-                    id="record_month_year"
-                    name="record_month_year"
-                    value="{{ request('record_month_year') ?? '' }}"
-                    class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
-                    onchange="this.form.submit()"
-                />
-            </div>
-
-            <div>
-                <label for="month" class="block text-sm font-medium text-gray-700 mb-2">
-                    الشهر (تاريخ الإيراد)
-                </label>
-                <input
-                    type="month"
-                    id="month"
-                    name="month"
-                    value="{{ request('month') ?? '' }}"
-                    class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
-                    onchange="this.form.submit()"
-                />
-            </div>
-
-            <div>
-                <label for="status" class="block text-sm font-medium text-gray-700 mb-2">
-                    الحالة
-                </label>
-                <select
-                    id="status"
-                    name="status"
-                    class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors select2"
-                    onchange="this.form.submit()"
-                >
-                    <option value="">جميع الحالات</option>
-                    <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>في الانتظار</option>
-                    <option value="received" {{ request('status') == 'received' ? 'selected' : '' }}>تم الاستلام</option>
-                    <option value="cancelled" {{ request('status') == 'cancelled' ? 'selected' : '' }}>ملغي</option>
-                </select>
-            </div>
-
-            <div class="flex items-end">
-                @if(request('project_id') || request('month') || request('record_month_year') || request('status'))
-                    <a href="{{ route('revenues.all') }}" class="w-full btn-secondary text-white px-6 py-3 rounded-xl hover:no-underline text-center">
-                        <i class="fas fa-times text-sm ml-2"></i>
-                        إلغاء الفلتر
-                    </a>
-                @endif
-            </div>
-        </form>
+            <!-- Monthly Records Cards -->
+            @foreach($monthlyRecords as $record)
+                @php
+                    $recordMonth = $record['record_month_year'];
+                    $months = [
+                        1 => 'يناير', 2 => 'فبراير', 3 => 'مارس', 4 => 'أبريل',
+                        5 => 'مايو', 6 => 'يونيو', 7 => 'يوليو', 8 => 'أغسطس',
+                        9 => 'سبتمبر', 10 => 'أكتوبر', 11 => 'نوفمبر', 12 => 'ديسمبر'
+                    ];
+                    $parts = explode('-', $recordMonth);
+                    $year = $parts[0] ?? '';
+                    $monthNum = isset($parts[1]) ? (int)$parts[1] : 0;
+                    $monthName = $months[$monthNum] ?? '';
+                    $isActive = request('record_month_year') == $recordMonth;
+                    $count = $record['count'];
+                @endphp
+                <a href="{{ route('revenues.all', ['record_month_year' => $recordMonth]) }}" class="monthly-record-card flex-1 min-w-[150px] max-w-[200px] p-4 rounded-xl border-2 transition-all cursor-pointer {{ $isActive ? 'border-primary bg-primary-50' : 'border-gray-200 hover:border-primary hover:bg-gray-50' }}">
+                    <div class="text-center">
+                        <div class="w-12 h-12 {{ $isActive ? 'bg-primary' : 'bg-gray-200' }} rounded-xl flex items-center justify-center mx-auto mb-2">
+                            <i class="fas fa-calendar text-white text-xl"></i>
+                        </div>
+                        <h4 class="font-bold text-gray-800">{{ $monthName }}</h4>
+                        <p class="text-xs text-gray-500">{{ $year }}</p>
+                        <p class="text-sm text-gray-600 mt-1">{{ $count }} سجل</p>
+                    </div>
+                </a>
+            @endforeach
+        </div>
     </div>
 
     <!-- Summary Cards -->
@@ -297,25 +264,31 @@
 </div>
 @endsection
 
+@section('styles')
+<style>
+.monthly-record-card {
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.monthly-record-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.monthly-record-card h4 {
+    transition: color 0.3s ease;
+}
+
+.monthly-record-card:hover h4 {
+    color: #6366f1;
+}
+</style>
+@endsection
+
 @section('scripts')
 <script>
 $(document).ready(function() {
-    // Initialize Select2
-    $('.select2').select2({
-        placeholder: 'اختر من القائمة',
-        allowClear: true,
-        dir: 'rtl',
-        width: '100%',
-        language: {
-            noResults: function() {
-                return 'لا توجد نتائج';
-            },
-            searching: function() {
-                return 'جاري البحث...';
-            }
-        }
-    });
-
     $('#revenuesTable').DataTable({
         responsive: true,
         language: {
@@ -335,33 +308,8 @@ $(document).ready(function() {
                 "sLast": "الأخير"
             }
         },
-        dom: 'Bfrtip',
-        buttons: [
-            {
-                extend: 'excel',
-                text: 'تصدير Excel',
-                className: 'btn btn-success',
-                exportOptions: {
-                    columns: [0, 1, 2, 3, 4, 5, 6, 7, 8]
-                }
-            },
-            {
-                extend: 'pdf',
-                text: 'تصدير PDF',
-                className: 'btn btn-danger',
-                exportOptions: {
-                    columns: [0, 1, 2, 3, 4, 5, 6, 7, 8]
-                }
-            },
-            {
-                extend: 'print',
-                text: 'طباعة',
-                className: 'btn btn-info',
-                exportOptions: {
-                    columns: [0, 1, 2, 3, 4, 5, 6, 7, 8]
-                }
-            }
-        ],
+        dom: 'rtip',
+        searching: false,
         columnDefs: [
             {
                 targets: [0], // السجلات الشهرية - قابل للبحث فقط
@@ -378,7 +326,7 @@ $(document).ready(function() {
             }
         ],
         order: [[2, 'desc']], // Sort by date descending
-        pageLength: 10,
+        pageLength: 100,
         lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]]
     });
 });

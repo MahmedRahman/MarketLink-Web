@@ -19,45 +19,53 @@
                 </div>
             </div>
             <div class="flex items-center space-x-3 rtl:space-x-reverse">
-                <button onclick="exportToExcel()" class="w-10 h-10 bg-green-500 hover:bg-green-600 text-white rounded-xl flex items-center justify-center transition-colors" title="تصدير Excel">
-                    <i class="fas fa-file-excel text-lg"></i>
-                </button>
-                <button onclick="exportToPDF()" class="w-10 h-10 bg-red-500 hover:bg-red-600 text-white rounded-xl flex items-center justify-center transition-colors" title="تصدير PDF">
-                    <i class="fas fa-file-pdf text-lg"></i>
-                </button>
-                <button onclick="printTable()" class="w-10 h-10 bg-blue-500 hover:bg-blue-600 text-white rounded-xl flex items-center justify-center transition-colors" title="طباعة">
-                    <i class="fas fa-print text-lg"></i>
-                </button>
             </div>
         </div>
     </div>
 
-    <!-- Record Month Filter -->
+    <!-- Monthly Records Cards -->
     <div class="card rounded-2xl p-6">
-        <form method="GET" action="{{ route('reports.total-employees-financial') }}" class="flex items-center gap-4">
-            <div class="flex-1">
-                <label for="record_month" class="block text-sm font-medium text-gray-700 mb-2">
-                    السجلات الشهرية
-                </label>
-                <input
-                    type="month"
-                    id="record_month"
-                    name="record_month"
-                    value="{{ $recordMonth ?? '' }}"
-                    class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
-                    onchange="this.form.submit()"
-                />
-                <p class="mt-1 text-xs text-gray-500">البحث يعتمد على السجلات الشهرية وليس تاريخ المصروف</p>
-            </div>
-            @if($recordMonth)
-            <div class="flex items-end">
-                <a href="{{ route('reports.total-employees-financial') }}" class="btn-secondary text-white px-6 py-3 rounded-xl hover:no-underline">
-                    <i class="fas fa-times text-sm ml-2"></i>
-                    إلغاء الفلتر
+        <h3 class="text-lg font-bold text-gray-800 mb-4">السجلات الشهرية</h3>
+        <div class="flex flex-wrap gap-4">
+            <!-- All Card -->
+            <a href="{{ route('reports.total-employees-financial') }}" class="monthly-record-card flex-1 min-w-[150px] max-w-[200px] p-4 rounded-xl border-2 transition-all cursor-pointer {{ !request('record_month') ? 'border-primary bg-primary-50' : 'border-gray-200 hover:border-primary hover:bg-gray-50' }}">
+                <div class="text-center">
+                    <div class="w-12 h-12 bg-primary rounded-xl flex items-center justify-center mx-auto mb-2">
+                        <i class="fas fa-calendar-alt text-white text-xl"></i>
+                    </div>
+                    <h4 class="font-bold text-gray-800">الكل</h4>
+                    <p class="text-sm text-gray-600 mt-1">{{ $totalCount }} سجل</p>
+                </div>
+            </a>
+
+            <!-- Monthly Records Cards -->
+            @foreach($monthlyRecords as $record)
+                @php
+                    $recordMonthValue = $record['record_month_year'];
+                    $months = [
+                        1 => 'يناير', 2 => 'فبراير', 3 => 'مارس', 4 => 'أبريل',
+                        5 => 'مايو', 6 => 'يونيو', 7 => 'يوليو', 8 => 'أغسطس',
+                        9 => 'سبتمبر', 10 => 'أكتوبر', 11 => 'نوفمبر', 12 => 'ديسمبر'
+                    ];
+                    $parts = explode('-', $recordMonthValue);
+                    $year = $parts[0] ?? '';
+                    $monthNum = isset($parts[1]) ? (int)$parts[1] : 0;
+                    $monthName = $months[$monthNum] ?? '';
+                    $isActive = request('record_month') == $recordMonthValue;
+                    $count = $record['count'];
+                @endphp
+                <a href="{{ route('reports.total-employees-financial', ['record_month' => $recordMonthValue]) }}" class="monthly-record-card flex-1 min-w-[150px] max-w-[200px] p-4 rounded-xl border-2 transition-all cursor-pointer {{ $isActive ? 'border-primary bg-primary-50' : 'border-gray-200 hover:border-primary hover:bg-gray-50' }}">
+                    <div class="text-center">
+                        <div class="w-12 h-12 {{ $isActive ? 'bg-primary' : 'bg-gray-200' }} rounded-xl flex items-center justify-center mx-auto mb-2">
+                            <i class="fas fa-calendar text-white text-xl"></i>
+                        </div>
+                        <h4 class="font-bold text-gray-800">{{ $monthName }}</h4>
+                        <p class="text-xs text-gray-500">{{ $year }}</p>
+                        <p class="text-sm text-gray-600 mt-1">{{ $count }} سجل</p>
+                    </div>
                 </a>
-            </div>
-            @endif
-        </form>
+            @endforeach
+        </div>
     </div>
 
     <!-- Summary Cards -->
@@ -117,7 +125,7 @@
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
                         @foreach($employeesData as $data)
-                            <tr class="hover:bg-gray-50">
+                            <tr class="hover:bg-gray-50 {{ !$data['has_expenses'] ? 'bg-yellow-50' : '' }}">
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center">
                                         <div class="w-10 h-10 bg-gradient-to-r from-purple-500 to-blue-500 rounded-xl flex items-center justify-center ml-3">
@@ -130,9 +138,15 @@
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm font-semibold text-blue-600">
-                                        {{ $data['projects_count'] }}
-                                    </div>
+                                    @if($data['projects_count'] > 0)
+                                        <button onclick="showEmployeeProjects({{ $data['employee']->id }})" class="text-sm font-semibold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer">
+                                            {{ $data['projects_count'] }}
+                                        </button>
+                                    @else
+                                        <div class="text-sm font-semibold text-gray-400">
+                                            {{ $data['projects_count'] }}
+                                        </div>
+                                    @endif
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     @if($data['total_paid'] > 0)
@@ -187,25 +201,91 @@
         @endif
     </div>
 </div>
+
+<!-- Modal for Employee Projects -->
+<div id="employeeProjectsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50 flex items-center justify-center">
+    <div class="bg-white rounded-2xl p-6 max-w-2xl w-full mx-4 shadow-xl max-h-[80vh] overflow-y-auto">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-xl font-bold text-gray-800" id="modalEmployeeName">مشاريع الموظف</h3>
+            <button onclick="closeEmployeeProjectsModal()" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        <div id="modalProjectsList" class="space-y-3">
+            <!-- Projects will be loaded here -->
+        </div>
+    </div>
+</div>
+
+<!-- Store projects data in JavaScript -->
+<script>
+var employeesProjectsData = {
+    @foreach($employeesData as $data)
+    {{ $data['employee']->id }}: {
+        employeeName: "{{ $data['employee']->name }}",
+        projects: [
+            @foreach($data['projects'] as $project)
+            {
+                id: {{ $project->id }},
+                name: "{{ $project->business_name }}",
+                client: "{{ $project->client->name ?? 'غير محدد' }}",
+                url: "{{ route('projects.show', $project) }}"
+            }@if(!$loop->last),@endif
+            @endforeach
+        ]
+    }@if(!$loop->last),@endif
+    @endforeach
+};
+</script>
+@endsection
+
+@section('styles')
+<style>
+.monthly-record-card {
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.monthly-record-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.monthly-record-card h4 {
+    transition: color 0.3s ease;
+}
+
+.monthly-record-card:hover h4 {
+    color: #6366f1;
+}
+</style>
 @endsection
 
 @section('scripts')
 <script>
-var table;
-
 $(document).ready(function() {
-    table = $('#employeesFinancialTable').DataTable({
+    $('#employeesFinancialTable').DataTable({
         responsive: true,
-        paging: false,
+        paging: true,
         searching: false,
         language: {
             "sProcessing": "جاري المعالجة...",
+            "sLengthMenu": "عرض _MENU_ سجل",
             "sZeroRecords": "لم يتم العثور على سجلات",
             "sInfo": "عرض _START_ إلى _END_ من _TOTAL_ سجل",
             "sInfoEmpty": "عرض 0 إلى 0 من 0 سجل",
-            "sInfoPostFix": ""
+            "sInfoFiltered": "(تصفية من _MAX_ سجل)",
+            "sInfoPostFix": "",
+            "sSearch": "البحث:",
+            "sUrl": "",
+            "oPaginate": {
+                "sFirst": "الأول",
+                "sPrevious": "السابق",
+                "sNext": "التالي",
+                "sLast": "الأخير"
+            }
         },
-        dom: 'rti',
+        dom: 'rtip',
         columnDefs: [
             {
                 targets: [4], // Actions column
@@ -214,43 +294,64 @@ $(document).ready(function() {
             }
         ],
         order: [[2, 'desc']], // Sort by paid amount descending
-        buttons: [
-            {
-                extend: 'excel',
-                text: 'Excel',
-                exportOptions: {
-                    columns: [0, 1, 2, 3]
-                }
-            },
-            {
-                extend: 'pdf',
-                text: 'PDF',
-                exportOptions: {
-                    columns: [0, 1, 2, 3]
-                }
-            },
-            {
-                extend: 'print',
-                text: 'Print',
-                exportOptions: {
-                    columns: [0, 1, 2, 3]
-                }
-            }
-        ]
+        pageLength: 100,
+        lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]]
     });
 });
 
-function exportToExcel() {
-    table.button(0).trigger();
+// Show Employee Projects Modal
+function showEmployeeProjects(employeeId) {
+    const employeeData = employeesProjectsData[employeeId];
+    if (!employeeData) {
+        alert('لا توجد بيانات للموظف');
+        return;
+    }
+
+    // Set employee name
+    document.getElementById('modalEmployeeName').textContent = 'مشاريع: ' + employeeData.employeeName;
+
+    // Clear and populate projects list
+    const projectsList = document.getElementById('modalProjectsList');
+    projectsList.innerHTML = '';
+
+    if (employeeData.projects.length === 0) {
+        projectsList.innerHTML = '<p class="text-gray-500 text-center py-4">لا يوجد مشاريع لهذا الموظف</p>';
+    } else {
+        employeeData.projects.forEach(function(project) {
+            const projectItem = document.createElement('div');
+            projectItem.className = 'p-4 border border-gray-200 rounded-xl hover:border-primary hover:bg-gray-50 transition-all';
+            projectItem.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <a href="${project.url}" class="text-sm font-medium text-gray-900 hover:text-primary">
+                            ${project.name}
+                        </a>
+                        <p class="text-xs text-gray-500 mt-1">العميل: ${project.client}</p>
+                    </div>
+                    <a href="${project.url}" class="text-blue-600 hover:text-blue-800 ml-3">
+                        <i class="fas fa-external-link-alt"></i>
+                    </a>
+                </div>
+            `;
+            projectsList.appendChild(projectItem);
+        });
+    }
+
+    // Show modal
+    document.getElementById('employeeProjectsModal').classList.remove('hidden');
 }
 
-function exportToPDF() {
-    table.button(1).trigger();
+// Close Employee Projects Modal
+function closeEmployeeProjectsModal() {
+    document.getElementById('employeeProjectsModal').classList.add('hidden');
 }
 
-function printTable() {
-    table.button(2).trigger();
-}
+// Close modal when clicking outside
+document.getElementById('employeeProjectsModal').addEventListener('click', function(e) {
+    if (e.target.id === 'employeeProjectsModal') {
+        closeEmployeeProjectsModal();
+    }
+});
 </script>
 @endsection
 

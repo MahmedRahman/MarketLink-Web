@@ -19,45 +19,53 @@
                 </div>
             </div>
             <div class="flex items-center space-x-3 rtl:space-x-reverse">
-                <button onclick="exportToExcel()" class="w-10 h-10 bg-green-500 hover:bg-green-600 text-white rounded-xl flex items-center justify-center transition-colors" title="تصدير Excel">
-                    <i class="fas fa-file-excel text-lg"></i>
-                </button>
-                <button onclick="exportToPDF()" class="w-10 h-10 bg-red-500 hover:bg-red-600 text-white rounded-xl flex items-center justify-center transition-colors" title="تصدير PDF">
-                    <i class="fas fa-file-pdf text-lg"></i>
-                </button>
-                <button onclick="printTable()" class="w-10 h-10 bg-blue-500 hover:bg-blue-600 text-white rounded-xl flex items-center justify-center transition-colors" title="طباعة">
-                    <i class="fas fa-print text-lg"></i>
-                </button>
             </div>
         </div>
     </div>
 
-    <!-- Month Filter -->
+    <!-- Monthly Records Cards -->
     <div class="card rounded-2xl p-6">
-        <form method="GET" action="{{ route('reports.receivables') }}" class="flex items-center gap-4">
-            <div class="flex-1">
-                <label for="month" class="block text-sm font-medium text-gray-700 mb-2">
-                    فلترة بالسجلات الشهرية
-                </label>
-                <input
-                    type="month"
-                    id="month"
-                    name="month"
-                    value="{{ $selectedMonth ?? '' }}"
-                    class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
-                    onchange="this.form.submit()"
-                />
-                <p class="mt-1 text-xs text-gray-500">البحث يعتمد على السجلات الشهرية وليس تاريخ الإيراد</p>
-            </div>
-            @if($selectedMonth)
-            <div class="flex items-end">
-                <a href="{{ route('reports.receivables') }}" class="btn-secondary text-white px-6 py-3 rounded-xl hover:no-underline">
-                    <i class="fas fa-times text-sm ml-2"></i>
-                    إلغاء الفلتر
+        <h3 class="text-lg font-bold text-gray-800 mb-4">السجلات الشهرية</h3>
+        <div class="flex flex-wrap gap-4">
+            <!-- All Card -->
+            <a href="{{ route('reports.receivables') }}" class="monthly-record-card flex-1 min-w-[150px] max-w-[200px] p-4 rounded-xl border-2 transition-all cursor-pointer {{ !request('month') ? 'border-primary bg-primary-50' : 'border-gray-200 hover:border-primary hover:bg-gray-50' }}">
+                <div class="text-center">
+                    <div class="w-12 h-12 bg-primary rounded-xl flex items-center justify-center mx-auto mb-2">
+                        <i class="fas fa-calendar-alt text-white text-xl"></i>
+                    </div>
+                    <h4 class="font-bold text-gray-800">الكل</h4>
+                    <p class="text-sm text-gray-600 mt-1">{{ $totalCount }} سجل</p>
+                </div>
+            </a>
+
+            <!-- Monthly Records Cards -->
+            @foreach($monthlyRecords as $record)
+                @php
+                    $recordMonthValue = $record['record_month_year'];
+                    $months = [
+                        1 => 'يناير', 2 => 'فبراير', 3 => 'مارس', 4 => 'أبريل',
+                        5 => 'مايو', 6 => 'يونيو', 7 => 'يوليو', 8 => 'أغسطس',
+                        9 => 'سبتمبر', 10 => 'أكتوبر', 11 => 'نوفمبر', 12 => 'ديسمبر'
+                    ];
+                    $parts = explode('-', $recordMonthValue);
+                    $year = $parts[0] ?? '';
+                    $monthNum = isset($parts[1]) ? (int)$parts[1] : 0;
+                    $monthName = $months[$monthNum] ?? '';
+                    $isActive = request('month') == $recordMonthValue;
+                    $count = $record['count'];
+                @endphp
+                <a href="{{ route('reports.receivables', ['month' => $recordMonthValue]) }}" class="monthly-record-card flex-1 min-w-[150px] max-w-[200px] p-4 rounded-xl border-2 transition-all cursor-pointer {{ $isActive ? 'border-primary bg-primary-50' : 'border-gray-200 hover:border-primary hover:bg-gray-50' }}">
+                    <div class="text-center">
+                        <div class="w-12 h-12 {{ $isActive ? 'bg-primary' : 'bg-gray-200' }} rounded-xl flex items-center justify-center mx-auto mb-2">
+                            <i class="fas fa-calendar text-white text-xl"></i>
+                        </div>
+                        <h4 class="font-bold text-gray-800">{{ $monthName }}</h4>
+                        <p class="text-xs text-gray-500">{{ $year }}</p>
+                        <p class="text-sm text-gray-600 mt-1">{{ $count }} سجل</p>
+                    </div>
                 </a>
-            </div>
-            @endif
-        </form>
+            @endforeach
+        </div>
     </div>
 
     <!-- Summary Cards -->
@@ -182,23 +190,53 @@
 </div>
 @endsection
 
+@section('styles')
+<style>
+.monthly-record-card {
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.monthly-record-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.monthly-record-card h4 {
+    transition: color 0.3s ease;
+}
+
+.monthly-record-card:hover h4 {
+    color: #6366f1;
+}
+</style>
+@endsection
+
 @section('scripts')
 <script>
-var table;
-
 $(document).ready(function() {
-    table = $('#receivablesTable').DataTable({
+    $('#receivablesTable').DataTable({
         responsive: true,
-        paging: false,
+        paging: true,
         searching: false,
         language: {
             "sProcessing": "جاري المعالجة...",
+            "sLengthMenu": "عرض _MENU_ سجل",
             "sZeroRecords": "لم يتم العثور على سجلات",
             "sInfo": "عرض _START_ إلى _END_ من _TOTAL_ سجل",
             "sInfoEmpty": "عرض 0 إلى 0 من 0 سجل",
-            "sInfoPostFix": ""
+            "sInfoFiltered": "(تصفية من _MAX_ سجل)",
+            "sInfoPostFix": "",
+            "sSearch": "البحث:",
+            "sUrl": "",
+            "oPaginate": {
+                "sFirst": "الأول",
+                "sPrevious": "السابق",
+                "sNext": "التالي",
+                "sLast": "الأخير"
+            }
         },
-        dom: 'rti',
+        dom: 'rtip',
         columnDefs: [
             {
                 targets: [4], // Actions column
@@ -207,43 +245,10 @@ $(document).ready(function() {
             }
         ],
         order: [[2, 'desc']], // Sort by paid amount descending
-        buttons: [
-            {
-                extend: 'excel',
-                text: 'Excel',
-                exportOptions: {
-                    columns: [0, 1, 2, 3]
-                }
-            },
-            {
-                extend: 'pdf',
-                text: 'PDF',
-                exportOptions: {
-                    columns: [0, 1, 2, 3]
-                }
-            },
-            {
-                extend: 'print',
-                text: 'Print',
-                exportOptions: {
-                    columns: [0, 1, 2, 3]
-                }
-            }
-        ]
+        pageLength: 100,
+        lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]]
     });
 });
-
-function exportToExcel() {
-    table.button(0).trigger();
-}
-
-function exportToPDF() {
-    table.button(1).trigger();
-}
-
-function printTable() {
-    table.button(2).trigger();
-}
 </script>
 @endsection
 
