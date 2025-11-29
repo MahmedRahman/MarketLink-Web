@@ -63,6 +63,7 @@ Route::middleware(['auth', \App\Http\Middleware\CheckTrialStatus::class])->group
            // Project Expenses Routes
            Route::resource('projects.expenses', ProjectExpenseController::class);
            Route::post('projects/{project}/expenses/{expense}/duplicate', [ProjectExpenseController::class, 'duplicate'])->name('projects.expenses.duplicate');
+           Route::post('projects/{project}/expenses/bulk-duplicate', [ProjectExpenseController::class, 'bulkDuplicate'])->name('projects.expenses.bulk-duplicate');
            
            // All Project Expenses Routes (مصروفات المشاريع)
            Route::get('expenses', [ProjectExpenseController::class, 'all'])->name('expenses.all');

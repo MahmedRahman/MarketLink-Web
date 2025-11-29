@@ -33,7 +33,7 @@ class ProjectExpenseController extends Controller
             }
         }
         
-        $expenses = $expensesQuery->latest('expense_date')->get();
+        $expenses = $expensesQuery->latest('id')->get();
         
         return view('projects.expenses.index', compact('project', 'expenses', 'selectedMonth'));
     }
@@ -177,6 +177,54 @@ class ProjectExpenseController extends Controller
         } catch (\Exception $e) {
             return redirect()->back()
                 ->with('error', 'حدث خطأ أثناء نسخ المصروف: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Duplicate multiple expenses with new record_month_year
+     */
+    public function bulkDuplicate(Request $request, Project $project)
+    {
+        try {
+            $request->validate([
+                'expense_ids' => 'required|array|min:1',
+                'expense_ids.*' => 'exists:project_expenses,id',
+                'record_month_year' => 'required|string|max:7|regex:/^\d{4}-\d{2}$/',
+            ]);
+
+            $expenseIds = $request->input('expense_ids');
+            $recordMonthYear = $request->input('record_month_year');
+            
+            // التحقق من أن جميع المصروفات تتبع المشروع
+            $expenses = ProjectExpense::where('project_id', $project->id)
+                ->whereIn('id', $expenseIds)
+                ->get();
+
+            if ($expenses->count() !== count($expenseIds)) {
+                return redirect()->back()
+                    ->with('error', 'بعض المصروفات المحددة غير موجودة أو لا تنتمي لهذا المشروع');
+            }
+
+            $duplicatedCount = 0;
+            foreach ($expenses as $expense) {
+                $newExpense = $expense->replicate();
+                $newExpense->title = $expense->title . ' (نسخة)';
+                $newExpense->status = 'pending';
+                $newExpense->record_month_year = $recordMonthYear;
+                $newExpense->save();
+                $duplicatedCount++;
+            }
+
+            return redirect()->route('projects.expenses.index', $project)
+                ->with('success', "تم نسخ {$duplicatedCount} مصروف بنجاح مع الشهر المحاسبي: {$recordMonthYear}");
+                
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return redirect()->back()
+                ->withErrors($e->validator)
+                ->withInput();
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->with('error', 'حدث خطأ أثناء نسخ المصروفات: ' . $e->getMessage());
         }
     }
 

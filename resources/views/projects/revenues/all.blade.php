@@ -326,7 +326,7 @@ $(document).ready(function() {
             "sInfoEmpty": "عرض 0 إلى 0 من 0 سجل",
             "sInfoFiltered": "(تصفية من _MAX_ سجل)",
             "sInfoPostFix": "",
-            "sSearch": "البحث:",
+            "sSearch": "البحث في السجلات الشهرية:",
             "sUrl": "",
             "oPaginate": {
                 "sFirst": "الأول",
@@ -364,7 +364,15 @@ $(document).ready(function() {
         ],
         columnDefs: [
             {
-                targets: [8], // Actions column
+                targets: [0], // السجلات الشهرية - قابل للبحث فقط
+                searchable: true
+            },
+            {
+                targets: [1, 2, 3, 4, 5, 6, 7], // جميع الأعمدة الأخرى غير قابلة للبحث
+                searchable: false
+            },
+            {
+                targets: [9], // Actions column
                 orderable: false,
                 searchable: false
             }

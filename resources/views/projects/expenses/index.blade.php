@@ -19,6 +19,10 @@
                 </div>
             </div>
             <div class="flex items-center space-x-3 rtl:space-x-reverse">
+                <button id="bulkDuplicateBtn" class="btn-secondary text-white px-6 py-3 rounded-xl flex items-center hover:no-underline" disabled>
+                    <i class="fas fa-copy text-sm ml-2"></i>
+                    نسخ المحدد
+                </button>
                 <a href="{{ route('projects.expenses.create', $project) }}" class="btn-primary text-white px-6 py-3 rounded-xl flex items-center hover:no-underline">
                     <i class="fas fa-plus text-sm ml-2"></i>
                     إضافة مصروف جديد
@@ -95,8 +99,11 @@
                 <table id="expensesTable" class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
+                            <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <input type="checkbox" id="selectAllExpenses" class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-2 focus:ring-primary cursor-pointer">
+                            </th>
                             <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                الشهر
+                                السجلات الشهرية
                             </th>
                             <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 التاريخ
@@ -121,16 +128,27 @@
                     <tbody class="bg-white divide-y divide-gray-200">
                         @foreach($expenses as $expense)
                             <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-center">
+                                    <input type="checkbox" name="expense_ids[]" value="{{ $expense->id }}" class="expense-checkbox w-4 h-4 rounded border-gray-300 text-primary focus:ring-2 focus:ring-primary cursor-pointer">
+                                </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    @php
-                                        $months = [
-                                            1 => 'يناير', 2 => 'فبراير', 3 => 'مارس', 4 => 'أبريل',
-                                            5 => 'مايو', 6 => 'يونيو', 7 => 'يوليو', 8 => 'أغسطس',
-                                            9 => 'سبتمبر', 10 => 'أكتوبر', 11 => 'نوفمبر', 12 => 'ديسمبر'
-                                        ];
-                                        $month = $expense->expense_date->format('n');
-                                    @endphp
-                                    <div class="text-sm font-medium text-gray-900">{{ $months[$month] }}</div>
+                                    @if($expense->record_month_year)
+                                        @php
+                                            $months = [
+                                                1 => 'يناير', 2 => 'فبراير', 3 => 'مارس', 4 => 'أبريل',
+                                                5 => 'مايو', 6 => 'يونيو', 7 => 'يوليو', 8 => 'أغسطس',
+                                                9 => 'سبتمبر', 10 => 'أكتوبر', 11 => 'نوفمبر', 12 => 'ديسمبر'
+                                            ];
+                                            $parts = explode('-', $expense->record_month_year);
+                                            $year = $parts[0] ?? '';
+                                            $monthNum = isset($parts[1]) ? (int)$parts[1] : 0;
+                                            $monthName = $months[$monthNum] ?? '';
+                                        @endphp
+                                        <div class="text-sm font-medium text-gray-900">{{ $monthName }} {{ $year }}</div>
+                                        <div class="text-xs text-gray-500">{{ $expense->record_month_year }}</div>
+                                    @else
+                                        <div class="text-sm font-medium text-gray-400 italic">غير محدد</div>
+                                    @endif
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm text-gray-500">{{ $expense->expense_date->format('Y-m-d') }}</div>
@@ -191,12 +209,55 @@
         @endif
     </div>
 </div>
+
+<!-- Modal for Bulk Duplicate -->
+<div id="bulkDuplicateModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50 flex items-center justify-center">
+    <div class="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-xl">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-xl font-bold text-gray-800">نسخ المصروفات المحددة</h3>
+            <button onclick="closeBulkDuplicateModal()" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        <form id="bulkDuplicateForm" method="POST" action="{{ route('projects.expenses.bulk-duplicate', $project) }}">
+            @csrf
+            <div class="mb-4">
+                <label for="record_month_year" class="block text-sm font-medium text-gray-700 mb-2">
+                    الشهر المحاسبي الجديد <span class="text-red-500">*</span>
+                </label>
+                <input
+                    type="month"
+                    id="record_month_year"
+                    name="record_month_year"
+                    value="{{ date('Y-m') }}"
+                    class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                    required
+                />
+                <p class="text-xs text-gray-500 mt-1">اختر الشهر المحاسبي للسجلات المنسوخة</p>
+            </div>
+            <div class="mb-4">
+                <p class="text-sm text-gray-600">
+                    سيتم نسخ <span id="selectedCount" class="font-bold text-primary">0</span> مصروف
+                </p>
+            </div>
+            <div class="flex items-center justify-end space-x-3 rtl:space-x-reverse">
+                <button type="button" onclick="closeBulkDuplicateModal()" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-colors">
+                    إلغاء
+                </button>
+                <button type="submit" class="btn-primary text-white px-6 py-3 rounded-xl hover:no-underline">
+                    <i class="fas fa-copy text-sm ml-2"></i>
+                    نسخ
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
 @endsection
 
 @section('scripts')
 <script>
 $(document).ready(function() {
-    $('#expensesTable').DataTable({
+    var table = $('#expensesTable').DataTable({
         responsive: true,
         language: {
             "sProcessing": "جاري المعالجة...",
@@ -222,7 +283,7 @@ $(document).ready(function() {
                 text: 'تصدير Excel',
                 className: 'btn btn-success',
                 exportOptions: {
-                    columns: [0, 1, 2, 3, 4, 5]
+                    columns: [1, 2, 3, 4, 5, 6, 7] // Skip checkbox column (0) and actions column (7)
                 }
             },
             {
@@ -230,7 +291,7 @@ $(document).ready(function() {
                 text: 'تصدير PDF',
                 className: 'btn btn-danger',
                 exportOptions: {
-                    columns: [0, 1, 2, 3, 4, 5]
+                    columns: [1, 2, 3, 4, 5, 6, 7] // Skip checkbox column (0) and actions column (7)
                 }
             },
             {
@@ -238,21 +299,160 @@ $(document).ready(function() {
                 text: 'طباعة',
                 className: 'btn btn-info',
                 exportOptions: {
-                    columns: [0, 1, 2, 3, 4, 5]
+                    columns: [1, 2, 3, 4, 5, 6, 7] // Skip checkbox column (0) and actions column (7)
+                }
+            },
+            {
+                text: 'نسخ المحدد',
+                className: 'btn btn-purple',
+                action: function (e, dt, node, config) {
+                    // Trigger the bulk duplicate button click
+                    $('#bulkDuplicateBtn').trigger('click');
                 }
             }
         ],
         columnDefs: [
             {
-                targets: [6], // Actions column
+                targets: [0], // Checkbox column
+                orderable: false,
+                searchable: false
+            },
+            {
+                targets: [7], // Actions column (last column, index 7)
                 orderable: false,
                 searchable: false
             }
         ],
-        order: [[1, 'desc']], // Sort by date descending
+        order: [[2, 'desc']], // Sort by date descending (newest first) - column 2 is date (after checkbox 0 and record_month_year 1)
         pageLength: 10,
         lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]]
     });
+
+    // Store selected expense IDs across all pages
+    var selectedExpenseIds = new Set();
+
+    // Select All Checkbox - Use event delegation for DataTable
+    $(document).on('change', '#selectAllExpenses', function() {
+        var isChecked = $(this).is(':checked');
+        var visibleCheckboxes = table.$('.expense-checkbox');
+        
+        visibleCheckboxes.each(function() {
+            var expenseId = $(this).val();
+            $(this).prop('checked', isChecked);
+            
+            if (isChecked) {
+                selectedExpenseIds.add(expenseId);
+            } else {
+                selectedExpenseIds.delete(expenseId);
+            }
+        });
+        
+        updateBulkDuplicateButton();
+    });
+
+    // Individual Checkbox - Use event delegation for DataTable
+    $(document).on('change', '.expense-checkbox', function() {
+        var expenseId = $(this).val();
+        
+        if ($(this).is(':checked')) {
+            selectedExpenseIds.add(expenseId);
+        } else {
+            selectedExpenseIds.delete(expenseId);
+        }
+        
+        updateSelectAllCheckbox();
+        updateBulkDuplicateButton();
+    });
+
+    // Update Select All Checkbox State
+    function updateSelectAllCheckbox() {
+        var visibleCheckboxes = table.$('.expense-checkbox');
+        var allChecked = true;
+        
+        visibleCheckboxes.each(function() {
+            if (!$(this).is(':checked')) {
+                allChecked = false;
+                return false; // break loop
+            }
+        });
+        
+        $('#selectAllExpenses').prop('checked', visibleCheckboxes.length > 0 && allChecked);
+    }
+
+    // Update Bulk Duplicate Button
+    function updateBulkDuplicateButton() {
+        const bulkBtn = $('#bulkDuplicateBtn');
+        const duplicateTableBtn = $('.btn-purple'); // DataTable duplicate button
+        
+        if (selectedExpenseIds.size > 0) {
+            bulkBtn.prop('disabled', false);
+            bulkBtn.removeClass('opacity-50 cursor-not-allowed');
+            // Enable DataTable button
+            if (duplicateTableBtn.length) {
+                duplicateTableBtn.prop('disabled', false);
+                duplicateTableBtn.removeClass('disabled');
+            }
+        } else {
+            bulkBtn.prop('disabled', true);
+            bulkBtn.addClass('opacity-50 cursor-not-allowed');
+            // Disable DataTable button
+            if (duplicateTableBtn.length) {
+                duplicateTableBtn.prop('disabled', true);
+                duplicateTableBtn.addClass('disabled');
+            }
+        }
+    }
+
+    // Open Bulk Duplicate Modal
+    $('#bulkDuplicateBtn').on('click', function(e) {
+        e.preventDefault();
+        
+        if (selectedExpenseIds.size === 0) {
+            alert('يرجى اختيار مصروف واحد على الأقل');
+            return;
+        }
+
+        // Convert Set to Array
+        var selectedIds = Array.from(selectedExpenseIds);
+
+        // Add hidden inputs for selected expense IDs
+        $('#bulkDuplicateForm').find('input[name="expense_ids[]"]').remove();
+        selectedIds.forEach(function(id) {
+            $('#bulkDuplicateForm').append('<input type="hidden" name="expense_ids[]" value="' + id + '">');
+        });
+
+        $('#selectedCount').text(selectedIds.length);
+        $('#bulkDuplicateModal').removeClass('hidden');
+    });
+
+    // Close Bulk Duplicate Modal
+    function closeBulkDuplicateModal() {
+        $('#bulkDuplicateModal').addClass('hidden');
+        // Reset form
+        $('#bulkDuplicateForm').find('input[name="expense_ids[]"]').remove();
+    }
+
+    // Close modal when clicking outside
+    $('#bulkDuplicateModal').on('click', function(e) {
+        if ($(e.target).attr('id') === 'bulkDuplicateModal') {
+            closeBulkDuplicateModal();
+        }
+    });
+
+    // Update button state when DataTable redraws (pagination, search, etc.)
+    table.on('draw', function() {
+        // Restore checkbox states from selectedExpenseIds
+        table.$('.expense-checkbox').each(function() {
+            var expenseId = $(this).val();
+            $(this).prop('checked', selectedExpenseIds.has(expenseId));
+        });
+        
+        updateSelectAllCheckbox();
+        updateBulkDuplicateButton();
+    });
+
+    // Initialize button state
+    updateBulkDuplicateButton();
 });
 </script>
 @endsection
