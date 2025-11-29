@@ -105,6 +105,7 @@ Route::middleware(['auth', \App\Http\Middleware\CheckTrialStatus::class])->group
            Route::get('reports/receivables', [ReportsController::class, 'receivables'])->name('reports.receivables');
            Route::get('reports/profits', [ReportsController::class, 'profits'])->name('reports.profits');
            Route::get('reports/total-employees-financial', [ReportsController::class, 'totalEmployeesFinancial'])->name('reports.total-employees-financial');
+           Route::post('reports/total-employees-financial/{employee}/mark-paid', [ReportsController::class, 'markEmployeeExpensesAsPaid'])->name('reports.mark-employee-expenses-paid');
            Route::get('reports/employees/{employee}/paid-expenses', [ReportsController::class, 'employeePaidExpenses'])->name('reports.employee-paid-expenses');
            Route::get('reports/employees-data', [ReportsController::class, 'employeesData'])->name('reports.employees-data');
        });

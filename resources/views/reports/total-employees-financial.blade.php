@@ -62,10 +62,10 @@
                         <h4 class="font-bold text-gray-800">{{ $monthName }}</h4>
                         <p class="text-xs text-gray-500">{{ $year }}</p>
                         <p class="text-sm text-gray-600 mt-1">{{ $count }} سجل</p>
-                    </div>
+            </div>
                 </a>
             @endforeach
-        </div>
+            </div>
     </div>
 
     <!-- Summary Cards -->
@@ -144,8 +144,8 @@
                                         </button>
                                     @else
                                         <div class="text-sm font-semibold text-gray-400">
-                                            {{ $data['projects_count'] }}
-                                        </div>
+                                        {{ $data['projects_count'] }}
+                                    </div>
                                     @endif
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
@@ -165,9 +165,19 @@
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                                    <a href="{{ route('reports.employee-financial', ['employee_id' => $data['employee']->id, 'record_month' => $recordMonth]) }}" class="text-blue-600 hover:text-blue-900 p-1" title="عرض التفاصيل">
-                                        <i class="fas fa-eye text-sm"></i>
-                                    </a>
+                                    <div class="flex items-center justify-center space-x-2 rtl:space-x-reverse">
+                                        @if($data['total_pending'] > 0)
+                                            <button onclick="showMarkAsPaidModal({{ $data['employee']->id }}, '{{ $data['employee']->name }}', {{ $data['total_pending'] }})" class="text-green-600 hover:text-green-900 p-1" title="تحويل المستحق إلى مدفوع">
+                                                <i class="fas fa-check-circle text-sm"></i>
+                                            </button>
+                                        @endif
+                                        <button onclick="showEmployeeTransferInfo({{ $data['employee']->id }})" class="text-purple-600 hover:text-purple-900 p-1" title="بيانات التحويل">
+                                            <i class="fas fa-credit-card text-sm"></i>
+                                        </button>
+                                        <a href="{{ route('reports.employee-financial', ['employee_id' => $data['employee']->id, 'record_month' => $recordMonth]) }}" class="text-blue-600 hover:text-blue-900 p-1" title="عرض التفاصيل">
+                                            <i class="fas fa-eye text-sm"></i>
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                         @endforeach
@@ -217,6 +227,50 @@
     </div>
 </div>
 
+<!-- Modal for Mark as Paid -->
+<div id="markAsPaidModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50 flex items-center justify-center">
+    <div class="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-xl">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-xl font-bold text-gray-800">تحويل المبلغ المستحق إلى مدفوع</h3>
+            <button onclick="closeMarkAsPaidModal()" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        <div class="mb-4">
+            <p class="text-gray-700 mb-2">الموظف: <span id="markAsPaidEmployeeName" class="font-semibold"></span></p>
+            <p class="text-gray-700 mb-2">المبلغ المستحق: <span id="markAsPaidAmount" class="font-semibold text-orange-600"></span> جنيه</p>
+            <p class="text-sm text-gray-500">سيتم تحويل جميع المصروفات المستحقة لهذا الموظف إلى مدفوعة.</p>
+        </div>
+        <form id="markAsPaidForm" method="POST" action="">
+            @csrf
+            <input type="hidden" name="record_month" value="{{ $recordMonth }}">
+            <div class="flex items-center justify-end space-x-3 rtl:space-x-reverse">
+                <button type="button" onclick="closeMarkAsPaidModal()" class="px-4 py-2 text-gray-700 bg-gray-200 rounded-xl hover:bg-gray-300 transition-colors">
+                    إلغاء
+                </button>
+                <button type="submit" class="px-4 py-2 text-white bg-green-600 rounded-xl hover:bg-green-700 transition-colors">
+                    تأكيد التحويل
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal for Employee Transfer Info -->
+<div id="employeeTransferModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50 flex items-center justify-center">
+    <div class="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-xl">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-xl font-bold text-gray-800" id="transferModalEmployeeName">بيانات التحويل</h3>
+            <button onclick="closeEmployeeTransferModal()" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        <div id="transferInfoContent" class="space-y-4">
+            <!-- Transfer info will be loaded here -->
+        </div>
+    </div>
+</div>
+
 <!-- Store projects data in JavaScript -->
 <script>
 var employeesProjectsData = {
@@ -233,6 +287,17 @@ var employeesProjectsData = {
             }@if(!$loop->last),@endif
             @endforeach
         ]
+    }@if(!$loop->last),@endif
+    @endforeach
+};
+
+// Store transfer info data
+var employeesTransferData = {
+    @foreach($employeesData as $data)
+    {{ $data['employee']->id }}: {
+        employeeName: "{{ $data['employee']->name }}",
+        instapayNumber: "{{ $data['employee']->instapay_number ?? '' }}",
+        vodafoneCashNumber: "{{ $data['employee']->vodafone_cash_number ?? '' }}"
     }@if(!$loop->last),@endif
     @endforeach
 };
@@ -350,6 +415,124 @@ function closeEmployeeProjectsModal() {
 document.getElementById('employeeProjectsModal').addEventListener('click', function(e) {
     if (e.target.id === 'employeeProjectsModal') {
         closeEmployeeProjectsModal();
+    }
+});
+
+// Show Employee Transfer Info Modal
+function showEmployeeTransferInfo(employeeId) {
+    const employeeData = employeesTransferData[employeeId];
+    if (!employeeData) {
+        alert('لا توجد بيانات للموظف');
+        return;
+    }
+
+    // Set employee name
+    document.getElementById('transferModalEmployeeName').textContent = 'بيانات التحويل: ' + employeeData.employeeName;
+
+    // Clear and populate transfer info
+    const transferContent = document.getElementById('transferInfoContent');
+    transferContent.innerHTML = '';
+
+    let hasInfo = false;
+
+    if (employeeData.instapayNumber) {
+        hasInfo = true;
+        const instapayDiv = document.createElement('div');
+        instapayDiv.className = 'p-4 bg-blue-50 border border-blue-200 rounded-xl';
+        instapayDiv.innerHTML = `
+            <label class="block text-sm font-medium text-blue-700 mb-2">رقم Instapay:</label>
+            <div class="flex items-center bg-white rounded-lg p-3 border border-blue-200">
+                <span class="flex-1 text-sm text-gray-800 font-mono" id="instapay-number-${employeeId}">${employeeData.instapayNumber}</span>
+                <button type="button" onclick="copyToClipboard('instapay-number-${employeeId}', 'instapay-copy-btn-${employeeId}')" id="instapay-copy-btn-${employeeId}" class="ml-2 text-blue-600 hover:text-blue-700" title="نسخ">
+                    <i class="fas fa-copy text-sm"></i>
+                </button>
+            </div>
+        `;
+        transferContent.appendChild(instapayDiv);
+    }
+
+    if (employeeData.vodafoneCashNumber) {
+        hasInfo = true;
+        const vodafoneDiv = document.createElement('div');
+        vodafoneDiv.className = 'p-4 bg-green-50 border border-green-200 rounded-xl';
+        vodafoneDiv.innerHTML = `
+            <label class="block text-sm font-medium text-green-700 mb-2">رقم فودافون كاش:</label>
+            <div class="flex items-center bg-white rounded-lg p-3 border border-green-200">
+                <span class="flex-1 text-sm text-gray-800 font-mono" id="vodafone-number-${employeeId}">${employeeData.vodafoneCashNumber}</span>
+                <button type="button" onclick="copyToClipboard('vodafone-number-${employeeId}', 'vodafone-copy-btn-${employeeId}')" id="vodafone-copy-btn-${employeeId}" class="ml-2 text-green-600 hover:text-green-700" title="نسخ">
+                    <i class="fas fa-copy text-sm"></i>
+                </button>
+            </div>
+        `;
+        transferContent.appendChild(vodafoneDiv);
+    }
+
+    if (!hasInfo) {
+        transferContent.innerHTML = '<p class="text-gray-500 text-center py-4">لا توجد بيانات تحويل لهذا الموظف</p>';
+    }
+
+    // Show modal
+    document.getElementById('employeeTransferModal').classList.remove('hidden');
+}
+
+// Close Employee Transfer Modal
+function closeEmployeeTransferModal() {
+    document.getElementById('employeeTransferModal').classList.add('hidden');
+}
+
+// Close modal when clicking outside
+document.getElementById('employeeTransferModal').addEventListener('click', function(e) {
+    if (e.target.id === 'employeeTransferModal') {
+        closeEmployeeTransferModal();
+    }
+});
+
+// Copy to clipboard function
+function copyToClipboard(elementId, buttonId) {
+    const element = document.getElementById(elementId);
+    const text = element.textContent;
+    
+    navigator.clipboard.writeText(text).then(function() {
+        const button = document.getElementById(buttonId);
+        const originalHTML = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-check text-sm"></i>';
+        button.classList.add('text-green-600');
+        
+        setTimeout(function() {
+            button.innerHTML = originalHTML;
+            button.classList.remove('text-green-600');
+        }, 2000);
+    }).catch(function(err) {
+        console.error('Failed to copy:', err);
+        alert('فشل نسخ النص');
+    });
+}
+
+// Show Mark as Paid Modal
+function showMarkAsPaidModal(employeeId, employeeName, totalPending) {
+    document.getElementById('markAsPaidEmployeeName').textContent = employeeName;
+    document.getElementById('markAsPaidAmount').textContent = totalPending.toLocaleString('ar-EG', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    
+    const form = document.getElementById('markAsPaidForm');
+    const recordMonth = '{{ $recordMonth }}';
+    let url = `/reports/total-employees-financial/${employeeId}/mark-paid`;
+    if (recordMonth) {
+        url += `?record_month=${recordMonth}`;
+    }
+    form.action = url;
+    
+    document.getElementById('markAsPaidModal').classList.remove('hidden');
+}
+
+// Close Mark as Paid Modal
+function closeMarkAsPaidModal() {
+    document.getElementById('markAsPaidModal').classList.add('hidden');
+}
+
+// Close modal when clicking outside
+document.getElementById('markAsPaidModal').addEventListener('click', function(e) {
+    if (e.target.id === 'markAsPaidModal') {
+        closeMarkAsPaidModal();
     }
 });
 </script>

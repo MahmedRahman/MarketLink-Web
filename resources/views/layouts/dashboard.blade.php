@@ -1022,6 +1022,34 @@
                         <span class="font-medium">المشاريع</span>
                     </a>
                     
+                    <!-- Divider -->
+                    <div class="my-6 mx-4 border-t border-gray-200"></div>
+                    
+
+
+              
+                    <!-- Basic Data Section -->
+                    <div class="px-2 mb-3 mt-3">
+                        <div class="bg-gradient-to-r from-gray-50 to-gray-100 px-4 py-2.5 rounded-xl border-r-4 border-primary shadow-sm">
+                            <h3 class="text-sm font-bold text-gray-700 tracking-wide">الخطه</h3>
+                        </div>
+                    </div>
+                    <!-- Monthly Plans -->
+                    <a href="{{ route('monthly-plans.index') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('monthly-plans.*') ? 'active' : '' }}">
+                        <span class="material-icons text-lg ml-3">calendar_month</span>
+                        <span class="font-medium">الخطط الشهرية</span>
+                    </a>
+                    
+                    <!-- Divider -->
+                    <div class="my-6 mx-4 border-t border-gray-200"></div>
+                    
+                    <!-- Reports Section -->
+                    <div class="px-2 mb-3 mt-3">
+                        <div class="bg-gradient-to-r from-gray-50 to-gray-100 px-4 py-2.5 rounded-xl border-r-4 border-primary shadow-sm">
+                            <h3 class="text-sm font-bold text-gray-700 tracking-wide">الحسابات</h3>
+                        </div>
+                    </div>
+                    
                     <!-- Project Revenues -->
                     <a href="{{ route('revenues.all') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('revenues.*') ? 'active' : '' }}">
                         <i class="fas fa-money-bill-wave text-lg ml-3"></i>
@@ -1043,44 +1071,7 @@
                     <!-- Total Employees Financial Report -->
                     <a href="{{ route('reports.total-employees-financial') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('reports.total-employees-financial') ? 'active' : '' }}">
                         <i class="fas fa-users-cog text-lg ml-3"></i>
-                        <span class="font-medium">إجمالي الموظفين</span>
-                    </a>
-                    
-                    <!-- Divider -->
-                    <div class="my-6 mx-4 border-t border-gray-200"></div>
-                    
-                    <!-- Monthly Plans -->
-                    <a href="{{ route('monthly-plans.index') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('monthly-plans.*') ? 'active' : '' }}">
-                        <span class="material-icons text-lg ml-3">calendar_month</span>
-                        <span class="font-medium">الخطط الشهرية</span>
-                    </a>
-                    
-                    <!-- Divider -->
-                    <div class="my-6 mx-4 border-t border-gray-200"></div>
-                    
-                    <!-- Reports Section -->
-                    <div class="px-2 mb-3 mt-3">
-                        <div class="bg-gradient-to-r from-gray-50 to-gray-100 px-4 py-2.5 rounded-xl border-r-4 border-primary shadow-sm">
-                            <h3 class="text-sm font-bold text-gray-700 tracking-wide">التقارير</h3>
-                        </div>
-                    </div>
-                    
-                    <!-- Profits Report -->
-                    <a href="{{ route('reports.profits') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('reports.profits') ? 'active' : '' }}">
-                        <i class="fas fa-chart-pie text-lg ml-3"></i>
-                        <span class="font-medium">الأرباح</span>
-                    </a>
-                    
-                    <!-- Employee Financial Report -->
-                    <a href="{{ route('reports.employee-financial') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('reports.employee-financial') ? 'active' : '' }}">
-                        <i class="fas fa-user-tie text-lg ml-3"></i>
-                        <span class="font-medium">مالي الموظفين</span>
-                    </a>
-                    
-                    <!-- Employees Data Report -->
-                    <a href="{{ route('reports.employees-data') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('reports.employees-data') ? 'active' : '' }}">
-                        <i class="fas fa-user-circle text-lg ml-3"></i>
-                        <span class="font-medium">بيانات الموظفين</span>
+                        <span class="font-medium">حسابات الموظفين</span>
                     </a>
                     
                     <!-- Divider -->

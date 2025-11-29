@@ -554,6 +554,45 @@ class ReportsController extends Controller
     }
 
     /**
+     * تحويل جميع المصروفات المستحقة للموظف إلى مدفوعة
+     */
+    public function markEmployeeExpensesAsPaid(Request $request, Employee $employee)
+    {
+        try {
+            $organizationId = $request->user()->organization_id;
+            
+            // التحقق من أن الموظف تابع للمنظمة
+            if ($employee->organization_id !== $organizationId) {
+                abort(403);
+            }
+
+            // Get filter parameters
+            $recordMonth = $request->query('record_month');
+
+            // Build query for pending expenses
+            $expensesQuery = \App\Models\ProjectExpense::where('employee_id', $employee->id)
+                ->where('status', 'pending')
+                ->whereHas('project', function($query) use ($organizationId) {
+                    $query->where('organization_id', $organizationId);
+                });
+
+            // Apply record_month_year filter if provided
+            if ($recordMonth) {
+                $expensesQuery->where('record_month_year', $recordMonth);
+            }
+
+            // Update all pending expenses to paid
+            $updatedCount = $expensesQuery->update(['status' => 'paid']);
+
+            return redirect()->route('reports.total-employees-financial', ['record_month' => $recordMonth])
+                ->with('success', "تم تحويل {$updatedCount} مصروف من مستحق إلى مدفوع بنجاح");
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->with('error', 'حدث خطأ أثناء تحديث حالة المصروفات: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * عرض تفاصيل المصروفات المدفوعة للموظف
      */
     public function employeePaidExpenses(Request $request, Employee $employee)
