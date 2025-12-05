@@ -22,6 +22,7 @@ class Project extends Model
         'youtube_url',
         'tiktok_url',
         'status',
+        'responsibility',
         'authorized_persons',
         'project_accounts'
     ];
@@ -31,6 +32,7 @@ class Project extends Model
         'updated_at' => 'datetime',
         'authorized_persons' => 'array',
         'project_accounts' => 'array',
+        'responsibility' => 'array',
     ];
 
     public function client(): BelongsTo

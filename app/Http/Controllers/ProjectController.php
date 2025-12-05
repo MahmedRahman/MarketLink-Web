@@ -21,12 +21,42 @@ class ProjectController extends Controller
     public function index(Request $request)
     {
         $organizationId = $request->user()->organization_id;
-        $projects = Project::where('organization_id', $organizationId)
+        $selectedResponsibility = $request->get('responsibility');
+        
+        $projectsQuery = Project::where('organization_id', $organizationId)
             ->with('client')
-            ->withCount(['revenues', 'expenses', 'employees'])
-            ->latest()
-            ->paginate(10);
-        return view('projects.index', compact('projects'));
+            ->withCount(['revenues', 'expenses', 'employees']);
+
+        // فلترة حسب المسؤولية
+        if ($selectedResponsibility && $selectedResponsibility !== 'all') {
+            $projectsQuery->whereJsonContains('responsibility', $selectedResponsibility);
+        }
+
+        $projects = $projectsQuery->latest()->paginate(10);
+
+        // حساب عدد المشاريع لكل مسؤولية
+        $allProjects = Project::where('organization_id', $organizationId)->get();
+        
+        $responsibilityStats = [
+            'full_management' => 0,
+            'media_buyer' => 0,
+            'account_manager' => 0,
+            'design' => 0,
+            'total' => $allProjects->count()
+        ];
+
+        foreach ($allProjects as $project) {
+            $responsibilities = $project->responsibility ?? [];
+            if (is_array($responsibilities)) {
+                foreach ($responsibilities as $resp) {
+                    if (isset($responsibilityStats[$resp])) {
+                        $responsibilityStats[$resp]++;
+                    }
+                }
+            }
+        }
+
+        return view('projects.index', compact('projects', 'responsibilityStats', 'selectedResponsibility'));
     }
 
     /**
@@ -58,6 +88,8 @@ class ProjectController extends Controller
                 'youtube_url' => 'nullable|url',
                 'tiktok_url' => 'nullable|url',
                 'status' => 'required|in:active,inactive,pending',
+                'responsibility' => 'nullable|array',
+                'responsibility.*' => 'in:full_management,media_buyer,account_manager,design',
                 'authorized_persons' => 'nullable|array',
                 'authorized_persons.*.name' => 'nullable|string|max:255',
                 'authorized_persons.*.phone' => 'nullable|string|max:20',
@@ -80,6 +112,19 @@ class ProjectController extends Controller
             // تحضير البيانات للـ JSON fields
             $data = $request->all();
             $data['organization_id'] = $request->user()->organization_id;
+            
+            // تنظيف البيانات الفارغة للمسؤولية
+            if (isset($data['responsibility']) && is_array($data['responsibility'])) {
+                $data['responsibility'] = array_filter($data['responsibility'], function($item) {
+                    return !empty($item);
+                });
+                $data['responsibility'] = array_values($data['responsibility']); // إعادة ترقيم المصفوفة
+                if (empty($data['responsibility'])) {
+                    $data['responsibility'] = null;
+                }
+            } else {
+                $data['responsibility'] = null;
+            }
             
             // تنظيف البيانات الفارغة للأشخاص الموثقين
             if (isset($data['authorized_persons']) && is_array($data['authorized_persons'])) {
@@ -219,6 +264,8 @@ class ProjectController extends Controller
                 'youtube_url' => 'nullable|url',
                 'tiktok_url' => 'nullable|url',
                 'status' => 'required|in:active,inactive,pending',
+                'responsibility' => 'nullable|array',
+                'responsibility.*' => 'in:full_management,media_buyer,account_manager,design',
                 'authorized_persons' => 'nullable|array',
                 'authorized_persons.*.name' => 'nullable|string|max:255',
                 'authorized_persons.*.phone' => 'nullable|string|max:20',
@@ -234,6 +281,19 @@ class ProjectController extends Controller
 
             // تحضير البيانات للـ JSON fields
             $data = $request->all();
+            
+            // تنظيف البيانات الفارغة للمسؤولية
+            if (isset($data['responsibility']) && is_array($data['responsibility'])) {
+                $data['responsibility'] = array_filter($data['responsibility'], function($item) {
+                    return !empty($item);
+                });
+                $data['responsibility'] = array_values($data['responsibility']); // إعادة ترقيم المصفوفة
+                if (empty($data['responsibility'])) {
+                    $data['responsibility'] = null;
+                }
+            } else {
+                $data['responsibility'] = null;
+            }
             
             // تنظيف البيانات الفارغة للأشخاص الموثقين
             if (isset($data['authorized_persons']) && is_array($data['authorized_persons'])) {

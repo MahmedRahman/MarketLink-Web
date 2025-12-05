@@ -21,6 +21,8 @@ use App\Http\Controllers\Employee\EmployeeExpenseController;
 use App\Http\Controllers\Employee\EmployeeMonthlyPlanController;
 use App\Http\Controllers\Employee\EmployeeProfileController;
 use App\Http\Controllers\Api\TasksController;
+use App\Http\Controllers\MeetingController;
+use App\Http\Controllers\ContractController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -40,6 +42,12 @@ Route::middleware(['auth', \App\Http\Middleware\CheckTrialStatus::class])->group
 
     // Clients Routes
     Route::resource('clients', ClientController::class);
+    
+    // Meetings Routes
+    Route::resource('meetings', MeetingController::class);
+    
+    // Contracts Routes
+    Route::resource('contracts', ContractController::class);
     
            // Projects Routes
            Route::resource('projects', ProjectController::class);

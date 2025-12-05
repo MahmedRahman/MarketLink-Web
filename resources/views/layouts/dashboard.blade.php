@@ -229,6 +229,16 @@
             color: var(--warning);
         }
         
+        .status-completed {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+        }
+        
+        .status-cancelled {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+        
         .glass-effect {
             background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(10px);
@@ -1020,6 +1030,18 @@
                     <a href="{{ route('projects.index') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('projects.*') ? 'active' : '' }}">
                         <i class="fas fa-project-diagram text-lg ml-3"></i>
                         <span class="font-medium">المشاريع</span>
+                    </a>
+                    
+                    <!-- Meetings -->
+                    <a href="{{ route('meetings.index') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('meetings.*') ? 'active' : '' }}">
+                        <i class="fas fa-calendar-alt text-lg ml-3"></i>
+                        <span class="font-medium">الاجتماعات</span>
+                    </a>
+                    
+                    <!-- Contracts -->
+                    <a href="{{ route('contracts.index') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('contracts.*') ? 'active' : '' }}">
+                        <i class="fas fa-file-contract text-lg ml-3"></i>
+                        <span class="font-medium">العقود</span>
                     </a>
                     
                     <!-- Divider -->

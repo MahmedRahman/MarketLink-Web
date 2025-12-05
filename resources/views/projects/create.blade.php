@@ -396,11 +396,11 @@
                     </button>
                 </div>
 
-                <!-- Status Section -->
+                <!-- Status and Responsibility Section -->
                 <div class="form-section space-y-6">
-                    <h3 class="text-lg font-semibold text-gray-800">الحالة</h3>
+                    <h3 class="text-lg font-semibold text-gray-800">الحالة والمسؤولية</h3>
                     
-                    <div class="grid grid-cols-1">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <!-- Status -->
                         <div>
                             <label for="status" class="block text-sm font-medium text-gray-700 mb-2">
@@ -418,6 +418,58 @@
                                 <option value="pending" {{ old('status') === 'pending' ? 'selected' : '' }}>في الانتظار</option>
                             </select>
                             @error('status')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <!-- Responsibility -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                المسؤولية
+                            </label>
+                            <div class="flex flex-wrap gap-4 mt-2">
+                                <label class="flex items-center cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        name="responsibility[]"
+                                        value="full_management"
+                                        {{ in_array('full_management', old('responsibility', [])) ? 'checked' : '' }}
+                                        class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary focus:ring-2"
+                                    />
+                                    <span class="mr-2 text-gray-700">إدارة كاملة</span>
+                                </label>
+                                <label class="flex items-center cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        name="responsibility[]"
+                                        value="media_buyer"
+                                        {{ in_array('media_buyer', old('responsibility', [])) ? 'checked' : '' }}
+                                        class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary focus:ring-2"
+                                    />
+                                    <span class="mr-2 text-gray-700">ميديا بير</span>
+                                </label>
+                                <label class="flex items-center cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        name="responsibility[]"
+                                        value="account_manager"
+                                        {{ in_array('account_manager', old('responsibility', [])) ? 'checked' : '' }}
+                                        class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary focus:ring-2"
+                                    />
+                                    <span class="mr-2 text-gray-700">Account Manager</span>
+                                </label>
+                                <label class="flex items-center cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        name="responsibility[]"
+                                        value="design"
+                                        {{ in_array('design', old('responsibility', [])) ? 'checked' : '' }}
+                                        class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary focus:ring-2"
+                                    />
+                                    <span class="mr-2 text-gray-700">تصميم</span>
+                                </label>
+                            </div>
+                            @error('responsibility')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>

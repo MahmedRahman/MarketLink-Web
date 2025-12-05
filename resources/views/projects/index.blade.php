@@ -36,6 +36,84 @@
         </div>
     </div>
 
+    <!-- Responsibility Stats Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <!-- Total Projects -->
+        <div class="responsibility-card card rounded-2xl p-6 hover:shadow-xl transition-all duration-300 cursor-pointer {{ (!isset($selectedResponsibility) || $selectedResponsibility === 'all' || $selectedResponsibility === '') ? 'ring-2 ring-gray-400 shadow-lg' : '' }}" 
+             data-responsibility="all" 
+             onclick="filterByResponsibility('all')">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 mb-1">إجمالي المشاريع</p>
+                    <p class="text-3xl font-bold text-gray-800">{{ number_format($responsibilityStats['total']) }}</p>
+                </div>
+                <div class="w-14 h-14 bg-gradient-to-br from-gray-500 to-gray-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <i class="fas fa-project-diagram text-white text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Full Management -->
+        <div class="responsibility-card card rounded-2xl p-6 hover:shadow-xl transition-all duration-300 border-l-4 border-blue-500 cursor-pointer {{ (isset($selectedResponsibility) && $selectedResponsibility === 'full_management') ? 'ring-2 ring-blue-400 shadow-lg' : '' }}" 
+             data-responsibility="full_management" 
+             onclick="filterByResponsibility('full_management')">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 mb-1">إدارة كاملة</p>
+                    <p class="text-3xl font-bold text-blue-600">{{ number_format($responsibilityStats['full_management']) }}</p>
+                </div>
+                <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <i class="fas fa-cogs text-white text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Media Buyer -->
+        <div class="responsibility-card card rounded-2xl p-6 hover:shadow-xl transition-all duration-300 border-l-4 border-purple-500 cursor-pointer {{ (isset($selectedResponsibility) && $selectedResponsibility === 'media_buyer') ? 'ring-2 ring-purple-400 shadow-lg' : '' }}" 
+             data-responsibility="media_buyer" 
+             onclick="filterByResponsibility('media_buyer')">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 mb-1">ميديا بير</p>
+                    <p class="text-3xl font-bold text-purple-600">{{ number_format($responsibilityStats['media_buyer']) }}</p>
+                </div>
+                <div class="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <i class="fas fa-bullhorn text-white text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Account Manager -->
+        <div class="responsibility-card card rounded-2xl p-6 hover:shadow-xl transition-all duration-300 border-l-4 border-green-500 cursor-pointer {{ (isset($selectedResponsibility) && $selectedResponsibility === 'account_manager') ? 'ring-2 ring-green-400 shadow-lg' : '' }}" 
+             data-responsibility="account_manager" 
+             onclick="filterByResponsibility('account_manager')">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 mb-1">Account Manager</p>
+                    <p class="text-3xl font-bold text-green-600">{{ number_format($responsibilityStats['account_manager']) }}</p>
+                </div>
+                <div class="w-14 h-14 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <i class="fas fa-user-tie text-white text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Design -->
+        <div class="responsibility-card card rounded-2xl p-6 hover:shadow-xl transition-all duration-300 border-l-4 border-orange-500 cursor-pointer {{ (isset($selectedResponsibility) && $selectedResponsibility === 'design') ? 'ring-2 ring-orange-400 shadow-lg' : '' }}" 
+             data-responsibility="design" 
+             onclick="filterByResponsibility('design')">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 mb-1">تصميم</p>
+                    <p class="text-3xl font-bold text-orange-600">{{ number_format($responsibilityStats['design']) }}</p>
+                </div>
+                <div class="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <i class="fas fa-palette text-white text-xl"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Projects Table -->
     <div class="card rounded-2xl overflow-hidden">
         @if($projects->count() > 0)
@@ -48,6 +126,7 @@
                             <th class="text-right" style="text-align: justify; padding-right: 33px;">العميل</th>
                             <th class="text-right" style="text-align: justify; padding-right: 33px;">الموقع</th>
                             <th class="text-right" style="text-align: justify; padding-right: 33px;">عدد الموظفين</th>
+                            <th class="text-right" style="text-align: justify; padding-right: 33px;">المسؤولية</th>
                             <th class="text-right" style="text-align: justify; padding-right: 33px;">الحالة</th>
                             <th class="text-center" style="text-align: justify; padding-right: 33px;">الإجراءات</th>
                         </tr>
@@ -96,6 +175,39 @@
                                 <td>
                                     <div class="text-sm font-semibold text-gray-900 text-right">
                                         {{ $project->employees_count ?? 0 }}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="flex flex-wrap gap-1 justify-end">
+                                        @php
+                                            $responsibilities = $project->responsibility ?? [];
+                                            if (!is_array($responsibilities)) {
+                                                $responsibilities = [];
+                                            }
+                                            $responsibilityLabels = [
+                                                'full_management' => 'إدارة كاملة',
+                                                'media_buyer' => 'ميديا بير',
+                                                'account_manager' => 'Account Manager',
+                                                'design' => 'تصميم'
+                                            ];
+                                            $responsibilityColors = [
+                                                'full_management' => 'bg-blue-100 text-blue-800',
+                                                'media_buyer' => 'bg-purple-100 text-purple-800',
+                                                'account_manager' => 'bg-green-100 text-green-800',
+                                                'design' => 'bg-orange-100 text-orange-800'
+                                            ];
+                                        @endphp
+                                        @if(count($responsibilities) > 0)
+                                            @foreach($responsibilities as $resp)
+                                                @if(isset($responsibilityLabels[$resp]))
+                                                    <span class="px-2 py-1 text-xs font-medium rounded-full {{ $responsibilityColors[$resp] ?? 'bg-gray-100 text-gray-800' }}">
+                                                        {{ $responsibilityLabels[$resp] }}
+                                                    </span>
+                                                @endif
+                                            @endforeach
+                                        @else
+                                            <span class="text-gray-400 text-sm">غير محدد</span>
+                                        @endif
                                     </div>
                                 </td>
                                 <td>
@@ -164,7 +276,7 @@ $(document).ready(function() {
         dom: 'rti',
         columnDefs: [
             {
-                targets: [6], // Actions column
+                targets: [7], // Actions column
                 orderable: false,
                 searchable: false
             }
@@ -175,26 +287,47 @@ $(document).ready(function() {
                 extend: 'excel',
                 text: 'Excel',
                 exportOptions: {
-                    columns: [0, 1, 2, 3, 4, 5]
+                    columns: [0, 1, 2, 3, 4, 5, 6]
                 }
             },
             {
                 extend: 'pdf',
                 text: 'PDF',
                 exportOptions: {
-                    columns: [0, 1, 2, 3, 4, 5]
+                    columns: [0, 1, 2, 3, 4, 5, 6]
                 }
             },
             {
                 extend: 'print',
                 text: 'Print',
                 exportOptions: {
-                    columns: [0, 1, 2, 3, 4, 5]
+                    columns: [0, 1, 2, 3, 4, 5, 6]
                 }
             }
         ]
     });
 });
+
+function filterByResponsibility(responsibility) {
+    // إزالة active state من جميع الكاردات
+    $('.responsibility-card').removeClass('ring-2 shadow-lg');
+    
+    // إضافة active state للكارد المحدد
+    if (responsibility === 'all') {
+        $('.responsibility-card[data-responsibility="all"]').addClass('ring-2 ring-gray-400 shadow-lg');
+    } else {
+        $('.responsibility-card[data-responsibility="' + responsibility + '"]').addClass('ring-2 shadow-lg');
+    }
+    
+    // إعادة تحميل الصفحة مع parameter الفلترة
+    const url = new URL(window.location.href);
+    if (responsibility === 'all') {
+        url.searchParams.delete('responsibility');
+    } else {
+        url.searchParams.set('responsibility', responsibility);
+    }
+    window.location.href = url.toString();
+}
 
 function exportToExcel() {
     table.button(0).trigger();
