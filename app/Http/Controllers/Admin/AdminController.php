@@ -47,9 +47,11 @@ class AdminController extends Controller
     /**
      * عرض جميع المستخدمين
      */
-    public function users(Request $request): View
+public function users(Request $request): View
     {
-        $query = User::with(['organization.clients', 'organization.employees', 'organization.projects']);
+        $query = User::with(['organization' => function($q) {
+            $q->withCount(['clients', 'employees', 'projects']);
+        }]);
 
         // فلترة حسب نوع المستخدم
         if ($request->has('user_type')) {
@@ -68,7 +70,35 @@ class AdminController extends Controller
             });
         }
 
-        $users = $query->latest()->paginate(15);
+        // الترتيب حسب عدد العملاء والموظفين والمشاريع أو تاريخ التسجيل
+        $sortBy = $request->get('sort_by', 'clients_count');
+        $sortOrder = $request->get('sort_order', 'desc');
+
+        if ($sortBy === 'created_at') {
+            $query->orderBy('users.created_at', $sortOrder);
+        } elseif ($sortBy === 'clients_count') {
+            $query->leftJoin('organizations', 'users.organization_id', '=', 'organizations.id')
+                  ->leftJoin('clients', 'organizations.id', '=', 'clients.organization_id')
+                  ->select('users.*')
+                  ->groupBy('users.id')
+                  ->orderByRaw('COALESCE(COUNT(clients.id), 0) ' . strtoupper($sortOrder));
+        } elseif ($sortBy === 'employees_count') {
+            $query->leftJoin('organizations', 'users.organization_id', '=', 'organizations.id')
+                  ->leftJoin('employees', 'organizations.id', '=', 'employees.organization_id')
+                  ->select('users.*')
+                  ->groupBy('users.id')
+                  ->orderByRaw('COALESCE(COUNT(employees.id), 0) ' . strtoupper($sortOrder));
+        } elseif ($sortBy === 'projects_count') {
+            $query->leftJoin('organizations', 'users.organization_id', '=', 'organizations.id')
+                  ->leftJoin('projects', 'organizations.id', '=', 'projects.organization_id')
+                  ->select('users.*')
+                  ->groupBy('users.id')
+                  ->orderByRaw('COALESCE(COUNT(projects.id), 0) ' . strtoupper($sortOrder));
+        } else {
+            $query->latest();
+        }
+
+        $users = $query->paginate(15);
 
         return view('admin.users.index', compact('users'));
     }

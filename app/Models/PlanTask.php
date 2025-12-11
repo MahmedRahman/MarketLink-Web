@@ -15,6 +15,8 @@ class PlanTask extends Model
         'title',
         'description',
         'idea',
+        'post',
+        'design',
         'status',
         'list_type',
         'order',

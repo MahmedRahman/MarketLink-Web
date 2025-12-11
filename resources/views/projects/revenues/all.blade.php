@@ -54,10 +54,10 @@
                 <div class="text-center">
                     <div class="w-12 h-12 bg-primary rounded-xl flex items-center justify-center mx-auto mb-2">
                         <i class="fas fa-calendar-alt text-white text-xl"></i>
-                    </div>
+            </div>
                     <h4 class="font-bold text-gray-800">الكل</h4>
                     <p class="text-sm text-gray-600 mt-1">{{ $totalCount }} سجل</p>
-                </div>
+            </div>
             </a>
 
             <!-- Monthly Records Cards -->
@@ -80,14 +80,14 @@
                     <div class="text-center">
                         <div class="w-12 h-12 {{ $isActive ? 'bg-primary' : 'bg-gray-200' }} rounded-xl flex items-center justify-center mx-auto mb-2">
                             <i class="fas fa-calendar text-white text-xl"></i>
-                        </div>
+            </div>
                         <h4 class="font-bold text-gray-800">{{ $monthName }}</h4>
                         <p class="text-xs text-gray-500">{{ $year }}</p>
                         <p class="text-sm text-gray-600 mt-1">{{ $count }} سجل</p>
-                    </div>
-                </a>
+            </div>
+                    </a>
             @endforeach
-        </div>
+            </div>
     </div>
 
     <!-- Summary Cards -->

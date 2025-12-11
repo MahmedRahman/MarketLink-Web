@@ -1044,6 +1044,12 @@
                         <span class="font-medium">العقود</span>
                     </a>
                     
+                    <!-- Brand Style Extractor -->
+                    <a href="{{ route('brand-style-extractors.index') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('brand-style-extractors.*') ? 'active' : '' }}">
+                        <i class="fas fa-palette text-lg ml-3"></i>
+                        <span class="font-medium">Brand Style Extractor</span>
+                    </a>
+                    
                     <!-- Divider -->
                     <div class="my-6 mx-4 border-t border-gray-200"></div>
                     

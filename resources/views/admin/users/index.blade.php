@@ -43,12 +43,28 @@
                     <option value="organization" {{ request('user_type') == 'organization' ? 'selected' : '' }}>مستخدمي المنظمات</option>
                 </select>
             </div>
+            <div class="md:w-64">
+                <label class="block text-sm font-medium text-gray-700 mb-2">الترتيب حسب</label>
+                <select name="sort_by" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                    <option value="created_at" {{ request('sort_by') == 'created_at' ? 'selected' : '' }}>تاريخ التسجيل</option>
+                    <option value="clients_count" {{ request('sort_by') == 'clients_count' ? 'selected' : '' }}>عدد العملاء</option>
+                    <option value="employees_count" {{ request('sort_by') == 'employees_count' ? 'selected' : '' }}>عدد الموظفين</option>
+                    <option value="projects_count" {{ request('sort_by') == 'projects_count' ? 'selected' : '' }}>عدد المشاريع</option>
+                </select>
+            </div>
+            <div class="md:w-48">
+                <label class="block text-sm font-medium text-gray-700 mb-2">الاتجاه</label>
+                <select name="sort_order" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                    <option value="desc" {{ request('sort_order', 'desc') == 'desc' ? 'selected' : '' }}>تنازلي</option>
+                    <option value="asc" {{ request('sort_order') == 'asc' ? 'selected' : '' }}>تصاعدي</option>
+                </select>
+            </div>
             <div class="flex items-end gap-2">
                 <button type="submit" class="btn-primary px-6 py-3 rounded-xl flex items-center">
                     <i class="fas fa-search ml-2"></i>
                     بحث
                 </button>
-                @if(request('search') || request('user_type'))
+                @if(request('search') || request('user_type') || request('sort_by'))
                     <a href="{{ route('admin.users.index') }}" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-colors flex items-center">
                         <i class="fas fa-times ml-2"></i>
                         إلغاء
@@ -58,177 +74,150 @@
         </form>
     </div>
     
-    <!-- Users Table -->
-    <div class="card rounded-2xl overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gradient-to-r from-gray-50 to-gray-100">
-                    <tr>
-                        <th class="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">تاريخ التسجيل</th>
-                        <th class="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">الاسم</th>
-                        <th class="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">البريد</th>
-                        <th class="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">نوع المستخدم</th>
-                        <th class="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">عدد العملاء</th>
-                        <th class="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">عدد الموظفين</th>
-                        <th class="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">عدد المشاريع</th>
-                        <th class="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">الحالة</th>
-                        <th class="px-6 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">إجراءات</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    @forelse($users as $user)
-                        <tr class="hover:bg-gray-50 transition-colors">
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="flex items-center">
-                                    <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center ml-3">
-                                        <i class="fas fa-calendar-alt text-indigo-600 text-sm"></i>
-                                    </div>
-                                    <div>
-                                        <div class="text-sm font-semibold text-gray-900">{{ $user->created_at->format('Y-m-d') }}</div>
-                                        <div class="text-xs text-gray-500">{{ $user->created_at->format('H:i') }}</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="flex items-center">
-                                    <div class="w-12 h-12 bg-gradient-to-br from-indigo-400 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold ml-3">
-                                        {{ strtoupper(substr($user->name, 0, 1)) }}
-                                    </div>
-                                    <div class="text-sm font-semibold text-gray-900">{{ $user->name }}</div>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="flex items-center">
-                                    <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center ml-2">
-                                        <i class="fas fa-envelope text-blue-600 text-sm"></i>
-                                    </div>
-                                    <div class="text-sm text-gray-900">{{ $user->email }}</div>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                @if($user->is_admin)
-                                    <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                                        <i class="fas fa-user-shield ml-1"></i>
-                                        مدير
-                                    </span>
-                                @else
-                                    <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                        <i class="fas fa-building ml-1"></i>
-                                        مستخدم منظمة
-                                    </span>
-                                @endif
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                @if($user->organization)
-                                    <div class="flex items-center">
-                                        <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center ml-2">
-                                            <i class="fas fa-users text-blue-600 text-sm"></i>
-                                        </div>
-                                        <span class="text-sm font-semibold text-gray-900">{{ $user->organization->clients->count() ?? 0 }}</span>
-                                    </div>
-                                @else
-                                    <span class="text-sm text-gray-400">-</span>
-                                @endif
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                @if($user->organization)
-                                    <div class="flex items-center">
-                                        <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center ml-2">
-                                            <i class="fas fa-user-tie text-green-600 text-sm"></i>
-                                        </div>
-                                        <span class="text-sm font-semibold text-gray-900">{{ $user->organization->employees->count() ?? 0 }}</span>
-                                    </div>
-                                @else
-                                    <span class="text-sm text-gray-400">-</span>
-                                @endif
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                @if($user->organization)
-                                    <div class="flex items-center">
-                                        <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center ml-2">
-                                            <i class="fas fa-folder text-purple-600 text-sm"></i>
-                                        </div>
-                                        <span class="text-sm font-semibold text-gray-900">{{ $user->organization->projects->count() ?? 0 }}</span>
-                                    </div>
-                                @else
-                                    <span class="text-sm text-gray-400">-</span>
-                                @endif
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                @php
-                                    $statusColors = [
-                                        'active' => 'bg-green-100 text-green-800',
-                                        'inactive' => 'bg-gray-100 text-gray-800',
-                                        'suspended' => 'bg-red-100 text-red-800',
-                                    ];
-                                    $statusText = [
-                                        'active' => 'نشط',
-                                        'inactive' => 'غير نشط',
-                                        'suspended' => 'موقوف',
-                                    ];
-                                    $currentStatus = $user->status ?? 'active';
-                                @endphp
-                                <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium {{ $statusColors[$currentStatus] ?? 'bg-gray-100 text-gray-800' }}">
-                                    <i class="fas fa-circle text-[8px] ml-1"></i>
-                                    {{ $statusText[$currentStatus] ?? $currentStatus }}
-                                </span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-center">
-                                <div class="flex items-center justify-center gap-2">
-                                    @if(!$user->is_admin)
-                                        <form method="POST" action="{{ route('admin.users.impersonate', $user) }}" class="inline" onsubmit="return confirm('هل أنت متأكد من الدخول كالمستخدم: {{ $user->name }}؟');">
-                                            @csrf
-                                            <button type="submit" class="w-9 h-9 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors flex items-center justify-center" title="الدخول كالمستخدم">
-                                                <i class="fas fa-sign-in-alt text-sm"></i>
-                                            </button>
-                                        </form>
-                                    @endif
-                                    <form method="POST" action="{{ route('admin.users.updateStatus', $user) }}" class="inline">
-                                        @csrf
-                                        @method('PATCH')
-                                        <select name="status" onchange="this.form.submit()" class="text-xs px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent {{ $statusColors[$currentStatus] ?? '' }}">
-                                            <option value="active" {{ $currentStatus == 'active' ? 'selected' : '' }}>نشط</option>
-                                            <option value="inactive" {{ $currentStatus == 'inactive' ? 'selected' : '' }}>غير نشط</option>
-                                            <option value="suspended" {{ $currentStatus == 'suspended' ? 'selected' : '' }}>موقوف</option>
-                                        </select>
-                                    </form>
-                                    <a href="{{ route('admin.users.show', $user) }}" class="w-9 h-9 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors flex items-center justify-center" title="عرض">
-                                        <i class="fas fa-eye text-sm"></i>
-                                    </a>
-                                    @if(!$user->is_admin)
-                                        <form method="POST" action="{{ route('admin.users.delete', $user) }}" class="inline" onsubmit="return confirm('هل أنت متأكد من حذف هذا المستخدم؟');">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="w-9 h-9 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors flex items-center justify-center" title="حذف">
-                                                <i class="fas fa-trash text-sm"></i>
-                                            </button>
-                                        </form>
-                                    @endif
-                                </div>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="9" class="px-6 py-12 text-center">
-                                <div class="flex flex-col items-center">
-                                    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                                        <i class="fas fa-users text-gray-400 text-2xl"></i>
-                                    </div>
-                                    <p class="text-gray-500 font-medium text-lg">لا يوجد مستخدمين</p>
-                                    <p class="text-sm text-gray-400 mt-1">لم يتم العثور على أي مستخدمين</p>
-                                </div>
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-        
-        @if($users->hasPages())
-            <div class="px-6 py-4 border-t border-gray-200">
-                {{ $users->links() }}
+    <!-- Users Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        @forelse($users as $user)
+            @php
+                $statusColors = [
+                    'active' => 'bg-green-100 text-green-800 border-green-200',
+                    'inactive' => 'bg-gray-100 text-gray-800 border-gray-200',
+                    'suspended' => 'bg-red-100 text-red-800 border-red-200',
+                ];
+                $statusText = [
+                    'active' => 'نشط',
+                    'inactive' => 'غير نشط',
+                    'suspended' => 'موقوف',
+                ];
+                $currentStatus = $user->status ?? 'active';
+                
+                // حساب الأرقام
+                $clientsCount = 0;
+                $employeesCount = 0;
+                $projectsCount = 0;
+                
+                if ($user->organization) {
+                    $clientsCount = $user->organization->clients_count ?? ($user->organization->clients ? $user->organization->clients->count() : 0);
+                    $employeesCount = $user->organization->employees_count ?? ($user->organization->employees ? $user->organization->employees->count() : 0);
+                    $projectsCount = $user->organization->projects_count ?? ($user->organization->projects ? $user->organization->projects->count() : 0);
+                }
+            @endphp
+            
+            <div class="card rounded-2xl p-6 hover:shadow-xl transition-all duration-300 border border-gray-200">
+                <!-- User Header -->
+                <div class="flex items-start justify-between mb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-16 h-16 bg-gradient-to-br from-indigo-400 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                            {{ strtoupper(substr($user->name, 0, 1)) }}
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-gray-900">{{ $user->name }}</h3>
+                            <p class="text-sm text-gray-500 mt-1">{{ $user->email }}</p>
+                        </div>
+                    </div>
+                    @if($user->is_admin)
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                            <i class="fas fa-user-shield ml-1"></i>
+                            مدير
+                        </span>
+                    @else
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            <i class="fas fa-building ml-1"></i>
+                            منظمة
+                        </span>
+                    @endif
+                </div>
+
+                <!-- Stats -->
+                <div class="grid grid-cols-3 gap-3 mb-4">
+                    <div class="bg-blue-50 rounded-xl p-3 text-center border border-blue-100">
+                        <div class="flex items-center justify-center mb-1">
+                            <i class="fas fa-users text-blue-600 text-lg"></i>
+                        </div>
+                        <div class="text-2xl font-bold text-blue-900">{{ $clientsCount }}</div>
+                        <div class="text-xs text-blue-600 mt-1">عملاء</div>
+                    </div>
+                    <div class="bg-green-50 rounded-xl p-3 text-center border border-green-100">
+                        <div class="flex items-center justify-center mb-1">
+                            <i class="fas fa-user-tie text-green-600 text-lg"></i>
+                        </div>
+                        <div class="text-2xl font-bold text-green-900">{{ $employeesCount }}</div>
+                        <div class="text-xs text-green-600 mt-1">موظفين</div>
+                    </div>
+                    <div class="bg-purple-50 rounded-xl p-3 text-center border border-purple-100">
+                        <div class="flex items-center justify-center mb-1">
+                            <i class="fas fa-folder text-purple-600 text-lg"></i>
+                        </div>
+                        <div class="text-2xl font-bold text-purple-900">{{ $projectsCount }}</div>
+                        <div class="text-xs text-purple-600 mt-1">مشاريع</div>
+                    </div>
+                </div>
+
+                <!-- Status and Date -->
+                <div class="flex items-center justify-between mb-4 pb-4 border-b border-gray-200">
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium {{ $statusColors[$currentStatus] ?? 'bg-gray-100 text-gray-800' }} border">
+                        <i class="fas fa-circle text-[8px] ml-1"></i>
+                        {{ $statusText[$currentStatus] ?? $currentStatus }}
+                    </span>
+                    <div class="text-xs text-gray-500">
+                        <i class="fas fa-calendar-alt ml-1"></i>
+                        {{ $user->created_at->format('Y-m-d') }}
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex items-center gap-2">
+                    @if(!$user->is_admin)
+                        <form method="POST" action="{{ route('admin.users.impersonate', $user) }}" class="flex-1" onsubmit="return confirm('هل أنت متأكد من الدخول كالمستخدم: {{ $user->name }}؟');">
+                            @csrf
+                            <button type="submit" class="w-full px-4 py-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors flex items-center justify-center text-sm font-medium" title="الدخول كالمستخدم">
+                                <i class="fas fa-sign-in-alt ml-2"></i>
+                                دخول
+                            </button>
+                        </form>
+                    @endif
+                    <form method="POST" action="{{ route('admin.users.updateStatus', $user) }}" class="flex-1">
+                        @csrf
+                        @method('PATCH')
+                        <select name="status" onchange="this.form.submit()" class="w-full text-xs px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent {{ $statusColors[$currentStatus] ?? '' }}">
+                            <option value="active" {{ $currentStatus == 'active' ? 'selected' : '' }}>نشط</option>
+                            <option value="inactive" {{ $currentStatus == 'inactive' ? 'selected' : '' }}>غير نشط</option>
+                            <option value="suspended" {{ $currentStatus == 'suspended' ? 'selected' : '' }}>موقوف</option>
+                        </select>
+                    </form>
+                    <a href="{{ route('admin.users.show', $user) }}" class="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors flex items-center justify-center" title="عرض">
+                        <i class="fas fa-eye"></i>
+                    </a>
+                    @if(!$user->is_admin)
+                        <form method="POST" action="{{ route('admin.users.delete', $user) }}" class="inline" onsubmit="return confirm('هل أنت متأكد من حذف هذا المستخدم؟');">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors flex items-center justify-center" title="حذف">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    @endif
+                </div>
             </div>
-        @endif
+        @empty
+            <div class="col-span-full">
+                <div class="card rounded-2xl p-12 text-center">
+                    <div class="flex flex-col items-center">
+                        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                            <i class="fas fa-users text-gray-400 text-2xl"></i>
+                        </div>
+                        <p class="text-gray-500 font-medium text-lg">لا يوجد مستخدمين</p>
+                        <p class="text-sm text-gray-400 mt-1">لم يتم العثور على أي مستخدمين</p>
+                    </div>
+                </div>
+            </div>
+        @endforelse
     </div>
+    
+    <!-- Pagination -->
+    @if($users->hasPages())
+        <div class="card rounded-2xl p-4">
+            {{ $users->links() }}
+        </div>
+    @endif
 </div>
 @endsection

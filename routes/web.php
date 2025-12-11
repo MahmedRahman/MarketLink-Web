@@ -49,8 +49,15 @@ Route::middleware(['auth', \App\Http\Middleware\CheckTrialStatus::class])->group
     // Contracts Routes
     Route::resource('contracts', ContractController::class);
     
+    // Brand Style Extractors Routes
+    Route::resource('brand-style-extractors', \App\Http\Controllers\BrandStyleExtractorController::class);
+    Route::get('projects/{project}/content/create', [\App\Http\Controllers\BrandStyleExtractorController::class, 'create'])->name('projects.content.create');
+    Route::post('brand-style-extractors/{brandStyleExtractor}/analyze', [\App\Http\Controllers\BrandStyleExtractorController::class, 'analyzeContent'])->name('brand-style-extractors.analyze');
+    
            // Projects Routes
            Route::resource('projects', ProjectController::class);
+           Route::get('projects/{project}/analyze', [ProjectController::class, 'showAnalyzePage'])->name('projects.analyze');
+           Route::post('projects/{project}/analyze-content', [ProjectController::class, 'analyzeProjectContent'])->name('projects.analyze-content');
            Route::post('projects/{project}/files', [ProjectController::class, 'uploadFile'])->name('projects.files.upload');
            Route::get('projects/{project}/files/{file}/download', [ProjectController::class, 'downloadFile'])->name('projects.files.download');
            Route::delete('projects/{project}/files/{file}', [ProjectController::class, 'deleteFile'])->name('projects.files.delete');
@@ -105,6 +112,12 @@ Route::middleware(['auth', \App\Http\Middleware\CheckTrialStatus::class])->group
            
            // Generate Description Route
            Route::post('/tasks/generate-description', [\App\Http\Controllers\PlanTaskController::class, 'generateDescription'])->name('tasks.generate-description');
+           Route::post('/tasks/suggest-ideas', [\App\Http\Controllers\PlanTaskController::class, 'suggestIdeas'])->name('tasks.suggest-ideas');
+           Route::post('/tasks/show-prompt', [\App\Http\Controllers\PlanTaskController::class, 'showPrompt'])->name('tasks.show-prompt');
+           Route::post('/tasks/suggest-post', [\App\Http\Controllers\PlanTaskController::class, 'suggestPost'])->name('tasks.suggest-post');
+           Route::post('/tasks/show-post-prompt', [\App\Http\Controllers\PlanTaskController::class, 'showPostPrompt'])->name('tasks.show-post-prompt');
+           Route::post('/tasks/suggest-design', [\App\Http\Controllers\PlanTaskController::class, 'suggestDesign'])->name('tasks.suggest-design');
+           Route::post('/tasks/show-design-prompt', [\App\Http\Controllers\PlanTaskController::class, 'showDesignPrompt'])->name('tasks.show-design-prompt');
            
            // Reports Routes
            Route::get('reports', [ReportsController::class, 'index'])->name('reports.index');

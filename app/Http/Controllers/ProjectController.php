@@ -8,8 +8,11 @@ use App\Models\ProjectRevenue;
 use App\Models\ProjectExpense;
 use App\Models\Client;
 use App\Models\Employee;
+use App\Models\BrandStyleExtractor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Http\RedirectResponse;
 use Carbon\Carbon;
 
@@ -217,7 +220,37 @@ class ProjectController extends Controller
         }
 
         $project->load(['client', 'files', 'employees']);
-        return view('projects.show', compact('project'));
+        
+        // جلب البوستات الخاصة بالمشروع
+        $posts = BrandStyleExtractor::where('project_id', $project->id)
+            ->whereIn('content_type', ['post', 'reels', 'text'])
+            ->with('creator')
+            ->orderBy('created_at', 'desc')
+            ->get();
+        
+        return view('projects.show', compact('project', 'posts'));
+    }
+
+    /**
+     * Show the analyze content page
+     */
+    public function showAnalyzePage(Request $request, Project $project)
+    {
+        if ($project->organization_id !== $request->user()->organization_id) {
+            abort(403);
+        }
+
+        // جلب جميع المحتويات النصية للمشروع
+        $textContentTypes = ['text', 'post', 'reels', 'book'];
+        $posts = BrandStyleExtractor::where('project_id', $project->id)
+            ->whereIn('content_type', $textContentTypes)
+            ->whereNotNull('content')
+            ->where('content', '!=', '')
+            ->with('creator')
+            ->orderBy('created_at', 'desc')
+            ->get();
+        
+        return view('projects.analyze', compact('project', 'posts'));
     }
 
     /**
@@ -534,5 +567,216 @@ class ProjectController extends Controller
             'expenses_pending',
             'expenses_cancelled'
         ));
+    }
+
+    /**
+     * Analyze all text content for a project using DeepSeek API
+     */
+    public function analyzeProjectContent(Request $request, Project $project)
+    {
+        if ($project->organization_id !== $request->user()->organization_id) {
+            abort(403);
+        }
+
+        try {
+            $apiKey = config('services.deepseek.api_key');
+            
+            if (!$apiKey) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'DeepSeek API key غير موجود'
+                ], 400);
+            }
+
+            // جلب جميع المحتويات النصية للمشروع
+            $textContentTypes = ['text', 'post', 'reels', 'book'];
+            $extractors = BrandStyleExtractor::where('project_id', $project->id)
+                ->whereIn('content_type', $textContentTypes)
+                ->whereNotNull('content')
+                ->where('content', '!=', '')
+                ->get();
+
+            if ($extractors->isEmpty()) {
+                Log::warning('No text content found for project', [
+                    'project_id' => $project->id
+                ]);
+                return response()->json([
+                    'success' => false,
+                    'error' => 'لا توجد محتويات نصية لهذا المشروع. يرجى إضافة محتوى نصي (text, post, reels, book) أولاً.'
+                ], 400);
+            }
+
+            Log::info('Found text content extractors', [
+                'count' => $extractors->count(),
+                'types' => $extractors->pluck('content_type')->toArray()
+            ]);
+
+            // جمع جميع المحتويات النصية
+            $allContent = $extractors->map(function($extractor) {
+                return "نوع المحتوى: {$extractor->content_type_label}\nالمحتوى: {$extractor->content}\n";
+            })->implode("\n---\n\n");
+
+            $prompt = "You are a brand analysis expert. Analyze the following text content and extract the Brand Profile. Return ONLY valid JSON without any additional text or explanation.
+
+Required fields:
+- voice: The brand voice/style
+- tone: The brand tone
+- structure: The content structure
+- language_style: The language style
+- cta_style: The call-to-action style
+- enemy: The enemy/problem the brand solves
+- values: The brand values
+- hook_patterns: Hook patterns used
+- phrases: Distinctive phrases
+
+Content to analyze:
+{$allContent}
+
+Return ONLY this JSON format (no markdown, no code blocks, just pure JSON):
+{
+  \"voice\": \"...\",
+  \"tone\": \"...\",
+  \"structure\": \"...\",
+  \"language_style\": \"...\",
+  \"cta_style\": \"...\",
+  \"enemy\": \"...\",
+  \"values\": \"...\",
+  \"hook_patterns\": \"...\",
+  \"phrases\": \"...\"
+}";
+
+            Log::info('Sending request to DeepSeek API', [
+                'content_length' => strlen($allContent),
+                'extractors_count' => $extractors->count()
+            ]);
+
+            $response = Http::timeout(120)
+                ->withHeaders([
+                    'Content-Type' => 'application/json',
+                    'Authorization' => 'Bearer ' . $apiKey,
+                ])
+                ->post('https://api.deepseek.com/v1/chat/completions', [
+                    'model' => 'deepseek-chat',
+                    'messages' => [
+                        [
+                            'role' => 'user',
+                            'content' => $prompt
+                        ]
+                    ],
+                    'temperature' => 0.7
+                ]);
+
+            if (!$response->successful()) {
+                Log::error('DeepSeek API error', [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+                
+                return response()->json([
+                    'success' => false,
+                    'error' => 'فشل في تحليل المحتوى. يرجى المحاولة مرة أخرى. Status: ' . $response->status(),
+                ], $response->status());
+            }
+
+            $responseData = $response->json();
+            Log::info('DeepSeek API response received', [
+                'has_choices' => isset($responseData['choices']),
+                'choices_count' => isset($responseData['choices']) ? count($responseData['choices']) : 0
+            ]);
+
+            $aiResponse = $responseData['choices'][0]['message']['content'] ?? '';
+            
+            if (empty($aiResponse)) {
+                Log::error('Empty response from DeepSeek', [
+                    'response_data' => $responseData
+                ]);
+                return response()->json([
+                    'success' => false,
+                    'error' => 'استجابة فارغة من AI',
+                ], 500);
+            }
+
+            Log::info('AI Response received', [
+                'response_length' => strlen($aiResponse),
+                'response_preview' => substr($aiResponse, 0, 200)
+            ]);
+            
+            // تنظيف الرد من markdown code blocks إذا وجدت
+            $aiResponse = preg_replace('/```json\s*/', '', $aiResponse);
+            $aiResponse = preg_replace('/```\s*/', '', $aiResponse);
+            $aiResponse = trim($aiResponse);
+            
+            // محاولة استخراج JSON من الرد
+            $brandProfile = null;
+            
+            // محاولة 1: تحليل مباشر
+            $brandProfile = json_decode($aiResponse, true);
+            
+            // محاولة 2: استخراج JSON من النص
+            if (!$brandProfile || !is_array($brandProfile)) {
+                $jsonMatch = [];
+                if (preg_match('/\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/s', $aiResponse, $jsonMatch)) {
+                    $brandProfile = json_decode($jsonMatch[0], true);
+                }
+            }
+            
+            // محاولة 3: البحث عن JSON في أي مكان في النص
+            if (!$brandProfile || !is_array($brandProfile)) {
+                if (preg_match_all('/\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/s', $aiResponse, $matches)) {
+                    foreach ($matches[0] as $match) {
+                        $decoded = json_decode($match, true);
+                        if (is_array($decoded) && isset($decoded['voice'])) {
+                            $brandProfile = $decoded;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (!$brandProfile || !is_array($brandProfile)) {
+                Log::error('Failed to parse DeepSeek response', [
+                    'response' => $aiResponse,
+                    'json_error' => json_last_error_msg()
+                ]);
+                
+                return response()->json([
+                    'success' => false,
+                    'error' => 'فشل في تحليل استجابة AI. Response: ' . substr($aiResponse, 0, 200),
+                ], 500);
+            }
+
+            // تنظيف البيانات
+            $brandProfile = array_filter($brandProfile, function($value) {
+                return !empty($value) && is_string($value);
+            });
+
+            if (empty($brandProfile)) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'لم يتم استخراج أي بيانات من المحتوى',
+                ], 400);
+            }
+
+            // حفظ Brand Profile في المشروع
+            $project->brand_profile = $brandProfile;
+            $project->save();
+
+            return response()->json([
+                'success' => true,
+                'brand_profile' => $brandProfile,
+                'message' => 'تم تحليل المحتوى وحفظ Brand Profile بنجاح'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error analyzing project content', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'error' => 'حدث خطأ أثناء تحليل المحتوى: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 }

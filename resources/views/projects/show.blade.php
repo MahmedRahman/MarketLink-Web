@@ -35,6 +35,10 @@
                     </div>
                 </div>
                 <div class="flex items-center space-x-3 rtl:space-x-reverse">
+                    <a href="{{ route('projects.analyze', $project) }}" class="flex items-center px-4 py-2 text-white bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 rounded-xl transition-colors icon-spacing shadow-lg">
+                        <i class="fas fa-magic text-sm ml-2"></i>
+                        تحليل المحتوى النصي
+                    </a>
                     <a href="{{ route('projects.edit', $project) }}" class="flex items-center px-4 py-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-xl transition-colors icon-spacing">
                         <i class="fas fa-edit text-sm ml-2"></i>
                         تعديل
@@ -634,11 +638,444 @@
                 </div>
             @endif
         </div>
+
+        <!-- Posts Section -->
+        <div class="card rounded-2xl p-6">
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center icon-spacing ml-3">
+                        <i class="fas fa-file-alt text-purple-600"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-800">المحتوى المنشور</h3>
+                </div>
+                <div class="flex items-center space-x-3 rtl:space-x-reverse">
+                    <a href="{{ route('projects.analyze', $project) }}" class="flex items-center px-4 py-2 text-white bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 rounded-xl transition-colors text-sm shadow-lg">
+                        <i class="fas fa-magic text-sm ml-2"></i>
+                        تحليل المحتوى
+                    </a>
+                    <a href="{{ route('projects.content.create', $project) }}" class="btn-primary text-white px-4 py-2 rounded-xl flex items-center hover:no-underline text-sm">
+                        <i class="fas fa-plus text-sm ml-2"></i>
+                        إضافة محتوى جديد
+                    </a>
+                </div>
+            </div>
+
+            @if(isset($posts) && $posts->count() > 0)
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    @foreach($posts as $post)
+                        <div class="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl p-5 border border-purple-100 hover:shadow-lg transition-all">
+                            <!-- Header -->
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center">
+                                    <div class="w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center ml-3">
+                                        @if($post->content_type == 'post')
+                                            <i class="fas fa-file-alt text-white text-sm"></i>
+                                        @elseif($post->content_type == 'reels')
+                                            <i class="fas fa-video text-white text-sm"></i>
+                                        @else
+                                            <i class="fas fa-align-left text-white text-sm"></i>
+                                        @endif
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold text-gray-800 text-sm">{{ $post->content_type_label }}</h4>
+                                        <p class="text-xs text-gray-500">{{ $post->created_at->format('Y-m-d') }}</p>
+                                    </div>
+                                </div>
+                                @if($post->revenue && $post->revenue > 0)
+                                    <div class="bg-green-100 text-green-700 px-2 py-1 rounded-lg text-xs font-semibold">
+                                        {{ number_format($post->revenue, 2) }} {{ $post->currency ?? 'EGP' }}
+                                    </div>
+                                @endif
+                            </div>
+
+                            <!-- Content Preview -->
+                            <div class="bg-white rounded-lg p-4 mb-4 border border-purple-100">
+                                <p class="text-sm text-gray-700 line-clamp-4 leading-relaxed">
+                                    {{ Str::limit($post->content, 150) }}
+                                </p>
+                            </div>
+
+                            <!-- Footer -->
+                            <div class="flex items-center justify-between pt-3 border-t border-purple-100">
+                                <div class="flex items-center text-xs text-gray-500">
+                                    @if($post->creator)
+                                        <i class="fas fa-user ml-1"></i>
+                                        {{ $post->creator->name }}
+                                    @endif
+                                </div>
+                                <a href="{{ route('brand-style-extractors.show', $post) }}" class="text-purple-600 hover:text-purple-700 text-sm font-medium flex items-center">
+                                    <i class="fas fa-eye text-xs ml-1"></i>
+                                    عرض التفاصيل
+                                </a>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+
+                <!-- Stats -->
+                <div class="mt-6 pt-6 border-t border-gray-200">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="bg-blue-50 rounded-lg p-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-600 mb-1">إجمالي المحتوى</p>
+                                    <p class="text-2xl font-bold text-blue-600">{{ $posts->count() }}</p>
+                                </div>
+                                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-file-alt text-blue-600"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-green-50 rounded-lg p-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-600 mb-1">إجمالي العائد</p>
+                                    <p class="text-2xl font-bold text-green-600">
+                                        {{ number_format($posts->sum(function($post) { return $post->revenue ?? 0; }), 2) }} EGP
+                                    </p>
+                                </div>
+                                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-coins text-green-600"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-purple-50 rounded-lg p-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-600 mb-1">البوستات</p>
+                                    <p class="text-2xl font-bold text-purple-600">
+                                        {{ $posts->where('content_type', 'post')->count() }}
+                                    </p>
+                                </div>
+                                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-file-alt text-purple-600"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @else
+                <div class="text-center py-12">
+                    <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-file-alt text-purple-400 text-2xl"></i>
+                    </div>
+                    <h4 class="text-lg font-medium text-gray-900 mb-2">لا يوجد محتوى منشور</h4>
+                    <p class="text-gray-500 mb-6">لم يتم إضافة أي محتوى منشور لهذا المشروع بعد</p>
+                    <a href="{{ route('projects.content.create', $project) }}" class="btn-primary text-white px-6 py-3 rounded-xl inline-flex items-center hover:no-underline">
+                        <i class="fas fa-plus text-sm ml-2"></i>
+                        إضافة محتوى جديد
+                    </a>
+                </div>
+            @endif
+
+            <!-- Brand Profile Section -->
+            @if($project->brand_profile && is_array($project->brand_profile) && count($project->brand_profile) > 0)
+                <div class="mt-8 pt-8 border-t border-gray-200">
+                    <div class="flex items-center mb-6">
+                        <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center icon-spacing ml-3">
+                            <i class="fas fa-magic text-white"></i>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-800">Brand Profile</h3>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        @if(isset($project->brand_profile['voice']) && !empty($project->brand_profile['voice']))
+                            <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-5 border border-blue-100">
+                                <div class="flex items-center mb-3">
+                                    <div class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center ml-3">
+                                        <i class="fas fa-microphone text-white text-xs"></i>
+                                    </div>
+                                    <h4 class="font-semibold text-gray-800">Voice</h4>
+                                </div>
+                                <p class="text-sm text-gray-700 leading-relaxed">{{ $project->brand_profile['voice'] }}</p>
+                            </div>
+                        @endif
+
+                        @if(isset($project->brand_profile['tone']) && !empty($project->brand_profile['tone']))
+                            <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-5 border border-purple-100">
+                                <div class="flex items-center mb-3">
+                                    <div class="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center ml-3">
+                                        <i class="fas fa-volume-up text-white text-xs"></i>
+                                    </div>
+                                    <h4 class="font-semibold text-gray-800">Tone</h4>
+                                </div>
+                                <p class="text-sm text-gray-700 leading-relaxed">{{ $project->brand_profile['tone'] }}</p>
+                            </div>
+                        @endif
+
+                        @if(isset($project->brand_profile['structure']) && !empty($project->brand_profile['structure']))
+                            <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-5 border border-green-100">
+                                <div class="flex items-center mb-3">
+                                    <div class="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center ml-3">
+                                        <i class="fas fa-sitemap text-white text-xs"></i>
+                                    </div>
+                                    <h4 class="font-semibold text-gray-800">Structure</h4>
+                                </div>
+                                <p class="text-sm text-gray-700 leading-relaxed">{{ $project->brand_profile['structure'] }}</p>
+                            </div>
+                        @endif
+
+                        @if(isset($project->brand_profile['language_style']) && !empty($project->brand_profile['language_style']))
+                            <div class="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-xl p-5 border border-yellow-100">
+                                <div class="flex items-center mb-3">
+                                    <div class="w-8 h-8 bg-yellow-500 rounded-lg flex items-center justify-center ml-3">
+                                        <i class="fas fa-language text-white text-xs"></i>
+                                    </div>
+                                    <h4 class="font-semibold text-gray-800">Language Style</h4>
+                                </div>
+                                <p class="text-sm text-gray-700 leading-relaxed">{{ $project->brand_profile['language_style'] }}</p>
+                            </div>
+                        @endif
+
+                        @if(isset($project->brand_profile['cta_style']) && !empty($project->brand_profile['cta_style']))
+                            <div class="bg-gradient-to-br from-red-50 to-pink-50 rounded-xl p-5 border border-red-100">
+                                <div class="flex items-center mb-3">
+                                    <div class="w-8 h-8 bg-red-500 rounded-lg flex items-center justify-center ml-3">
+                                        <i class="fas fa-hand-pointer text-white text-xs"></i>
+                                    </div>
+                                    <h4 class="font-semibold text-gray-800">CTA Style</h4>
+                                </div>
+                                <p class="text-sm text-gray-700 leading-relaxed">{{ $project->brand_profile['cta_style'] }}</p>
+                            </div>
+                        @endif
+
+                        @if(isset($project->brand_profile['enemy']) && !empty($project->brand_profile['enemy']))
+                            <div class="bg-gradient-to-br from-gray-50 to-slate-50 rounded-xl p-5 border border-gray-100">
+                                <div class="flex items-center mb-3">
+                                    <div class="w-8 h-8 bg-gray-500 rounded-lg flex items-center justify-center ml-3">
+                                        <i class="fas fa-shield-alt text-white text-xs"></i>
+                                    </div>
+                                    <h4 class="font-semibold text-gray-800">Enemy</h4>
+                                </div>
+                                <p class="text-sm text-gray-700 leading-relaxed">{{ $project->brand_profile['enemy'] }}</p>
+                            </div>
+                        @endif
+
+                        @if(isset($project->brand_profile['values']) && !empty($project->brand_profile['values']))
+                            <div class="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-xl p-5 border border-indigo-100">
+                                <div class="flex items-center mb-3">
+                                    <div class="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center ml-3">
+                                        <i class="fas fa-heart text-white text-xs"></i>
+                                    </div>
+                                    <h4 class="font-semibold text-gray-800">Values</h4>
+                                </div>
+                                <p class="text-sm text-gray-700 leading-relaxed">{{ $project->brand_profile['values'] }}</p>
+                            </div>
+                        @endif
+
+                        @if(isset($project->brand_profile['hook_patterns']) && !empty($project->brand_profile['hook_patterns']))
+                            <div class="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl p-5 border border-teal-100">
+                                <div class="flex items-center mb-3">
+                                    <div class="w-8 h-8 bg-teal-500 rounded-lg flex items-center justify-center ml-3">
+                                        <i class="fas fa-fish text-white text-xs"></i>
+                                    </div>
+                                    <h4 class="font-semibold text-gray-800">Hook Patterns</h4>
+                                </div>
+                                <p class="text-sm text-gray-700 leading-relaxed">{{ $project->brand_profile['hook_patterns'] }}</p>
+                            </div>
+                        @endif
+
+                        @if(isset($project->brand_profile['phrases']) && !empty($project->brand_profile['phrases']))
+                            <div class="bg-gradient-to-br from-amber-50 to-yellow-50 rounded-xl p-5 border border-amber-100 md:col-span-2">
+                                <div class="flex items-center mb-3">
+                                    <div class="w-8 h-8 bg-amber-500 rounded-lg flex items-center justify-center ml-3">
+                                        <i class="fas fa-quote-left text-white text-xs"></i>
+                                    </div>
+                                    <h4 class="font-semibold text-gray-800">Phrases</h4>
+                                </div>
+                                <p class="text-sm text-gray-700 leading-relaxed">{{ $project->brand_profile['phrases'] }}</p>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            @endif
+        </div>
     </div>
 </div>
 
 @section('scripts')
 <script>
+// تعريف الدالة في النطاق العام قبل DOMContentLoaded
+window.analyzeProjectContent = function(event) {
+    console.log('analyzeProjectContent called', event);
+    
+    try {
+        // الحصول على الزر الذي تم الضغط عليه
+        let clickedBtn = null;
+        if (event && event.target) {
+            clickedBtn = event.target.closest('button');
+        }
+        if (!clickedBtn) {
+            clickedBtn = document.getElementById('analyzeContentBtn') || document.getElementById('analyzeProjectContentBtn');
+        }
+        
+        const projectId = {{ $project->id }};
+        console.log('Project ID:', projectId);
+        console.log('Clicked button:', clickedBtn);
+        
+        // تعطيل الزر إذا كان موجوداً
+        if (clickedBtn) {
+            clickedBtn.disabled = true;
+            const originalHTML = clickedBtn.innerHTML;
+            clickedBtn.innerHTML = '<i class="fas fa-spinner fa-spin text-sm ml-2"></i> جاري التحليل...';
+            clickedBtn.dataset.originalHTML = originalHTML;
+        }
+        
+        // تعطيل الزر في الهيدر أيضاً إذا كان موجوداً
+        const headerBtn = document.getElementById('analyzeProjectContentBtn');
+        const headerBtnText = document.getElementById('analyzeProjectBtnText');
+        const headerBtnLoading = document.getElementById('analyzeProjectBtnLoading');
+        
+        if (headerBtn) {
+            headerBtn.disabled = true;
+            if (headerBtnText) headerBtnText.classList.add('hidden');
+            if (headerBtnLoading) headerBtnLoading.classList.remove('hidden');
+        }
+        
+        // الحصول على CSRF token
+        const csrfToken = document.querySelector('meta[name="csrf-token"]');
+        if (!csrfToken) {
+            throw new Error('CSRF token not found');
+        }
+        const token = csrfToken.getAttribute('content');
+        console.log('CSRF Token found:', token ? 'Yes' : 'No');
+        
+        // إظهار رسالة تحميل
+        Swal.fire({
+            title: 'جاري التحليل...',
+            text: 'يرجى الانتظار بينما نقوم بتحليل جميع المحتويات النصية للمشروع',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            showConfirmButton: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+        
+        // استدعاء API
+        console.log('Starting content analysis for project:', projectId);
+        console.log('Fetch URL:', `/projects/${projectId}/analyze-content`);
+        
+        fetch(`/projects/${projectId}/analyze-content`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': token,
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => {
+            console.log('Response status:', response.status);
+            if (!response.ok) {
+                return response.json().then(data => {
+                    throw new Error(data.error || `HTTP error! status: ${response.status}`);
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Response data:', data);
+            if (data.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'تم التحليل بنجاح!',
+                    text: 'تم تحليل جميع المحتويات النصية وحفظ Brand Profile على مستوى المشروع',
+                    confirmButtonText: 'حسناً'
+                }).then(() => {
+                    // إعادة تحميل الصفحة لعرض البيانات المحدثة
+                    location.reload();
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'فشل التحليل',
+                    text: data.error || 'حدث خطأ أثناء تحليل المحتوى',
+                    confirmButtonText: 'حسناً'
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'حدث خطأ',
+                text: error.message || 'حدث خطأ أثناء الاتصال بالخادم',
+                confirmButtonText: 'حسناً'
+            });
+        })
+        .finally(() => {
+            // إعادة تفعيل الزر الذي تم الضغط عليه
+            if (clickedBtn && clickedBtn.dataset.originalHTML) {
+                clickedBtn.disabled = false;
+                clickedBtn.innerHTML = clickedBtn.dataset.originalHTML;
+            }
+            
+            // إعادة تفعيل الزر في الهيدر إذا كان موجوداً
+            if (headerBtn) {
+                headerBtn.disabled = false;
+                if (headerBtnText) headerBtnText.classList.remove('hidden');
+                if (headerBtnLoading) headerBtnLoading.classList.add('hidden');
+            }
+        });
+    } catch (error) {
+        console.error('Error in analyzeProjectContent:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'حدث خطأ',
+            text: error.message || 'حدث خطأ غير متوقع',
+            confirmButtonText: 'حسناً'
+        });
+        
+        // إعادة تفعيل الأزرار في حالة الخطأ
+        const clickedBtn = document.getElementById('analyzeContentBtn') || document.getElementById('analyzeProjectContentBtn');
+        if (clickedBtn && clickedBtn.dataset.originalHTML) {
+            clickedBtn.disabled = false;
+            clickedBtn.innerHTML = clickedBtn.dataset.originalHTML;
+        }
+    }
+};
+
+// إضافة event listener للأزرار بعد تحميل الصفحة
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, setting up event listeners');
+    
+    // زر في قسم البوستات
+    const analyzeBtn = document.getElementById('analyzeContentBtn');
+    if (analyzeBtn) {
+        analyzeBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Posts section button clicked!');
+            if (typeof window.analyzeProjectContent === 'function') {
+                window.analyzeProjectContent(e);
+            } else {
+                console.error('analyzeProjectContent function not found');
+            }
+        });
+        console.log('Posts section analyze button event listener added');
+    } else {
+        console.warn('Posts section analyze button not found');
+    }
+    
+    // زر في الهيدر
+    const headerBtn = document.getElementById('analyzeProjectContentBtn');
+    if (headerBtn) {
+        headerBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Header button clicked!');
+            if (typeof window.analyzeProjectContent === 'function') {
+                window.analyzeProjectContent(e);
+            } else {
+                console.error('analyzeProjectContent function not found');
+            }
+        });
+        console.log('Header analyze button event listener added');
+    } else {
+        console.warn('Header analyze button not found');
+    }
+});
+
 function togglePassword(inputId) {
     const input = document.getElementById(inputId);
     if (input.type === 'password') {
@@ -663,6 +1100,5 @@ function copyPassword(inputId) {
         showConfirmButton: false
     });
 }
-</script>
 @endsection
 @endsection

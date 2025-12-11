@@ -24,7 +24,8 @@ class Project extends Model
         'status',
         'responsibility',
         'authorized_persons',
-        'project_accounts'
+        'project_accounts',
+        'brand_profile'
     ];
 
     protected $casts = [
@@ -33,6 +34,7 @@ class Project extends Model
         'authorized_persons' => 'array',
         'project_accounts' => 'array',
         'responsibility' => 'array',
+        'brand_profile' => 'array',
     ];
 
     public function client(): BelongsTo

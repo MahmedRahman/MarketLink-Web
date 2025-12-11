@@ -163,7 +163,8 @@
                             id="description"
                             name="description"
                             rows="3"
-                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors text-lg leading-relaxed"
+                            style="font-size: 1.125rem; line-height: 1.75; font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif;"
                             placeholder="أدخل وصف للخطة الشهرية (اختياري)"
                         >{{ old('description', $monthlyPlan->description) }}</textarea>
                         @error('description')

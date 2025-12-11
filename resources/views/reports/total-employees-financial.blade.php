@@ -174,9 +174,9 @@
                                         <button onclick="showEmployeeTransferInfo({{ $data['employee']->id }})" class="text-purple-600 hover:text-purple-900 p-1" title="بيانات التحويل">
                                             <i class="fas fa-credit-card text-sm"></i>
                                         </button>
-                                        <a href="{{ route('reports.employee-financial', ['employee_id' => $data['employee']->id, 'record_month' => $recordMonth]) }}" class="text-blue-600 hover:text-blue-900 p-1" title="عرض التفاصيل">
-                                            <i class="fas fa-eye text-sm"></i>
-                                        </a>
+                                    <a href="{{ route('reports.employee-financial', ['employee_id' => $data['employee']->id, 'record_month' => $recordMonth]) }}" class="text-blue-600 hover:text-blue-900 p-1" title="عرض التفاصيل">
+                                        <i class="fas fa-eye text-sm"></i>
+                                    </a>
                                     </div>
                                 </td>
                             </tr>
@@ -415,7 +415,7 @@ function closeEmployeeProjectsModal() {
 document.getElementById('employeeProjectsModal').addEventListener('click', function(e) {
     if (e.target.id === 'employeeProjectsModal') {
         closeEmployeeProjectsModal();
-    }
+}
 });
 
 // Show Employee Transfer Info Modal

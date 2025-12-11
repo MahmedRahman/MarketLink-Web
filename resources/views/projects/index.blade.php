@@ -232,6 +232,9 @@
                                         <a href="{{ route('projects.expenses.index', $project) }}" class="text-red-600 hover:text-red-900 p-1" title="المصروفات ({{ $project->expenses_count }})">
                                             <i class="fas fa-credit-card text-sm"></i>
                                         </a>
+                                        <a href="{{ route('projects.content.create', $project) }}" class="text-purple-600 hover:text-purple-900 p-1" title="إضافة محتوى منشور">
+                                            <i class="fas fa-file-text text-sm"></i>
+                                        </a>
                                         <button onclick="confirmDelete('{{ route('projects.destroy', $project) }}', 'تأكيد حذف المشروع', 'هل أنت متأكد من حذف المشروع {{ $project->business_name }}؟')" class="text-red-600 hover:text-red-900 p-1" title="حذف">
                                             <i class="fas fa-trash text-sm"></i>
                                         </button>

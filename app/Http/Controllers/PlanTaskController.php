@@ -8,10 +8,12 @@ use App\Models\PlanTaskComment;
 use App\Models\MonthlyPlan;
 use App\Models\MonthlyPlanGoal;
 use App\Models\Employee;
+use App\Models\BrandStyleExtractor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 use Illuminate\Http\JsonResponse;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -338,6 +340,84 @@ class PlanTaskController extends Controller
                     unset($taskData['links']);
                 }
             }
+            
+            // حفظ توصيات الفكرة في task_data
+            if ($request->has('idea_recommendations')) {
+                $ideaRecommendationsValue = $request->idea_recommendations;
+                
+                Log::info('Saving idea_recommendations', [
+                    'has_field' => $request->has('idea_recommendations'),
+                    'value' => $ideaRecommendationsValue,
+                    'value_length' => strlen($ideaRecommendationsValue ?? ''),
+                    'is_empty' => empty(trim($ideaRecommendationsValue ?? ''))
+                ]);
+                
+                if (!empty(trim($ideaRecommendationsValue))) {
+                    // تنظيف من HTML tags إذا كانت موجودة
+                    $ideaRecommendationsValue = strip_tags($ideaRecommendationsValue);
+                    $ideaRecommendationsValue = trim($ideaRecommendationsValue);
+                    $taskData['idea_recommendations'] = $ideaRecommendationsValue;
+                    
+                    Log::info('idea_recommendations saved to task_data', [
+                        'cleaned_value' => $ideaRecommendationsValue,
+                        'task_data' => $taskData
+                    ]);
+                } else {
+                    unset($taskData['idea_recommendations']);
+                    Log::info('idea_recommendations removed from task_data (empty)');
+                }
+            } else {
+                Log::info('idea_recommendations not found in request', [
+                    'request_keys' => array_keys($request->all())
+                ]);
+            }
+            
+            // حفظ توصيات البوست في task_data
+            if ($request->has('post_recommendations')) {
+                $postRecommendationsValue = $request->post_recommendations;
+                Log::info('Saving post_recommendations', [
+                    'has_field' => $request->has('post_recommendations'),
+                    'value' => $postRecommendationsValue,
+                    'value_length' => strlen($postRecommendationsValue ?? ''),
+                    'is_empty' => empty(trim($postRecommendationsValue ?? ''))
+                ]);
+                
+                if (!empty(trim($postRecommendationsValue))) {
+                    $taskData['post_recommendations'] = trim($postRecommendationsValue);
+                    Log::info('post_recommendations saved to task_data', [
+                        'cleaned_value' => trim($postRecommendationsValue),
+                        'task_data' => $taskData
+                    ]);
+                } else {
+                    unset($taskData['post_recommendations']);
+                    Log::info('post_recommendations removed from task_data (empty)');
+                }
+            } else {
+                Log::info('post_recommendations not found in request', [
+                    'request_keys' => array_keys($request->all())
+                ]);
+            }
+            
+            // حفظ توصيات التصميم في task_data
+            if ($request->has('design_recommendations')) {
+                $designRecommendationsValue = $request->design_recommendations;
+                if (!empty(trim($designRecommendationsValue))) {
+                    $taskData['design_recommendations'] = trim($designRecommendationsValue);
+                } else {
+                    unset($taskData['design_recommendations']);
+                }
+            }
+            
+            // حفظ خيارات البوست في task_data
+            if ($request->has('post_platform')) {
+                $taskData['post_platform'] = $request->post_platform;
+            }
+            if ($request->has('post_type')) {
+                $taskData['post_type'] = $request->post_type;
+            }
+            if ($request->has('post_word_count')) {
+                $taskData['post_word_count'] = $request->post_word_count;
+            }
 
             // تحديث البيانات البسيطة فقط (بدون list_type أو order)
             $oldGoalId = $task->goal_id;
@@ -384,10 +464,21 @@ class PlanTaskController extends Controller
                     $updateData['title'] = $request->title;
                 }
                 if ($request->has('description')) {
+                    Log::info('Saving description in partial update', [
+                        'has_field' => $request->has('description'),
+                        'value_length' => strlen($request->description ?? ''),
+                        'value_preview' => substr($request->description ?? '', 0, 100)
+                    ]);
                     $updateData['description'] = $request->description;
                 }
                 if ($request->has('idea')) {
                     $updateData['idea'] = $request->idea;
+                }
+                if ($request->has('post')) {
+                    $updateData['post'] = $request->post;
+                }
+                if ($request->has('design')) {
+                    $updateData['design'] = $request->design;
                 }
                 if ($request->has('assigned_to')) {
                     $updateData['assigned_to'] = $newAssignedTo;
@@ -404,16 +495,27 @@ class PlanTaskController extends Controller
                 if ($request->has('goal_id')) {
                     $updateData['goal_id'] = $request->goal_id && $request->goal_id !== '' ? $request->goal_id : null;
                 }
-                if ($request->has('links')) {
+                // حفظ task_data دائماً إذا كان هناك أي تغييرات في البيانات المرتبطة
+                // أو إذا كان taskData يحتوي على بيانات (حتى لو كانت موجودة مسبقاً)
+                if ($request->has('links') || $request->has('idea_recommendations') || $request->has('post_recommendations') || $request->has('design_recommendations') || $request->has('post_platform') || $request->has('post_type') || $request->has('post_word_count') || !empty($taskData)) {
                     $updateData['task_data'] = !empty($taskData) ? $taskData : null;
                 }
                 $task->update($updateData);
             } else {
                 // تحديث كامل - نستخدم القيم المحسوبة
+                Log::info('Full update - saving description and task_data', [
+                    'description_length' => strlen($request->description ?? ''),
+                    'description_preview' => substr($request->description ?? '', 0, 100),
+                    'task_data' => $taskData,
+                    'has_post_recommendations' => isset($taskData['post_recommendations'])
+                ]);
+                
                 $updateData = [
                     'title' => $request->title,
                     'description' => $request->description,
                     'idea' => $request->idea,
+                    'post' => $request->post ?? null,
+                    'design' => $request->design ?? null,
                     'assigned_to' => $newAssignedTo,
                     'due_date' => $request->due_date ?: null,
                     'status' => $request->status,
@@ -423,6 +525,12 @@ class PlanTaskController extends Controller
                     'task_data' => !empty($taskData) ? $taskData : null,
                 ];
                 $task->update($updateData);
+                
+                Log::info('Update completed', [
+                    'task_id' => $task->id,
+                    'description_saved' => strlen($task->description ?? ''),
+                    'task_data_saved' => $task->task_data
+                ]);
             }
             
             // تحديث achieved_value للهدف إذا تغيرت الحالة أو list_type
@@ -1153,6 +1261,1130 @@ class PlanTaskController extends Controller
             return response()->json([
                 'success' => false,
                 'error' => 'حدث خطأ أثناء إنشاء الوصف: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Suggest ideas for a task using DeepSeek API
+     */
+    public function suggestIdeas(Request $request): JsonResponse
+    {
+        try {
+            $request->validate([
+                'task_id' => 'required|integer|exists:plan_tasks,id',
+                'title' => 'nullable|string',
+                'description' => 'nullable|string',
+                'idea_recommendations' => 'nullable|string',
+            ]);
+
+            $taskId = $request->input('task_id');
+            $title = $request->input('title', '');
+            $description = $request->input('description', '');
+            $ideaRecommendationsFromRequest = $request->input('idea_recommendations', '');
+
+            // جلب المهمة والمشروع
+            $task = PlanTask::with(['monthlyPlan.project'])->findOrFail($taskId);
+            $project = $task->monthlyPlan->project ?? null;
+
+            if (!$project) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'المشروع غير موجود'
+                ], 400);
+            }
+
+            $apiKey = config('services.deepseek.api_key');
+            
+            if (!$apiKey) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'DeepSeek API key غير موجود'
+                ], 400);
+            }
+
+            // جلب البوستات من المشروع
+            $textContentTypes = ['text', 'post', 'reels', 'book'];
+            $posts = BrandStyleExtractor::where('project_id', $project->id)
+                ->whereIn('content_type', $textContentTypes)
+                ->whereNotNull('content')
+                ->where('content', '!=', '')
+                ->orderBy('created_at', 'desc')
+                ->limit(10) // أخذ آخر 10 بوستات كمثال
+                ->get();
+
+            // بناء أمثلة البوستات
+            $postsExamples = '';
+            if ($posts->count() > 0) {
+                $postsExamples = "\n\nأمثلة على البوستات الموجودة في المشروع:\n";
+                foreach ($posts as $index => $post) {
+                    $postsExamples .= "\nمثال " . ($index + 1) . ":\n";
+                    $postsExamples .= "نوع المحتوى: {$post->content_type_label}\n";
+                    $postsExamples .= "المحتوى: " . Str::limit($post->content, 300) . "\n";
+                }
+            }
+
+            // بناء Brand Profile
+            $brandProfileText = '';
+            if ($project->brand_profile && is_array($project->brand_profile) && count($project->brand_profile) > 0) {
+                $brandProfileText = "\n\nBrand Profile الخاص بالمشروع:\n";
+                foreach ($project->brand_profile as $key => $value) {
+                    if (!empty($value)) {
+                        $keyLabel = match($key) {
+                            'voice' => 'Voice',
+                            'tone' => 'Tone',
+                            'structure' => 'Structure',
+                            'language_style' => 'Language Style',
+                            'cta_style' => 'CTA Style',
+                            'enemy' => 'Enemy',
+                            'values' => 'Values',
+                            'hook_patterns' => 'Hook Patterns',
+                            'phrases' => 'Phrases',
+                            default => $key
+                        };
+                        $brandProfileText .= "- {$keyLabel}: {$value}\n";
+                    }
+                }
+            }
+
+            // استخدام التوصيات من الطلب أولاً، وإذا لم تكن موجودة، جلبها من task_data
+            $ideaRecommendations = '';
+            
+            if (!empty(trim($ideaRecommendationsFromRequest))) {
+                // استخدام التوصيات من الطلب مباشرة
+                $ideaRecommendations = strip_tags($ideaRecommendationsFromRequest);
+                $ideaRecommendations = trim($ideaRecommendations);
+            } else {
+                // جلب توصيات الفكرة من task_data - مع إعادة تحميل المهمة للتأكد من أحدث البيانات
+                $task->refresh();
+                $taskData = $task->task_data ?? [];
+                
+                if (is_array($taskData) && isset($taskData['idea_recommendations'])) {
+                    $ideaRecommendations = $taskData['idea_recommendations'];
+                } elseif (is_string($taskData)) {
+                    // إذا كان task_data نص JSON، نحاول تحليله
+                    $decodedTaskData = json_decode($taskData, true);
+                    if (is_array($decodedTaskData) && isset($decodedTaskData['idea_recommendations'])) {
+                        $ideaRecommendations = $decodedTaskData['idea_recommendations'];
+                    }
+                }
+                
+                // تنظيف التوصيات من أي HTML tags إذا كانت موجودة
+                if (!empty($ideaRecommendations)) {
+                    $ideaRecommendations = strip_tags($ideaRecommendations);
+                    $ideaRecommendations = trim($ideaRecommendations);
+                }
+            }
+            
+            Log::info('Idea recommendations check', [
+                'task_id' => $taskId,
+                'from_request' => !empty(trim($ideaRecommendationsFromRequest)),
+                'idea_recommendations' => $ideaRecommendations,
+                'has_recommendations' => !empty($ideaRecommendations),
+                'recommendations_length' => strlen($ideaRecommendations ?? '')
+            ]);
+
+            // بناء الـ prompt
+            $context = '';
+            if ($title) {
+                $context .= "عنوان المهمة: {$title}\n";
+            }
+            if ($description) {
+                $context .= "الوصف الحالي: {$description}\n";
+            }
+
+            // بناء البرومبت مع إعطاء توصيات الفكرة أهمية عالية جداً
+            $recommendationsSection = '';
+            if ($ideaRecommendations && !empty(trim($ideaRecommendations))) {
+                $recommendationsSection = "\n\n⚠️⚠️⚠️ توصيات الفكرة (أهمية عالية جداً - يجب الالتزام بها بشكل كامل):\n{$ideaRecommendations}\n\n";
+            }
+
+            $prompt = "أنت خبير في اقتراح أفكار للمحتوى. بناءً على المعلومات التالية، اقترح فكرة واحدة جديدة ومبتكرة للمهمة.
+
+{$context}{$recommendationsSection}{$postsExamples}{$brandProfileText}
+
+المتطلبات الأساسية:
+1. الفكرة يجب أن تكون جديدة ومبتكرة (ليست موجودة في الأمثلة أعلاه)
+2. الفكرة يجب أن تكون من 3 إلى 4 سطور
+3. الفكرة يجب أن تكون مكتوبة بأسلوب واضح ومباشر
+4. الفكرة يجب أن تتماشى مع Brand Profile الخاص بالمشروع
+5. الفكرة يجب أن تكون عملية وقابلة للتنفيذ
+
+⚠️ متطلبات التوصيات (أهمية عالية جداً - إلزامي):
+" . ($ideaRecommendations && !empty(trim($ideaRecommendations)) ? "6. يجب أن تكون الفكرة المقترحة متوافقة تماماً مع التوصيات المذكورة أعلاه وتأخذها في الاعتبار بشكل كامل
+7. التوصيات المذكورة هي أولوية قصوى ويجب أن تنعكس بشكل واضح في الفكرة المقترحة
+8. إذا كانت التوصيات تتطلب تعديلات أو إضافات معينة، يجب أن تكون الفكرة المقترحة تتضمن هذه التعديلات والإضافات بشكل واضح ومباشر" : "6. لا توجد توصيات حالياً") . "
+
+أرجع فقط الفكرة المقترحة بدون أي نص إضافي أو شرح أو عناوين.";
+
+            Log::info('Sending request to DeepSeek API for idea suggestions', [
+                'title' => $title,
+                'has_description' => !empty($description),
+                'has_recommendations' => !empty($ideaRecommendations),
+                'recommendations_length' => strlen($ideaRecommendations ?? ''),
+                'recommendations_preview' => substr($ideaRecommendations ?? '', 0, 200),
+                'prompt_length' => strlen($prompt),
+                'prompt_preview' => substr($prompt, 0, 500)
+            ]);
+
+            $response = Http::timeout(120)
+                ->withHeaders([
+                    'Content-Type' => 'application/json',
+                    'Authorization' => 'Bearer ' . $apiKey,
+                ])
+                ->post('https://api.deepseek.com/v1/chat/completions', [
+                    'model' => 'deepseek-chat',
+                    'messages' => [
+                        [
+                            'role' => 'user',
+                            'content' => $prompt
+                        ]
+                    ],
+                    'temperature' => 0.8
+                ]);
+
+            if (!$response->successful()) {
+                Log::error('DeepSeek API error for idea suggestions', [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+                
+                return response()->json([
+                    'success' => false,
+                    'error' => 'فشل في اقتراح الأفكار. يرجى المحاولة مرة أخرى.',
+                ], $response->status());
+            }
+
+            $responseData = $response->json();
+            $aiResponse = $responseData['choices'][0]['message']['content'] ?? '';
+            
+            if (empty($aiResponse)) {
+                Log::error('Empty response from DeepSeek for idea suggestions');
+                return response()->json([
+                    'success' => false,
+                    'error' => 'استجابة فارغة من AI',
+                ], 500);
+            }
+
+            Log::info('AI Response received for idea suggestions', [
+                'response_length' => strlen($aiResponse),
+                'response_preview' => substr($aiResponse, 0, 200)
+            ]);
+
+            // تنظيف الرد
+            $aiResponse = trim($aiResponse);
+            
+            // إزالة أي عناوين أو تنسيقات غير مرغوبة
+            $aiResponse = preg_replace('/^(فكرة|الفكرة|الفكرة المقترحة|Idea|Suggested Idea)[:\s]*/i', '', $aiResponse);
+            $aiResponse = preg_replace('/^[-•\d\.\s]+/', '', $aiResponse);
+            $aiResponse = trim($aiResponse);
+
+            if (empty($aiResponse) || strlen($aiResponse) < 20) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'لم يتم اقتراح فكرة صحيحة',
+                ], 400);
+            }
+
+            // استخدام الفكرة المقترحة مباشرة
+            $suggestedIdeas = $aiResponse;
+            
+            // دمج توصيات الفكرة مع الفكرة المقترحة إذا كانت موجودة
+            $ideaRecommendations = $task->task_data['idea_recommendations'] ?? '';
+            if ($ideaRecommendations && !empty(trim($ideaRecommendations))) {
+                $suggestedIdeas = $suggestedIdeas . "\n\n---\n\nتوصيات:\n" . $ideaRecommendations;
+            }
+
+            return response()->json([
+                'success' => true,
+                'ideas' => $suggestedIdeas,
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error suggesting ideas', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'error' => 'حدث خطأ أثناء اقتراح الأفكار: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Show the prompt that would be sent to DeepSeek API
+     */
+    public function showPrompt(Request $request): JsonResponse
+    {
+        try {
+            $request->validate([
+                'task_id' => 'required|integer|exists:plan_tasks,id',
+                'title' => 'nullable|string',
+                'description' => 'nullable|string',
+                'idea_recommendations' => 'nullable|string',
+            ]);
+
+            $taskId = $request->input('task_id');
+            $title = $request->input('title', '');
+            $description = $request->input('description', '');
+            $ideaRecommendationsFromRequest = $request->input('idea_recommendations', '');
+
+            // جلب المهمة والمشروع
+            $task = PlanTask::with(['monthlyPlan.project'])->findOrFail($taskId);
+            $project = $task->monthlyPlan->project ?? null;
+
+            if (!$project) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'المشروع غير موجود'
+                ], 400);
+            }
+
+            // جلب البوستات من المشروع
+            $textContentTypes = ['text', 'post', 'reels', 'book'];
+            $posts = BrandStyleExtractor::where('project_id', $project->id)
+                ->whereIn('content_type', $textContentTypes)
+                ->whereNotNull('content')
+                ->where('content', '!=', '')
+                ->orderBy('created_at', 'desc')
+                ->limit(10)
+                ->get();
+
+            // بناء أمثلة البوستات
+            $postsExamples = '';
+            if ($posts->count() > 0) {
+                $postsExamples = "\n\nأمثلة على البوستات الموجودة في المشروع:\n";
+                foreach ($posts as $index => $post) {
+                    $postsExamples .= "\nمثال " . ($index + 1) . ":\n";
+                    $postsExamples .= "نوع المحتوى: {$post->content_type_label}\n";
+                    $postsExamples .= "المحتوى: " . Str::limit($post->content, 300) . "\n";
+                }
+            }
+
+            // بناء Brand Profile
+            $brandProfileText = '';
+            if ($project->brand_profile && is_array($project->brand_profile) && count($project->brand_profile) > 0) {
+                $brandProfileText = "\n\nBrand Profile الخاص بالمشروع:\n";
+                foreach ($project->brand_profile as $key => $value) {
+                    if (!empty($value)) {
+                        $keyLabel = match($key) {
+                            'voice' => 'Voice',
+                            'tone' => 'Tone',
+                            'structure' => 'Structure',
+                            'language_style' => 'Language Style',
+                            'cta_style' => 'CTA Style',
+                            'enemy' => 'Enemy',
+                            'values' => 'Values',
+                            'hook_patterns' => 'Hook Patterns',
+                            'phrases' => 'Phrases',
+                            default => $key
+                        };
+                        $brandProfileText .= "- {$keyLabel}: {$value}\n";
+                    }
+                }
+            }
+
+            // استخدام التوصيات من الطلب أولاً، وإذا لم تكن موجودة، جلبها من task_data
+            $ideaRecommendations = '';
+            
+            if (!empty(trim($ideaRecommendationsFromRequest))) {
+                // استخدام التوصيات من الطلب مباشرة
+                $ideaRecommendations = strip_tags($ideaRecommendationsFromRequest);
+                $ideaRecommendations = trim($ideaRecommendations);
+            } else {
+                // جلب توصيات الفكرة من task_data
+                $taskData = $task->task_data ?? [];
+                
+                if (is_array($taskData) && isset($taskData['idea_recommendations'])) {
+                    $ideaRecommendations = $taskData['idea_recommendations'];
+                } elseif (is_string($taskData)) {
+                    $decodedTaskData = json_decode($taskData, true);
+                    if (is_array($decodedTaskData) && isset($decodedTaskData['idea_recommendations'])) {
+                        $ideaRecommendations = $decodedTaskData['idea_recommendations'];
+                    }
+                }
+                
+                if (!empty($ideaRecommendations)) {
+                    $ideaRecommendations = strip_tags($ideaRecommendations);
+                    $ideaRecommendations = trim($ideaRecommendations);
+                }
+            }
+            
+            Log::info('Idea recommendations check (showPrompt)', [
+                'task_id' => $taskId,
+                'from_request' => !empty(trim($ideaRecommendationsFromRequest)),
+                'idea_recommendations' => $ideaRecommendations,
+                'has_recommendations' => !empty($ideaRecommendations),
+                'recommendations_length' => strlen($ideaRecommendations ?? '')
+            ]);
+
+            // بناء الـ prompt
+            $context = '';
+            if ($title) {
+                $context .= "عنوان المهمة: {$title}\n";
+            }
+            if ($description) {
+                $context .= "الوصف الحالي: {$description}\n";
+            }
+
+            // بناء البرومبت مع إعطاء توصيات الفكرة أهمية عالية جداً
+            $recommendationsSection = '';
+            if ($ideaRecommendations && !empty(trim($ideaRecommendations))) {
+                $recommendationsSection = "\n\n⚠️⚠️⚠️ توصيات الفكرة (أهمية عالية جداً - يجب الالتزام بها بشكل كامل):\n{$ideaRecommendations}\n\n";
+            }
+
+            $prompt = "أنت خبير في اقتراح أفكار للمحتوى. بناءً على المعلومات التالية، اقترح فكرة واحدة جديدة ومبتكرة للمهمة.
+
+{$context}{$recommendationsSection}{$postsExamples}{$brandProfileText}
+
+المتطلبات الأساسية:
+1. الفكرة يجب أن تكون جديدة ومبتكرة (ليست موجودة في الأمثلة أعلاه)
+2. الفكرة يجب أن تكون من 3 إلى 4 سطور
+3. الفكرة يجب أن تكون مكتوبة بأسلوب واضح ومباشر
+4. الفكرة يجب أن تتماشى مع Brand Profile الخاص بالمشروع
+5. الفكرة يجب أن تكون عملية وقابلة للتنفيذ
+
+⚠️ متطلبات التوصيات (أهمية عالية جداً - إلزامي):
+" . ($ideaRecommendations && !empty(trim($ideaRecommendations)) ? "6. يجب أن تكون الفكرة المقترحة متوافقة تماماً مع التوصيات المذكورة أعلاه وتأخذها في الاعتبار بشكل كامل
+7. التوصيات المذكورة هي أولوية قصوى ويجب أن تنعكس بشكل واضح في الفكرة المقترحة
+8. إذا كانت التوصيات تتطلب تعديلات أو إضافات معينة، يجب أن تكون الفكرة المقترحة تتضمن هذه التعديلات والإضافات بشكل واضح ومباشر" : "6. لا توجد توصيات حالياً") . "
+
+أرجع فقط الفكرة المقترحة بدون أي نص إضافي أو شرح أو عناوين.";
+
+            return response()->json([
+                'success' => true,
+                'prompt' => $prompt,
+                'message' => 'تم إنشاء البرومبت بنجاح'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error showing prompt', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'error' => 'حدث خطأ أثناء إنشاء البرومبت: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Suggest post content using DeepSeek API
+     */
+    public function suggestPost(Request $request): JsonResponse
+    {
+        try {
+            $request->validate([
+                'task_id' => 'required|integer|exists:plan_tasks,id',
+                'description' => 'nullable|string',
+                'idea' => 'nullable|string',
+                'post_recommendations' => 'nullable|string',
+                'post_platform' => 'nullable|string|in:facebook,linkedin,tiktok,instagram,twitter',
+                'post_type' => 'nullable|string|in:text,video,carousel,reels,story',
+                'post_word_count' => 'nullable|string',
+            ]);
+
+            $taskId = $request->input('task_id');
+            $description = $request->input('description', '');
+            $idea = $request->input('idea', '');
+            $postRecommendations = $request->input('post_recommendations', '');
+            $postPlatform = $request->input('post_platform', '');
+            $postType = $request->input('post_type', '');
+            $postWordCount = $request->input('post_word_count', '');
+
+            // جلب المهمة والمشروع
+            $task = PlanTask::with(['monthlyPlan.project'])->findOrFail($taskId);
+            $project = $task->monthlyPlan->project ?? null;
+
+            if (!$project) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'المشروع غير موجود'
+                ], 400);
+            }
+
+            $apiKey = config('services.deepseek.api_key');
+            
+            if (!$apiKey) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'DeepSeek API key غير موجود'
+                ], 400);
+            }
+
+            // جلب البوستات من المشروع كأمثلة
+            $textContentTypes = ['text', 'post', 'reels', 'book'];
+            $posts = BrandStyleExtractor::where('project_id', $project->id)
+                ->whereIn('content_type', $textContentTypes)
+                ->whereNotNull('content')
+                ->where('content', '!=', '')
+                ->orderBy('created_at', 'desc')
+                ->limit(10)
+                ->get();
+
+            // بناء أمثلة البوستات
+            $postsExamples = '';
+            if ($posts->count() > 0) {
+                $postsExamples = "\n\nأمثلة على البوستات الموجودة في المشروع:\n";
+                foreach ($posts as $index => $post) {
+                    $postsExamples .= "\nمثال " . ($index + 1) . ":\n";
+                    $postsExamples .= "نوع المحتوى: {$post->content_type_label}\n";
+                    $postsExamples .= "المحتوى: " . Str::limit($post->content, 300) . "\n";
+                }
+            }
+
+            // بناء Brand Profile
+            $brandProfileText = '';
+            if ($project->brand_profile && is_array($project->brand_profile) && count($project->brand_profile) > 0) {
+                $brandProfileText = "\n\nBrand Profile الخاص بالمشروع:\n";
+                foreach ($project->brand_profile as $key => $value) {
+                    if (!empty($value)) {
+                        $keyLabel = match($key) {
+                            'voice' => 'Voice',
+                            'tone' => 'Tone',
+                            'structure' => 'Structure',
+                            'language_style' => 'Language Style',
+                            'cta_style' => 'CTA Style',
+                            'enemy' => 'Enemy',
+                            'values' => 'Values',
+                            'hook_patterns' => 'Hook Patterns',
+                            'phrases' => 'Phrases',
+                            default => $key
+                        };
+                        $brandProfileText .= "- {$keyLabel}: {$value}\n";
+                    }
+                }
+            }
+
+            // استخدام التوصيات من الطلب أولاً
+            $postRecommendationsText = '';
+            if (!empty(trim($postRecommendations))) {
+                $postRecommendationsText = strip_tags($postRecommendations);
+                $postRecommendationsText = trim($postRecommendationsText);
+            } else {
+                // جلب من task_data إذا لم تكن موجودة في الطلب
+                $taskData = $task->task_data ?? [];
+                if (is_array($taskData) && isset($taskData['post_recommendations'])) {
+                    $postRecommendationsText = strip_tags($taskData['post_recommendations']);
+                    $postRecommendationsText = trim($postRecommendationsText);
+                }
+            }
+
+            // بناء معلومات البوست
+            $postInfo = '';
+            if ($postPlatform) {
+                $platformLabels = [
+                    'facebook' => 'فيسبوك',
+                    'linkedin' => 'لينكد إن',
+                    'tiktok' => 'تيك توك',
+                    'instagram' => 'إنستجرام',
+                    'twitter' => 'تويتر'
+                ];
+                $postInfo .= "المنصة: " . ($platformLabels[$postPlatform] ?? $postPlatform) . "\n";
+            }
+            if ($postType) {
+                $typeLabels = [
+                    'text' => 'نص',
+                    'video' => 'فيديو',
+                    'carousel' => 'كروسر',
+                    'reels' => 'ريلز',
+                    'story' => 'ستوري'
+                ];
+                $postInfo .= "نوع البوست: " . ($typeLabels[$postType] ?? $postType) . "\n";
+            }
+            if ($postWordCount) {
+                $postInfo .= "عدد الكلمات المطلوب: {$postWordCount} كلمة\n";
+            }
+
+            // بناء الـ prompt
+            $context = '';
+            if ($idea && !empty(trim($idea))) {
+                $context .= "الفكرة:\n{$idea}\n\n";
+            }
+            if ($description && !empty(trim($description))) {
+                $context .= "الوصف:\n{$description}\n\n";
+            }
+            
+            $recommendationsSection = '';
+            if ($postRecommendationsText && !empty(trim($postRecommendationsText))) {
+                $recommendationsSection = "\n\n⚠️⚠️⚠️ توصيات البوست (أهمية عالية جداً - يجب الالتزام بها بشكل كامل):\n{$postRecommendationsText}\n\n";
+            }
+
+            $prompt = "أنت خبير في كتابة محتوى البوستات لوسائل التواصل الاجتماعي. بناءً على المعلومات التالية، اكتب بوست كامل وجاهز للنشر.
+
+{$context}{$recommendationsSection}{$postsExamples}{$brandProfileText}
+
+" . ($postInfo ? "معلومات البوست:\n{$postInfo}\n\n" : "") . "المتطلبات:
+1. البوست يجب أن يكون جديداً ومبتكراً (ليس نسخة من الأمثلة أعلاه)
+2. البوست يجب أن يتماشى تماماً مع Brand Profile الخاص بالمشروع
+3. البوست يجب أن يكون جاهزاً للنشر مباشرة
+4. استخدم نفس الأسلوب والهيكل الموجود في الأمثلة
+5. إذا كانت هناك توصيات للبوست، يجب الالتزام بها بشكل كامل
+" . ($postWordCount ? "6. البوست يجب أن يكون حوالي {$postWordCount} كلمة\n" : "") . "
+7. البوست يجب أن يكون جذاباً ومقنعاً
+8. استخدم نفس النبرة والأسلوب الموجود في الأمثلة
+
+أرجع فقط نص البوست الجاهز للنشر بدون أي نص إضافي أو شرح أو عناوين.";
+
+            Log::info('Sending request to DeepSeek API for post suggestions', [
+                'task_id' => $taskId,
+                'has_description' => !empty($description),
+                'has_idea' => !empty($idea),
+                'has_recommendations' => !empty($postRecommendationsText),
+                'platform' => $postPlatform,
+                'type' => $postType,
+                'word_count' => $postWordCount,
+                'prompt_length' => strlen($prompt)
+            ]);
+
+            // زيادة الـ execution time limit
+            set_time_limit(180); // 3 دقائق
+            
+            $response = Http::timeout(150)
+                ->withHeaders([
+                    'Content-Type' => 'application/json',
+                    'Authorization' => 'Bearer ' . $apiKey,
+                ])
+                ->post('https://api.deepseek.com/v1/chat/completions', [
+                    'model' => 'deepseek-chat',
+                    'messages' => [
+                        [
+                            'role' => 'user',
+                            'content' => $prompt
+                        ]
+                    ],
+                    'temperature' => 0.8,
+                    'max_tokens' => 2000 // تقليل عدد الـ tokens لتسريع الرد
+                ]);
+
+            if (!$response->successful()) {
+                Log::error('DeepSeek API error for post suggestions', [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+                
+                return response()->json([
+                    'success' => false,
+                    'error' => 'فشل في اقتراح البوست. يرجى المحاولة مرة أخرى.',
+                ], $response->status());
+            }
+
+            $responseData = $response->json();
+            $aiResponse = $responseData['choices'][0]['message']['content'] ?? '';
+            
+            if (empty($aiResponse)) {
+                Log::error('Empty response from DeepSeek for post suggestions');
+                return response()->json([
+                    'success' => false,
+                    'error' => 'استجابة فارغة من AI',
+                ], 500);
+            }
+
+            Log::info('AI Response received for post suggestions', [
+                'response_length' => strlen($aiResponse),
+                'response_preview' => substr($aiResponse, 0, 200)
+            ]);
+
+            // تنظيف الرد
+            $aiResponse = trim($aiResponse);
+            
+            // إزالة أي عناوين أو تنسيقات غير مرغوبة
+            $aiResponse = preg_replace('/^(بوست|البوست|Post|المحتوى|Content)[:\s]*/i', '', $aiResponse);
+            $aiResponse = preg_replace('/^[-•\d\.\s]+/', '', $aiResponse);
+            $aiResponse = trim($aiResponse);
+
+            if (empty($aiResponse) || strlen($aiResponse) < 20) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'لم يتم اقتراح بوست صحيح',
+                ], 400);
+            }
+
+            return response()->json([
+                'success' => true,
+                'post' => $aiResponse,
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error suggesting post', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'error' => 'حدث خطأ أثناء اقتراح البوست: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Show the prompt that would be sent to DeepSeek API for post suggestions
+     */
+    public function showPostPrompt(Request $request): JsonResponse
+    {
+        try {
+            $request->validate([
+                'task_id' => 'required|integer|exists:plan_tasks,id',
+                'description' => 'nullable|string',
+                'idea' => 'nullable|string',
+                'post_recommendations' => 'nullable|string',
+                'post_platform' => 'nullable|string|in:facebook,linkedin,tiktok,instagram,twitter',
+                'post_type' => 'nullable|string|in:text,video,carousel,reels,story',
+                'post_word_count' => 'nullable|string',
+            ]);
+
+            $taskId = $request->input('task_id');
+            $description = $request->input('description', '');
+            $idea = $request->input('idea', '');
+            $postRecommendations = $request->input('post_recommendations', '');
+            $postPlatform = $request->input('post_platform', '');
+            $postType = $request->input('post_type', '');
+            $postWordCount = $request->input('post_word_count', '');
+
+            // جلب المهمة والمشروع
+            $task = PlanTask::with(['monthlyPlan.project'])->findOrFail($taskId);
+            $project = $task->monthlyPlan->project ?? null;
+
+            if (!$project) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'المشروع غير موجود'
+                ], 400);
+            }
+
+            // جلب البوستات من المشروع كأمثلة
+            $textContentTypes = ['text', 'post', 'reels', 'book'];
+            $posts = BrandStyleExtractor::where('project_id', $project->id)
+                ->whereIn('content_type', $textContentTypes)
+                ->whereNotNull('content')
+                ->where('content', '!=', '')
+                ->orderBy('created_at', 'desc')
+                ->limit(10)
+                ->get();
+
+            // بناء أمثلة البوستات
+            $postsExamples = '';
+            if ($posts->count() > 0) {
+                $postsExamples = "\n\nأمثلة على البوستات الموجودة في المشروع:\n";
+                foreach ($posts as $index => $post) {
+                    $postsExamples .= "\nمثال " . ($index + 1) . ":\n";
+                    $postsExamples .= "نوع المحتوى: {$post->content_type_label}\n";
+                    $postsExamples .= "المحتوى: " . Str::limit($post->content, 300) . "\n";
+                }
+            }
+
+            // بناء Brand Profile
+            $brandProfileText = '';
+            if ($project->brand_profile && is_array($project->brand_profile) && count($project->brand_profile) > 0) {
+                $brandProfileText = "\n\nBrand Profile الخاص بالمشروع:\n";
+                foreach ($project->brand_profile as $key => $value) {
+                    if (!empty($value)) {
+                        $keyLabel = match($key) {
+                            'voice' => 'Voice',
+                            'tone' => 'Tone',
+                            'structure' => 'Structure',
+                            'language_style' => 'Language Style',
+                            'cta_style' => 'CTA Style',
+                            'enemy' => 'Enemy',
+                            'values' => 'Values',
+                            'hook_patterns' => 'Hook Patterns',
+                            'phrases' => 'Phrases',
+                            default => $key
+                        };
+                        $brandProfileText .= "- {$keyLabel}: {$value}\n";
+                    }
+                }
+            }
+
+            // استخدام التوصيات من الطلب أولاً
+            $postRecommendationsText = '';
+            if (!empty(trim($postRecommendations))) {
+                $postRecommendationsText = strip_tags($postRecommendations);
+                $postRecommendationsText = trim($postRecommendationsText);
+            } else {
+                // جلب من task_data إذا لم تكن موجودة في الطلب
+                $taskData = $task->task_data ?? [];
+                if (is_array($taskData) && isset($taskData['post_recommendations'])) {
+                    $postRecommendationsText = strip_tags($taskData['post_recommendations']);
+                    $postRecommendationsText = trim($postRecommendationsText);
+                }
+            }
+
+            // بناء معلومات البوست
+            $postInfo = '';
+            if ($postPlatform) {
+                $platformLabels = [
+                    'facebook' => 'فيسبوك',
+                    'linkedin' => 'لينكد إن',
+                    'tiktok' => 'تيك توك',
+                    'instagram' => 'إنستجرام',
+                    'twitter' => 'تويتر'
+                ];
+                $postInfo .= "المنصة: " . ($platformLabels[$postPlatform] ?? $postPlatform) . "\n";
+            }
+            if ($postType) {
+                $typeLabels = [
+                    'text' => 'نص',
+                    'video' => 'فيديو',
+                    'carousel' => 'كروسر',
+                    'reels' => 'ريلز',
+                    'story' => 'ستوري'
+                ];
+                $postInfo .= "نوع البوست: " . ($typeLabels[$postType] ?? $postType) . "\n";
+            }
+            if ($postWordCount) {
+                $postInfo .= "عدد الكلمات المطلوب: {$postWordCount} كلمة\n";
+            }
+
+            // جلب معلومات المشروع
+            $projectInfo = '';
+            if ($project) {
+                $projectInfo = "\n\n=== معلومات المشروع ===\n";
+                if ($project->business_name) {
+                    $projectInfo .= "اسم المشروع/العلامة التجارية: {$project->business_name}\n";
+                }
+                if ($project->business_description) {
+                    $projectInfo .= "وصف المشروع: {$project->business_description}\n";
+                }
+            }
+            
+            // بناء الـ prompt بشكل احترافي
+            $context = '';
+            if ($idea && !empty(trim($idea))) {
+                $context .= "=== الفكرة الأساسية ===\n{$idea}\n\n";
+            }
+            if ($description && !empty(trim($description))) {
+                $context .= "=== وصف المهمة ===\n{$description}\n\n";
+            }
+            
+            $recommendationsSection = '';
+            if ($postRecommendationsText && !empty(trim($postRecommendationsText))) {
+                $recommendationsSection = "\n\n=== ⚠️ توصيات البوست (أهمية عالية جداً - إلزامي) ===\n{$postRecommendationsText}\n\n";
+            }
+
+            $prompt = "أنت كاتب محتوى محترف وخبير في كتابة البوستات لوسائل التواصل الاجتماعي. مهمتك هي كتابة محتوى احترافي وجذاب بناءً على المعلومات التالية.
+
+{$projectInfo}{$context}{$recommendationsSection}
+
+=== أمثلة على البوستات السابقة للمشروع ===
+{$postsExamples}
+
+=== Brand Profile وأسلوب الكتابة ===
+{$brandProfileText}
+
+" . ($postInfo ? "=== مواصفات البوست المطلوب ===\n{$postInfo}\n" : "") . "
+=== المتطلبات والضوابط ===
+1. البوست يجب أن يكون جديداً ومبتكراً تماماً (ليس نسخة أو تعديل على الأمثلة أعلاه)
+2. البوست يجب أن يتماشى 100% مع Brand Profile وأسلوب الكتابة المحدد أعلاه
+3. البوست يجب أن يكون جاهزاً للنشر مباشرة بدون أي تعديلات
+4. استخدم نفس الأسلوب والهيكل والنبرة الموجودة في الأمثلة السابقة
+5. إذا كانت هناك توصيات محددة للبوست، يجب الالتزام بها بشكل كامل ودقيق
+" . ($postWordCount ? "6. البوست يجب أن يكون بالضبط حوالي {$postWordCount} كلمة (هام جداً)\n" : "") . "
+7. البوست يجب أن يكون جذاباً ومقنعاً ويحفز التفاعل
+8. استخدم نفس النبرة والأسلوب واللغة الموجودة في الأمثلة
+9. تأكد من أن المحتوى يتماشى مع هوية المشروع ورسالته
+10. استخدم نفس أنواع الجمل والتراكيب الموجودة في الأمثلة
+
+=== مهمتك ===
+اكتب بوست كامل وجاهز للنشر يتماشى مع جميع المتطلبات أعلاه. البوست يجب أن يكون احترافياً وجذاباً ومتوافقاً تماماً مع أسلوب المشروع.
+
+=== المخرجات المطلوبة ===
+أرجع فقط نص البوست الجاهز للنشر بدون أي نص إضافي أو شرح أو عناوين أو تنسيقات غير ضرورية. فقط نص البوست النهائي.";
+
+            Log::info('Prompt for DeepSeek API post suggestions', [
+                'prompt' => $prompt,
+                'prompt_length' => strlen($prompt)
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'prompt' => $prompt,
+                'message' => 'تم إنشاء البرومبت بنجاح'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error showing post prompt', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'error' => 'حدث خطأ أثناء إنشاء البرومبت: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Suggest design using DeepSeek API
+     */
+    public function suggestDesign(Request $request): JsonResponse
+    {
+        try {
+            $request->validate([
+                'task_id' => 'required|integer|exists:plan_tasks,id',
+                'design' => 'nullable|string',
+                'design_recommendations' => 'nullable|string',
+            ]);
+
+            $taskId = $request->input('task_id');
+            $design = $request->input('design', '');
+            $designRecommendations = $request->input('design_recommendations', '');
+
+            // جلب المهمة والمشروع
+            $task = PlanTask::with(['monthlyPlan.project'])->findOrFail($taskId);
+            $project = $task->monthlyPlan->project ?? null;
+
+            if (!$project) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'المشروع غير موجود'
+                ], 400);
+            }
+
+            $apiKey = config('services.deepseek.api_key');
+            
+            if (!$apiKey) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'DeepSeek API key غير موجود'
+                ], 400);
+            }
+
+            // بناء البرومبت للتصميم
+            $projectInfo = "=== معلومات المشروع ===\n";
+            $projectInfo .= "اسم المشروع: {$project->business_name}\n";
+            if ($project->description) {
+                $projectInfo .= "وصف المشروع: {$project->description}\n";
+            }
+            $projectInfo .= "\n";
+
+            $context = '';
+            if ($design && !empty(trim($design))) {
+                $context .= "=== التصميم الحالي ===\n{$design}\n\n";
+            }
+
+            $recommendationsSection = '';
+            if ($designRecommendations && !empty(trim($designRecommendations))) {
+                $recommendationsSection = "\n\n=== ⚠️ توصيات التصميم (أهمية عالية جداً - إلزامي) ===\n{$designRecommendations}\n\n";
+            }
+
+            // جلب Brand Profile
+            $brandProfileText = '';
+            if ($project->brand_profile) {
+                $brandProfile = is_array($project->brand_profile) ? $project->brand_profile : json_decode($project->brand_profile, true);
+                if (is_array($brandProfile) && !empty($brandProfile)) {
+                    $brandProfileText = "=== Brand Profile وأسلوب التصميم ===\n";
+                    foreach ($brandProfile as $key => $value) {
+                        if (!empty($value)) {
+                            $brandProfileText .= "{$key}: {$value}\n";
+                        }
+                    }
+                    $brandProfileText .= "\n";
+                }
+            }
+
+            $prompt = "أنت مصمم جرافيك محترف وخبير في تصميم المحتوى لوسائل التواصل الاجتماعي. مهمتك هي اقتراح تصميم احترافي بناءً على المعلومات التالية.
+
+{$projectInfo}{$context}{$recommendationsSection}
+
+{$brandProfileText}
+
+=== المتطلبات والضوابط ===
+1. التصميم المقترح يجب أن يكون جديداً ومبتكراً تماماً
+2. التصميم يجب أن يتماشى 100% مع Brand Profile وأسلوب المشروع
+3. إذا كانت هناك توصيات محددة للتصميم، يجب الالتزام بها بشكل كامل ودقيق
+4. اقترح تفاصيل التصميم مثل: الألوان، الخطوط، التخطيط، العناصر البصرية، النمط
+5. التصميم يجب أن يكون مناسباً لوسائل التواصل الاجتماعي
+6. قدم وصفاً واضحاً ومفصلاً للتصميم المقترح
+
+=== مهمتك ===
+اقترح تصميم كامل ومفصل يتماشى مع جميع المتطلبات أعلاه. قدم وصفاً شاملاً للتصميم يتضمن جميع التفاصيل المطلوبة.
+
+=== المخرجات المطلوبة ===
+أرجع فقط وصف التصميم المقترح بدون أي نص إضافي أو شرح أو عناوين.";
+
+            Log::info('Sending request to DeepSeek API for design suggestions', [
+                'task_id' => $taskId,
+                'has_design' => !empty($design),
+                'has_recommendations' => !empty($designRecommendations),
+                'prompt_length' => strlen($prompt)
+            ]);
+
+            // زيادة الـ execution time limit
+            set_time_limit(180); // 3 دقائق
+            
+            $response = Http::timeout(150)
+                ->withHeaders([
+                    'Content-Type' => 'application/json',
+                    'Authorization' => 'Bearer ' . $apiKey,
+                ])
+                ->post('https://api.deepseek.com/v1/chat/completions', [
+                    'model' => 'deepseek-chat',
+                    'messages' => [
+                        [
+                            'role' => 'user',
+                            'content' => $prompt
+                        ]
+                    ],
+                    'temperature' => 0.8,
+                    'max_tokens' => 2000 // تقليل عدد الـ tokens لتسريع الرد
+                ]);
+
+            if (!$response->successful()) {
+                Log::error('DeepSeek API error for design suggestions', [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+                
+                return response()->json([
+                    'success' => false,
+                    'error' => 'فشل في اقتراح التصميم. يرجى المحاولة مرة أخرى.',
+                ], $response->status());
+            }
+
+            $responseData = $response->json();
+            $aiResponse = $responseData['choices'][0]['message']['content'] ?? '';
+            
+            if (empty($aiResponse)) {
+                Log::error('Empty response from DeepSeek for design suggestions');
+                return response()->json([
+                    'success' => false,
+                    'error' => 'استجابة فارغة من AI',
+                ], 500);
+            }
+
+            // تنظيف الرد
+            $aiResponse = trim($aiResponse);
+            $aiResponse = preg_replace('/^(تصميم|التصميم|Design|المحتوى|Content)[:\s]*/i', '', $aiResponse);
+            $aiResponse = preg_replace('/^[-•\d\.\s]+/', '', $aiResponse);
+            $aiResponse = trim($aiResponse);
+
+            if (empty($aiResponse) || strlen($aiResponse) < 20) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'لم يتم اقتراح تصميم صحيح',
+                ], 400);
+            }
+
+            return response()->json([
+                'success' => true,
+                'design' => $aiResponse,
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error suggesting design', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'error' => 'حدث خطأ أثناء اقتراح التصميم: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Show the prompt that would be sent to DeepSeek API for design suggestions
+     */
+    public function showDesignPrompt(Request $request): JsonResponse
+    {
+        try {
+            $request->validate([
+                'task_id' => 'required|integer|exists:plan_tasks,id',
+                'design' => 'nullable|string',
+                'design_recommendations' => 'nullable|string',
+            ]);
+
+            $taskId = $request->input('task_id');
+            $design = $request->input('design', '');
+            $designRecommendations = $request->input('design_recommendations', '');
+
+            // جلب المهمة والمشروع
+            $task = PlanTask::with(['monthlyPlan.project'])->findOrFail($taskId);
+            $project = $task->monthlyPlan->project ?? null;
+
+            if (!$project) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'المشروع غير موجود'
+                ], 400);
+            }
+
+            // بناء البرومبت للتصميم
+            $projectInfo = "=== معلومات المشروع ===\n";
+            $projectInfo .= "اسم المشروع: {$project->business_name}\n";
+            if ($project->description) {
+                $projectInfo .= "وصف المشروع: {$project->description}\n";
+            }
+            $projectInfo .= "\n";
+
+            $context = '';
+            if ($design && !empty(trim($design))) {
+                $context .= "=== التصميم الحالي ===\n{$design}\n\n";
+            }
+
+            $recommendationsSection = '';
+            if ($designRecommendations && !empty(trim($designRecommendations))) {
+                $recommendationsSection = "\n\n=== ⚠️ توصيات التصميم (أهمية عالية جداً - إلزامي) ===\n{$designRecommendations}\n\n";
+            }
+
+            // جلب Brand Profile
+            $brandProfileText = '';
+            if ($project->brand_profile) {
+                $brandProfile = is_array($project->brand_profile) ? $project->brand_profile : json_decode($project->brand_profile, true);
+                if (is_array($brandProfile) && !empty($brandProfile)) {
+                    $brandProfileText = "=== Brand Profile وأسلوب التصميم ===\n";
+                    foreach ($brandProfile as $key => $value) {
+                        if (!empty($value)) {
+                            $brandProfileText .= "{$key}: {$value}\n";
+                        }
+                    }
+                    $brandProfileText .= "\n";
+                }
+            }
+
+            $prompt = "أنت مصمم جرافيك محترف وخبير في تصميم المحتوى لوسائل التواصل الاجتماعي. مهمتك هي اقتراح تصميم احترافي بناءً على المعلومات التالية.
+
+{$projectInfo}{$context}{$recommendationsSection}
+
+{$brandProfileText}
+
+=== المتطلبات والضوابط ===
+1. التصميم المقترح يجب أن يكون جديداً ومبتكراً تماماً
+2. التصميم يجب أن يتماشى 100% مع Brand Profile وأسلوب المشروع
+3. إذا كانت هناك توصيات محددة للتصميم، يجب الالتزام بها بشكل كامل ودقيق
+4. اقترح تفاصيل التصميم مثل: الألوان، الخطوط، التخطيط، العناصر البصرية، النمط
+5. التصميم يجب أن يكون مناسباً لوسائل التواصل الاجتماعي
+6. قدم وصفاً واضحاً ومفصلاً للتصميم المقترح
+
+=== مهمتك ===
+اقترح تصميم كامل ومفصل يتماشى مع جميع المتطلبات أعلاه. قدم وصفاً شاملاً للتصميم يتضمن جميع التفاصيل المطلوبة.
+
+=== المخرجات المطلوبة ===
+أرجع فقط وصف التصميم المقترح بدون أي نص إضافي أو شرح أو عناوين.";
+
+            return response()->json([
+                'success' => true,
+                'prompt' => $prompt,
+                'message' => 'تم إنشاء البرومبت بنجاح'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error showing design prompt', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'error' => 'حدث خطأ أثناء إنشاء البرومبت: ' . $e->getMessage(),
             ], 500);
         }
     }
