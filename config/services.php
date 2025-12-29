@@ -39,4 +39,9 @@ return [
         'api_key' => env('DEEPSEEK_API_KEY'),
     ],
 
+    'google_ai_sandbox' => [
+        'api_key' => env('GOOGLE_AI_SANDBOX_API_KEY'),
+        'project_id' => env('GOOGLE_AI_SANDBOX_PROJECT_ID'),
+    ],
+
 ];

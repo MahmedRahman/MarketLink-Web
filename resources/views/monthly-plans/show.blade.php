@@ -53,6 +53,57 @@
                         <span class="text-xs text-gray-700">{{ $monthlyPlan->month }} {{ $monthlyPlan->year }}</span>
                     </div>
                 </div>
+                
+                <!-- Content Summary -->
+                @php
+                    $totalPosts = $monthlyPlan->goals->sum('posts') ?? 0;
+                    $totalCarousel = $monthlyPlan->goals->sum('carousel') ?? 0;
+                    $totalReels = $monthlyPlan->goals->sum('reels') ?? 0;
+                    $totalAdsCampaigns = $monthlyPlan->goals->sum('ads_campaigns') ?? 0;
+                    $totalOtherGoals = $monthlyPlan->goals->sum('other_goals') ?? 0;
+                @endphp
+                @if($totalPosts > 0 || $totalCarousel > 0 || $totalReels > 0 || $totalAdsCampaigns > 0 || $totalOtherGoals > 0)
+                    <div class="mt-4 pt-4 border-t border-gray-200">
+                        <h4 class="text-xs md:text-sm font-semibold text-gray-700 mb-3">المحتوى المطلوب:</h4>
+                        <div class="flex flex-wrap items-center gap-2 md:gap-3">
+                            @if($totalPosts > 0)
+                                <div class="flex items-center gap-1 md:gap-2 bg-indigo-50 px-2 md:px-3 py-1.5 md:py-2 rounded-lg border border-indigo-200">
+                                    <div class="w-3 h-3 md:w-4 md:h-4 rounded-full bg-indigo-600"></div>
+                                    <span class="text-xs md:text-sm font-medium text-indigo-700">البوستات:</span>
+                                    <span class="text-xs md:text-sm font-bold text-indigo-800">{{ $totalPosts }}</span>
+                                </div>
+                            @endif
+                            @if($totalCarousel > 0)
+                                <div class="flex items-center gap-1 md:gap-2 bg-purple-50 px-2 md:px-3 py-1.5 md:py-2 rounded-lg border border-purple-200">
+                                    <div class="w-3 h-3 md:w-4 md:h-4 rounded-full bg-purple-600"></div>
+                                    <span class="text-xs md:text-sm font-medium text-purple-700">الكروسول:</span>
+                                    <span class="text-xs md:text-sm font-bold text-purple-800">{{ $totalCarousel }}</span>
+                                </div>
+                            @endif
+                            @if($totalReels > 0)
+                                <div class="flex items-center gap-1 md:gap-2 bg-pink-50 px-2 md:px-3 py-1.5 md:py-2 rounded-lg border border-pink-200">
+                                    <div class="w-3 h-3 md:w-4 md:h-4 rounded-full bg-pink-600"></div>
+                                    <span class="text-xs md:text-sm font-medium text-pink-700">الريلز:</span>
+                                    <span class="text-xs md:text-sm font-bold text-pink-800">{{ $totalReels }}</span>
+                                </div>
+                            @endif
+                            @if($totalAdsCampaigns > 0)
+                                <div class="flex items-center gap-1 md:gap-2 bg-amber-50 px-2 md:px-3 py-1.5 md:py-2 rounded-lg border border-amber-200">
+                                    <div class="w-3 h-3 md:w-4 md:h-4 rounded-full bg-amber-600"></div>
+                                    <span class="text-xs md:text-sm font-medium text-amber-700">حملات الإعلانية:</span>
+                                    <span class="text-xs md:text-sm font-bold text-amber-800">{{ $totalAdsCampaigns }}</span>
+                                </div>
+                            @endif
+                            @if($totalOtherGoals > 0)
+                                <div class="flex items-center gap-1 md:gap-2 bg-emerald-50 px-2 md:px-3 py-1.5 md:py-2 rounded-lg border border-emerald-200">
+                                    <div class="w-3 h-3 md:w-4 md:h-4 rounded-full bg-emerald-600"></div>
+                                    <span class="text-xs md:text-sm font-medium text-emerald-700">أهداف أخرى:</span>
+                                    <span class="text-xs md:text-sm font-bold text-emerald-800">{{ $totalOtherGoals }}</span>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                @endif
             </div>
         </div>
 
@@ -66,6 +117,13 @@
                     <h3 class="text-base md:text-lg font-semibold text-gray-800">متابعة الخطة</h3>
                 </div>
                 <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <button id="bulk-assign-btn" onclick="showBulkAssignModal()" class="flex items-center justify-center px-3 md:px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors text-sm md:text-base hidden">
+                        <span class="material-icons text-xs md:text-sm ml-1 md:ml-2">person_add</span>
+                        <span class="hidden sm:inline">تعيين المهام المختارة</span>
+                        <span class="sm:hidden">تعيين</span>
+                    </button>
+                </div>
+                <div class="flex items-center gap-2 w-full sm:w-auto hidden">
                     <a href="{{ route('monthly-plans.tasks.create', $monthlyPlan) }}" class="flex items-center justify-center px-3 md:px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm md:text-base flex-1 sm:flex-initial">
                         <span class="material-icons text-xs md:text-sm ml-1 md:ml-2">add_task</span>
                         <span class="hidden sm:inline">إضافة مهمة جديدة</span>
@@ -255,9 +313,48 @@
                     <div class="w-full bg-gray-200 rounded-full h-2">
                         <div class="bg-blue-600 h-2 rounded-full" style="width: {{ min(100, $goal->progress_percentage) }}%"></div>
                     </div>
-                    <div class="text-xs text-gray-600 mt-1">
+                    <div class="text-xs text-gray-600 mt-1 mb-3">
                         {{ $goal->achieved_value }} / {{ $goal->target_value }}
                     </div>
+                    
+                    <!-- Content Details -->
+                    @if(($goal->posts ?? 0) > 0 || ($goal->carousel ?? 0) > 0 || ($goal->reels ?? 0) > 0 || ($goal->ads_campaigns ?? 0) > 0 || ($goal->other_goals ?? 0) > 0)
+                        <div class="mt-3 pt-3 border-t border-gray-200">
+                            <h5 class="text-xs font-semibold text-gray-700 mb-2">المحتوى المطلوب:</h5>
+                            <div class="grid grid-cols-1 gap-2">
+                                @if(($goal->posts ?? 0) > 0)
+                                    <div class="flex items-center justify-between text-xs">
+                                        <span class="text-gray-600">البوستات:</span>
+                                        <span class="font-medium text-gray-800">{{ $goal->posts }}</span>
+                                    </div>
+                                @endif
+                                @if(($goal->carousel ?? 0) > 0)
+                                    <div class="flex items-center justify-between text-xs">
+                                        <span class="text-gray-600">الكروسول:</span>
+                                        <span class="font-medium text-gray-800">{{ $goal->carousel }}</span>
+                                    </div>
+                                @endif
+                                @if(($goal->reels ?? 0) > 0)
+                                    <div class="flex items-center justify-between text-xs">
+                                        <span class="text-gray-600">الريلز:</span>
+                                        <span class="font-medium text-gray-800">{{ $goal->reels }}</span>
+                                    </div>
+                                @endif
+                                @if(($goal->ads_campaigns ?? 0) > 0)
+                                    <div class="flex items-center justify-between text-xs">
+                                        <span class="text-gray-600">حملات الإعلانية:</span>
+                                        <span class="font-medium text-gray-800">{{ $goal->ads_campaigns }}</span>
+                                    </div>
+                                @endif
+                                @if(($goal->other_goals ?? 0) > 0)
+                                    <div class="flex items-center justify-between text-xs">
+                                        <span class="text-gray-600">أهداف أخرى:</span>
+                                        <span class="font-medium text-gray-800">{{ $goal->other_goals }}</span>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    @endif
                 </div>
             @empty
                 <div class="text-center py-8 text-gray-500">
@@ -354,6 +451,49 @@
                 </button>
                 <button type="submit" class="btn-primary text-white px-4 py-2 rounded-lg">
                     إضافة
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Bulk Assign Modal -->
+<div id="bulk-assign-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+    <div class="bg-white rounded-2xl p-6 max-w-md w-full mx-4">
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center">
+                <div class="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center ml-3">
+                    <span class="material-icons text-purple-600">group_add</span>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800">تعيين المهام المختارة</h3>
+            </div>
+            <button onclick="hideBulkAssignModal()" class="text-gray-400 hover:text-gray-600">
+                <span class="material-icons">close</span>
+            </button>
+        </div>
+        <form id="bulk-assign-form" class="space-y-4">
+            @csrf
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">اختر الموظف</label>
+                <select id="bulk-assign-employee" name="assigned_to"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary">
+                    <option value="">مهام عامة (بدون موظف)</option>
+                    @foreach($monthlyPlan->employees as $employee)
+                        <option value="{{ $employee->id }}">{{ $employee->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-3">
+                <p class="text-sm text-gray-600">
+                    <span id="selected-tasks-count">0</span> مهمة محددة
+                </p>
+            </div>
+            <div class="flex justify-end space-x-3 rtl:space-x-reverse">
+                <button type="button" onclick="hideBulkAssignModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                    إلغاء
+                </button>
+                <button type="submit" class="btn-primary text-white px-4 py-2 rounded-lg">
+                    تعيين
                 </button>
             </div>
         </form>
@@ -474,7 +614,7 @@
                 <button type="submit" class="btn-primary text-white px-4 py-2 rounded-lg">
                     حفظ
                 </button>
-                <button type="button" onclick="deleteTask()" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">
+                <button type="button" onclick="deleteTask()" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 hidden">
                     حذف
                 </button>
             </div>
@@ -1153,6 +1293,112 @@ document.getElementById('quick-assign-form').addEventListener('submit', function
 document.getElementById('quick-assign-modal')?.addEventListener('click', function(e) {
     if (e.target === this) {
         hideQuickAssignModal();
+    }
+});
+
+// Bulk Assign Functions
+function updateBulkAssignButton() {
+    const selectedTasks = document.querySelectorAll('.task-select-checkbox:checked');
+    const bulkAssignBtn = document.getElementById('bulk-assign-btn');
+    
+    if (selectedTasks.length > 0) {
+        bulkAssignBtn.classList.remove('hidden');
+    } else {
+        bulkAssignBtn.classList.add('hidden');
+    }
+}
+
+function showBulkAssignModal() {
+    const selectedTasks = document.querySelectorAll('.task-select-checkbox:checked');
+    if (selectedTasks.length === 0) {
+        alert('يرجى اختيار مهمة واحدة على الأقل');
+        return;
+    }
+    
+    document.getElementById('selected-tasks-count').textContent = selectedTasks.length;
+    document.getElementById('bulk-assign-modal').classList.remove('hidden');
+}
+
+function hideBulkAssignModal() {
+    document.getElementById('bulk-assign-modal').classList.add('hidden');
+    document.getElementById('bulk-assign-form').reset();
+}
+
+// Bulk Assign Form Submit
+document.getElementById('bulk-assign-form')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const selectedTasks = document.querySelectorAll('.task-select-checkbox:checked');
+    if (selectedTasks.length === 0) {
+        alert('يرجى اختيار مهمة واحدة على الأقل');
+        return;
+    }
+    
+    const taskIds = Array.from(selectedTasks).map(checkbox => checkbox.dataset.taskId);
+    const assignedTo = document.getElementById('bulk-assign-employee').value || null;
+    const listType = assignedTo ? 'employee' : 'tasks';
+    
+    const submitButton = this.querySelector('button[type="submit"]');
+    const originalText = submitButton.innerHTML;
+    submitButton.disabled = true;
+    submitButton.innerHTML = '<span class="material-icons text-sm animate-spin ml-2">sync</span> جاري التعيين...';
+    
+    fetch(`/monthly-plans/${monthlyPlanId}/tasks/bulk-assign`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+            task_ids: taskIds,
+            assigned_to: assignedTo,
+            list_type: listType
+        })
+    })
+    .then(response => {
+        return response.json().then(data => {
+            if (!response.ok) {
+                throw new Error(data.error || data.message || 'حدث خطأ أثناء تعيين المهام');
+            }
+            return data;
+        });
+    })
+    .then(data => {
+        if (data.success) {
+            hideBulkAssignModal();
+            // إلغاء تحديد جميع المهام
+            selectedTasks.forEach(checkbox => checkbox.checked = false);
+            updateBulkAssignButton();
+            location.reload();
+        } else {
+            alert(data.error || 'حدث خطأ أثناء تعيين المهام');
+            submitButton.disabled = false;
+            submitButton.innerHTML = originalText;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert(error.message || 'حدث خطأ أثناء تعيين المهام');
+        submitButton.disabled = false;
+        submitButton.innerHTML = originalText;
+    });
+});
+
+// Close bulk assign modal when clicking outside
+document.getElementById('bulk-assign-modal')?.addEventListener('click', function(e) {
+    if (e.target === this) {
+        hideBulkAssignModal();
+    }
+});
+
+// Close modals on ESC key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        hideGoalsModal();
+        hideEmployeesModal();
+        hideQuickAssignModal();
+        hideBulkAssignModal();
     }
 });
 </script>

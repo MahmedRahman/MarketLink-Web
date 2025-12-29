@@ -131,6 +131,77 @@
                 <p class="text-gray-600 text-sm">نظام إدارة شركات التسويق الإلكتروني</p>
             </div>
 
+            @if(request()->getHost() === '127.0.0.1' || request()->getHost() === 'localhost')
+            <!-- Development Login Cards - Only visible on localhost -->
+            <div class="mb-6 space-y-3">
+                <p class="text-xs text-gray-500 text-center mb-3">بيانات تسجيل الدخول للتطوير</p>
+                
+                <!-- Admin Card -->
+                <div class="bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 rounded-xl p-4 cursor-pointer hover:shadow-md transition-all" onclick="fillLoginForm('admin@marketlink.com', '123456')">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3 space-x-reverse">
+                            <div class="w-10 h-10 bg-red-500 rounded-lg flex items-center justify-center">
+                                <span class="material-icons text-white text-sm">admin_panel_settings</span>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-semibold text-gray-800">Admin</h3>
+                                <p class="text-xs text-gray-600">admin@marketlink.com</p>
+                            </div>
+                        </div>
+                        <span class="material-icons text-red-500 text-sm">arrow_forward</span>
+                    </div>
+                </div>
+
+                <!-- Employee Card -->
+                <div class="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 rounded-xl p-4 cursor-pointer hover:shadow-md transition-all" onclick="fillLoginForm('employee@marketlink.com', '123456')">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3 space-x-reverse">
+                            <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+                                <span class="material-icons text-white text-sm">person</span>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-semibold text-gray-800">Employee</h3>
+                                <p class="text-xs text-gray-600">employee@marketlink.com</p>
+                            </div>
+                        </div>
+                        <span class="material-icons text-blue-500 text-sm">arrow_forward</span>
+                    </div>
+                </div>
+
+                <!-- Client Card -->
+                <div class="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4 cursor-pointer hover:shadow-md transition-all" onclick="fillLoginForm('client@marketlink.com', '123456')">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3 space-x-reverse">
+                            <div class="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+                                <span class="material-icons text-white text-sm">business</span>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-semibold text-gray-800">Client</h3>
+                                <p class="text-xs text-gray-600">client@marketlink.com</p>
+                            </div>
+                        </div>
+                        <span class="material-icons text-green-500 text-sm">arrow_forward</span>
+                    </div>
+                </div>
+
+                <!-- Company Card -->
+                <div class="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-xl p-4 cursor-pointer hover:shadow-md transition-all" onclick="fillLoginForm('atpfreelancer@gmail.com', '123456789')">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3 space-x-reverse">
+                            <div class="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center">
+                                <span class="material-icons text-white text-sm">domain</span>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-semibold text-gray-800">شركة</h3>
+                                <p class="text-xs text-gray-600">atpfreelancer@gmail.com</p>
+                            </div>
+                        </div>
+                        <span class="material-icons text-orange-500 text-sm">arrow_forward</span>
+                    </div>
+                </div>
+            </div>
+            @endif
+
             <!-- Login Form -->
             <form method="POST" action="{{ route('login') }}" class="space-y-6">
                 @csrf
@@ -246,6 +317,12 @@
                 passwordInput.type = 'password';
                 passwordIcon.textContent = 'visibility';
             }
+        }
+
+        // Fill login form with credentials from card
+        function fillLoginForm(email, password) {
+            document.getElementById('email').value = email;
+            document.getElementById('password').value = password;
         }
     </script>
 

@@ -191,10 +191,11 @@
                                         'goal_type' => $goal->goal_type,
                                         'goal_name' => $goal->goal_name,
                                         'target_value' => $goal->target_value,
+                                        'posts' => $goal->posts ?? 0,
                                         'carousel' => $goal->carousel ?? 0,
                                         'reels' => $goal->reels ?? 0,
-                                        'video' => $goal->video ?? 0,
-                                        'photo' => $goal->photo ?? 0,
+                                        'ads_campaigns' => $goal->ads_campaigns ?? 0,
+                                        'other_goals' => $goal->other_goals ?? 0,
                                         'description' => $goal->description,
                                         'id' => $goal->id,
                                     ];
@@ -254,9 +255,20 @@
                                     <!-- Content Sections -->
                                     <div class="bg-gray-50 rounded-lg p-3 md:p-4 mb-3 md:mb-4">
                                         <h4 class="text-xs md:text-sm font-semibold text-gray-700 mb-2 md:mb-3">المحتوى</h4>
-                                        <div class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
+                                        <div class="grid grid-cols-1 gap-3 md:gap-4">
                                             <div>
-                                                <label class="block text-sm font-medium text-gray-700 mb-2">كروسير</label>
+                                                <label class="block text-sm font-medium text-gray-700 mb-2">البوستات</label>
+                                                <input
+                                                    type="number"
+                                                    name="goals[{{ $index }}][posts]"
+                                                    value="{{ $goal['posts'] ?? 0 }}"
+                                                    min="0"
+                                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                                                    placeholder="0"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-2">الكروسول</label>
                                                 <input
                                                     type="number"
                                                     name="goals[{{ $index }}][carousel]"
@@ -267,7 +279,7 @@
                                                 />
                                             </div>
                                             <div>
-                                                <label class="block text-sm font-medium text-gray-700 mb-2">ريلز</label>
+                                                <label class="block text-sm font-medium text-gray-700 mb-2">الريلز</label>
                                                 <input
                                                     type="number"
                                                     name="goals[{{ $index }}][reels]"
@@ -278,22 +290,22 @@
                                                 />
                                             </div>
                                             <div>
-                                                <label class="block text-sm font-medium text-gray-700 mb-2">فيديو</label>
+                                                <label class="block text-sm font-medium text-gray-700 mb-2">حملات الإعلانية</label>
                                                 <input
                                                     type="number"
-                                                    name="goals[{{ $index }}][video]"
-                                                    value="{{ $goal['video'] ?? 0 }}"
+                                                    name="goals[{{ $index }}][ads_campaigns]"
+                                                    value="{{ $goal['ads_campaigns'] ?? 0 }}"
                                                     min="0"
                                                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                                                     placeholder="0"
                                                 />
                                             </div>
                                             <div>
-                                                <label class="block text-sm font-medium text-gray-700 mb-2">صورة</label>
+                                                <label class="block text-sm font-medium text-gray-700 mb-2">أهداف أخرى</label>
                                                 <input
                                                     type="number"
-                                                    name="goals[{{ $index }}][photo]"
-                                                    value="{{ $goal['photo'] ?? 0 }}"
+                                                    name="goals[{{ $index }}][other_goals]"
+                                                    value="{{ $goal['other_goals'] ?? 0 }}"
                                                     min="0"
                                                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                                                     placeholder="0"
@@ -357,9 +369,20 @@
                                 <!-- Content Sections -->
                                 <div class="bg-gray-50 rounded-lg p-4 mb-4">
                                     <h4 class="text-sm font-semibold text-gray-700 mb-3">المحتوى</h4>
-                                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                    <div class="grid grid-cols-1 gap-4">
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-2">كروسير</label>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">البوستات</label>
+                                            <input
+                                                type="number"
+                                                name="goals[0][posts]"
+                                                min="0"
+                                                value="0"
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                                                placeholder="0"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">الكروسول</label>
                                             <input
                                                 type="number"
                                                 name="goals[0][carousel]"
@@ -370,7 +393,7 @@
                                             />
                                         </div>
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-2">ريلز</label>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">الريلز</label>
                                             <input
                                                 type="number"
                                                 name="goals[0][reels]"
@@ -381,10 +404,10 @@
                                             />
                                         </div>
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-2">فيديو</label>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">حملات الإعلانية</label>
                                             <input
                                                 type="number"
-                                                name="goals[0][video]"
+                                                name="goals[0][ads_campaigns]"
                                                 min="0"
                                                 value="0"
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
@@ -392,10 +415,10 @@
                                             />
                                         </div>
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-2">صورة</label>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">أهداف أخرى</label>
                                             <input
                                                 type="number"
-                                                name="goals[0][photo]"
+                                                name="goals[0][other_goals]"
                                                 min="0"
                                                 value="0"
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
@@ -423,6 +446,29 @@
                     @error('goals.*')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror
+                </div>
+
+                <!-- Generate Tasks Section -->
+                <div class="form-section space-y-4 md:space-y-6">
+                    <div class="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl md:rounded-2xl p-4 md:p-6">
+                        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <div class="w-10 h-10 md:w-12 md:h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                                        <span class="material-icons text-green-600 text-lg md:text-xl">auto_awesome</span>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-base md:text-lg font-semibold text-gray-800">إنشاء الخطة تلقائياً</h3>
+                                        <p class="text-xs md:text-sm text-gray-600 mt-1">سيتم إنشاء المهام تلقائياً بناءً على الأهداف والمحتوى المحدد</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" id="generate-tasks" class="bg-green-600 hover:bg-green-700 text-white px-6 md:px-8 py-3 md:py-4 rounded-xl md:rounded-2xl flex items-center justify-center text-sm md:text-base font-semibold shadow-lg hover:shadow-xl transition-all w-full md:w-auto">
+                                <span class="material-icons text-base md:text-lg ml-2">auto_awesome</span>
+                                إنشاء الخطة
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Employees Section -->
@@ -571,9 +617,20 @@ $(document).ready(function() {
                 <!-- Content Sections -->
                 <div class="bg-gray-50 rounded-lg p-4 mb-4">
                     <h4 class="text-sm font-semibold text-gray-700 mb-3">المحتوى</h4>
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="grid grid-cols-1 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">كروسير</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">البوستات</label>
+                            <input
+                                type="number"
+                                name="goals[${goalIndex}][posts]"
+                                min="0"
+                                value="0"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                                placeholder="0"
+                            />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">الكروسول</label>
                             <input
                                 type="number"
                                 name="goals[${goalIndex}][carousel]"
@@ -584,7 +641,7 @@ $(document).ready(function() {
                             />
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">ريلز</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">الريلز</label>
                             <input
                                 type="number"
                                 name="goals[${goalIndex}][reels]"
@@ -595,10 +652,10 @@ $(document).ready(function() {
                             />
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">فيديو</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">حملات الإعلانية</label>
                             <input
                                 type="number"
-                                name="goals[${goalIndex}][video]"
+                                name="goals[${goalIndex}][ads_campaigns]"
                                 min="0"
                                 value="0"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
@@ -606,10 +663,10 @@ $(document).ready(function() {
                             />
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">صورة</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">أهداف أخرى</label>
                             <input
                                 type="number"
-                                name="goals[${goalIndex}][photo]"
+                                name="goals[${goalIndex}][other_goals]"
                                 min="0"
                                 value="0"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
@@ -686,6 +743,45 @@ $(document).ready(function() {
         allSelected = !allSelected;
         $('.employee-checkbox').prop('checked', allSelected).trigger('change');
         $(this).text(allSelected ? 'إلغاء تحديد الكل' : 'تحديد الكل');
+    });
+
+    // إنشاء المهام تلقائياً
+    $('#generate-tasks').on('click', function(e) {
+        e.preventDefault();
+        
+        if (!confirm('هل أنت متأكد من إنشاء المهام بناءً على الأهداف المحددة؟ سيتم إنشاء مهام جديدة لكل هدف.')) {
+            return;
+        }
+
+        const button = $(this);
+        const originalText = button.html();
+        button.prop('disabled', true);
+        button.html('<span class="material-icons text-xs md:text-sm ml-2 animate-spin">sync</span> جاري الإنشاء...');
+
+        $.ajax({
+            url: '{{ route("monthly-plans.generate-tasks", $monthlyPlan) }}',
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                'Accept': 'application/json'
+            },
+            success: function(response) {
+                if (response.success) {
+                    alert(response.message || 'تم إنشاء المهام بنجاح');
+                    window.location.href = '{{ route("monthly-plans.show", $monthlyPlan) }}';
+                } else {
+                    alert(response.error || 'حدث خطأ أثناء إنشاء المهام');
+                    button.prop('disabled', false);
+                    button.html(originalText);
+                }
+            },
+            error: function(xhr) {
+                const errorMessage = xhr.responseJSON?.error || xhr.responseJSON?.message || 'حدث خطأ أثناء إنشاء المهام';
+                alert(errorMessage);
+                button.prop('disabled', false);
+                button.html(originalText);
+            }
+        });
     });
 
     // التحقق من اختيار موظف واحد على الأقل قبل الإرسال

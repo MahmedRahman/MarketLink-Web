@@ -21,6 +21,7 @@ class PlanTask extends Model
         'list_type',
         'order',
         'due_date',
+        'publish_date',
         'color',
         'task_data',
     ];
@@ -28,6 +29,7 @@ class PlanTask extends Model
     protected $casts = [
         'order' => 'integer',
         'due_date' => 'date',
+        'publish_date' => 'date',
         'task_data' => 'array',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',

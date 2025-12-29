@@ -1,8 +1,15 @@
-<div class="task-card bg-white rounded-lg p-4 border-l-4 hover:shadow-md transition-shadow cursor-move" 
+<div class="task-card bg-white rounded-lg p-4 border-l-4 hover:shadow-md transition-shadow cursor-move relative" 
      data-task-id="{{ $task->id }}" 
      draggable="false"
      style="border-left-color: {{ $task->color ?? '#6366f1' }};">
-    <div class="flex items-start justify-between mb-2">
+    <!-- Checkbox for bulk selection -->
+    <div class="absolute top-2 right-2 z-10">
+        <input type="checkbox" 
+               class="task-select-checkbox w-5 h-5 rounded border-2 border-gray-300 text-primary focus:ring-2 focus:ring-primary cursor-pointer" 
+               data-task-id="{{ $task->id }}"
+               onclick="event.stopPropagation(); updateBulkAssignButton();">
+    </div>
+    <div class="flex items-start justify-between mb-2 ml-6">
         <a href="{{ route('monthly-plans.tasks.show', [$task->monthly_plan_id, $task->id]) }}" 
            class="font-semibold text-gray-800 text-sm flex-1 hover:text-primary cursor-pointer">
             {{ $task->title }}
@@ -31,7 +38,7 @@
                 $deletePath = $deletePath ?: $deleteUrl;
             @endphp
             <button onclick="event.stopPropagation(); deleteTaskCard({{ $task->id }}, '{{ $deletePath }}')" 
-                    class="text-red-400 hover:text-red-600" 
+                    class="text-red-400 hover:text-red-600 hidden" 
                     title="حذف المهمة">
                 <span class="material-icons text-sm">delete</span>
             </button>

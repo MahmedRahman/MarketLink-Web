@@ -82,6 +82,23 @@
                             @enderror
                         </div>
                         
+                        <!-- تاريخ النشر -->
+                        <div>
+                            <label for="publish_date" class="block text-sm font-medium text-gray-700 mb-2">
+                                تاريخ النشر
+                            </label>
+                            <input 
+                                type="date" 
+                                id="publish_date" 
+                                name="publish_date" 
+                                value="{{ old('publish_date', $task->publish_date ? $task->publish_date->format('Y-m-d') : '') }}"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors text-sm"
+                            >
+                            @error('publish_date')
+                                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        
                         <!-- الحالة -->
                         <div>
                             <label for="status" class="block text-sm font-medium text-gray-700 mb-2">
@@ -648,11 +665,33 @@
                     </div>
                 </div>
 
+                <!-- Work Design Button -->
+                <div class="form-section space-y-6 mb-6">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-semibold text-gray-800 flex items-center">
+                            <span class="material-icons text-blue-600 ml-2">link</span>
+                            روابط هامة
+                        </h3>
+                        <button
+                            type="button"
+                            id="work-design-btn"
+                            class="px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                            onclick="generateDesignImage()"
+                        >
+                            <span class="material-icons text-sm" id="work-design-icon">auto_awesome</span>
+                            <span id="work-design-text">عمل التصميم</span>
+                            <span class="material-icons text-sm animate-spin hidden" id="work-design-spinner">sync</span>
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Important Links Section -->
                 <div class="form-section space-y-6">
-                    <div>
-                        <h3 class="text-lg font-semibold text-gray-800 mb-2">روابط هامة</h3>
-                        <p class="text-sm text-gray-600 mb-4">يمكنك إضافة روابط مهمة متعلقة بالمهمة (اختياري)</p>
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-800 mb-2">روابط هامة</h3>
+                            <p class="text-sm text-gray-600 mb-4">يمكنك إضافة روابط مهمة متعلقة بالمهمة (اختياري)</p>
+                        </div>
                     </div>
                     
                     <div id="links-container" class="space-y-4">
@@ -3179,8 +3218,15 @@ window.suggestDesign = async function suggestDesign() {
         const suggestDesignText = document.getElementById('suggest-design-text');
         const suggestDesignSpinner = document.getElementById('suggest-design-spinner');
         
-        if (!suggestDesignBtn) {
-            console.error('suggest-design-btn not found');
+        // Also handle the create-design-btn
+        const createDesignBtn = document.getElementById('create-design-btn');
+        const createDesignIcon = document.getElementById('create-design-icon');
+        const createDesignText = document.getElementById('create-design-text');
+        const createDesignSpinner = document.getElementById('create-design-spinner');
+        
+        const activeBtn = suggestDesignBtn || createDesignBtn;
+        if (!activeBtn) {
+            console.error('Design button not found');
             alert('خطأ: لم يتم العثور على الزر');
             return;
         }
@@ -3201,10 +3247,19 @@ window.suggestDesign = async function suggestDesign() {
         }
         
         // Disable button and show loading
-        suggestDesignBtn.disabled = true;
-        suggestDesignIcon.classList.add('hidden');
-        suggestDesignText.textContent = 'جاري اقتراح التصميم...';
-        suggestDesignSpinner.classList.remove('hidden');
+        // Disable both buttons
+        if (suggestDesignBtn) {
+            suggestDesignBtn.disabled = true;
+            if (suggestDesignIcon) suggestDesignIcon.classList.add('hidden');
+            if (suggestDesignText) suggestDesignText.textContent = 'جاري اقتراح التصميم...';
+            if (suggestDesignSpinner) suggestDesignSpinner.classList.remove('hidden');
+        }
+        if (createDesignBtn) {
+            createDesignBtn.disabled = true;
+            if (createDesignIcon) createDesignIcon.classList.add('hidden');
+            if (createDesignText) createDesignText.textContent = 'جاري عمل التصميم...';
+            if (createDesignSpinner) createDesignSpinner.classList.remove('hidden');
+        }
         
         const csrfTokenElement = document.querySelector('meta[name="csrf-token"]');
         if (!csrfTokenElement) {
@@ -3269,18 +3324,18 @@ window.suggestDesign = async function suggestDesign() {
             designTextarea.dispatchEvent(new Event('input', { bubbles: true }));
         }
         
-        // Re-enable button and hide loading
+        // Re-enable buttons and hide loading
         if (suggestDesignBtn) {
             suggestDesignBtn.disabled = false;
+            if (suggestDesignIcon) suggestDesignIcon.classList.remove('hidden');
+            if (suggestDesignText) suggestDesignText.textContent = 'اقترح تصميم';
+            if (suggestDesignSpinner) suggestDesignSpinner.classList.add('hidden');
         }
-        if (suggestDesignIcon) {
-            suggestDesignIcon.classList.remove('hidden');
-        }
-        if (suggestDesignText) {
-            suggestDesignText.textContent = 'اقترح تصميم';
-        }
-        if (suggestDesignSpinner) {
-            suggestDesignSpinner.classList.add('hidden');
+        if (createDesignBtn) {
+            createDesignBtn.disabled = false;
+            if (createDesignIcon) createDesignIcon.classList.remove('hidden');
+            if (createDesignText) createDesignText.textContent = 'عمل التصميم';
+            if (createDesignSpinner) createDesignSpinner.classList.add('hidden');
         }
         
         // Show success message
@@ -3301,23 +3356,28 @@ window.suggestDesign = async function suggestDesign() {
             errorMessage = error.message;
         }
         
-        // Re-enable button in case of error
+        // Re-enable buttons in case of error
         const suggestDesignBtn = document.getElementById('suggest-design-btn');
         const suggestDesignIcon = document.getElementById('suggest-design-icon');
         const suggestDesignText = document.getElementById('suggest-design-text');
         const suggestDesignSpinner = document.getElementById('suggest-design-spinner');
         
+        const createDesignBtn = document.getElementById('create-design-btn');
+        const createDesignIcon = document.getElementById('create-design-icon');
+        const createDesignText = document.getElementById('create-design-text');
+        const createDesignSpinner = document.getElementById('create-design-spinner');
+        
         if (suggestDesignBtn) {
             suggestDesignBtn.disabled = false;
+            if (suggestDesignIcon) suggestDesignIcon.classList.remove('hidden');
+            if (suggestDesignText) suggestDesignText.textContent = 'اقترح تصميم';
+            if (suggestDesignSpinner) suggestDesignSpinner.classList.add('hidden');
         }
-        if (suggestDesignIcon) {
-            suggestDesignIcon.classList.remove('hidden');
-        }
-        if (suggestDesignText) {
-            suggestDesignText.textContent = 'اقترح تصميم';
-        }
-        if (suggestDesignSpinner) {
-            suggestDesignSpinner.classList.add('hidden');
+        if (createDesignBtn) {
+            createDesignBtn.disabled = false;
+            if (createDesignIcon) createDesignIcon.classList.remove('hidden');
+            if (createDesignText) createDesignText.textContent = 'عمل التصميم';
+            if (createDesignSpinner) createDesignSpinner.classList.add('hidden');
         }
         
         if (typeof Swal !== 'undefined') {
@@ -3330,6 +3390,184 @@ window.suggestDesign = async function suggestDesign() {
         } else {
             alert(errorMessage);
         }
+    }
+}
+
+// Generate Design Image Function
+window.generateDesignImage = async function generateDesignImage() {
+    console.log('generateDesignImage function called');
+    
+    try {
+        const designTextarea = document.getElementById('design');
+        const workDesignBtn = document.getElementById('work-design-btn');
+        const workDesignIcon = document.getElementById('work-design-icon');
+        const workDesignText = document.getElementById('work-design-text');
+        const workDesignSpinner = document.getElementById('work-design-spinner');
+        
+        if (!workDesignBtn) {
+            console.error('work-design-btn not found');
+            alert('خطأ: لم يتم العثور على الزر');
+            return;
+        }
+        
+        // Get task ID
+        const taskId = {{ $task->id }};
+        
+        // Get design content
+        let design = '';
+        if (designTextarea && designTextarea.value) {
+            design = designTextarea.value.trim();
+        }
+        
+        if (!design || design === '') {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'تنبيه',
+                    text: 'يرجى إدخال محتوى التصميم أولاً',
+                    confirmButtonText: 'حسناً'
+                });
+            } else {
+                alert('يرجى إدخال محتوى التصميم أولاً');
+            }
+            return;
+        }
+        
+        // Disable button and show loading
+        workDesignBtn.disabled = true;
+        if (workDesignIcon) workDesignIcon.classList.add('hidden');
+        if (workDesignText) workDesignText.textContent = 'جاري إنشاء الصورة...';
+        if (workDesignSpinner) workDesignSpinner.classList.remove('hidden');
+        
+        const csrfTokenElement = document.querySelector('meta[name="csrf-token"]');
+        if (!csrfTokenElement) {
+            throw new Error('CSRF token not found');
+        }
+        const csrfToken = csrfTokenElement.getAttribute('content');
+        if (!csrfToken) {
+            throw new Error('CSRF token content is empty');
+        }
+        
+        console.log('Sending request to /tasks/generate-design-image', {
+            task_id: taskId,
+            has_design: !!design
+        });
+        
+        const response = await fetch('/tasks/generate-design-image', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: JSON.stringify({
+                task_id: taskId,
+                design: design
+            })
+        });
+        
+        console.log('Response status:', response.status);
+        console.log('Response ok:', response.ok);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Error response:', errorText);
+            let errorData;
+            try {
+                errorData = JSON.parse(errorText);
+            } catch (e) {
+                errorData = { error: errorText || `فشل في إنشاء الصورة (${response.status})` };
+            }
+            throw new Error(errorData.error || errorData.message || `فشل في إنشاء الصورة (${response.status})`);
+        }
+        
+        const data = await response.json();
+        
+        if (!data.success) {
+            throw new Error(data.error || 'فشل في إنشاء الصورة');
+        }
+        
+        const imageData = data.image;
+        
+        if (!imageData || imageData.trim() === '') {
+            throw new Error('لم يتم إنشاء صورة');
+        }
+        
+        // Re-enable button and hide loading
+        workDesignBtn.disabled = false;
+        if (workDesignIcon) workDesignIcon.classList.remove('hidden');
+        if (workDesignText) workDesignText.textContent = 'عمل التصميم';
+        if (workDesignSpinner) workDesignSpinner.classList.add('hidden');
+        
+        // Display image in modal
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: 'تم إنشاء الصورة بنجاح!',
+                html: `<div style="text-align: center;">
+                    <img src="data:image/jpeg;base64,${imageData}" style="max-width: 100%; max-height: 70vh; border-radius: 8px; margin: 10px 0;" alt="Generated Design" />
+                    <div style="margin-top: 15px;">
+                        <button onclick="downloadDesignImage('${imageData}')" class="swal2-confirm swal2-styled" style="background-color: #3085d6; margin-left: 10px;">
+                            تحميل الصورة
+                        </button>
+                    </div>
+                </div>`,
+                width: '90%',
+                showConfirmButton: true,
+                confirmButtonText: 'إغلاق',
+                customClass: {
+                    popup: 'swal2-popup-large'
+                }
+            });
+        } else {
+            // Fallback: open image in new window
+            const imageWindow = window.open();
+            imageWindow.document.write(`<img src="data:image/jpeg;base64,${imageData}" style="max-width: 100%;" />`);
+        }
+        
+    } catch (error) {
+        console.error('Error generating design image:', error);
+        let errorMessage = 'حدث خطأ أثناء إنشاء الصورة. يرجى المحاولة مرة أخرى.';
+        if (error.message) {
+            errorMessage = error.message;
+        }
+        
+        // Re-enable button in case of error
+        const workDesignBtn = document.getElementById('work-design-btn');
+        const workDesignIcon = document.getElementById('work-design-icon');
+        const workDesignText = document.getElementById('work-design-text');
+        const workDesignSpinner = document.getElementById('work-design-spinner');
+        
+        if (workDesignBtn) workDesignBtn.disabled = false;
+        if (workDesignIcon) workDesignIcon.classList.remove('hidden');
+        if (workDesignText) workDesignText.textContent = 'عمل التصميم';
+        if (workDesignSpinner) workDesignSpinner.classList.add('hidden');
+        
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                icon: 'error',
+                title: 'خطأ',
+                text: errorMessage,
+                confirmButtonText: 'حسناً'
+            });
+        } else {
+            alert(errorMessage);
+        }
+    }
+}
+
+// Download Design Image Function
+window.downloadDesignImage = function downloadDesignImage(base64Data) {
+    try {
+        const link = document.createElement('a');
+        link.href = 'data:image/jpeg;base64,' + base64Data;
+        link.download = 'design-' + Date.now() + '.jpg';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    } catch (error) {
+        console.error('Error downloading image:', error);
+        alert('حدث خطأ أثناء تحميل الصورة');
     }
 }
 

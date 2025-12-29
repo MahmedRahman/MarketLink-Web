@@ -1,8 +1,8 @@
 @extends('layouts.dashboard')
 
-@section('title', 'الخطط الشهرية')
-@section('page-title', 'الخطط الشهرية')
-@section('page-description', 'إدارة الخطط الشهرية للمشاريع')
+@section('title', 'الحملات الإعلانية')
+@section('page-title', 'الحملات الإعلانية')
+@section('page-description', 'إدارة الحملات الإعلانية للمشاريع')
 
 @section('content')
 <div class="container mx-auto px-3 md:px-4">
@@ -30,100 +30,69 @@
                         <span class="material-icons text-white text-lg md:text-xl">calendar_month</span>
                     </div>
                     <div>
-                        <h2 class="text-xl md:text-2xl font-bold text-gray-800">الخطط الشهرية</h2>
-                        <p class="text-sm md:text-base text-gray-600 hidden md:block">إدارة وتتبع الخطط الشهرية للمشاريع</p>
+                        <h2 class="text-xl md:text-2xl font-bold text-gray-800">الحملات الإعلانية</h2>
+                        <p class="text-sm md:text-base text-gray-600 hidden md:block">إدارة وتتبع الحملات الإعلانية للمشاريع</p>
                     </div>
                 </div>
-                <a href="{{ route('monthly-plans.create') }}" class="btn-primary text-white px-4 md:px-6 py-2 md:py-3 rounded-xl flex items-center justify-center text-sm md:text-base w-full md:w-auto">
+                    <a href="{{ route('monthly-plans.create') }}" class="btn-primary text-white px-4 md:px-6 py-2 md:py-3 rounded-xl flex items-center justify-center text-sm md:text-base w-full md:w-auto">
                     <span class="material-icons text-xs md:text-sm ml-2">add</span>
-                    <span class="hidden sm:inline">إضافة خطة شهرية جديدة</span>
-                    <span class="sm:hidden">إضافة خطة</span>
+                    <span class="hidden sm:inline">إضافة حملة إعلانية جديدة</span>
+                    <span class="sm:hidden">إضافة حملة</span>
                 </a>
             </div>
         </div>
 
         <!-- Plans List -->
-        <div class="card rounded-xl md:rounded-2xl p-3 md:p-6">
+        <div>
             @if($plans->count() > 0)
-                <!-- Desktop Table View -->
-                <div class="hidden md:block overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-4 md:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">المشروع</th>
-                                <th class="px-4 md:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">الشهر</th>
-                                <th class="px-4 md:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">الأهداف</th>
-                                <th class="px-4 md:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">الموظفين</th>
-                                <th class="px-4 md:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">الحالة</th>
-                                <th class="px-4 md:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">الإجراءات</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            @foreach($plans as $plan)
-                                <tr>
-                                    <td class="px-4 md:px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm font-medium text-gray-900">{{ $plan->project->business_name }}</div>
-                                    </td>
-                                    <td class="px-4 md:px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-900">{{ $plan->month }} {{ $plan->year }}</div>
-                                    </td>
-                                    <td class="px-4 md:px-6 py-4">
-                                        <div class="text-sm text-gray-500">{{ $plan->goals->count() }} هدف</div>
-                                    </td>
-                                    <td class="px-4 md:px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-500">{{ $plan->employees->count() }} موظف</div>
-                                    </td>
-                                    <td class="px-4 md:px-6 py-4 whitespace-nowrap">
-                                        <span class="px-2 py-1 text-xs rounded-full bg-{{ $plan->status_color }}-100 text-{{ $plan->status_color }}-800">
-                                            {{ $plan->status_badge }}
-                                        </span>
-                                    </td>
-                                    <td class="px-4 md:px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        <div class="flex items-center space-x-3 rtl:space-x-reverse">
-                                            <a href="{{ route('monthly-plans.show', $plan) }}" class="text-blue-600 hover:text-blue-900">عرض</a>
-                                            <a href="{{ route('monthly-plans.edit', $plan) }}" class="text-green-600 hover:text-green-900">تعديل</a>
-                                            <button onclick="confirmDelete('{{ route('monthly-plans.destroy', $plan) }}', 'تأكيد حذف الخطة', 'هل أنت متأكد من حذف الخطة الشهرية {{ $plan->month }} {{ $plan->year }}؟')" class="text-red-600 hover:text-red-900" title="حذف">
-                                                <span class="material-icons text-sm">delete</span>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-                
-                <!-- Mobile Card View -->
-                <div class="md:hidden space-y-4">
+                <!-- Cards Grid View -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                     @foreach($plans as $plan)
-                        <div class="bg-white border border-gray-200 rounded-xl p-4">
-                            <div class="flex items-start justify-between mb-3">
+                        <div class="card rounded-xl md:rounded-2xl p-4 md:p-6 hover:shadow-lg transition-shadow">
+                            <div class="flex items-start justify-between mb-4">
                                 <div class="flex-1">
-                                    <h3 class="text-base font-semibold text-gray-900 mb-1">{{ $plan->project->business_name }}</h3>
-                                    <p class="text-sm text-gray-600">{{ $plan->month }} {{ $plan->year }}</p>
+                                    <h3 class="text-lg md:text-xl font-bold text-gray-800 mb-1">{{ $plan->project->business_name }}</h3>
+                                    <p class="text-sm md:text-base text-gray-600 flex items-center gap-2">
+                                        <span class="material-icons text-sm">calendar_month</span>
+                                        {{ $plan->month }} {{ $plan->year }}
+                                    </p>
                                 </div>
-                                <span class="px-2 py-1 text-xs rounded-full bg-{{ $plan->status_color }}-100 text-{{ $plan->status_color }}-800 flex-shrink-0">
+                                <span class="px-3 py-1 text-xs rounded-full bg-{{ $plan->status_color }}-100 text-{{ $plan->status_color }}-800 flex-shrink-0">
                                     {{ $plan->status_badge }}
                                 </span>
                             </div>
-                            <div class="flex items-center gap-4 mb-3 text-sm text-gray-600">
-                                <div class="flex items-center gap-1">
-                                    <span class="material-icons text-xs">flag</span>
-                                    <span>{{ $plan->goals->count() }} هدف</span>
+
+                            @if($plan->description)
+                                <p class="text-sm text-gray-600 mb-4 line-clamp-2">{{ Str::limit($plan->description, 100) }}</p>
+                            @endif
+
+                            <div class="flex items-center gap-4 mb-4 pt-4 border-t border-gray-100">
+                                <div class="flex items-center gap-2 text-sm text-gray-600">
+                                    <div class="w-8 h-8 bg-purple-50 rounded-lg flex items-center justify-center">
+                                        <span class="material-icons text-purple-600 text-sm">flag</span>
+                                    </div>
+                                    <span class="font-medium">{{ $plan->goals->count() }}</span>
+                                    <span class="text-gray-500">هدف</span>
                                 </div>
-                                <div class="flex items-center gap-1">
-                                    <span class="material-icons text-xs">people</span>
-                                    <span>{{ $plan->employees->count() }} موظف</span>
+                                <div class="flex items-center gap-2 text-sm text-gray-600">
+                                    <div class="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
+                                        <span class="material-icons text-blue-600 text-sm">people</span>
+                                    </div>
+                                    <span class="font-medium">{{ $plan->employees->count() }}</span>
+                                    <span class="text-gray-500">موظف</span>
                                 </div>
                             </div>
-                            <div class="flex items-center gap-2 pt-3 border-t border-gray-200">
-                                <a href="{{ route('monthly-plans.show', $plan) }}" class="flex-1 text-center px-3 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium">
+
+                            <div class="flex items-center gap-2 pt-4 border-t border-gray-100">
+                                <a href="{{ route('monthly-plans.show', $plan) }}" class="flex-1 text-center px-3 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium flex items-center justify-center gap-1">
+                                    <span class="material-icons text-sm">visibility</span>
                                     عرض
                                 </a>
-                                <a href="{{ route('monthly-plans.edit', $plan) }}" class="flex-1 text-center px-3 py-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors text-sm font-medium">
+                                <a href="{{ route('monthly-plans.edit', $plan) }}" class="flex-1 text-center px-3 py-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors text-sm font-medium flex items-center justify-center gap-1">
+                                    <span class="material-icons text-sm">edit</span>
                                     تعديل
                                 </a>
-                                <button onclick="confirmDelete('{{ route('monthly-plans.destroy', $plan) }}', 'تأكيد حذف الخطة', 'هل أنت متأكد من حذف الخطة الشهرية {{ $plan->month }} {{ $plan->year }}؟')" class="px-3 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors" title="حذف">
+                                <button onclick="confirmDelete('{{ route('monthly-plans.destroy', $plan) }}', 'تأكيد حذف الحملة', 'هل أنت متأكد من حذف الحملة الإعلانية {{ $plan->month }} {{ $plan->year }}؟')" class="px-3 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors flex items-center justify-center" title="حذف">
                                     <span class="material-icons text-sm">delete</span>
                                 </button>
                             </div>
@@ -137,11 +106,11 @@
             @else
                 <div class="text-center py-8 md:py-12 px-4">
                     <span class="material-icons text-gray-400 text-4xl md:text-6xl mb-3 md:mb-4">calendar_month</span>
-                    <h3 class="text-base md:text-lg font-medium text-gray-900 mb-2">لا توجد خطط شهرية</h3>
-                    <p class="text-sm md:text-base text-gray-500 mb-4 md:mb-6">ابدأ بإنشاء خطة شهرية جديدة للمشاريع</p>
+                    <h3 class="text-base md:text-lg font-medium text-gray-900 mb-2">لا توجد حملات إعلانية</h3>
+                    <p class="text-sm md:text-base text-gray-500 mb-4 md:mb-6">ابدأ بإنشاء حملة إعلانية جديدة للمشاريع</p>
                     <a href="{{ route('monthly-plans.create') }}" class="btn-primary text-white px-4 md:px-6 py-2.5 md:py-3 rounded-xl inline-flex items-center hover:no-underline text-sm md:text-base">
                         <span class="material-icons text-xs md:text-sm ml-2">add</span>
-                        إضافة خطة شهرية جديدة
+                        إضافة حملة إعلانية جديدة
                     </a>
                 </div>
             @endif

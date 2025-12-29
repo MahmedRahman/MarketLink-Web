@@ -83,26 +83,26 @@
                         </div>
 
                         <!-- Month -->
-                        <div>
+                        <div class="hidden">
                             <label for="month" class="block text-sm font-medium text-gray-700 mb-2">
-                                الشهر <span class="text-red-500">*</span>
+                                الشهر
                             </label>
                             <select
                                 id="month"
                                 name="month"
-                                required
                                 class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
                             >
-                                <option value="">اختر الشهر</option>
                                 @php
                                     $months = [
                                         1 => 'يناير', 2 => 'فبراير', 3 => 'مارس', 4 => 'أبريل',
                                         5 => 'مايو', 6 => 'يونيو', 7 => 'يوليو', 8 => 'أغسطس',
                                         9 => 'سبتمبر', 10 => 'أكتوبر', 11 => 'نوفمبر', 12 => 'ديسمبر'
                                     ];
+                                    $currentMonth = date('n');
+                                    $currentMonthName = $months[$currentMonth];
                                 @endphp
                                 @foreach($months as $num => $name)
-                                    <option value="{{ $name }}" data-month="{{ $num }}" {{ old('month') == $name ? 'selected' : '' }}>
+                                    <option value="{{ $name }}" data-month="{{ $num }}" {{ (old('month', $currentMonthName) == $name) ? 'selected' : '' }}>
                                         {{ $name }}
                                     </option>
                                 @endforeach
@@ -113,9 +113,9 @@
                         </div>
 
                         <!-- Year -->
-                        <div>
+                        <div class="hidden">
                             <label for="year" class="block text-sm font-medium text-gray-700 mb-2">
-                                السنة <span class="text-red-500">*</span>
+                                السنة
                             </label>
                             <input
                                 type="number"
@@ -124,10 +124,9 @@
                                 value="{{ old('year', date('Y')) }}"
                                 min="2020"
                                 max="2100"
-                                required
                                 class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
                             />
-                            <input type="hidden" id="month_number" name="month_number" value="{{ old('month_number') }}">
+                            <input type="hidden" id="month_number" name="month_number" value="{{ old('month_number', date('n')) }}">
                             @error('year')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
@@ -214,7 +213,7 @@
                 </div>
 
                 <!-- Employees Section -->
-                <div class="form-section space-y-4 md:space-y-6">
+                <div class="form-section space-y-4 md:space-y-6 hidden">
                     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                         <div>
                             <h3 class="text-base md:text-lg font-semibold text-gray-800">الموظفين المشاركين <span class="text-red-500">*</span></h3>
@@ -422,23 +421,18 @@ $(document).ready(function() {
         $(this).text(allSelected ? 'إلغاء تحديد الكل' : 'تحديد الكل');
     });
 
-    // التحقق من اختيار موظف واحد على الأقل قبل الإرسال
-    $('#monthly-plan-form').on('submit', function(e) {
-        const checkedEmployees = $('.employee-checkbox:checked').length;
-        if (checkedEmployees === 0) {
-            e.preventDefault();
-            alert('يرجى اختيار موظف واحد على الأقل');
-            // إظهار رسالة الخطأ
-            if (!$('#employee-error-message').length) {
-                $('#employee_ids-error').after('<p id="employee-error-message" class="mt-1 text-sm text-red-600">يرجى اختيار موظف واحد على الأقل</p>');
-            }
-            // التمرير إلى قسم الموظفين
-            $('html, body').animate({
-                scrollTop: $('.form-section').last().offset().top - 100
-            }, 500);
-            return false;
-        }
+    // تحديث month_number عند تغيير الشهر
+    $('#month').on('change', function() {
+        const selectedOption = $(this).find('option:selected');
+        const monthNumber = selectedOption.data('month');
+        $('#month_number').val(monthNumber);
     });
+    
+    // تعيين القيمة الأولية لـ month_number
+    const initialMonthNumber = $('#month').find('option:selected').data('month');
+    if (initialMonthNumber) {
+        $('#month_number').val(initialMonthNumber);
+    }
 });
 </script>
 @endsection

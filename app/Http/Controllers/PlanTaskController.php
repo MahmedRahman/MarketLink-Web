@@ -71,6 +71,7 @@ class PlanTaskController extends Controller
             'assigned_to' => 'nullable|exists:employees,id',
             'list_type' => 'nullable|in:tasks,employee,ready,publish',
             'due_date' => 'nullable|date',
+            'publish_date' => 'nullable|date',
             'color' => ['nullable', 'string', 'regex:/^#[A-Fa-f0-9]{6}$/'],
             'status' => 'nullable|in:todo,in_progress,review,done,publish,archived',
             'links' => 'nullable|array',
@@ -144,6 +145,7 @@ class PlanTaskController extends Controller
             'list_type' => $listType,
             'order' => $maxOrder + 1,
             'due_date' => $request->due_date,
+            'publish_date' => $request->publish_date,
             'color' => $request->color ?? '#6366f1',
             'task_data' => !empty($taskData) ? $taskData : null,
         ]);
@@ -283,6 +285,7 @@ class PlanTaskController extends Controller
                 'idea' => 'nullable|string',
                 'assigned_to' => 'nullable|exists:employees,id',
                 'due_date' => 'nullable|date',
+                'publish_date' => 'nullable|date',
                 'color' => ['nullable', 'string', 'regex:/^#[A-Fa-f0-9]{6}$/'],
                 'status' => $isPartialUpdate ? 'required|in:todo,in_progress,review,done,publish,archived' : 'required|in:todo,in_progress,review,done,publish,archived',
                 'links' => 'nullable|array',
@@ -489,6 +492,9 @@ class PlanTaskController extends Controller
                 if ($request->has('due_date')) {
                     $updateData['due_date'] = $request->due_date ?: null;
                 }
+                if ($request->has('publish_date')) {
+                    $updateData['publish_date'] = $request->publish_date ?: null;
+                }
                 if ($request->has('color')) {
                     $updateData['color'] = $request->color;
                 }
@@ -518,6 +524,7 @@ class PlanTaskController extends Controller
                     'design' => $request->design ?? null,
                     'assigned_to' => $newAssignedTo,
                     'due_date' => $request->due_date ?: null,
+                    'publish_date' => $request->publish_date ?: null,
                     'status' => $request->status,
                     'list_type' => $newListType,
                     'color' => $request->color ?? '#6366f1',
@@ -846,6 +853,95 @@ class PlanTaskController extends Controller
             return response()->json([
                 'success' => false,
                 'error' => 'حدث خطأ أثناء تحديث الموظف: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Bulk assign tasks to employee
+     */
+    public function bulkAssign(Request $request, MonthlyPlan $monthlyPlan): JsonResponse
+    {
+        if ($monthlyPlan->organization_id !== $request->user()->organization_id) {
+            return response()->json(['error' => 'غير مصرح'], 403);
+        }
+
+        $request->validate([
+            'task_ids' => 'required|array|min:1',
+            'task_ids.*' => 'required|integer|exists:plan_tasks,id',
+            'assigned_to' => 'nullable|exists:employees,id',
+            'list_type' => 'required|in:tasks,employee,ready,publish',
+        ]);
+
+        try {
+            $taskIds = $request->task_ids;
+            $assignedTo = $request->assigned_to;
+            $listType = $request->list_type;
+
+            // التحقق من أن جميع المهام تنتمي لهذه الخطة
+            $tasks = PlanTask::whereIn('id', $taskIds)
+                ->where('monthly_plan_id', $monthlyPlan->id)
+                ->get();
+
+            if ($tasks->count() !== count($taskIds)) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'بعض المهام المحددة غير موجودة أو لا تنتمي لهذه الخطة'
+                ], 400);
+            }
+
+            // التحقق من أن الموظف ينتمي للمنظمة إذا تم تحديده
+            if ($assignedTo) {
+                $employee = Employee::where('id', $assignedTo)
+                    ->where('organization_id', $monthlyPlan->organization_id)
+                    ->first();
+
+                if (!$employee) {
+                    return response()->json([
+                        'success' => false,
+                        'error' => 'الموظف المحدد غير موجود'
+                    ], 400);
+                }
+            }
+
+            // تحديث جميع المهام
+            $updatedCount = 0;
+            foreach ($tasks as $task) {
+                $oldListType = $task->list_type;
+                $oldAssignedTo = $task->assigned_to;
+
+                $task->update([
+                    'assigned_to' => $assignedTo,
+                    'list_type' => $listType,
+                ]);
+
+                // إرسال webhook إذا تم تعيين المهمة لموظف
+                if ($assignedTo && $task->assignedEmployee) {
+                    $this->sendTaskWebhook($task);
+                }
+
+                // تحديث achieved_value إذا كانت المهمة مرتبطة بهدف
+                if ($task->goal_id && in_array($listType, ['ready', 'publish'])) {
+                    $this->updateGoalAchievedValue($task->goal_id);
+                }
+
+                $updatedCount++;
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => "تم تعيين {$updatedCount} مهمة بنجاح",
+                'updated_count' => $updatedCount
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error in bulk assign: ' . $e->getMessage(), [
+                'task_ids' => $request->task_ids ?? [],
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'success' => false,
+                'error' => 'حدث خطأ أثناء تعيين المهام: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -2385,6 +2481,133 @@ class PlanTaskController extends Controller
             return response()->json([
                 'success' => false,
                 'error' => 'حدث خطأ أثناء إنشاء البرومبت: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Generate design image using Google AI Sandbox API
+     */
+    public function generateDesignImage(Request $request): JsonResponse
+    {
+        try {
+            set_time_limit(180); // Increase execution time for API calls
+            
+            $request->validate([
+                'task_id' => 'required|integer|exists:plan_tasks,id',
+                'design' => 'required|string',
+            ]);
+
+            $taskId = $request->input('task_id');
+            $design = $request->input('design', '');
+
+            if (empty(trim($design))) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'يرجى إدخال محتوى التصميم'
+                ], 400);
+            }
+
+            // Use exact values from curl command - no config needed
+            $projectId = 'f49651bf-fd2d-4ef0-b2e6-98813b75f4a6';
+            $bearerToken = 'ya29.a0Aa7pCA861v1m4DB60zfGzizfx5ZpvvMpUdxzOOnovFXZRharBv4biTfF_EMNce6tsKDvrJk4arF9ai1aJqTL164gsND0jpvHGe4ILXHkodsMF1OgMtzftc5PT9eau5pca6_oFcz06u-B3UO8qOSc7VIIxLvDkNnHuMfI6jtx1kHHXEWgmXJY2-OfdflYI-QVru5uuRdG3dR-jxnhczv7DJCd41MceWeNuozHBcmy8mbfpggmgzxRObKLEvluuvALpOlUanenbSrTzjDCDkSdcQ0Czs0PBQgnJwLcB-HJmw4i_MSzL7OPikzwLFEUlVKvPtKSRsZBjllgXnRSFrVLqtDenL-KU23u6BjifQ3-cBMaCgYKAZ8SARISFQHGX2Mi4fk-SgZjanwMUWB35poyYw0370';
+            
+            // Generate session ID (timestamp in milliseconds) - matching curl format
+            $sessionId = ';' . round(microtime(true) * 1000);
+
+            // Use the exact recaptchaToken from the curl example (you may need to generate this dynamically)
+            $recaptchaToken = "0cAFcWeA6pu6UCsu4StOnazrKaXFjnMm3p-HkNXgkwRftPl1uYq72gW3Z01RzTeSwPtlDVqRapwtragXOaGtwOFwKgx8rmuhPNXYWtaKiNpd81Bqg82hr9Tl6uoMxMTJY5TotIkl0KUsPGWnbh2Sq3ds2DGypz01xjvOLp9qyW7w1Lg1D5xVr7RfOluA7qCNHyb1P_BRZXN0AW076fHME0gRkgHBHOzAw6rCI2u3WVa1V9B38DtNyiY_RD0B56MkPxt5Lne6POEQxu-Z3abjtREM3oDzw-j5xocRW_8Fk17WLh9DAzzY4I_hxFIS4aJwRjbWhJ2sKrlmHq73xHIZ6yHIcqxFpXgHKQFCczjGqpOdc-Ij8l4DoAqIYc5mXTJFzefyTHoxjZXJ_mz_w_gf46B_xCAxniOMff9_KJU0f3NS-tk5l1jp16gO5tVG3_D1KG3oy3CST8X4J0WP44joMrZIx0_-2vGC89C-dcnJbyIbPJUaLT25YTwq5U-OYjVpQfCrHwiFFd-MnOPvHtZ9iqb6GCXKkQPCD6ErbQ5nZQXRv9lTaGPlIsOIWEiCjOaEF9UOH7hTOlGlg1gXspPFmh3KN2a_D46vz6ndhuGZRdZLIGQuqUPGwruj9ciNr-MDtU461ZlSaZci-6Zgf5nB9qTUu_tpMw3UYtea6m9VbBAOMdy-4riI96Nc0eim1ngsEK0jC3TOvQFhtGio6iaSSYnQW_DGlhasdF5-bqUBBSCy_twimrh20ppHH63DX2wcNtUyLGpwvGoOvKIR5tmob_fLnm4XvkFggdEfo1CR_pHD1hfcYcYv09EZCp2wCONMZUi3tzi5pfcZNW4C7ZTRSurjFB2bxWOH4dWmQS82z1tcyq91d7Mn73JjrH9J6nDTus5vLy9aVUBYaYdBhaBakmcEPkjgkVQ2q7xya-v2rvia0YzbYTjUHkPON8IdXQ54bLPKucOfShUvGofEqHgyvBjIXXrDM1N82W9kdmV-i3nflQTGIT679aEg1xNJvKqjUfjCKDkfG69e8yO6rE9bhnstNC9Axf6JRi90rDRXEH0umCGw6eENLbZX00vCBga0E660M8qEiSOep4F2qEiBtC6onhh9OVRu2to5mMoo_v8rOZIKC2e7IaUSZ638rkVYDY0IU_foM8NHH9Hvd63wNaVBOsisgVHdZ9Th3giaTh1sFEyKnQ_TaAdpM4tFNB-IuECWCY_A2IF1q2mCAcbnf5VD838WJVlOHe3wZt0YFjeoVxmmWaV-asm6hHznob0o8cQKK4BaGpFE9rmWoWeT4HKeeH_mV8SP8p3bBC60sLUtfT3CTzC0tZK0OUQxk6j4I-nSq0g9u3rBuLQJkYt_r51lBrSUkeTVneYToFFSd_L8cGu8KCa6ZJqh9Lt1Go3hcEd-40C23JsY7gzlRJEe9tduFBuyBdwrGppzqnieUGwrfw7RRca-hXDclP_lLQ0HmHHIsxGCZmQGEvES7QsVOH3s3zTko3lca-wpVE4vllfZCplrB3vnz1b3AnPNXjnMUZki0xsdPJT62xx38Uelu-IhSE7ZnnU_kBMFDKyKD1pcUxdWDSkZ7fDzQ";
+
+            // Prepare the request body - matching the exact structure from curl
+            $requestBody = [
+                'clientContext' => [
+                    'recaptchaToken' => $recaptchaToken,
+                    'sessionId' => $sessionId
+                ],
+                'requests' => [
+                    [
+                        'clientContext' => [
+                            'recaptchaToken' => $recaptchaToken,
+                            'sessionId' => $sessionId,
+                            'projectId' => $projectId,
+                            'tool' => 'PINHOLE'
+                        ],
+                        'seed' => 679341, // Using the same seed from curl example
+                        'imageModelName' => 'GEM_PIX_2',
+                        'imageAspectRatio' => 'IMAGE_ASPECT_RATIO_PORTRAIT',
+                        'prompt' => $design, // Only change: use the design input as prompt
+                        'imageInputs' => []
+                    ]
+                ]
+            ];
+
+            // Make API call to Google AI Sandbox - matching curl command exactly
+            $response = Http::timeout(150)
+                ->withHeaders([
+                    'sec-ch-ua-platform' => '"macOS"',
+                    'Authorization' => 'Bearer ' . $bearerToken,
+                    'User-Agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36',
+                    'sec-ch-ua' => '"Google Chrome";v="143", "Chromium";v="143", "Not A(Brand";v="24"',
+                    'Content-Type' => 'text/plain;charset=UTF-8',
+                    'sec-ch-ua-mobile' => '?0',
+                    'Accept' => '*/*',
+                    'X-Browser-Channel' => 'stable',
+                    'X-Browser-Year' => '2025',
+                    'X-Browser-Validation' => 'AUXUCdutEJ+6gl6bYtz7E2kgIT4=',
+                    'X-Browser-Copyright' => 'Copyright 2025 Google LLC. All Rights reserved.',
+                    'X-Client-Data' => 'CJG2yQEIprbJAQipncoBCPT5ygEIlaHLAQiGoM0BCPmdzwEYsZvPAQ==',
+                    'Sec-Fetch-Site' => 'cross-site',
+                    'Sec-Fetch-Mode' => 'cors',
+                    'Sec-Fetch-Dest' => 'empty',
+                    'host' => 'aisandbox-pa.googleapis.com',
+                ])
+                ->withBody(json_encode($requestBody), 'text/plain;charset=UTF-8')
+                ->post("https://aisandbox-pa.googleapis.com/v1/projects/{$projectId}/flowMedia:batchGenerateImages");
+
+            if (!$response->successful()) {
+                Log::error('Google AI Sandbox API error', [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'error' => 'فشل في إنشاء الصورة: ' . ($response->json()['error']['message'] ?? 'خطأ غير معروف')
+                ], 500);
+            }
+
+            $responseData = $response->json();
+
+            // Extract the base64 encoded image
+            if (isset($responseData['media']) && is_array($responseData['media']) && count($responseData['media']) > 0) {
+                $firstMedia = $responseData['media'][0];
+                if (isset($firstMedia['image']['generatedImage']['encodedImage'])) {
+                    $encodedImage = $firstMedia['image']['generatedImage']['encodedImage'];
+                    
+                    // Remove data URL prefix if present
+                    $encodedImage = preg_replace('/^data:image\/[a-z]+;base64,/', '', $encodedImage);
+                    
+                    return response()->json([
+                        'success' => true,
+                        'image' => $encodedImage
+                    ]);
+                }
+            }
+
+            return response()->json([
+                'success' => false,
+                'error' => 'لم يتم العثور على الصورة في الاستجابة'
+            ], 500);
+
+        } catch (\Exception $e) {
+            Log::error('Error generating design image: ' . $e->getMessage(), [
+                'task_id' => $request->input('task_id'),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'error' => 'حدث خطأ أثناء إنشاء الصورة: ' . $e->getMessage(),
             ], 500);
         }
     }

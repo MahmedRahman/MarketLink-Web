@@ -97,6 +97,7 @@ Route::middleware(['auth', \App\Http\Middleware\CheckTrialStatus::class])->group
            
            // Monthly Plans Routes
            Route::resource('monthly-plans', \App\Http\Controllers\MonthlyPlanController::class);
+           Route::post('monthly-plans/{monthlyPlan}/generate-tasks', [\App\Http\Controllers\MonthlyPlanController::class, 'generateTasks'])->name('monthly-plans.generate-tasks');
            Route::get('monthly-plans/{monthlyPlan}/tasks/create', [\App\Http\Controllers\PlanTaskController::class, 'create'])->name('monthly-plans.tasks.create');
            Route::post('monthly-plans/{monthlyPlan}/tasks', [\App\Http\Controllers\PlanTaskController::class, 'store'])->name('monthly-plans.tasks.store');
            Route::get('monthly-plans/{monthlyPlan}/tasks/{task}', [\App\Http\Controllers\PlanTaskController::class, 'show'])->name('monthly-plans.tasks.show');
@@ -105,6 +106,7 @@ Route::middleware(['auth', \App\Http\Middleware\CheckTrialStatus::class])->group
            Route::post('monthly-plans/{monthlyPlan}/tasks/{task}/comments', [\App\Http\Controllers\PlanTaskController::class, 'storeComment'])->name('monthly-plans.tasks.comments.store');
            Route::post('monthly-plans/{monthlyPlan}/tasks/{task}/move', [\App\Http\Controllers\PlanTaskController::class, 'move'])->name('monthly-plans.tasks.move');
            Route::post('monthly-plans/{monthlyPlan}/tasks/{task}/quick-assign', [\App\Http\Controllers\PlanTaskController::class, 'quickAssign'])->name('monthly-plans.tasks.quick-assign');
+           Route::post('monthly-plans/{monthlyPlan}/tasks/bulk-assign', [\App\Http\Controllers\PlanTaskController::class, 'bulkAssign'])->name('monthly-plans.tasks.bulk-assign');
            Route::delete('monthly-plans/{monthlyPlan}/tasks/{task}', [\App\Http\Controllers\PlanTaskController::class, 'destroy'])->name('monthly-plans.tasks.destroy');
            Route::get('monthly-plans/{monthlyPlan}/tasks/{task}/files/{file}/view', [\App\Http\Controllers\PlanTaskController::class, 'viewFile'])->name('monthly-plans.tasks.files.view');
            Route::get('monthly-plans/{monthlyPlan}/tasks/{task}/files/{file}/download', [\App\Http\Controllers\PlanTaskController::class, 'downloadFile'])->name('monthly-plans.tasks.files.download');
@@ -118,6 +120,7 @@ Route::middleware(['auth', \App\Http\Middleware\CheckTrialStatus::class])->group
            Route::post('/tasks/show-post-prompt', [\App\Http\Controllers\PlanTaskController::class, 'showPostPrompt'])->name('tasks.show-post-prompt');
            Route::post('/tasks/suggest-design', [\App\Http\Controllers\PlanTaskController::class, 'suggestDesign'])->name('tasks.suggest-design');
            Route::post('/tasks/show-design-prompt', [\App\Http\Controllers\PlanTaskController::class, 'showDesignPrompt'])->name('tasks.show-design-prompt');
+           Route::post('/tasks/generate-design-image', [\App\Http\Controllers\PlanTaskController::class, 'generateDesignImage'])->name('tasks.generate-design-image');
            
            // Reports Routes
            Route::get('reports', [ReportsController::class, 'index'])->name('reports.index');

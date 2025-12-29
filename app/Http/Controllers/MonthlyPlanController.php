@@ -6,6 +6,7 @@ use App\Models\MonthlyPlan;
 use App\Models\Project;
 use App\Models\Employee;
 use App\Models\MonthlyPlanGoal;
+use App\Models\PlanTask;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -32,12 +33,6 @@ class MonthlyPlanController extends Controller
             ->orderBy('name')
             ->get();
         
-        // التحقق من وجود موظفين
-        if ($employees->isEmpty()) {
-            return redirect()->route('employees.create')
-                ->with('info', 'يجب إضافة موظف واحد على الأقل قبل إنشاء خطة شهرية');
-        }
-        
         return view('monthly-plans.create', compact('projects', 'employees'));
     }
 
@@ -45,20 +40,21 @@ class MonthlyPlanController extends Controller
     {
         $request->validate([
             'project_id' => 'required|exists:projects,id',
-            'month' => 'required|string',
-            'year' => 'required|integer|min:2020|max:2100',
-            'month_number' => 'required|integer|min:1|max:12',
+            'month' => 'nullable|string',
+            'year' => 'nullable|integer|min:2020|max:2100',
+            'month_number' => 'nullable|integer|min:1|max:12',
             'description' => 'nullable|string',
             'goals' => 'required|array|min:1',
             'goals.*.goal_type' => 'required|string',
             'goals.*.goal_name' => 'required|string|max:255',
             'goals.*.target_value' => 'required|integer|min:0',
+            'goals.*.posts' => 'nullable|integer|min:0',
             'goals.*.carousel' => 'nullable|integer|min:0',
             'goals.*.reels' => 'nullable|integer|min:0',
-            'goals.*.video' => 'nullable|integer|min:0',
-            'goals.*.photo' => 'nullable|integer|min:0',
+            'goals.*.ads_campaigns' => 'nullable|integer|min:0',
+            'goals.*.other_goals' => 'nullable|integer|min:0',
             'goals.*.description' => 'nullable|string',
-            'employee_ids' => 'required|array|min:1',
+            'employee_ids' => 'nullable|array',
             'employee_ids.*' => 'exists:employees,id',
         ]);
 
@@ -72,26 +68,39 @@ class MonthlyPlanController extends Controller
                 ->where('organization_id', $organizationId)
                 ->firstOrFail();
             
-            // التحقق من عدم وجود خطة موجودة لنفس المشروع والشهر
-            $existingPlan = MonthlyPlan::where('project_id', $request->project_id)
-                ->where('organization_id', $organizationId)
-                ->where('year', $request->year)
-                ->where('month_number', $request->month_number)
-                ->first();
+            // استخدام القيم الافتراضية إذا لم يتم إرسالها
+            $currentDate = Carbon::now();
+            $months = [
+                1 => 'يناير', 2 => 'فبراير', 3 => 'مارس', 4 => 'أبريل',
+                5 => 'مايو', 6 => 'يونيو', 7 => 'يوليو', 8 => 'أغسطس',
+                9 => 'سبتمبر', 10 => 'أكتوبر', 11 => 'نوفمبر', 12 => 'ديسمبر'
+            ];
+            $month = $request->month ?? $months[$currentDate->month];
+            $year = $request->year ?? $currentDate->year;
+            $monthNumber = $request->month_number ?? $currentDate->month;
             
-            if ($existingPlan) {
-                return redirect()->back()
-                    ->with('error', 'يوجد بالفعل خطة شهرية لنفس المشروع في نفس الشهر. يرجى اختيار شهر آخر أو مشروع آخر.')
-                    ->withInput();
+            // التحقق من عدم وجود خطة موجودة لنفس المشروع والشهر (فقط إذا تم تحديد الشهر والسنة)
+            if ($request->has('year') && $request->has('month_number')) {
+                $existingPlan = MonthlyPlan::where('project_id', $request->project_id)
+                    ->where('organization_id', $organizationId)
+                    ->where('year', $year)
+                    ->where('month_number', $monthNumber)
+                    ->first();
+                
+                if ($existingPlan) {
+                    return redirect()->back()
+                        ->with('error', 'يوجد بالفعل خطة شهرية لنفس المشروع في نفس الشهر. يرجى اختيار شهر آخر أو مشروع آخر.')
+                        ->withInput();
+                }
             }
             
             // إنشاء الخطة الشهرية
             $plan = MonthlyPlan::create([
                 'project_id' => $request->project_id,
                 'organization_id' => $organizationId,
-                'month' => $request->month,
-                'year' => $request->year,
-                'month_number' => $request->month_number,
+                'month' => $month,
+                'year' => $year,
+                'month_number' => $monthNumber,
                 'description' => $request->description,
                 'status' => 'draft',
             ]);
@@ -104,23 +113,26 @@ class MonthlyPlanController extends Controller
                     'goal_name' => $goalData['goal_name'],
                     'target_value' => $goalData['target_value'],
                     'achieved_value' => 0,
+                    'posts' => $goalData['posts'] ?? 0,
                     'carousel' => $goalData['carousel'] ?? 0,
                     'reels' => $goalData['reels'] ?? 0,
-                    'video' => $goalData['video'] ?? 0,
-                    'photo' => $goalData['photo'] ?? 0,
+                    'ads_campaigns' => $goalData['ads_campaigns'] ?? 0,
+                    'other_goals' => $goalData['other_goals'] ?? 0,
                     'description' => $goalData['description'] ?? null,
                 ]);
             }
             
-            // إضافة الموظفين
-            $employeeIds = $request->employee_ids;
-            // التحقق من أن الموظفين يتبعون المنظمة
-            $validEmployees = Employee::whereIn('id', $employeeIds)
-                ->where('organization_id', $organizationId)
-                ->pluck('id')
-                ->toArray();
-            
-            $plan->employees()->attach($validEmployees);
+            // إضافة الموظفين (إذا تم اختيارهم)
+            if ($request->has('employee_ids') && !empty($request->employee_ids)) {
+                $employeeIds = $request->employee_ids;
+                // التحقق من أن الموظفين يتبعون المنظمة
+                $validEmployees = Employee::whereIn('id', $employeeIds)
+                    ->where('organization_id', $organizationId)
+                    ->pluck('id')
+                    ->toArray();
+                
+                $plan->employees()->attach($validEmployees);
+            }
             
             DB::commit();
             
@@ -200,12 +212,13 @@ class MonthlyPlanController extends Controller
             'goals.*.goal_type' => 'required|string',
             'goals.*.goal_name' => 'required|string|max:255',
             'goals.*.target_value' => 'required|integer|min:0',
+            'goals.*.posts' => 'nullable|integer|min:0',
             'goals.*.carousel' => 'nullable|integer|min:0',
             'goals.*.reels' => 'nullable|integer|min:0',
-            'goals.*.video' => 'nullable|integer|min:0',
-            'goals.*.photo' => 'nullable|integer|min:0',
+            'goals.*.ads_campaigns' => 'nullable|integer|min:0',
+            'goals.*.other_goals' => 'nullable|integer|min:0',
             'goals.*.description' => 'nullable|string',
-            'employee_ids' => 'required|array|min:1',
+            'employee_ids' => 'nullable|array',
             'employee_ids.*' => 'exists:employees,id',
         ]);
 
@@ -263,10 +276,11 @@ class MonthlyPlanController extends Controller
                             'goal_type' => $goalData['goal_type'],
                             'goal_name' => $goalData['goal_name'],
                             'target_value' => $goalData['target_value'],
+                            'posts' => $goalData['posts'] ?? 0,
                             'carousel' => $goalData['carousel'] ?? 0,
                             'reels' => $goalData['reels'] ?? 0,
-                            'video' => $goalData['video'] ?? 0,
-                            'photo' => $goalData['photo'] ?? 0,
+                            'ads_campaigns' => $goalData['ads_campaigns'] ?? 0,
+                            'other_goals' => $goalData['other_goals'] ?? 0,
                             'description' => $goalData['description'] ?? null,
                         ]);
                     }
@@ -278,24 +292,30 @@ class MonthlyPlanController extends Controller
                         'goal_name' => $goalData['goal_name'],
                         'target_value' => $goalData['target_value'],
                         'achieved_value' => 0,
+                        'posts' => $goalData['posts'] ?? 0,
                         'carousel' => $goalData['carousel'] ?? 0,
                         'reels' => $goalData['reels'] ?? 0,
-                        'video' => $goalData['video'] ?? 0,
-                        'photo' => $goalData['photo'] ?? 0,
+                        'ads_campaigns' => $goalData['ads_campaigns'] ?? 0,
+                        'other_goals' => $goalData['other_goals'] ?? 0,
                         'description' => $goalData['description'] ?? null,
                     ]);
                 }
             }
             
-            // تحديث الموظفين
-            $employeeIds = $request->employee_ids;
-            // التحقق من أن الموظفين يتبعون المنظمة
-            $validEmployees = Employee::whereIn('id', $employeeIds)
-                ->where('organization_id', $organizationId)
-                ->pluck('id')
-                ->toArray();
-            
-            $monthlyPlan->employees()->sync($validEmployees);
+            // تحديث الموظفين (إذا تم اختيارهم)
+            if ($request->has('employee_ids') && !empty($request->employee_ids)) {
+                $employeeIds = $request->employee_ids;
+                // التحقق من أن الموظفين يتبعون المنظمة
+                $validEmployees = Employee::whereIn('id', $employeeIds)
+                    ->where('organization_id', $organizationId)
+                    ->pluck('id')
+                    ->toArray();
+                
+                $monthlyPlan->employees()->sync($validEmployees);
+            } else {
+                // إذا لم يتم اختيار موظفين، إزالة جميع الموظفين
+                $monthlyPlan->employees()->sync([]);
+            }
             
             DB::commit();
             
@@ -320,5 +340,144 @@ class MonthlyPlanController extends Controller
 
         return redirect()->route('monthly-plans.index')
             ->with('success', 'تم حذف الخطة بنجاح');
+    }
+
+    public function generateTasks(Request $request, MonthlyPlan $monthlyPlan)
+    {
+        if ($monthlyPlan->organization_id !== $request->user()->organization_id) {
+            abort(403);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $goals = $monthlyPlan->goals;
+            $employees = $monthlyPlan->employees;
+            $tasksCreated = 0;
+
+            // الحصول على آخر ترتيب
+            $maxOrder = PlanTask::where('monthly_plan_id', $monthlyPlan->id)
+                ->max('order') ?? 0;
+
+            foreach ($goals as $goal) {
+                $order = $maxOrder + 1;
+
+                // إنشاء مهام للبوستات
+                if (($goal->posts ?? 0) > 0) {
+                    for ($i = 1; $i <= $goal->posts; $i++) {
+                        PlanTask::create([
+                            'monthly_plan_id' => $monthlyPlan->id,
+                            'goal_id' => $goal->id,
+                            'assigned_to' => null,
+                            'title' => "بوست {$i} - {$goal->goal_name}",
+                            'description' => "مهمة إنشاء بوست رقم {$i} للهدف: {$goal->goal_name}",
+                            'status' => 'todo',
+                            'list_type' => 'tasks',
+                            'order' => $order++,
+                            'color' => '#6366f1',
+                        ]);
+                        $tasksCreated++;
+                    }
+                }
+
+                // إنشاء مهام للكروسول
+                if (($goal->carousel ?? 0) > 0) {
+                    for ($i = 1; $i <= $goal->carousel; $i++) {
+                        PlanTask::create([
+                            'monthly_plan_id' => $monthlyPlan->id,
+                            'goal_id' => $goal->id,
+                            'assigned_to' => null,
+                            'title' => "كروسول {$i} - {$goal->goal_name}",
+                            'description' => "مهمة إنشاء كروسول رقم {$i} للهدف: {$goal->goal_name}",
+                            'status' => 'todo',
+                            'list_type' => 'tasks',
+                            'order' => $order++,
+                            'color' => '#8b5cf6',
+                        ]);
+                        $tasksCreated++;
+                    }
+                }
+
+                // إنشاء مهام للريلز
+                if (($goal->reels ?? 0) > 0) {
+                    for ($i = 1; $i <= $goal->reels; $i++) {
+                        PlanTask::create([
+                            'monthly_plan_id' => $monthlyPlan->id,
+                            'goal_id' => $goal->id,
+                            'assigned_to' => null,
+                            'title' => "ريلز {$i} - {$goal->goal_name}",
+                            'description' => "مهمة إنشاء ريلز رقم {$i} للهدف: {$goal->goal_name}",
+                            'status' => 'todo',
+                            'list_type' => 'tasks',
+                            'order' => $order++,
+                            'color' => '#ec4899',
+                        ]);
+                        $tasksCreated++;
+                    }
+                }
+
+                // إنشاء مهام لحملات الإعلانية
+                if (($goal->ads_campaigns ?? 0) > 0) {
+                    for ($i = 1; $i <= $goal->ads_campaigns; $i++) {
+                        PlanTask::create([
+                            'monthly_plan_id' => $monthlyPlan->id,
+                            'goal_id' => $goal->id,
+                            'assigned_to' => null,
+                            'title' => "حملة إعلانية {$i} - {$goal->goal_name}",
+                            'description' => "مهمة إنشاء حملة إعلانية رقم {$i} للهدف: {$goal->goal_name}",
+                            'status' => 'todo',
+                            'list_type' => 'tasks',
+                            'order' => $order++,
+                            'color' => '#f59e0b',
+                        ]);
+                        $tasksCreated++;
+                    }
+                }
+
+                // إنشاء مهام لأهداف أخرى
+                if (($goal->other_goals ?? 0) > 0) {
+                    for ($i = 1; $i <= $goal->other_goals; $i++) {
+                        PlanTask::create([
+                            'monthly_plan_id' => $monthlyPlan->id,
+                            'goal_id' => $goal->id,
+                            'assigned_to' => null,
+                            'title' => "هدف آخر {$i} - {$goal->goal_name}",
+                            'description' => "مهمة هدف آخر رقم {$i} للهدف: {$goal->goal_name}",
+                            'status' => 'todo',
+                            'list_type' => 'tasks',
+                            'order' => $order++,
+                            'color' => '#10b981',
+                        ]);
+                        $tasksCreated++;
+                    }
+                }
+            }
+
+            DB::commit();
+
+            if ($request->expectsJson() || $request->header('Accept') === 'application/json') {
+                return response()->json([
+                    'success' => true,
+                    'message' => "تم إنشاء {$tasksCreated} مهمة بنجاح",
+                    'tasks_created' => $tasksCreated
+                ]);
+            }
+
+            return redirect()->route('monthly-plans.show', $monthlyPlan)
+                ->with('success', "تم إنشاء {$tasksCreated} مهمة بنجاح");
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            if ($request->expectsJson() || $request->header('Accept') === 'application/json') {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'حدث خطأ أثناء إنشاء المهام: ' . $e->getMessage()
+                ], 500);
+            }
+
+            return redirect()->back()
+                ->with('error', 'حدث خطأ أثناء إنشاء المهام: ' . $e->getMessage());
+        }
     }
 }
