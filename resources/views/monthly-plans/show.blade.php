@@ -122,14 +122,12 @@
                         <span class="hidden sm:inline">تعيين المهام المختارة</span>
                         <span class="sm:hidden">تعيين</span>
                     </button>
-                </div>
-                <div class="flex items-center gap-2 w-full sm:w-auto hidden">
-                    <a href="{{ route('monthly-plans.tasks.create', $monthlyPlan) }}" class="flex items-center justify-center px-3 md:px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm md:text-base flex-1 sm:flex-initial">
+                    <a href="{{ route('monthly-plans.tasks.create', $monthlyPlan) }}" class="flex items-center justify-center px-3 md:px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm md:text-base">
                         <span class="material-icons text-xs md:text-sm ml-1 md:ml-2">add_task</span>
                         <span class="hidden sm:inline">إضافة مهمة جديدة</span>
                         <span class="sm:hidden">مهمة جديدة</span>
                     </a>
-                    <button onclick="showAddTaskModal()" class="btn-primary text-white px-3 md:px-4 py-2 rounded-lg flex items-center justify-center text-sm md:text-base flex-1 sm:flex-initial">
+                    <button onclick="showAddTaskModal()" class="btn-primary text-white px-3 md:px-4 py-2 rounded-lg flex items-center justify-center text-sm md:text-base">
                         <span class="material-icons text-xs md:text-sm ml-1 md:ml-2">add</span>
                         <span class="hidden sm:inline">إضافة مهمة سريعة</span>
                         <span class="sm:hidden">سريعة</span>
