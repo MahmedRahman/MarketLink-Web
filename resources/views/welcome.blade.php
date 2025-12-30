@@ -100,6 +100,7 @@
                     <span class="mr-3 text-xl font-bold text-white">MarketLink</span>
                 </div>
                 <div class="hidden md:flex items-center space-x-reverse space-x-4">
+                    <a href="{{ route('content-creation.index') }}" class="text-white hover:text-gray-200 px-4 py-2 transition-colors">إنشاء محتوى</a>
                     <a href="#features" class="text-white hover:text-gray-200 px-4 py-2 transition-colors">المميزات</a>
                     <a href="#pricing" class="text-white hover:text-gray-200 px-4 py-2 transition-colors">الأسعار</a>
                     <a href="#how-it-works" class="text-white hover:text-gray-200 px-4 py-2 transition-colors">كيف يعمل</a>
@@ -116,6 +117,7 @@
         <!-- Mobile Menu -->
         <div id="mobile-menu" class="hidden md:hidden bg-white/95 backdrop-blur-lg border-t border-white/20">
             <div class="px-4 py-4 space-y-2">
+                <a href="{{ route('content-creation.index') }}" class="block text-gray-800 hover:text-purple-600 px-4 py-2 rounded-lg transition-colors">إنشاء محتوى</a>
                 <a href="#features" class="block text-gray-800 hover:text-purple-600 px-4 py-2 rounded-lg transition-colors">المميزات</a>
                 <a href="#pricing" class="block text-gray-800 hover:text-purple-600 px-4 py-2 rounded-lg transition-colors">الأسعار</a>
                 <a href="#how-it-works" class="block text-gray-800 hover:text-purple-600 px-4 py-2 rounded-lg transition-colors">كيف يعمل</a>

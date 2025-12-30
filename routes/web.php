@@ -23,6 +23,7 @@ use App\Http\Controllers\Employee\EmployeeProfileController;
 use App\Http\Controllers\Api\TasksController;
 use App\Http\Controllers\MeetingController;
 use App\Http\Controllers\ContractController;
+use App\Http\Controllers\ContentCreationController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -32,6 +33,9 @@ Route::get('/', function () {
         ->get();
     return view('welcome', compact('plans'));
 })->name('welcome');
+
+Route::get('/content-creation', [ContentCreationController::class, 'index'])->name('content-creation.index');
+Route::post('/content-creation/generate', [ContentCreationController::class, 'generateContent'])->name('content-creation.generate');
 
 Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 
