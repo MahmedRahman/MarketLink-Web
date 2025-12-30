@@ -391,8 +391,10 @@
             const contentType = document.getElementById('content-type-select').value;
             const wordCount = document.getElementById('word-count-select').value;
 
-            // Make API call
-            fetch('{{ route("content-creation.generate") }}', {
+            // Make API call - use current origin to ensure HTTPS
+            const apiUrl = window.location.origin + '/content-creation/generate';
+            
+            fetch(apiUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
