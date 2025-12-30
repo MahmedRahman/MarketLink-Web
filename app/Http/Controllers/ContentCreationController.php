@@ -29,12 +29,14 @@ class ContentCreationController extends Controller
                 'platform' => 'nullable|string|max:50',
                 'content_type' => 'nullable|string|max:50',
                 'word_count' => 'nullable|string|max:20',
+                'reference_post' => 'nullable|string|max:5000',
             ]);
 
             $prompt = $request->input('prompt');
             $platform = $request->input('platform');
             $contentType = $request->input('content_type');
             $wordCount = $request->input('word_count');
+            $referencePost = $request->input('reference_post');
             $apiKey = config('services.deepseek.api_key');
 
             if (empty($apiKey)) {
@@ -140,6 +142,18 @@ class ContentCreationController extends Controller
                 $wordCountRequirement = "\n7. عدد الكلمات المطلوب: {$wordCount} كلمة تقريباً (يُسمح بزيادة أو نقصان بسيط)";
             }
 
+            // Build reference post section
+            $referencePostSection = '';
+            if (!empty($referencePost)) {
+                $referencePostSection = "\n\n=== البوست المرجعي ===
+يوجد بوست مرجعي أدناه. يجب أن يكون المحتوى الجديد مشابهاً له في الأسلوب والنبرة والهيكل، ولكن مع محتوى جديد بناءً على الطلب أعلاه.
+
+البوست المرجعي:
+{$referencePost}
+
+ملاحظة مهمة: استخدم هذا البوست كمرجع للأسلوب والنبرة فقط، ولكن أنشئ محتوى جديداً تماماً بناءً على الطلب المحدد أعلاه.";
+            }
+
             $fullPrompt = "أنت مساعد محترف في إنشاء محتوى تسويقي إبداعي. مهمتك هي إنشاء محتوى تسويقي جذاب ومؤثر بناءً على الطلب التالي:
 
 الطلب: {$prompt}
@@ -148,6 +162,7 @@ class ContentCreationController extends Controller
 " . ($platform ? "المنصة المستهدفة: {$platformName}" : "المنصة: عام") . "
 " . ($contentType ? "نوع المحتوى: {$contentTypeName}" : "نوع المحتوى: عام") . "
 " . ($wordCount && $wordCount !== 'custom' ? "عدد الكلمات المطلوب: {$wordCount} كلمة" : "") . "
+{$referencePostSection}
 
 === المتطلبات ===
 1. المحتوى يجب أن يكون جذاباً ومؤثراً
@@ -155,7 +170,7 @@ class ContentCreationController extends Controller
 3. استخدم لغة عربية سليمة وواضحة
 4. اجعل المحتوى إبداعياً ومميزاً
 5. أضف دعوة للعمل (Call to Action) إذا كان مناسباً{$platformRequirements}{$contentTypeRequirements}{$wordCountRequirement}
-6. تأكد من أن المحتوى مناسب تماماً للمنصة المحددة ونوع المحتوى المطلوب
+6. تأكد من أن المحتوى مناسب تماماً للمنصة المحددة ونوع المحتوى المطلوب" . (!empty($referencePost) ? "\n7. استخدم البوست المرجعي كدليل للأسلوب والنبرة، ولكن أنشئ محتوى جديداً تماماً" : "") . "
 
 === المخرجات المطلوبة ===
 أرجع المحتوى الكامل الجاهز للاستخدام بدون أي نص إضافي أو شرح أو عناوين.";

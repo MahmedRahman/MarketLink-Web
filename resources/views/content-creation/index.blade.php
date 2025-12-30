@@ -105,14 +105,23 @@
             <div class="flex flex-col gap-4">
                 <!-- Input and Button Row - First -->
                 <div class="flex flex-col md:flex-row items-center gap-4">
+                    <!-- Reference Post Icon Button -->
+                    <button onclick="openReferencePostModal()" class="px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition-all flex items-center gap-2 border-2 border-gray-300 hover:border-gray-400" title="إضافة بوست كمرجع">
+                        <span class="material-icons text-lg">bookmark_add</span>
+                    </button>
+                    
                     <!-- Input Field -->
-                    <div class="flex-1 w-full">
+                    <div class="flex-1 w-full relative">
                         <input 
                             type="text" 
                             id="generation-prompt" 
                             placeholder="+ صف المشهد الذي تتخيله"
                             class="w-full px-4 py-3 generation-input rounded-xl text-sm focus:ring-2 focus:ring-purple-500"
                         />
+                        <!-- Reference Post Indicator -->
+                        <div id="reference-post-indicator" class="hidden absolute left-2 top-1/2 transform -translate-y-1/2">
+                            <span class="material-icons text-green-500 text-sm" title="يوجد بوست مرجعي">bookmark</span>
+                        </div>
                     </div>
                     
                     <!-- Generate Button -->
@@ -182,13 +191,53 @@
     <!-- Add bottom padding to prevent content from being hidden behind fixed bottom bar -->
     <div class="h-32"></div>
 
+    <!-- Reference Post Modal -->
+    <div id="reference-post-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col">
+            <!-- Header -->
+            <div class="p-6 border-b border-gray-200 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                        <span class="material-icons text-purple-600">bookmark_add</span>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-800">إضافة بوست كمرجع</h3>
+                        <p class="text-sm text-gray-500">اكتب البوست الذي تريد أن يكون المحتوى الجديد مشابهاً له</p>
+                    </div>
+                </div>
+                <button onclick="closeReferencePostModal()" class="text-gray-400 hover:text-gray-600">
+                    <span class="material-icons">close</span>
+                </button>
+            </div>
+
+            <!-- Content -->
+            <div class="flex-1 overflow-y-auto p-6">
+                <textarea 
+                    id="reference-post-input" 
+                    placeholder="الصق أو اكتب البوست المرجعي هنا..."
+                    class="w-full h-64 px-4 py-3 border-2 border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 resize-none"
+                ></textarea>
+            </div>
+
+            <!-- Footer -->
+            <div class="p-6 border-t border-gray-200 flex items-center justify-end gap-3">
+                <button onclick="closeReferencePostModal()" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                    إلغاء
+                </button>
+                <button onclick="saveReferencePost()" class="px-6 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg font-semibold hover:shadow-lg transition-all">
+                    حفظ
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Content Modal -->
-    <div id="content-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-gray-900 rounded-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col md:flex-row">
+    <div id="content-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-2">
+        <div class="bg-gray-900 rounded-2xl w-full h-full max-w-[98vw] max-h-[98vh] overflow-hidden flex flex-col md:flex-row">
             <!-- Sidebar -->
-            <div class="bg-gray-800 w-full md:w-80 flex-shrink-0 border-l border-gray-700 flex flex-col">
+            <div class="bg-gray-800 w-full md:w-[35%] lg:w-[30%] flex-shrink-0 border-l border-gray-700 flex flex-col overflow-hidden">
                 <!-- Header -->
-                <div class="p-4 border-b border-gray-700 flex items-center justify-between">
+                <div class="p-4 border-b border-gray-700 flex items-center justify-between flex-shrink-0">
                     <div class="flex items-center gap-2">
                         <div class="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center">
                             <span class="material-icons text-gray-900 text-sm">auto_awesome</span>
@@ -203,6 +252,8 @@
                     </button>
                 </div>
 
+                <!-- Scrollable Sidebar Content -->
+                <div class="flex-1 overflow-y-auto">
                 <!-- PROMPT Section -->
                 <div class="p-4 border-b border-gray-700">
                     <div class="flex items-center justify-between mb-2">
@@ -245,6 +296,22 @@
                     </div>
                 </div>
 
+                <!-- REFERENCE POST Section -->
+                <div id="reference-post-section" class="p-4 border-b border-gray-700 hidden">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-2">
+                            <span class="material-icons text-gray-400 text-sm">bookmark</span>
+                            <h4 class="text-gray-300 text-xs font-semibold uppercase">البوست المرجعي</h4>
+                        </div>
+                        <button onclick="copyReferencePost()" class="text-gray-400 hover:text-white text-xs">
+                            <span class="material-icons text-sm">content_copy</span>
+                        </button>
+                    </div>
+                    <div class="bg-gray-900 rounded-lg p-3 mt-2">
+                        <p id="modal-reference-post" class="text-gray-300 text-sm whitespace-pre-wrap"></p>
+                    </div>
+                </div>
+
                 <!-- ADDITIONAL Section -->
                 <div class="p-4 border-b border-gray-700">
                     <div class="flex items-center justify-between cursor-pointer" onclick="toggleAdditional()">
@@ -284,9 +351,11 @@
                         </div>
                     </div>
                 </div>
+                </div>
+                <!-- End Scrollable Sidebar Content -->
 
                 <!-- Action Buttons -->
-                <div class="p-4 mt-auto space-y-3">
+                <div class="p-4 space-y-3 flex-shrink-0 border-t border-gray-700 bg-gray-800">
                     <button onclick="recreateContent()" class="w-full bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold py-3 rounded-lg flex items-center justify-center gap-2 transition-colors">
                         <span class="material-icons text-sm">refresh</span>
                         إعادة إنشاء
@@ -322,8 +391,8 @@
 
             <!-- Main Content Area -->
             <div class="flex-1 bg-gray-900 overflow-y-auto">
-                <div class="p-6">
-                    <div id="modal-content" class="text-gray-200 whitespace-pre-wrap leading-relaxed text-base"></div>
+                <div class="p-8 max-w-4xl mx-auto">
+                    <div id="modal-content" class="text-gray-200 whitespace-pre-wrap leading-relaxed text-lg"></div>
                 </div>
             </div>
         </div>
@@ -332,6 +401,7 @@
     <script>
         let currentContent = '';
         let currentPrompt = '';
+        let currentReferencePost = '';
         let activeLoadingCards = 0;
         const MAX_CONCURRENT_REQUESTS = 5;
 
@@ -405,7 +475,8 @@
                     prompt: prompt,
                     platform: platform,
                     content_type: contentType,
-                    word_count: wordCount
+                    word_count: wordCount,
+                    reference_post: currentReferencePost
                 })
             })
             .then(response => {
@@ -425,7 +496,7 @@
                     }
 
                     // Create success card
-                    const successCard = createSuccessCard(data.content, loadingCardId, prompt, platform, contentType, wordCount);
+                    const successCard = createSuccessCard(data.content, loadingCardId, prompt, platform, contentType, wordCount, currentReferencePost);
                     contentGrid.insertBefore(successCard, contentGrid.firstChild);
                 } else {
                     throw new Error(data.error || 'فشل في إنشاء المحتوى');
@@ -476,7 +547,7 @@
             return card;
         }
 
-        function createSuccessCard(content, id, prompt, platform, contentType, wordCount) {
+        function createSuccessCard(content, id, prompt, platform, contentType, wordCount, referencePost = '') {
             const promptPreview = prompt.length > 50 ? prompt.substring(0, 50) + '...' : prompt;
             const platformNames = {
                 'facebook': 'فيسبوك',
@@ -506,7 +577,7 @@
             const card = document.createElement('div');
             card.id = 'success-' + id;
             card.className = 'content-card bg-white rounded-2xl overflow-hidden shadow-md aspect-[4/5] relative cursor-pointer';
-            card.onclick = () => showContentModal(content, prompt, platform, contentType, wordCount);
+            card.onclick = () => showContentModal(content, prompt, platform, contentType, wordCount, referencePost);
             card.innerHTML = `
                 <div class="absolute inset-0 flex flex-col items-center justify-center p-4 bg-gradient-to-br from-green-50 to-emerald-100">
                     <div class="text-center w-full">
@@ -524,9 +595,19 @@
             return card;
         }
 
-        function showContentModal(content, prompt, platform, contentType, wordCount) {
+        function showContentModal(content, prompt, platform, contentType, wordCount, referencePost = '') {
             currentContent = content;
             currentPrompt = prompt || '';
+            currentReferencePost = referencePost || '';
+            
+            // Show/hide reference post section
+            const referencePostSection = document.getElementById('reference-post-section');
+            if (currentReferencePost) {
+                referencePostSection.classList.remove('hidden');
+                document.getElementById('modal-reference-post').textContent = currentReferencePost;
+            } else {
+                referencePostSection.classList.add('hidden');
+            }
             
             const platformNames = {
                 'facebook': 'فيسبوك',
@@ -748,6 +829,61 @@
                 closeContentModal();
             }
         }
+
+        // Reference Post Functions
+        function openReferencePostModal() {
+            document.getElementById('reference-post-modal').classList.remove('hidden');
+            // Load existing reference post if any
+            if (currentReferencePost) {
+                document.getElementById('reference-post-input').value = currentReferencePost;
+            }
+        }
+
+        function closeReferencePostModal() {
+            document.getElementById('reference-post-modal').classList.add('hidden');
+        }
+
+        function saveReferencePost() {
+            const referencePost = document.getElementById('reference-post-input').value.trim();
+            currentReferencePost = referencePost;
+            
+            // Show/hide indicator
+            const indicator = document.getElementById('reference-post-indicator');
+            if (currentReferencePost) {
+                indicator.classList.remove('hidden');
+            } else {
+                indicator.classList.add('hidden');
+            }
+            
+            closeReferencePostModal();
+        }
+
+        function copyReferencePost() {
+            if (currentReferencePost) {
+                navigator.clipboard.writeText(currentReferencePost).then(() => {
+                    alert('تم نسخ البوست المرجعي بنجاح');
+                }).catch(() => {
+                    alert('فشل في نسخ البوست المرجعي');
+                });
+            }
+        }
+
+        // Close reference post modal when clicking outside
+        document.getElementById('reference-post-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeReferencePostModal();
+            }
+        });
+
+        // Close reference post modal on ESC key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const referenceModal = document.getElementById('reference-post-modal');
+                if (!referenceModal.classList.contains('hidden')) {
+                    closeReferencePostModal();
+                }
+            }
+        });
 
 
         // Close modal when clicking outside
