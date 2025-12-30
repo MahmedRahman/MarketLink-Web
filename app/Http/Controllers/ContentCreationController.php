@@ -7,6 +7,7 @@ use Illuminate\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class ContentCreationController extends Controller
 {
@@ -233,6 +234,46 @@ class ContentCreationController extends Controller
             return response()->json([
                 'success' => false,
                 'error' => 'حدث خطأ أثناء إنشاء المحتوى: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * رفع صورة مرجعية
+     */
+    public function uploadReferenceImage(Request $request): JsonResponse
+    {
+        try {
+            $request->validate([
+                'image' => 'required|image|mimes:jpeg,jpg,png,gif,webp|max:10240', // 10MB max
+            ]);
+
+            $file = $request->file('image');
+            $fileName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+            $filePath = $file->storeAs('content-creation/reference-images', $fileName, 'public');
+
+            $url = Storage::url($filePath);
+
+            return response()->json([
+                'success' => true,
+                'url' => asset($url),
+                'path' => $filePath,
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'error' => 'خطأ في التحقق من الصورة: ' . implode(', ', $e->errors()['image'] ?? []),
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('Error uploading reference image', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'error' => 'حدث خطأ أثناء رفع الصورة: ' . $e->getMessage(),
             ], 500);
         }
     }

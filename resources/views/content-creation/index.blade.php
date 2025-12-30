@@ -110,6 +110,12 @@
                         <span class="material-icons text-lg">bookmark_add</span>
                     </button>
                     
+                    <!-- Reference Image Icon Button -->
+                    <button onclick="document.getElementById('reference-image-input').click()" class="px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition-all flex items-center gap-2 border-2 border-gray-300 hover:border-gray-400" title="إضافة صورة مرجعية">
+                        <span class="material-icons text-lg">image</span>
+                    </button>
+                    <input type="file" id="reference-image-input" accept="image/*" class="hidden" onchange="handleReferenceImageUpload(event)">
+                    
                     <!-- Input Field -->
                     <div class="flex-1 w-full relative">
                         <input 
@@ -121,6 +127,10 @@
                         <!-- Reference Post Indicator -->
                         <div id="reference-post-indicator" class="hidden absolute left-2 top-1/2 transform -translate-y-1/2">
                             <span class="material-icons text-green-500 text-sm" title="يوجد بوست مرجعي">bookmark</span>
+                        </div>
+                        <!-- Reference Image Indicator -->
+                        <div id="reference-image-indicator" class="hidden absolute left-8 top-1/2 transform -translate-y-1/2">
+                            <span class="material-icons text-blue-500 text-sm" title="يوجد صورة مرجعية">image</span>
                         </div>
                     </div>
                     
@@ -312,6 +322,23 @@
                     </div>
                 </div>
 
+                <!-- REFERENCE IMAGE Section -->
+                <div id="reference-image-section" class="p-4 border-b border-gray-700 hidden">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-2">
+                            <span class="material-icons text-gray-400 text-sm">image</span>
+                            <h4 class="text-gray-300 text-xs font-semibold uppercase">الصورة المرجعية</h4>
+                        </div>
+                        <button onclick="removeReferenceImage()" class="text-gray-400 hover:text-white text-xs">
+                            <span class="material-icons text-sm">close</span>
+                        </button>
+                    </div>
+                    <div class="bg-gray-900 rounded-lg p-3 mt-2">
+                        <img id="modal-reference-image" src="" alt="الصورة المرجعية" class="w-full rounded-lg mb-2 max-h-64 object-contain">
+                        <p id="modal-reference-image-url" class="text-gray-400 text-xs break-all"></p>
+                    </div>
+                </div>
+
                 <!-- ADDITIONAL Section -->
                 <div class="p-4 border-b border-gray-700">
                     <div class="flex items-center justify-between cursor-pointer" onclick="toggleAdditional()">
@@ -402,6 +429,7 @@
         let currentContent = '';
         let currentPrompt = '';
         let currentReferencePost = '';
+        let currentReferenceImageUrl = '';
         let activeLoadingCards = 0;
         const MAX_CONCURRENT_REQUESTS = 5;
 
@@ -496,7 +524,7 @@
                     }
 
                     // Create success card
-                    const successCard = createSuccessCard(data.content, loadingCardId, prompt, platform, contentType, wordCount, currentReferencePost);
+                    const successCard = createSuccessCard(data.content, loadingCardId, prompt, platform, contentType, wordCount, currentReferencePost, currentReferenceImageUrl);
                     contentGrid.insertBefore(successCard, contentGrid.firstChild);
                 } else {
                     throw new Error(data.error || 'فشل في إنشاء المحتوى');
@@ -547,7 +575,7 @@
             return card;
         }
 
-        function createSuccessCard(content, id, prompt, platform, contentType, wordCount, referencePost = '') {
+        function createSuccessCard(content, id, prompt, platform, contentType, wordCount, referencePost = '', referenceImageUrl = '') {
             const promptPreview = prompt.length > 50 ? prompt.substring(0, 50) + '...' : prompt;
             const platformNames = {
                 'facebook': 'فيسبوك',
@@ -577,7 +605,7 @@
             const card = document.createElement('div');
             card.id = 'success-' + id;
             card.className = 'content-card bg-white rounded-2xl overflow-hidden shadow-md aspect-[4/5] relative cursor-pointer';
-            card.onclick = () => showContentModal(content, prompt, platform, contentType, wordCount, referencePost);
+            card.onclick = () => showContentModal(content, prompt, platform, contentType, wordCount, referencePost, referenceImageUrl);
             card.innerHTML = `
                 <div class="absolute inset-0 flex flex-col items-center justify-center p-4 bg-gradient-to-br from-green-50 to-emerald-100">
                     <div class="text-center w-full">
@@ -595,10 +623,11 @@
             return card;
         }
 
-        function showContentModal(content, prompt, platform, contentType, wordCount, referencePost = '') {
+        function showContentModal(content, prompt, platform, contentType, wordCount, referencePost = '', referenceImageUrl = '') {
             currentContent = content;
             currentPrompt = prompt || '';
             currentReferencePost = referencePost || '';
+            currentReferenceImageUrl = referenceImageUrl || '';
             
             // Show/hide reference post section
             const referencePostSection = document.getElementById('reference-post-section');
@@ -607,6 +636,16 @@
                 document.getElementById('modal-reference-post').textContent = currentReferencePost;
             } else {
                 referencePostSection.classList.add('hidden');
+            }
+            
+            // Show/hide reference image section
+            const referenceImageSection = document.getElementById('reference-image-section');
+            if (currentReferenceImageUrl) {
+                referenceImageSection.classList.remove('hidden');
+                document.getElementById('modal-reference-image').src = currentReferenceImageUrl;
+                document.getElementById('modal-reference-image-url').textContent = currentReferenceImageUrl;
+            } else {
+                referenceImageSection.classList.add('hidden');
             }
             
             const platformNames = {
@@ -632,7 +671,7 @@
             };
             
             // Generate image prompt
-            const imagePrompt = generateImagePrompt(prompt, platform, contentType, content);
+            const imagePrompt = generateImagePrompt(prompt, platform, contentType, content, currentReferenceImageUrl);
             currentImagePrompt = imagePrompt;
             document.getElementById('image-prompt').textContent = imagePrompt;
             
@@ -651,7 +690,69 @@
             document.getElementById('content-modal').classList.remove('hidden');
         }
 
-        function generateImagePrompt(prompt, platform, contentType, content) {
+        function handleReferenceImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                alert('يرجى اختيار ملف صورة صحيح');
+                return;
+            }
+            
+            // Validate file size (max 10MB)
+            if (file.size > 10 * 1024 * 1024) {
+                alert('حجم الصورة يجب أن يكون أقل من 10 ميجابايت');
+                return;
+            }
+            
+            // Show loading
+            const indicator = document.getElementById('reference-image-indicator');
+            indicator.classList.remove('hidden');
+            
+            // Create FormData
+            const formData = new FormData();
+            formData.append('image', file);
+            
+            // Upload image
+            const apiUrl = window.location.origin + '/content-creation/upload-reference-image';
+            
+            fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json'
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    currentReferenceImageUrl = data.url;
+                    alert('تم رفع الصورة بنجاح');
+                } else {
+                    throw new Error(data.error || 'فشل في رفع الصورة');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('حدث خطأ أثناء رفع الصورة: ' + error.message);
+                indicator.classList.add('hidden');
+            });
+            
+            // Reset input
+            event.target.value = '';
+        }
+
+        function removeReferenceImage() {
+            currentReferenceImageUrl = '';
+            const indicator = document.getElementById('reference-image-indicator');
+            indicator.classList.add('hidden');
+            const section = document.getElementById('reference-image-section');
+            section.classList.add('hidden');
+        }
+
+        function generateImagePrompt(prompt, platform, contentType, content, referenceImageUrl = '') {
             const platformNames = {
                 'facebook': 'Facebook',
                 'instagram': 'Instagram',
@@ -688,6 +789,17 @@
             designPrompt += `A bold, eye-catching ${platformName} ${contentTypeName} design for digital marketing.\n`;
             designPrompt += `Based on the concept: "${prompt}"\n\n`;
             
+            // Add reference image analysis if available
+            if (referenceImageUrl) {
+                designPrompt += `=== Reference Image ===\n`;
+                designPrompt += `Reference Image URL: ${referenceImageUrl}\n\n`;
+                designPrompt += `IMPORTANT: Analyze the reference image and create a design that:\n`;
+                designPrompt += `- Matches the visual style, color scheme, and composition of the reference image\n`;
+                designPrompt += `- Uses similar layout structure, typography style, and visual elements\n`;
+                designPrompt += `- Maintains the same mood, tone, and aesthetic approach\n`;
+                designPrompt += `- Adapts the reference design to fit the new content while keeping the visual identity consistent\n\n`;
+            }
+            
             if (contentType === 'ad' || contentType === 'post') {
                 designPrompt += `A compelling visual representation that captures the essence of the marketing message.\n`;
             } else if (contentType === 'story') {
@@ -716,6 +828,12 @@
                 designPrompt += `Designed for ${platformName} story, vertical 9:16 ratio, mobile-first design.\n`;
             } else {
                 designPrompt += `Designed for ${platformName}, optimized for mobile viewing.\n`;
+            }
+            
+            // Add reference image URL at the end for easy copy-paste
+            if (referenceImageUrl) {
+                designPrompt += `\n\n=== Reference Image URL (for external tools) ===\n`;
+                designPrompt += `${referenceImageUrl}\n`;
             }
             
             return designPrompt;

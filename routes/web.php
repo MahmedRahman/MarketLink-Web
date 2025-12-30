@@ -36,6 +36,7 @@ Route::get('/', function () {
 
 Route::get('/content-creation', [ContentCreationController::class, 'index'])->name('content-creation.index');
 Route::post('/content-creation/generate', [ContentCreationController::class, 'generateContent'])->name('content-creation.generate');
+Route::post('/content-creation/upload-reference-image', [ContentCreationController::class, 'uploadReferenceImage'])->name('content-creation.upload-image');
 
 Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 
