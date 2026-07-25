@@ -48,7 +48,9 @@
                 <span class="material-icons text-purple-600">dashboard_customize</span>
                 مهامي من مساحة العمل
             </h3>
-            <span class="px-3 py-1 text-xs rounded-full bg-purple-100 text-purple-700">{{ $workTasks->count() }}</span>
+            <a href="{{ route('employee.tasks.index') }}" class="text-sm text-purple-600 hover:text-purple-700 font-medium">
+                كل المهام ←
+            </a>
         </div>
         <div class="space-y-3">
             @foreach($workTasks as $wt)

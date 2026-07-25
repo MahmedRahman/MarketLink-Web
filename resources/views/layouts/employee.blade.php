@@ -77,6 +77,11 @@
                 <span class="material-icons text-lg ml-3">dashboard</span>
                 <span class="font-medium">لوحة التحكم</span>
             </a>
+
+            <a href="{{ route('employee.tasks.index') }}" class="flex items-center px-4 py-3 text-gray-700 rounded-xl hover:bg-gray-100 {{ request()->routeIs('employee.tasks.index') || request()->routeIs('employee.work.*') ? 'bg-purple-50 text-purple-700' : '' }}">
+                <span class="material-icons text-lg ml-3">task_alt</span>
+                <span class="font-medium">المهام</span>
+            </a>
             
             <a href="{{ route('employee.projects.index') }}" class="flex items-center px-4 py-3 text-gray-700 rounded-xl hover:bg-gray-100 {{ request()->routeIs('employee.projects.*') ? 'bg-purple-50 text-purple-700' : '' }}">
                 <span class="material-icons text-lg ml-3">folder</span>
