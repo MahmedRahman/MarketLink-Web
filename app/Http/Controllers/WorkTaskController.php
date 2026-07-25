@@ -95,16 +95,7 @@ class WorkTaskController extends Controller
      */
     private function suggestAssignee(Request $request, string $kind): ?int
     {
-        $role = WorkTask::kindRoleMap()[$kind] ?? null;
-        if (! $role) {
-            return null;
-        }
-
-        return Employee::where('organization_id', $request->user()->organization_id)
-            ->where('status', 'active')
-            ->where('role', $role)
-            ->orderBy('id')
-            ->value('id');
+        return WorkTask::suggestAssigneeId($request->user()->organization_id, $kind);
     }
 
     private function ensureEmployeeInOrg(Request $request, int $employeeId): void

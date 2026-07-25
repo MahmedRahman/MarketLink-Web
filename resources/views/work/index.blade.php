@@ -146,14 +146,15 @@
             <div class="grid grid-cols-2 gap-3">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">النوع</label>
-                    <select name="type" class="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 focus:border-primary focus:outline-none">
+                    <select name="type" id="newActivityType" onchange="toggleTemplateOption()"
+                            class="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 focus:border-primary focus:outline-none">
                         @foreach($types as $key => $label)
                             <option value="{{ $key }}">{{ $label }}</option>
                         @endforeach
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">التاريخ</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">تاريخ المحاضرة / النشاط</label>
                     <input type="date" name="event_date"
                            class="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 focus:border-primary focus:outline-none">
                 </div>
@@ -163,6 +164,19 @@
                 <textarea name="description" rows="3" placeholder="تفاصيل النشاط والأفكار العامة..."
                           class="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 focus:border-primary focus:outline-none"></textarea>
             </div>
+            {{-- قالب تاسكات المحاضرة القياسية (من دليل تنظيم ملفات المحاضرة) --}}
+            <div id="templateOption" class="bg-teal-50 border border-teal-200 rounded-xl p-3">
+                <label class="flex items-start gap-2 cursor-pointer">
+                    <input type="checkbox" name="with_template" value="1" checked
+                           class="mt-1 rounded border-gray-300 text-teal-600 focus:ring-teal-500">
+                    <span class="text-sm text-gray-700">
+                        <span class="font-semibold">إنشاء تاسكات المحاضرة القياسية تلقائيًا</span>
+                        <span class="block text-xs text-gray-500 mt-0.5">
+                            11 مهمة موزّعة على الفريق حسب الدور: إعلان، تذكير، تيزر، مونتاج، كفر يوتيوب، رفع، مقاطع، ريلز، آراء، جدولة — بمواعيد نسبية لتاريخ المحاضرة.
+                        </span>
+                    </span>
+                </label>
+            </div>
             <div class="flex gap-3 pt-2">
                 <button type="submit" class="btn-primary text-white px-5 py-2.5 rounded-xl font-medium flex-1">إنشاء</button>
                 <button type="button" onclick="document.getElementById('newActivityModal').classList.add('hidden')"
@@ -171,4 +185,14 @@
         </form>
     </div>
 </div>
+
+<script>
+    function toggleTemplateOption() {
+        const type = document.getElementById('newActivityType').value;
+        const box = document.getElementById('templateOption');
+        const isLecture = type === 'free_lecture' || type === 'live_lecture';
+        box.classList.toggle('hidden', !isLecture);
+    }
+    document.addEventListener('DOMContentLoaded', toggleTemplateOption);
+</script>
 @endsection

@@ -83,6 +83,70 @@
         </div>
     </div>
 
+    {{-- تنظيم ملفات المحاضرة (حسب دليل تنظيم ملفات المحاضرة) --}}
+    @if($activity->is_lecture)
+    <details class="card rounded-2xl overflow-hidden">
+        <summary class="p-5 cursor-pointer flex items-center justify-between select-none">
+            <span class="font-bold text-gray-800 flex items-center gap-2">
+                <span class="material-icons text-teal-600">folder_open</span>
+                تنظيم ملفات المحاضرة
+            </span>
+            <span class="text-xs text-gray-500">اضغط للعرض</span>
+        </summary>
+        <div class="px-5 pb-5 space-y-4">
+            <div class="bg-teal-50 border border-teal-200 rounded-xl p-3">
+                <p class="text-xs text-gray-500 mb-1">فولدر المحاضرة:</p>
+                <code class="text-sm font-semibold text-teal-800" dir="ltr">{{ $activity->suggested_folder }}</code>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                <div class="border border-gray-200 rounded-xl p-3">
+                    <p class="font-semibold text-gray-800 flex items-center gap-1 mb-2">
+                        <span class="material-icons text-base text-indigo-500">movie</span>
+                        Final_Lecture
+                    </p>
+                    <ul class="text-xs text-gray-600 space-y-1" dir="ltr">
+                        <li><code>Final_YouTube.mp4</code></li>
+                        <li><code>Youtube_Cover.png</code></li>
+                        <li><code>youtube_link.txt</code></li>
+                    </ul>
+                    <p class="text-xs text-gray-400 mt-2">النسخة النهائية المرفوعة يوتيوب</p>
+                </div>
+                <div class="border border-gray-200 rounded-xl p-3">
+                    <p class="font-semibold text-gray-800 flex items-center gap-1 mb-2">
+                        <span class="material-icons text-base text-red-500">video_library</span>
+                        Marketing_Clips
+                    </p>
+                    <ul class="text-xs text-gray-600 space-y-1" dir="ltr">
+                        <li><code>Lecture_Clips/</code></li>
+                        <li><code>Teasers/Teaser_Before.mp4</code></li>
+                        <li><code>Teasers/Teaser_After.mp4</code></li>
+                    </ul>
+                    <p class="text-xs text-gray-400 mt-2">مقاطع من المحاضرة + تيزرات</p>
+                </div>
+                <div class="border border-gray-200 rounded-xl p-3">
+                    <p class="font-semibold text-gray-800 flex items-center gap-1 mb-2">
+                        <span class="material-icons text-base text-purple-500">palette</span>
+                        Marketing_Graphics
+                    </p>
+                    <ul class="text-xs text-gray-600 space-y-1" dir="ltr">
+                        <li><code>Announcement/</code></li>
+                        <li><code>Reminder_1Hour/</code></li>
+                        <li><code>Testimonials/</code></li>
+                        <li><code>Reels_Design/</code></li>
+                    </ul>
+                    <p class="text-xs text-gray-400 mt-2">إعلان + تذكير + آراء + ريلز</p>
+                </div>
+            </div>
+
+            <p class="text-xs text-gray-500 bg-gray-50 rounded-xl p-3">
+                <span class="font-semibold">القاعدة الذهبية:</span>
+                كل حاجة تخص المحاضرة دي مكانها الأساسي جوه فولدرها — أي نسخة في <code dir="ltr">03_Social_Content</code> مؤقتة لجدول النشر بس. التسجيل الخام وقت اللايف يروح <code dir="ltr">05_Live_Recordings</code> مؤقتًا لحد المونتاج.
+            </p>
+        </div>
+    </details>
+    @endif
+
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {{-- إضافة مهمة سريعة --}}
         <div class="lg:col-span-1">

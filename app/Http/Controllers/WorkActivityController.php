@@ -59,10 +59,14 @@ class WorkActivityController extends Controller
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'type' => 'required|in:live_lecture,paid_round,educational,other',
+            'type' => 'required|in:free_lecture,live_lecture,paid_round,educational,other',
             'description' => 'nullable|string',
             'event_date' => 'nullable|date',
+            'with_template' => 'nullable|boolean',
         ]);
+
+        $withTemplate = (bool) ($validated['with_template'] ?? false);
+        unset($validated['with_template']);
 
         $validated['organization_id'] = $request->user()->organization_id;
         $validated['created_by'] = $request->user()->id;
@@ -70,7 +74,42 @@ class WorkActivityController extends Controller
 
         $activity = WorkActivity::create($validated);
 
-        return redirect()->route('work.show', $activity)->with('success', 'تم إنشاء النشاط بنجاح');
+        // توليد التاسكات القياسية للمحاضرة (حسب دليل تنظيم ملفات المحاضرة)
+        $tasksCreated = 0;
+        if ($withTemplate && $activity->is_lecture) {
+            $tasksCreated = $this->createLectureTemplateTasks($activity);
+        }
+
+        $message = $tasksCreated > 0
+            ? "تم إنشاء النشاط مع {$tasksCreated} مهمة قياسية موزّعة على الفريق"
+            : 'تم إنشاء النشاط بنجاح';
+
+        return redirect()->route('work.show', $activity)->with('success', $message);
+    }
+
+    /**
+     * ينشئ التاسكات القياسية للمحاضرة المجانية ويعيّنها حسب الدور،
+     * بمواعيد نسبية لتاريخ المحاضرة.
+     */
+    private function createLectureTemplateTasks(WorkActivity $activity): int
+    {
+        $order = 0;
+        foreach (WorkActivity::lectureTaskTemplate() as $template) {
+            WorkTask::create([
+                'work_activity_id' => $activity->id,
+                'title' => $template['title'],
+                'idea' => $template['idea'],
+                'kind' => $template['kind'],
+                'assigned_to' => WorkTask::suggestAssigneeId($activity->organization_id, $template['kind']),
+                'status' => 'todo',
+                'due_date' => $activity->event_date
+                    ? $activity->event_date->copy()->addDays($template['offset'])->toDateString()
+                    : null,
+                'order' => ++$order,
+            ]);
+        }
+
+        return $order;
     }
 
     public function show(Request $request, WorkActivity $work)
@@ -100,7 +139,7 @@ class WorkActivityController extends Controller
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'type' => 'required|in:live_lecture,paid_round,educational,other',
+            'type' => 'required|in:free_lecture,live_lecture,paid_round,educational,other',
             'description' => 'nullable|string',
             'event_date' => 'nullable|date',
             'status' => 'required|in:planning,in_progress,done,cancelled',

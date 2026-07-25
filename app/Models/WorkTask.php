@@ -89,6 +89,23 @@ class WorkTask extends Model
     }
 
     /**
+     * يقترح موظفًا نشطًا من المنظمة حسب نوع الشغل ودوره.
+     */
+    public static function suggestAssigneeId(?int $organizationId, string $kind): ?int
+    {
+        $role = self::kindRoleMap()[$kind] ?? null;
+        if (! $role || ! $organizationId) {
+            return null;
+        }
+
+        return Employee::where('organization_id', $organizationId)
+            ->where('status', 'active')
+            ->where('role', $role)
+            ->orderBy('id')
+            ->value('id');
+    }
+
+    /**
      * الدور المقترح لكل نوع شغل (kind => employee role).
      */
     public static function kindRoleMap(): array
