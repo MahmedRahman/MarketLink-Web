@@ -67,6 +67,22 @@
                         <span class="material-icons ml-3">dashboard</span>
                         لوحة التحكم
                     </a>
+
+                    <div class="pt-3 pb-1 px-4">
+                        <p class="text-xs font-semibold text-gray-500 tracking-wide">توزيع الشغل</p>
+                    </div>
+                    <a href="{{ route('work.index') }}" class="flex items-center px-4 py-3 rounded-lg hover:bg-gray-800 transition-colors {{ request()->routeIs('work.*') ? 'bg-gray-800' : '' }}">
+                        <span class="material-icons ml-3">dashboard_customize</span>
+                        مساحة العمل
+                    </a>
+                    <a href="{{ route('employees.index') }}" class="flex items-center px-4 py-3 rounded-lg hover:bg-gray-800 transition-colors {{ request()->routeIs('employees.*') ? 'bg-gray-800' : '' }}">
+                        <span class="material-icons ml-3">badge</span>
+                        الموظفين
+                    </a>
+
+                    <div class="pt-3 pb-1 px-4">
+                        <p class="text-xs font-semibold text-gray-500 tracking-wide">إدارة النظام</p>
+                    </div>
                     <a href="{{ route('admin.users.index') }}" class="flex items-center px-4 py-3 rounded-lg hover:bg-gray-800 transition-colors {{ request()->routeIs('admin.users.*') ? 'bg-gray-800' : '' }}">
                         <span class="material-icons ml-3">people</span>
                         المستخدمين
