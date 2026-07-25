@@ -125,6 +125,68 @@
                 <p class="text-gray-600 text-sm">MarketLink</p>
             </div>
 
+            {{-- مؤقت للاختبار: كروت الموظفين — احذف القسم ده قبل الإطلاق العام --}}
+            <div class="mb-6 space-y-3">
+                <p class="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-center">
+                    حسابات الموظفين (مؤقت) — اضغط كارت عشان تملأ البيانات
+                </p>
+
+                <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-3 cursor-pointer hover:shadow-md transition-all" onclick="fillLoginForm('alaa@marketlink.app', 'Alaa@2026')">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-800">الاء رآفت</h3>
+                            <p class="text-xs text-gray-600">أكونت منجر + نشر · alaa@marketlink.app</p>
+                            <p class="text-xs text-indigo-700 mt-0.5">Alaa@2026</p>
+                        </div>
+                        <span class="material-icons text-indigo-500 text-sm">arrow_forward</span>
+                    </div>
+                </div>
+
+                <div class="bg-blue-50 border border-blue-200 rounded-xl p-3 cursor-pointer hover:shadow-md transition-all" onclick="fillLoginForm('nira@marketlink.app', 'Nira@2026')">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-800">نيرة</h3>
+                            <p class="text-xs text-gray-600">كتابة محتوى · nira@marketlink.app</p>
+                            <p class="text-xs text-blue-700 mt-0.5">Nira@2026</p>
+                        </div>
+                        <span class="material-icons text-blue-500 text-sm">arrow_forward</span>
+                    </div>
+                </div>
+
+                <div class="bg-purple-50 border border-purple-200 rounded-xl p-3 cursor-pointer hover:shadow-md transition-all" onclick="fillLoginForm('youssef@marketlink.app', 'Youssef@2026')">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-800">يوسف محمد</h3>
+                            <p class="text-xs text-gray-600">مصمم · youssef@marketlink.app</p>
+                            <p class="text-xs text-purple-700 mt-0.5">Youssef@2026</p>
+                        </div>
+                        <span class="material-icons text-purple-500 text-sm">arrow_forward</span>
+                    </div>
+                </div>
+
+                <div class="bg-purple-50 border border-purple-200 rounded-xl p-3 cursor-pointer hover:shadow-md transition-all" onclick="fillLoginForm('mariam@marketlink.app', 'Mariam@2026')">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-800">مريم</h3>
+                            <p class="text-xs text-gray-600">مصممة · mariam@marketlink.app</p>
+                            <p class="text-xs text-purple-700 mt-0.5">Mariam@2026</p>
+                        </div>
+                        <span class="material-icons text-purple-500 text-sm">arrow_forward</span>
+                    </div>
+                </div>
+
+                <div class="bg-rose-50 border border-rose-200 rounded-xl p-3 cursor-pointer hover:shadow-md transition-all" onclick="fillLoginForm('nevin@marketlink.app', 'Nevin@2026')">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-800">نفين عبد الله</h3>
+                            <p class="text-xs text-gray-600">فيديو · nevin@marketlink.app</p>
+                            <p class="text-xs text-rose-700 mt-0.5">Nevin@2026</p>
+                        </div>
+                        <span class="material-icons text-rose-500 text-sm">arrow_forward</span>
+                    </div>
+                </div>
+            </div>
+
             <!-- Login Form -->
             <form method="POST" action="{{ route('employee.login.store') }}" class="space-y-6">
                 @csrf
@@ -208,6 +270,13 @@
             <p class="text-xs text-white/80">© 2024 MarketLink. جميع الحقوق محفوظة.</p>
         </div>
     </div>
+
+    <script>
+        function fillLoginForm(email, password) {
+            document.getElementById('email').value = email;
+            document.getElementById('password').value = password;
+        }
+    </script>
 
     <!-- SweetAlert Script -->
     <script>

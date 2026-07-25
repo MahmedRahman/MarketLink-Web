@@ -131,76 +131,46 @@
                 <p class="text-gray-600 text-sm">نظام إدارة شركات التسويق الإلكتروني</p>
             </div>
 
-            @if(request()->getHost() === '127.0.0.1' || request()->getHost() === 'localhost')
-            <!-- Development Login Cards - Only visible on localhost -->
+            {{-- مؤقت للاختبار: كروت الفريق — احذف القسم ده قبل الإطلاق العام --}}
             <div class="mb-6 space-y-3">
-                <p class="text-xs text-gray-500 text-center mb-3">بيانات تسجيل الدخول للتطوير</p>
-                
-                <!-- Admin Card -->
-                <div class="bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 rounded-xl p-4 cursor-pointer hover:shadow-md transition-all" onclick="fillLoginForm('admin@marketlink.com', '123456')">
+                <p class="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-center">
+                    حسابات الفريق (مؤقت للاختبار) — اضغط كارت عشان تملأ البيانات
+                </p>
+
+                <p class="text-xs font-semibold text-gray-500">أدمن الموقع</p>
+
+                <div class="bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 rounded-xl p-3 cursor-pointer hover:shadow-md transition-all" onclick="fillLoginForm('mohamed@marketlink.app', 'Mohamed@2026')">
                     <div class="flex items-center justify-between">
-                        <div class="flex items-center space-x-3 space-x-reverse">
-                            <div class="w-10 h-10 bg-red-500 rounded-lg flex items-center justify-center">
-                                <span class="material-icons text-white text-sm">admin_panel_settings</span>
-                            </div>
-                            <div>
-                                <h3 class="text-sm font-semibold text-gray-800">Admin</h3>
-                                <p class="text-xs text-gray-600">admin@marketlink.com</p>
-                            </div>
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-800">محمد عبد الرحمن</h3>
+                            <p class="text-xs text-gray-600">أدمن · mohamed@marketlink.app</p>
+                            <p class="text-xs text-red-600 mt-0.5">Mohamed@2026</p>
                         </div>
                         <span class="material-icons text-red-500 text-sm">arrow_forward</span>
                     </div>
                 </div>
 
-                <!-- Employee Card -->
-                <div class="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 rounded-xl p-4 cursor-pointer hover:shadow-md transition-all" onclick="fillLoginForm('employee@marketlink.com', '123456')">
+                <div class="bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 rounded-xl p-3 cursor-pointer hover:shadow-md transition-all" onclick="fillLoginForm('maha@marketlink.app', 'Maha@2026')">
                     <div class="flex items-center justify-between">
-                        <div class="flex items-center space-x-3 space-x-reverse">
-                            <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
-                                <span class="material-icons text-white text-sm">person</span>
-                            </div>
-                            <div>
-                                <h3 class="text-sm font-semibold text-gray-800">Employee</h3>
-                                <p class="text-xs text-gray-600">employee@marketlink.com</p>
-                            </div>
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-800">مها رافت</h3>
+                            <p class="text-xs text-gray-600">أدمن · maha@marketlink.app</p>
+                            <p class="text-xs text-red-600 mt-0.5">Maha@2026</p>
                         </div>
-                        <span class="material-icons text-blue-500 text-sm">arrow_forward</span>
+                        <span class="material-icons text-red-500 text-sm">arrow_forward</span>
                     </div>
                 </div>
 
-                <!-- Client Card -->
-                <div class="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4 cursor-pointer hover:shadow-md transition-all" onclick="fillLoginForm('client@marketlink.com', '123456')">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center space-x-3 space-x-reverse">
-                            <div class="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
-                                <span class="material-icons text-white text-sm">business</span>
-                            </div>
-                            <div>
-                                <h3 class="text-sm font-semibold text-gray-800">Client</h3>
-                                <p class="text-xs text-gray-600">client@marketlink.com</p>
-                            </div>
-                        </div>
-                        <span class="material-icons text-green-500 text-sm">arrow_forward</span>
-                    </div>
-                </div>
+                <p class="text-xs font-semibold text-gray-500 pt-2">الموظفون — ادخل من «تسجيل دخول الموظف»</p>
 
-                <!-- Company Card -->
-                <div class="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-xl p-4 cursor-pointer hover:shadow-md transition-all" onclick="fillLoginForm('atpfreelancer@gmail.com', '123456789')">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center space-x-3 space-x-reverse">
-                            <div class="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center">
-                                <span class="material-icons text-white text-sm">domain</span>
-                            </div>
-                            <div>
-                                <h3 class="text-sm font-semibold text-gray-800">شركة</h3>
-                                <p class="text-xs text-gray-600">atpfreelancer@gmail.com</p>
-                            </div>
-                        </div>
-                        <span class="material-icons text-orange-500 text-sm">arrow_forward</span>
-                    </div>
+                <div class="bg-blue-50 border border-blue-200 rounded-xl p-3 text-xs text-gray-700 space-y-1.5">
+                    <div><strong>الاء رآفت</strong> — أكونت منجر + نشر · <code>alaa@marketlink.app</code> · <span class="text-blue-700">Alaa@2026</span></div>
+                    <div><strong>نيرة</strong> — كتابة محتوى · <code>nira@marketlink.app</code> · <span class="text-blue-700">Nira@2026</span></div>
+                    <div><strong>يوسف محمد</strong> — مصمم · <code>youssef@marketlink.app</code> · <span class="text-blue-700">Youssef@2026</span></div>
+                    <div><strong>مريم</strong> — مصممة · <code>mariam@marketlink.app</code> · <span class="text-blue-700">Mariam@2026</span></div>
+                    <div><strong>نفين عبد الله</strong> — فيديو · <code>nevin@marketlink.app</code> · <span class="text-blue-700">Nevin@2026</span></div>
                 </div>
             </div>
-            @endif
 
             <!-- Login Form -->
             <form method="POST" action="{{ route('login') }}" class="space-y-6">
