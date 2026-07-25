@@ -1,13 +1,5 @@
-# Stage 1: build frontend assets (Vite)
-FROM node:20-alpine AS assets
-WORKDIR /app
-COPY package.json package-lock.json ./
-RUN npm ci
-COPY vite.config.js postcss.config.js tailwind.config.js ./
-COPY resources ./resources
-RUN npm run build
-
-# Stage 2: PHP-FPM + nginx (same pattern as the live marketlink container)
+# Assets are prebuilt locally with `npm run build` and committed in public/build
+# (server npm registry access is unreliable, so no Node build stage here).
 FROM php:8.2-fpm-alpine
 
 RUN apk add --no-cache \
@@ -55,7 +47,6 @@ COPY composer.json composer.lock ./
 RUN composer install --no-interaction --prefer-dist --no-dev --no-scripts --optimize-autoloader
 
 COPY . .
-COPY --from=assets /app/public/build ./public/build
 
 RUN composer dump-autoload --optimize \
     && mkdir -p storage/framework/{sessions,views,cache} storage/logs bootstrap/cache database \
