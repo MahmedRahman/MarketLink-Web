@@ -1,40 +1,67 @@
-FROM php:8.2-apache
+# Stage 1: build frontend assets (Vite)
+FROM node:20-alpine AS assets
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY vite.config.js postcss.config.js tailwind.config.js ./
+COPY resources ./resources
+RUN npm run build
+
+# Stage 2: PHP-FPM + nginx (same pattern as the live marketlink container)
+FROM php:8.2-fpm-alpine
+
+RUN apk add --no-cache \
+    git \
+    curl \
+    libpng-dev \
+    libzip-dev \
+    zip \
+    unzip \
+    oniguruma-dev \
+    nginx \
+    supervisor \
+    freetype-dev \
+    libjpeg-turbo-dev \
+    sqlite \
+    sqlite-dev \
+    pkgconfig \
+    autoconf \
+    g++ \
+    make
+
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install \
+    pdo_sqlite \
+    mbstring \
+    exif \
+    pcntl \
+    bcmath \
+    gd \
+    zip \
+    && docker-php-ext-enable pdo_sqlite
+
+RUN apk del autoconf g++ make
+
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
-# 1) أدوات ونبني امتدادات PHP المطلوبة (SQLite + ZIP + GD)
-RUN apt-get update && apt-get install -y \
-    libzip-dev \
-    unzip \
-    sqlite3 \
-    libsqlite3-dev \
-    libpng-dev \
-    libjpeg62-turbo-dev \
-    libfreetype6-dev \
-    && docker-php-ext-install pdo_sqlite bcmath zip \
-    # تهيئة وبناء GD مع دعم JPEG و FreeType
-    && docker-php-ext-configure gd --with-jpeg --with-freetype \
-    && docker-php-ext-install gd \
-    && rm -rf /var/lib/apt/lists/*
+COPY docker/nginx/default.conf /etc/nginx/http.d/default.conf
+COPY docker/supervisor/supervisord.conf /etc/supervisord.conf
+COPY docker/php/local.ini /usr/local/etc/php/conf.d/local.ini
 
-# 2) Composer
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
-
-# 3) نسخ composer files أولاً
+# Composer deps first for layer caching
 COPY composer.json composer.lock ./
+RUN composer install --no-interaction --prefer-dist --no-dev --no-scripts --optimize-autoloader
 
-# 4) تثبيت الباكدجات
-RUN composer install --no-interaction --prefer-dist --no-dev --optimize-autoloader
-
-# 5) نسخ باقي الكود
 COPY . .
+COPY --from=assets /app/public/build ./public/build
 
-# 6) تحضير قاعدة بيانات SQLite والصلاحيات
-RUN mkdir -p database \
-    && touch database/database.sqlite \
-    && chown -R www-data:www-data storage bootstrap/cache database
+RUN composer dump-autoload --optimize \
+    && mkdir -p storage/framework/{sessions,views,cache} storage/logs bootstrap/cache database \
+    && chown -R www-data:www-data /var/www/html \
+    && chmod -R 775 storage bootstrap/cache database
 
-# 7) تشغيل Laravel بالسيرفر المدمج
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+EXPOSE 80
 
-EXPOSE 8000
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]

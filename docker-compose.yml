@@ -1,25 +1,24 @@
 services:
-  laravel:
-    build: .
-    ports:
-      - "8000:8000"
-    volumes:
-      # استبعاد vendor و node_modules من volume mapping
-      - .:/var/www/html
-      - ./prod.env:/var/www/html/.env
-      - vendor:/var/www/html/vendor
-      - node_modules:/var/www/html/node_modules
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: marketlink_web_app
+    restart: unless-stopped
+    working_dir: /var/www/html
+    env_file:
+      - .env
     environment:
-      - APP_ENV=production
-      - APP_DEBUG=false
-    networks:
-      - laravel-network
-    restart: unless-stopped   # ✅ حطها هنا جوه السيرفس
-
-volumes:
-  vendor:
-  node_modules:
-
-networks:
-  laravel-network:
-    driver: bridge
+      APP_NAME: ${APP_NAME:-MarketLink Internal}
+      APP_ENV: ${APP_ENV:-production}
+      APP_DEBUG: ${APP_DEBUG:-false}
+      APP_URL: ${APP_URL:-https://app.marketlink.app}
+      DB_CONNECTION: ${DB_CONNECTION:-sqlite}
+    volumes:
+      - ./:/var/www/html
+      - /var/www/html/vendor
+      - /var/www/html/node_modules
+      - /var/www/html/public/build
+      - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    ports:
+      - "8007:80"
