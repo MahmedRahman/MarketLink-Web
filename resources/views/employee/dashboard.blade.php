@@ -40,6 +40,47 @@
         </div>
     </div>
 
+    <!-- Academy Work Hub Tasks -->
+    @if(isset($workTasks) && $workTasks->count() > 0)
+    <div class="card p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="font-bold text-gray-800 flex items-center gap-2">
+                <span class="material-icons text-purple-600">dashboard_customize</span>
+                مهامي من مساحة العمل
+            </h3>
+            <span class="px-3 py-1 text-xs rounded-full bg-purple-100 text-purple-700">{{ $workTasks->count() }}</span>
+        </div>
+        <div class="space-y-3">
+            @foreach($workTasks as $wt)
+                <a href="{{ route('employee.work.show', $wt) }}"
+                   class="flex items-center justify-between gap-3 p-3 rounded-xl border border-gray-100 hover:bg-gray-50 transition-colors {{ $wt->is_overdue ? 'border-r-4 border-red-400' : '' }}">
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            @php
+                                $kindColors = ['design'=>'bg-purple-100 text-purple-700','video'=>'bg-red-100 text-red-700','content'=>'bg-blue-100 text-blue-700','publish'=>'bg-teal-100 text-teal-700','other'=>'bg-gray-100 text-gray-700'];
+                                $stColors = ['todo'=>'bg-gray-100 text-gray-700','in_progress'=>'bg-blue-100 text-blue-700','review'=>'bg-yellow-100 text-yellow-700','done'=>'bg-green-100 text-green-700'];
+                            @endphp
+                            <span class="px-2 py-0.5 text-xs rounded-full {{ $kindColors[$wt->kind] ?? 'bg-gray-100 text-gray-700' }}">{{ $wt->kind_label }}</span>
+                            <span class="px-2 py-0.5 text-xs rounded-full {{ $stColors[$wt->status] ?? 'bg-gray-100 text-gray-700' }}">{{ $wt->status_label }}</span>
+                            @if($wt->is_overdue)
+                                <span class="px-2 py-0.5 text-xs rounded-full bg-red-100 text-red-700">متأخرة</span>
+                            @endif
+                        </div>
+                        <p class="font-medium text-gray-800 mt-1 truncate">{{ $wt->title }}</p>
+                        <p class="text-xs text-gray-500 truncate">{{ $wt->activity->title }}</p>
+                    </div>
+                    <div class="text-left shrink-0">
+                        @if($wt->due_date)
+                            <p class="text-xs text-gray-500 flex items-center gap-1"><span class="material-icons text-sm">event</span>{{ $wt->due_date->format('m/d') }}</p>
+                        @endif
+                        <span class="material-icons text-gray-400">chevron_left</span>
+                    </div>
+                </a>
+            @endforeach
+        </div>
+    </div>
+    @endif
+
         <!-- Stats Cards -->
     <div class="grid grid-cols-1 md:grid-cols-{{ $hasManagerRole ? '6' : '5' }} gap-4">
         <div class="card p-4">

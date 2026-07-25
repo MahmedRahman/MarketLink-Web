@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Employee;
 
 use App\Http\Controllers\Controller;
 use App\Models\PlanTask;
+use App\Models\WorkTask;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -64,6 +65,14 @@ class EmployeeDashboardController extends Controller
 
         $hasManagerRole = count($managedProjectIds) > 0;
 
-        return view('employee.dashboard', compact('allTasks', 'tasksByStatus', 'stats', 'employee', 'hasManagerRole', 'managedProjectIds'));
+        // مهام مساحة العمل (الأكاديمية) المعيّنة للموظف
+        $workTasks = WorkTask::where('assigned_to', $employee->id)
+            ->with('activity')
+            ->orderByRaw("CASE WHEN status = 'done' THEN 1 ELSE 0 END")
+            ->orderBy('due_date')
+            ->latest()
+            ->get();
+
+        return view('employee.dashboard', compact('allTasks', 'tasksByStatus', 'stats', 'employee', 'hasManagerRole', 'managedProjectIds', 'workTasks'));
     }
 }

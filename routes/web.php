@@ -117,6 +117,17 @@ Route::middleware(['auth', \App\Http\Middleware\CheckTrialStatus::class])->group
            Route::get('monthly-plans/{monthlyPlan}/tasks/{task}/files/{file}/download', [\App\Http\Controllers\PlanTaskController::class, 'downloadFile'])->name('monthly-plans.tasks.files.download');
            Route::delete('monthly-plans/{monthlyPlan}/tasks/{task}/files/{file}', [\App\Http\Controllers\PlanTaskController::class, 'deleteFile'])->name('monthly-plans.tasks.files.delete');
            
+           // Academy Work Hub (مساحة العمل)
+           Route::get('work', [\App\Http\Controllers\WorkActivityController::class, 'index'])->name('work.index');
+           Route::post('work', [\App\Http\Controllers\WorkActivityController::class, 'store'])->name('work.store');
+           Route::get('work/{work}', [\App\Http\Controllers\WorkActivityController::class, 'show'])->name('work.show');
+           Route::put('work/{work}', [\App\Http\Controllers\WorkActivityController::class, 'update'])->name('work.update');
+           Route::delete('work/{work}', [\App\Http\Controllers\WorkActivityController::class, 'destroy'])->name('work.destroy');
+           Route::post('work/{work}/tasks', [\App\Http\Controllers\WorkTaskController::class, 'store'])->name('work.tasks.store');
+           Route::put('work/{work}/tasks/{task}', [\App\Http\Controllers\WorkTaskController::class, 'update'])->name('work.tasks.update');
+           Route::post('work/{work}/tasks/{task}/assign', [\App\Http\Controllers\WorkTaskController::class, 'assign'])->name('work.tasks.assign');
+           Route::delete('work/{work}/tasks/{task}', [\App\Http\Controllers\WorkTaskController::class, 'destroy'])->name('work.tasks.destroy');
+
            // Generate Description Route
            Route::post('/tasks/generate-description', [\App\Http\Controllers\PlanTaskController::class, 'generateDescription'])->name('tasks.generate-description');
            Route::post('/tasks/suggest-ideas', [\App\Http\Controllers\PlanTaskController::class, 'suggestIdeas'])->name('tasks.suggest-ideas');
@@ -213,6 +224,10 @@ Route::middleware('auth:employee')->prefix('employee')->name('employee.')->group
     // Monthly Plans Routes (Only for Managers)
     Route::get('/monthly-plans', [EmployeeMonthlyPlanController::class, 'index'])->name('monthly-plans.index');
     Route::get('/monthly-plans/{monthlyPlan}', [EmployeeMonthlyPlanController::class, 'show'])->name('monthly-plans.show');
+
+    // Academy Work Hub Tasks (مساحة العمل)
+    Route::get('/work-tasks/{task}', [\App\Http\Controllers\Employee\EmployeeWorkTaskController::class, 'show'])->name('work.show');
+    Route::patch('/work-tasks/{task}/status', [\App\Http\Controllers\Employee\EmployeeWorkTaskController::class, 'updateStatus'])->name('work.status');
     
     // Tasks Routes - Update route to include destroy
     Route::delete('/tasks/{task}', [EmployeeTaskController::class, 'destroy'])->name('tasks.destroy');

@@ -1067,6 +1067,12 @@
                         <span class="material-icons text-lg ml-3">calendar_month</span>
                         <span class="font-medium">الحملات الإعلانية</span>
                     </a>
+
+                    <!-- Academy Work Hub -->
+                    <a href="{{ route('work.index') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('work.*') ? 'active' : '' }}">
+                        <span class="material-icons text-lg ml-3">dashboard_customize</span>
+                        <span class="font-medium">مساحة العمل</span>
+                    </a>
                     
                     <!-- Divider -->
                     <div class="my-6 mx-4 border-t border-gray-200"></div>
