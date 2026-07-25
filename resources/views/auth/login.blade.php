@@ -161,14 +161,61 @@
                     </div>
                 </div>
 
-                <p class="text-xs font-semibold text-gray-500 pt-2">الموظفون — ادخل من «تسجيل دخول الموظف»</p>
+                <p class="text-xs font-semibold text-gray-500 pt-2">الموظفون</p>
 
-                <div class="bg-blue-50 border border-blue-200 rounded-xl p-3 text-xs text-gray-700 space-y-1.5">
-                    <div><strong>الاء رآفت</strong> — أكونت منجر + نشر · <code>alaa@marketlink.app</code> · <span class="text-blue-700">Alaa@2026</span></div>
-                    <div><strong>نيرة</strong> — كتابة محتوى · <code>nira@marketlink.app</code> · <span class="text-blue-700">Nira@2026</span></div>
-                    <div><strong>يوسف محمد</strong> — مصمم · <code>youssef@marketlink.app</code> · <span class="text-blue-700">Youssef@2026</span></div>
-                    <div><strong>مريم</strong> — مصممة · <code>mariam@marketlink.app</code> · <span class="text-blue-700">Mariam@2026</span></div>
-                    <div><strong>نفين عبد الله</strong> — فيديو · <code>nevin@marketlink.app</code> · <span class="text-blue-700">Nevin@2026</span></div>
+                <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-3 cursor-pointer hover:shadow-md transition-all" onclick="fillLoginForm('alaa@marketlink.app', 'Alaa@2026')">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-800">الاء رآفت</h3>
+                            <p class="text-xs text-gray-600">أكونت منجر + نشر · alaa@marketlink.app</p>
+                            <p class="text-xs text-blue-600 mt-0.5">Alaa@2026</p>
+                        </div>
+                        <span class="material-icons text-blue-500 text-sm">arrow_forward</span>
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-3 cursor-pointer hover:shadow-md transition-all" onclick="fillLoginForm('nira@marketlink.app', 'Nira@2026')">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-800">نيرة</h3>
+                            <p class="text-xs text-gray-600">كتابة محتوى · nira@marketlink.app</p>
+                            <p class="text-xs text-blue-600 mt-0.5">Nira@2026</p>
+                        </div>
+                        <span class="material-icons text-blue-500 text-sm">arrow_forward</span>
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-3 cursor-pointer hover:shadow-md transition-all" onclick="fillLoginForm('youssef@marketlink.app', 'Youssef@2026')">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-800">يوسف محمد</h3>
+                            <p class="text-xs text-gray-600">مصمم · youssef@marketlink.app</p>
+                            <p class="text-xs text-blue-600 mt-0.5">Youssef@2026</p>
+                        </div>
+                        <span class="material-icons text-blue-500 text-sm">arrow_forward</span>
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-3 cursor-pointer hover:shadow-md transition-all" onclick="fillLoginForm('mariam@marketlink.app', 'Mariam@2026')">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-800">مريم</h3>
+                            <p class="text-xs text-gray-600">مصممة · mariam@marketlink.app</p>
+                            <p class="text-xs text-blue-600 mt-0.5">Mariam@2026</p>
+                        </div>
+                        <span class="material-icons text-blue-500 text-sm">arrow_forward</span>
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-3 cursor-pointer hover:shadow-md transition-all" onclick="fillLoginForm('nevin@marketlink.app', 'Nevin@2026')">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-800">نفين عبد الله</h3>
+                            <p class="text-xs text-gray-600">فيديو · nevin@marketlink.app</p>
+                            <p class="text-xs text-blue-600 mt-0.5">Nevin@2026</p>
+                        </div>
+                        <span class="material-icons text-blue-500 text-sm">arrow_forward</span>
+                    </div>
                 </div>
             </div>
 
@@ -244,16 +291,8 @@
                 </button>
             </form>
 
-            <!-- Employee Login Link -->
-            <div class="mt-6 text-center pt-6 border-t border-gray-200">
-                <a href="{{ route('employee.login') }}" class="inline-flex items-center justify-center w-full py-3 px-4 rounded-xl text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 transition-colors mb-3">
-                    <span class="material-icons text-sm ml-2">person</span>
-                    تسجيل دخول الموظف
-                </a>
-            </div>
-
             <!-- Register Link -->
-            <div class="mt-4 text-center pt-4 border-t border-gray-200">
+            <div class="mt-6 text-center pt-6 border-t border-gray-200">
                 <p class="text-sm text-gray-600 mb-3">
                     ليس لديك حساب؟
                 </p>

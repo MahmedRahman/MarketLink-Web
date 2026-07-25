@@ -28,8 +28,13 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        // موظف: توجيه إلى لوحة تحكم الموظفين
+        if ($request->authenticatedGuard === 'employee') {
+            return redirect()->intended(route('employee.dashboard', absolute: false));
+        }
+
         // إذا كان المستخدم admin، إعادة التوجيه إلى لوحة تحكم المدير
-        if (Auth::user()->is_admin) {
+        if (Auth::guard('web')->user()->is_admin) {
             return redirect()->intended(route('admin.dashboard', absolute: false));
         }
 
@@ -42,6 +47,7 @@ class AuthenticatedSessionController extends Controller
     public function destroy(Request $request): RedirectResponse
     {
         Auth::guard('web')->logout();
+        Auth::guard('employee')->logout();
 
         $request->session()->invalidate();
 

@@ -12,6 +12,11 @@ use Illuminate\Validation\ValidationException;
 class LoginRequest extends FormRequest
 {
     /**
+     * الحارس الذي نجح تسجيل الدخول من خلاله: web (أدمن/مستخدم) أو employee.
+     */
+    public string $authenticatedGuard = 'web';
+
+    /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
@@ -41,31 +46,62 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
-            RateLimiter::hit($this->throttleKey());
+        $credentials = $this->only('email', 'password');
+        $remember = $this->boolean('remember');
 
-            throw ValidationException::withMessages([
-                'email' => trans('auth.failed'),
-            ]);
+        // 1) محاولة الدخول كمستخدم/أدمن (حارس web)
+        if (Auth::guard('web')->attempt($credentials, $remember)) {
+            $user = Auth::guard('web')->user();
+
+            if ($user && $user->status === 'suspended') {
+                Auth::guard('web')->logout();
+                throw ValidationException::withMessages([
+                    'email' => 'تم إيقاف حسابك. يرجى التواصل مع الدعم الفني.',
+                ]);
+            }
+
+            if ($user && $user->status === 'inactive') {
+                Auth::guard('web')->logout();
+                throw ValidationException::withMessages([
+                    'email' => 'حسابك غير نشط. يرجى التواصل مع الدعم الفني.',
+                ]);
+            }
+
+            $this->authenticatedGuard = 'web';
+            RateLimiter::clear($this->throttleKey());
+
+            return;
         }
 
-        // التحقق من حالة المستخدم
-        $user = Auth::user();
-        if ($user && $user->status === 'suspended') {
-            Auth::logout();
-            throw ValidationException::withMessages([
-                'email' => 'تم إيقاف حسابك. يرجى التواصل مع الدعم الفني.',
-            ]);
+        // 2) محاولة الدخول كموظف (حارس employee)
+        if (Auth::guard('employee')->attempt($credentials, $remember)) {
+            $employee = Auth::guard('employee')->user();
+
+            if ($employee && $employee->status === 'inactive') {
+                Auth::guard('employee')->logout();
+                throw ValidationException::withMessages([
+                    'email' => 'حسابك غير نشط. يرجى التواصل مع المدير.',
+                ]);
+            }
+
+            if ($employee && $employee->status === 'pending') {
+                Auth::guard('employee')->logout();
+                throw ValidationException::withMessages([
+                    'email' => 'حسابك في انتظار الموافقة. يرجى التواصل مع المدير.',
+                ]);
+            }
+
+            $this->authenticatedGuard = 'employee';
+            RateLimiter::clear($this->throttleKey());
+
+            return;
         }
 
-        if ($user && $user->status === 'inactive') {
-            Auth::logout();
-            throw ValidationException::withMessages([
-                'email' => 'حسابك غير نشط. يرجى التواصل مع الدعم الفني.',
-            ]);
-        }
+        RateLimiter::hit($this->throttleKey());
 
-        RateLimiter::clear($this->throttleKey());
+        throw ValidationException::withMessages([
+            'email' => trans('auth.failed'),
+        ]);
     }
 
     /**

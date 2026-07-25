@@ -7,16 +7,15 @@ use App\Http\Requests\Employee\Auth\EmployeeLoginRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\View\View;
 
 class EmployeeAuthController extends Controller
 {
     /**
-     * Display the login view.
+     * تم دمج تسجيل دخول الموظف في صفحة الدخول الموحدة، لذا نوجّه للرابط الموحد.
      */
-    public function create(): View
+    public function create(): RedirectResponse
     {
-        return view('employee.auth.login');
+        return redirect()->route('login');
     }
 
     /**
