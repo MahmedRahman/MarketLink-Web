@@ -164,63 +164,23 @@
     </details>
     @endif
 
-    {{-- لصق نص كامل وتقسيمه لتاسكات عبر DeepSeek --}}
-    <div class="card rounded-2xl p-5 border border-indigo-100 bg-gradient-to-l from-indigo-50/40 to-white">
-        <div class="flex items-start justify-between gap-3 mb-3">
-            <div>
-                <h3 class="font-bold text-gray-800 flex items-center gap-2">
-                    <span class="material-icons text-indigo-600">auto_awesome</span>
-                    لصق المحتوى وتقسيم التاسكات
-                </h3>
-                <p class="text-xs text-gray-500 mt-1">
-                    الصق النص كامل مرة واحدة — DeepSeek يقسّمه لتاسكات بدون ما يغيّر الكابشن أو المطلوب، ويلخّص المطلوب من المصمم.
-                </p>
-            </div>
-        </div>
-        <form method="POST" action="{{ route('work.tasks.parse-bulk', $activity) }}" id="parseBulkForm" class="space-y-3">
-            @csrf
-            <textarea name="bulk_text" id="bulkText" rows="7" required minlength="20"
-                      placeholder="الصق هنا كل المحتوى مرة واحدة: البوستات، الكابشن، TOV، مرجع التصميم، المنصات، مواعيد النشر..."
-                      class="w-full px-4 py-3 rounded-xl border-2 border-indigo-100 text-sm focus:border-indigo-400 focus:outline-none bg-white">{{ old('bulk_text') }}</textarea>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">كاتب المحتوى (اختياري)</label>
-                    <select name="content_writer_id" class="w-full px-3 py-2 rounded-xl border-2 border-gray-200 text-sm focus:border-primary focus:outline-none">
-                        <option value="">اقتراح تلقائي</option>
-                        @foreach($employees as $emp)
-                            <option value="{{ $emp->id }}">{{ $emp->name }} — {{ $emp->role_badge }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">المصمم (اختياري)</label>
-                    <select name="designer_id" class="w-full px-3 py-2 rounded-xl border-2 border-gray-200 text-sm focus:border-primary focus:outline-none">
-                        <option value="">اقتراح تلقائي</option>
-                        @foreach($employees as $emp)
-                            <option value="{{ $emp->id }}">{{ $emp->name }} — {{ $emp->role_badge }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="flex items-end">
-                    <button type="submit" id="parseBulkBtn"
-                            class="btn-primary text-white w-full py-2.5 rounded-xl font-medium flex items-center justify-center gap-2">
-                        <span class="material-icons text-base">psychology</span>
-                        <span id="parseBulkBtnLabel">حلّل وقسّم التاسكات</span>
-                    </button>
-                </div>
-            </div>
-        </form>
-    </div>
-
     <div class="space-y-4">
-        <div class="flex items-center justify-between gap-3">
+        <div class="flex items-center justify-between gap-3 flex-wrap">
             <h3 class="font-bold text-gray-800">المهام ({{ $activity->tasks->count() }})</h3>
-            <button type="button"
-                    onclick="openAddTaskModal()"
-                    class="btn-primary text-white px-4 py-2 rounded-xl font-medium text-sm inline-flex items-center gap-1.5">
-                <span class="material-icons text-base">add_task</span>
-                إضافة تاسك محتوى
-            </button>
+            <div class="flex items-center gap-2 flex-wrap">
+                <button type="button"
+                        onclick="openParseBulkModal()"
+                        class="px-4 py-2 rounded-xl font-medium text-sm inline-flex items-center gap-1.5 bg-indigo-50 text-indigo-700 border border-indigo-100 hover:bg-indigo-100">
+                    <span class="material-icons text-base">auto_awesome</span>
+                    لصق المحتوى وتقسيم التاسكات
+                </button>
+                <button type="button"
+                        onclick="openAddTaskModal()"
+                        class="btn-primary text-white px-4 py-2 rounded-xl font-medium text-sm inline-flex items-center gap-1.5">
+                    <span class="material-icons text-base">add_task</span>
+                    إضافة تاسك محتوى
+                </button>
+            </div>
         </div>
 
         @forelse($taskGroups as $group)
@@ -365,6 +325,59 @@
                 </button>
             </div>
         @endforelse
+    </div>
+</div>
+
+{{-- مودال لصق المحتوى وتقسيمه --}}
+<div id="parseBulkModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
+    <div class="bg-white rounded-2xl w-full max-w-2xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between mb-2">
+            <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+                <span class="material-icons text-indigo-600">auto_awesome</span>
+                لصق المحتوى وتقسيم التاسكات
+            </h3>
+            <button type="button" onclick="closeParseBulkModal()" class="text-gray-400 hover:text-gray-600">
+                <span class="material-icons">close</span>
+            </button>
+        </div>
+        <p class="text-xs text-gray-500 mb-4">
+            الصق النص كامل مرة واحدة — DeepSeek يقسّمه لتاسكات بدون ما يغيّر الكابشن أو المطلوب، ويلخّص المطلوب من المصمم.
+        </p>
+        <form method="POST" action="{{ route('work.tasks.parse-bulk', $activity) }}" id="parseBulkForm" class="space-y-3">
+            @csrf
+            <textarea name="bulk_text" id="bulkText" rows="8" required minlength="20"
+                      placeholder="الصق هنا كل المحتوى مرة واحدة: البوستات، الكابشن، TOV، مرجع التصميم، المنصات، مواعيد النشر..."
+                      class="w-full px-4 py-3 rounded-xl border-2 border-indigo-100 text-sm focus:border-indigo-400 focus:outline-none bg-white">{{ old('bulk_text') }}</textarea>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">كاتب المحتوى (اختياري)</label>
+                    <select name="content_writer_id" class="w-full px-3 py-2 rounded-xl border-2 border-gray-200 text-sm focus:border-primary focus:outline-none">
+                        <option value="">اقتراح تلقائي</option>
+                        @foreach($employees as $emp)
+                            <option value="{{ $emp->id }}" @selected(old('content_writer_id') == $emp->id)>{{ $emp->name }} — {{ $emp->role_badge }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">المصمم (اختياري)</label>
+                    <select name="designer_id" class="w-full px-3 py-2 rounded-xl border-2 border-gray-200 text-sm focus:border-primary focus:outline-none">
+                        <option value="">اقتراح تلقائي</option>
+                        @foreach($employees as $emp)
+                            <option value="{{ $emp->id }}" @selected(old('designer_id') == $emp->id)>{{ $emp->name }} — {{ $emp->role_badge }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+            <div class="flex gap-3 pt-2">
+                <button type="submit" id="parseBulkBtn"
+                        class="btn-primary text-white flex-1 py-2.5 rounded-xl font-medium inline-flex items-center justify-center gap-2">
+                    <span class="material-icons text-base">psychology</span>
+                    <span id="parseBulkBtnLabel">حلّل وقسّم التاسكات</span>
+                </button>
+                <button type="button" onclick="closeParseBulkModal()"
+                        class="px-5 py-2.5 rounded-xl font-medium bg-gray-100 text-gray-700 hover:bg-gray-200">إلغاء</button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -704,6 +717,15 @@
         return String(value).substring(0, 10);
     }
 
+    function openParseBulkModal() {
+        document.getElementById('parseBulkModal').classList.remove('hidden');
+        document.getElementById('bulkText')?.focus();
+    }
+
+    function closeParseBulkModal() {
+        document.getElementById('parseBulkModal').classList.add('hidden');
+    }
+
     function openAddTaskModal() {
         document.getElementById('addTaskModal').classList.remove('hidden');
         updateSuggestion();
@@ -831,5 +853,9 @@
         btn.disabled = true;
         label.textContent = 'جاري التحليل والتقسيم...';
     });
+
+    @if(old('bulk_text'))
+    document.addEventListener('DOMContentLoaded', openParseBulkModal);
+    @endif
 </script>
 @endsection
