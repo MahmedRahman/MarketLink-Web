@@ -166,7 +166,28 @@
 
     <div class="space-y-4">
         <div class="flex items-center justify-between gap-3 flex-wrap">
-            <h3 class="font-bold text-gray-800">المهام ({{ $activity->tasks->count() }})</h3>
+            <div>
+                <h3 class="font-bold text-gray-800">المهام ({{ $contentCounts['total'] }})</h3>
+                <div class="flex flex-wrap items-center gap-2 mt-2">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 text-blue-700 text-xs font-semibold border border-blue-100">
+                        <span class="material-icons text-sm">article</span>
+                        بوست {{ $contentCounts['post'] }}
+                    </span>
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-50 text-rose-700 text-xs font-semibold border border-rose-100">
+                        <span class="material-icons text-sm">movie</span>
+                        ريلز {{ $contentCounts['reels'] }}
+                    </span>
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 text-amber-700 text-xs font-semibold border border-amber-100">
+                        <span class="material-icons text-sm">view_carousel</span>
+                        كروسيل {{ $contentCounts['carousel'] }}
+                    </span>
+                    @if($contentCounts['other'] > 0)
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gray-50 text-gray-600 text-xs font-semibold border border-gray-200">
+                            أخرى {{ $contentCounts['other'] }}
+                        </span>
+                    @endif
+                </div>
+            </div>
             <div class="flex items-center gap-2 flex-wrap">
                 <button type="button"
                         onclick="openParseBulkModal()"
@@ -183,138 +204,68 @@
             </div>
         </div>
 
-        @forelse($taskGroups as $group)
-            <section class="card rounded-2xl overflow-hidden">
-                <div class="px-4 py-3 bg-gray-50 border-b border-gray-100 flex items-center justify-between gap-3">
-                    <div class="flex items-center gap-3 min-w-0">
-                        <div class="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center shrink-0">
-                            <span class="material-icons">{{ $group['key'] === 'unassigned' ? 'person_off' : 'person' }}</span>
-                        </div>
-                        <div class="min-w-0">
-                            <h4 class="font-bold text-gray-800 truncate">{{ $group['name'] }}</h4>
-                            <p class="text-xs text-gray-500">
-                                @if($group['role_label'])
-                                    {{ $group['role_label'] }} ·
-                                @endif
-                                {{ count($group['items']) }} مطلوب
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="divide-y divide-gray-100">
-                    @foreach($group['items'] as $item)
-                        @php $task = $item['task']; @endphp
-                        <div class="p-4 {{ $task->is_overdue ? 'bg-red-50/40' : '' }}">
-                            <div class="flex items-start justify-between gap-3">
-                                <div class="flex-1 min-w-0">
-                                    <div class="flex items-center gap-2 flex-wrap">
-                                        @foreach($item['roles'] as $roleName)
-                                            <span class="px-2 py-0.5 text-[11px] rounded-md bg-teal-50 text-teal-700 border border-teal-100">{{ $roleName }}</span>
-                                        @endforeach
-                                        <span class="role-badge role-{{ $task->kind_color }}">{{ $task->kind_label }}</span>
-                                        <span class="role-badge role-{{ $task->status_color }}">{{ $task->status_label }}</span>
-                                        @if($task->content_type_label)
-                                            <span class="role-badge role-indigo">{{ $task->content_type_label }}</span>
-                                        @endif
-                                        @if($task->is_overdue)
-                                            <span class="role-badge role-red flex items-center gap-1"><span class="material-icons text-xs">schedule</span>متأخرة</span>
-                                        @endif
-                                    </div>
-                                    <h5 class="font-semibold text-gray-800 mt-2">{{ $task->title }}</h5>
-                                    @if($task->caption)
-                                        <p class="text-sm text-gray-500 mt-1 line-clamp-2">{{ $task->caption }}</p>
-                                    @elseif($task->idea)
-                                        <p class="text-sm text-gray-500 mt-1 line-clamp-2">{{ $task->idea }}</p>
-                                    @endif
-                                    @if(in_array('مصمم', $item['roles'], true) && $task->designer_brief)
-                                        <div class="mt-2 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2">
-                                            <p class="text-[11px] font-semibold text-amber-700 mb-0.5 flex items-center gap-1">
-                                                <span class="material-icons text-sm">tips_and_updates</span>
-                                                المطلوب منك كمصمم
-                                            </p>
-                                            <p class="text-xs text-amber-900 whitespace-pre-line">{{ $task->designer_brief }}</p>
-                                        </div>
-                                    @elseif($task->designer_brief)
-                                        <div class="mt-2 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2">
-                                            <p class="text-[11px] font-semibold text-amber-700 mb-0.5 flex items-center gap-1">
-                                                <span class="material-icons text-sm">tips_and_updates</span>
-                                                ملخص للمصمم
-                                            </p>
-                                            <p class="text-xs text-amber-900 whitespace-pre-line line-clamp-3">{{ $task->designer_brief }}</p>
-                                        </div>
-                                    @endif
-                                    @if(!empty($task->platform_labels))
-                                        <div class="flex flex-wrap gap-1 mt-2">
-                                            @foreach($task->platform_labels as $plat)
-                                                <span class="px-2 py-0.5 text-[11px] rounded-md bg-gray-100 text-gray-600">{{ $plat }}</span>
-                                            @endforeach
-                                        </div>
-                                    @endif
-                                    <div class="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs text-gray-500">
-                                        @if($task->publish_date)
-                                            <span class="flex items-center gap-1"><span class="material-icons text-sm">campaign</span>نشر {{ $task->publish_date->format('Y/m/d') }}</span>
-                                        @endif
-                                        @if($task->due_date)
-                                            <span class="flex items-center gap-1"><span class="material-icons text-sm">event</span>{{ $task->due_date->format('Y/m/d') }}</span>
-                                        @endif
-                                    </div>
+        @if(count($taskGroups))
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                @foreach($taskGroups as $group)
+                    <section class="card rounded-2xl overflow-hidden flex flex-col min-h-[280px]">
+                        <div class="px-4 py-3 bg-gray-50 border-b border-gray-100">
+                            <div class="flex items-center gap-3 min-w-0">
+                                <div class="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center shrink-0">
+                                    <span class="material-icons">{{ $group['key'] === 'unassigned' ? 'person_off' : 'person' }}</span>
                                 </div>
-
-                                <div class="flex flex-col items-end gap-2 shrink-0">
-                                    <div class="flex items-center gap-1">
-                                        <button type="button"
-                                                data-task="{{ json_encode([
-                                                    'id' => $task->id,
-                                                    'title' => $task->title,
-                                                    'idea' => $task->idea,
-                                                    'tov' => $task->tov,
-                                                    'caption' => $task->caption,
-                                                    'content_type' => $task->content_type,
-                                                    'design_reference' => $task->design_reference,
-                                                    'designer_brief' => $task->designer_brief,
-                                                    'platforms' => $task->platforms,
-                                                    'notes' => $task->notes,
-                                                    'kind' => $task->kind,
-                                                    'status' => $task->status,
-                                                    'assigned_to' => $task->assigned_to,
-                                                    'content_writer_id' => $task->content_writer_id,
-                                                    'designer_id' => $task->designer_id,
-                                                    'due_date' => optional($task->due_date)?->format('Y-m-d'),
-                                                    'publish_date' => optional($task->publish_date)?->format('Y-m-d'),
-                                                ], JSON_UNESCAPED_UNICODE) }}"
-                                                onclick="openTaskEdit(JSON.parse(this.getAttribute('data-task')))"
-                                                class="p-2 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200" title="تعديل">
-                                            <span class="material-icons text-base">edit</span>
-                                        </button>
-                                        <button type="button"
-                                                onclick="summarizeDesigner({{ $task->id }}, this)"
-                                                class="p-2 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100" title="تلخيص المطلوب من المصمم">
-                                            <span class="material-icons text-base">tips_and_updates</span>
-                                        </button>
-                                        <button type="button"
-                                                onclick="confirmDelete('{{ route('work.tasks.destroy', [$activity, $task]) }}', 'حذف المهمة', 'هل تريد حذف هذه المهمة؟')"
-                                                class="p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100" title="حذف">
-                                            <span class="material-icons text-base">delete</span>
-                                        </button>
-                                    </div>
-                                    <form method="POST" action="{{ route('work.tasks.assign', [$activity, $task]) }}">
-                                        @csrf
-                                        <select name="assigned_to" onchange="this.form.submit()"
-                                                class="px-2 py-1.5 rounded-lg border-2 border-gray-200 text-xs focus:border-primary focus:outline-none max-w-[160px]">
-                                            <option value="">— غير معيّن —</option>
-                                            @foreach($employees as $emp)
-                                                <option value="{{ $emp->id }}" @selected($task->assigned_to === $emp->id)>{{ $emp->name }}</option>
-                                            @endforeach
-                                        </select>
-                                    </form>
+                                <div class="min-w-0">
+                                    <h4 class="font-bold text-gray-800 truncate">{{ $group['name'] }}</h4>
+                                    <p class="text-xs text-gray-500">
+                                        @if($group['role_label'])
+                                            {{ $group['role_label'] }} ·
+                                        @endif
+                                        {{ count($group['items']) }} مطلوب
+                                    </p>
                                 </div>
                             </div>
                         </div>
-                    @endforeach
-                </div>
-            </section>
-        @empty
+
+                        <div class="p-3 space-y-2 flex-1 overflow-y-auto max-h-[520px]">
+                            @foreach($group['items'] as $item)
+                                @php $task = $item['task']; @endphp
+                                <a href="{{ route('work.tasks.show', [$activity, $task]) }}"
+                                   class="block rounded-xl border border-gray-200 bg-white hover:border-primary/40 hover:shadow-sm transition-all p-3 {{ $task->is_overdue ? 'border-r-4 border-r-red-400' : '' }}">
+                                    <div class="flex items-center gap-1.5 flex-wrap mb-1.5">
+                                        @foreach($item['roles'] as $roleName)
+                                            <span class="px-1.5 py-0.5 text-[10px] rounded-md bg-teal-50 text-teal-700">{{ $roleName }}</span>
+                                        @endforeach
+                                        @if($task->content_type_label)
+                                            <span class="px-1.5 py-0.5 text-[10px] rounded-md bg-indigo-50 text-indigo-700">{{ $task->content_type_label }}</span>
+                                        @endif
+                                        <span class="px-1.5 py-0.5 text-[10px] rounded-md bg-gray-100 text-gray-600">{{ $task->status_label }}</span>
+                                    </div>
+                                    <p class="font-semibold text-sm text-gray-800 line-clamp-2">{{ $task->title }}</p>
+                                    @if($task->caption)
+                                        <p class="text-xs text-sky-700 mt-1 line-clamp-2"><span class="font-semibold">Caption:</span> {{ $task->caption }}</p>
+                                    @endif
+                                    @if($task->tov)
+                                        <p class="text-xs text-violet-700 mt-1 line-clamp-1"><span class="font-semibold">TOV:</span> {{ $task->tov }}</p>
+                                    @endif
+                                    @if(in_array('مصمم', $item['roles'], true) && $task->designer_brief)
+                                        <p class="text-[11px] text-amber-800 mt-1.5 bg-amber-50 rounded-lg px-2 py-1 line-clamp-2">{{ $task->designer_brief }}</p>
+                                    @endif
+                                    <div class="flex items-center justify-between mt-2 text-[11px] text-gray-400">
+                                        <span>
+                                            @if($task->publish_date)
+                                                نشر {{ $task->publish_date->format('m/d') }}
+                                            @elseif($task->due_date)
+                                                {{ $task->due_date->format('m/d') }}
+                                            @endif
+                                        </span>
+                                        <span class="inline-flex items-center gap-0.5 text-primary">تفاصيل <span class="material-icons text-sm">chevron_left</span></span>
+                                    </div>
+                                </a>
+                            @endforeach
+                        </div>
+                    </section>
+                @endforeach
+            </div>
+        @else
             <div class="card rounded-2xl p-10 text-center">
                 <span class="material-icons text-5xl text-gray-300">checklist</span>
                 <p class="text-gray-500 text-sm mt-3">لا توجد مهام بعد</p>
@@ -324,7 +275,7 @@
                     إضافة تاسك محتوى
                 </button>
             </div>
-        @endforelse
+        @endif
     </div>
 </div>
 

@@ -133,10 +133,19 @@ class WorkActivityController extends Controller
         $employeesById = $employees->keyBy('id');
         $taskGroups = $this->buildTaskGroupsByPerson($work->tasks, $employeesById);
 
+        $contentCounts = [
+            'total' => $work->tasks->count(),
+            'post' => $work->tasks->where('content_type', 'post')->count(),
+            'reels' => $work->tasks->where('content_type', 'reels')->count(),
+            'carousel' => $work->tasks->where('content_type', 'carousel')->count(),
+            'other' => $work->tasks->filter(fn ($t) => ! in_array($t->content_type, ['post', 'reels', 'carousel'], true))->count(),
+        ];
+
         return view('work.show', [
             'activity' => $work,
             'employees' => $employees,
             'taskGroups' => $taskGroups,
+            'contentCounts' => $contentCounts,
             'kinds' => WorkTask::kinds(),
             'taskStatuses' => WorkTask::statuses(),
             'activityStatuses' => WorkActivity::statuses(),

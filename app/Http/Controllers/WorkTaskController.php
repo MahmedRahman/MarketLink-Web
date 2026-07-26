@@ -12,6 +12,29 @@ use Illuminate\Support\Facades\Log;
 
 class WorkTaskController extends Controller
 {
+    public function show(Request $request, WorkActivity $work, WorkTask $task)
+    {
+        $this->authorizeActivity($request, $work);
+        $this->authorizeTask($work, $task);
+
+        $task->load(['contentWriter', 'designer', 'assignedEmployee']);
+
+        $employees = Employee::where('organization_id', $request->user()->organization_id)
+            ->where('status', 'active')
+            ->orderBy('name')
+            ->get();
+
+        return view('work.tasks.show', [
+            'activity' => $work,
+            'task' => $task,
+            'employees' => $employees,
+            'kinds' => WorkTask::kinds(),
+            'taskStatuses' => WorkTask::statuses(),
+            'contentTypes' => WorkTask::contentTypes(),
+            'platforms' => WorkTask::platforms(),
+        ]);
+    }
+
     public function store(Request $request, WorkActivity $work)
     {
         $this->authorizeActivity($request, $work);
@@ -193,6 +216,10 @@ class WorkTaskController extends Controller
         $this->ensureOptionalEmployeesInOrg($request, $validated);
 
         $task->update($validated);
+
+        if ($request->boolean('return_to_detail')) {
+            return redirect()->route('work.tasks.show', [$work, $task])->with('success', 'تم تحديث المهمة');
+        }
 
         return redirect()->route('work.show', $work)->with('success', 'تم تحديث المهمة');
     }

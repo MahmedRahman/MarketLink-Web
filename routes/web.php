@@ -125,6 +125,7 @@ Route::middleware(['auth', \App\Http\Middleware\CheckTrialStatus::class])->group
            Route::delete('work/{work}', [\App\Http\Controllers\WorkActivityController::class, 'destroy'])->name('work.destroy');
            Route::post('work/{work}/tasks', [\App\Http\Controllers\WorkTaskController::class, 'store'])->name('work.tasks.store');
            Route::post('work/{work}/tasks/parse-bulk', [\App\Http\Controllers\WorkTaskController::class, 'parseBulk'])->name('work.tasks.parse-bulk');
+           Route::get('work/{work}/tasks/{task}', [\App\Http\Controllers\WorkTaskController::class, 'show'])->name('work.tasks.show');
            Route::put('work/{work}/tasks/{task}', [\App\Http\Controllers\WorkTaskController::class, 'update'])->name('work.tasks.update');
            Route::post('work/{work}/tasks/{task}/assign', [\App\Http\Controllers\WorkTaskController::class, 'assign'])->name('work.tasks.assign');
            Route::post('work/{work}/tasks/{task}/summarize-designer', [\App\Http\Controllers\WorkTaskController::class, 'summarizeDesignerBrief'])->name('work.tasks.summarize-designer');
