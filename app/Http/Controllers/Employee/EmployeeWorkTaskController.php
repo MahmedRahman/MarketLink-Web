@@ -18,7 +18,7 @@ class EmployeeWorkTaskController extends Controller
         $employee = Auth::guard('employee')->user();
         $status = $request->get('status');
 
-        $workQuery = WorkTask::where('assigned_to', $employee->id)->with('activity');
+        $workQuery = WorkTask::forEmployee($employee->id)->with('activity');
         if ($status && array_key_exists($status, WorkTask::statuses())) {
             $workQuery->where('status', $status);
         }
@@ -36,18 +36,20 @@ class EmployeeWorkTaskController extends Controller
         }
         $planTasks = $planQuery->orderBy('created_at', 'desc')->get();
 
+        $workBase = fn () => WorkTask::forEmployee($employee->id);
+
         $stats = [
-            'total' => WorkTask::where('assigned_to', $employee->id)->count()
+            'total' => $workBase()->count()
                 + PlanTask::where('assigned_to', $employee->id)->count(),
-            'todo' => WorkTask::where('assigned_to', $employee->id)->where('status', 'todo')->count()
+            'todo' => $workBase()->where('status', 'todo')->count()
                 + PlanTask::where('assigned_to', $employee->id)->where('status', 'todo')->count(),
-            'in_progress' => WorkTask::where('assigned_to', $employee->id)->where('status', 'in_progress')->count()
+            'in_progress' => $workBase()->where('status', 'in_progress')->count()
                 + PlanTask::where('assigned_to', $employee->id)->where('status', 'in_progress')->count(),
-            'review' => WorkTask::where('assigned_to', $employee->id)->where('status', 'review')->count()
+            'review' => $workBase()->where('status', 'review')->count()
                 + PlanTask::where('assigned_to', $employee->id)->where('status', 'review')->count(),
-            'done' => WorkTask::where('assigned_to', $employee->id)->where('status', 'done')->count()
+            'done' => $workBase()->where('status', 'done')->count()
                 + PlanTask::where('assigned_to', $employee->id)->where('status', 'done')->count(),
-            'overdue' => WorkTask::where('assigned_to', $employee->id)
+            'overdue' => $workBase()
                 ->where('status', '!=', 'done')
                 ->whereDate('due_date', '<', now()->toDateString())
                 ->count(),
@@ -66,9 +68,9 @@ class EmployeeWorkTaskController extends Controller
     public function show(WorkTask $task)
     {
         $employee = Auth::guard('employee')->user();
-        abort_unless($task->assigned_to === $employee->id, 403);
+        abort_unless($task->isVisibleToEmployee($employee->id), 403);
 
-        $task->load('activity');
+        $task->load(['activity', 'contentWriter', 'designer', 'assignedEmployee']);
 
         return view('employee.work.show', [
             'task' => $task,
@@ -79,7 +81,7 @@ class EmployeeWorkTaskController extends Controller
     public function updateStatus(Request $request, WorkTask $task)
     {
         $employee = Auth::guard('employee')->user();
-        abort_unless($task->assigned_to === $employee->id, 403);
+        abort_unless($task->isVisibleToEmployee($employee->id), 403);
 
         $validated = $request->validate([
             'status' => 'required|in:todo,in_progress,review,done',

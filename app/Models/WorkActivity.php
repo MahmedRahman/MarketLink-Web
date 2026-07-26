@@ -135,9 +135,11 @@ class WorkActivity extends Model
         return [
             [
                 'title' => 'تصميم بوست إعلان المحاضرة',
-                'kind' => 'design',
+                'kind' => 'content',
                 'offset' => -3,
                 'idea' => "ينشر قبل المحاضرة بأيام لإعلان الموعد والموضوع.\nالمسار: Marketing_Graphics/Announcement/Announcement_Post.png",
+                'content_type' => 'post',
+                'platforms' => ['facebook', 'instagram'],
             ],
             [
                 'title' => 'فيديو تشويقي قبل المحاضرة (Teaser_Before)',
@@ -147,9 +149,11 @@ class WorkActivity extends Model
             ],
             [
                 'title' => 'تصميم بوست التذكير (قبل المحاضرة بساعة)',
-                'kind' => 'design',
+                'kind' => 'content',
                 'offset' => 0,
                 'idea' => "ينشر قبل المحاضرة بساعة للتذكير بالموعد.\nالمسار: Marketing_Graphics/Reminder_1Hour/Reminder_Post.png",
+                'content_type' => 'post',
+                'platforms' => ['facebook', 'instagram'],
             ],
             [
                 'title' => 'مونتاج النسخة النهائية للمحاضرة',
@@ -171,9 +175,11 @@ class WorkActivity extends Model
             ],
             [
                 'title' => 'قص مقاطع من المحاضرة (Lecture_Clips)',
-                'kind' => 'video',
+                'kind' => 'content',
                 'offset' => 4,
                 'idea' => "مقاطع قصيرة من محتوى المحاضرة تنشر كريلز/شورتس.\nالمسار: Marketing_Clips/Lecture_Clips/",
+                'content_type' => 'reels',
+                'platforms' => ['instagram', 'tiktok', 'facebook'],
             ],
             [
                 'title' => 'فيديو تشويقي بعد النشر (Teaser_After)',
@@ -195,9 +201,11 @@ class WorkActivity extends Model
             ],
             [
                 'title' => 'بوست آراء الحضور (Testimonials)',
-                'kind' => 'design',
+                'kind' => 'content',
                 'offset' => 6,
                 'idea' => "ينشر بعد المحاضرة لو فيه ردود فعل من الحضور — يعزز الثقة للمرة الجاية.\nالمسار: Marketing_Graphics/Testimonials/Testimonial_Post.png",
+                'content_type' => 'post',
+                'platforms' => ['facebook', 'instagram'],
             ],
         ];
     }

@@ -44,11 +44,37 @@ class AcademyWorkSeeder extends Seeder
             ->where('status', 'active')->where('role', $role)->value('id');
 
         $tasks = [
-            ['title' => 'تصميم بوستر إعلان المحاضرة', 'kind' => 'design', 'role' => 'designer'],
-            ['title' => 'فيديو تشويقي قصير (Reel)', 'kind' => 'video', 'role' => 'video_editor'],
-            ['title' => 'كتابة وصف وكابشن المحاضرة', 'kind' => 'content', 'role' => 'content_writer'],
-            ['title' => 'نشر المحتوى على حسابات السوشيال', 'kind' => 'publish', 'role' => 'account_manager'],
+            [
+                'title' => 'بوست إعلان المحاضرة',
+                'kind' => 'content',
+                'role' => 'content_writer',
+                'content_type' => 'post',
+                'platforms' => ['facebook', 'instagram'],
+                'caption' => 'محاضرة لايف عن أساسيات التسويق الرقمي — سجّل حضورك الآن.',
+            ],
+            [
+                'title' => 'فيديو تشويقي قصير (Reel)',
+                'kind' => 'content',
+                'role' => 'video_editor',
+                'content_type' => 'reels',
+                'platforms' => ['instagram', 'tiktok'],
+            ],
+            [
+                'title' => 'كتابة وصف وكابشن المحاضرة',
+                'kind' => 'content',
+                'role' => 'content_writer',
+                'content_type' => 'post',
+                'platforms' => ['facebook', 'linkedin'],
+            ],
+            [
+                'title' => 'نشر المحتوى على حسابات السوشيال',
+                'kind' => 'publish',
+                'role' => 'account_manager',
+            ],
         ];
+
+        $writerId = $byRole('content_writer');
+        $designerId = $byRole('designer');
 
         foreach ($tasks as $i => $t) {
             WorkTask::updateOrCreate(
@@ -56,8 +82,14 @@ class AcademyWorkSeeder extends Seeder
                 [
                     'kind' => $t['kind'],
                     'assigned_to' => $byRole($t['role']),
+                    'content_writer_id' => $writerId,
+                    'designer_id' => $designerId,
+                    'content_type' => $t['content_type'] ?? null,
+                    'platforms' => $t['platforms'] ?? null,
+                    'caption' => $t['caption'] ?? null,
                     'status' => 'todo',
                     'due_date' => now()->addDays(3)->toDateString(),
+                    'publish_date' => ! empty($t['content_type']) ? now()->addDays(4)->toDateString() : null,
                     'order' => $i + 1,
                 ]
             );

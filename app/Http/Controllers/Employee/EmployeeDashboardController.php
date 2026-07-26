@@ -65,8 +65,8 @@ class EmployeeDashboardController extends Controller
 
         $hasManagerRole = count($managedProjectIds) > 0;
 
-        // مهام مساحة العمل (الأكاديمية) المعيّنة للموظف
-        $workTasks = WorkTask::where('assigned_to', $employee->id)
+        // مهام مساحة العمل (الأكاديمية) للموظف كمعيّن أو كاتب أو مصمم
+        $workTasks = WorkTask::forEmployee($employee->id)
             ->with('activity')
             ->orderByRaw("CASE WHEN status = 'done' THEN 1 ELSE 0 END")
             ->orderBy('due_date')

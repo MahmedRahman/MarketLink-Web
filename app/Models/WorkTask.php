@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -10,17 +11,28 @@ class WorkTask extends Model
     protected $fillable = [
         'work_activity_id',
         'assigned_to',
+        'content_writer_id',
+        'designer_id',
         'title',
         'idea',
+        'tov',
+        'caption',
+        'content_type',
+        'design_reference',
+        'designer_brief',
+        'platforms',
         'notes',
         'kind',
         'status',
         'due_date',
+        'publish_date',
         'order',
     ];
 
     protected $casts = [
         'due_date' => 'date',
+        'publish_date' => 'date',
+        'platforms' => 'array',
         'order' => 'integer',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
@@ -34,6 +46,35 @@ class WorkTask extends Model
     public function assignedEmployee(): BelongsTo
     {
         return $this->belongsTo(Employee::class, 'assigned_to');
+    }
+
+    public function contentWriter(): BelongsTo
+    {
+        return $this->belongsTo(Employee::class, 'content_writer_id');
+    }
+
+    public function designer(): BelongsTo
+    {
+        return $this->belongsTo(Employee::class, 'designer_id');
+    }
+
+    /**
+     * مهام يظهر فيها الموظف كمعيّن أو كاتب محتوى أو مصمم.
+     */
+    public function scopeForEmployee(Builder $query, int $employeeId): Builder
+    {
+        return $query->where(function (Builder $q) use ($employeeId) {
+            $q->where('assigned_to', $employeeId)
+                ->orWhere('content_writer_id', $employeeId)
+                ->orWhere('designer_id', $employeeId);
+        });
+    }
+
+    public function isVisibleToEmployee(int $employeeId): bool
+    {
+        return (int) $this->assigned_to === $employeeId
+            || (int) $this->content_writer_id === $employeeId
+            || (int) $this->designer_id === $employeeId;
     }
 
     public function getKindLabelAttribute(): string
@@ -78,6 +119,26 @@ class WorkTask extends Model
             'done' => 'green',
             default => 'gray',
         };
+    }
+
+    public function getContentTypeLabelAttribute(): ?string
+    {
+        if (! $this->content_type) {
+            return null;
+        }
+
+        return self::contentTypes()[$this->content_type] ?? $this->content_type;
+    }
+
+    public function getPlatformLabelsAttribute(): array
+    {
+        $map = self::platforms();
+        $platforms = $this->platforms ?? [];
+
+        return collect($platforms)
+            ->map(fn ($key) => $map[$key] ?? $key)
+            ->values()
+            ->all();
     }
 
     public function getIsOverdueAttribute(): bool
@@ -136,6 +197,26 @@ class WorkTask extends Model
             'in_progress' => 'قيد التنفيذ',
             'review' => 'قيد المراجعة',
             'done' => 'منجزة',
+        ];
+    }
+
+    public static function contentTypes(): array
+    {
+        return [
+            'post' => 'بوست',
+            'reels' => 'ريلز',
+            'carousel' => 'كروسيل',
+        ];
+    }
+
+    public static function platforms(): array
+    {
+        return [
+            'facebook' => 'فيسبوك',
+            'instagram' => 'إنستجرام',
+            'linkedin' => 'لينكدإن',
+            'tiktok' => 'تيك توك',
+            'twitter' => 'إكس (تويتر)',
         ];
     }
 }

@@ -77,18 +77,28 @@
                     <div class="flex items-center gap-2 flex-wrap">
                         <span class="px-2 py-0.5 text-xs rounded-full {{ $kindColors[$wt->kind] ?? $kindColors['other'] }}">{{ $wt->kind_label }}</span>
                         <span class="px-2 py-0.5 text-xs rounded-full {{ $stColors[$wt->status] ?? $stColors['todo'] }}">{{ $wt->status_label }}</span>
+                        @if($wt->content_type_label)
+                            <span class="px-2 py-0.5 text-xs rounded-full bg-indigo-100 text-indigo-700">{{ $wt->content_type_label }}</span>
+                        @endif
                         @if($wt->is_overdue)
                             <span class="px-2 py-0.5 text-xs rounded-full bg-red-100 text-red-700">متأخرة</span>
                         @endif
                     </div>
                     <p class="font-semibold text-gray-800 mt-2">{{ $wt->title }}</p>
                     <p class="text-xs text-gray-500 mt-0.5 truncate">{{ $wt->activity->title ?? '—' }} · {{ $wt->activity->type_label ?? '' }}</p>
-                    @if($wt->idea)
+                    @if($wt->caption)
+                        <p class="text-sm text-gray-500 mt-1 line-clamp-1">{{ $wt->caption }}</p>
+                    @elseif($wt->idea)
                         <p class="text-sm text-gray-500 mt-1 line-clamp-1">{{ $wt->idea }}</p>
                     @endif
                 </div>
                 <div class="text-left shrink-0 flex flex-col items-end gap-1">
-                    @if($wt->due_date)
+                    @if($wt->publish_date)
+                        <span class="text-xs text-gray-500 flex items-center gap-1">
+                            <span class="material-icons text-sm">campaign</span>
+                            {{ $wt->publish_date->format('Y/m/d') }}
+                        </span>
+                    @elseif($wt->due_date)
                         <span class="text-xs text-gray-500 flex items-center gap-1">
                             <span class="material-icons text-sm">event</span>
                             {{ $wt->due_date->format('Y/m/d') }}
