@@ -24,6 +24,7 @@ class WorkTask extends Model
         'notes',
         'kind',
         'status',
+        'pipeline_stage',
         'due_date',
         'publish_date',
         'order',
@@ -147,6 +148,65 @@ class WorkTask extends Model
             && $this->status !== 'done'
             && $this->due_date->isPast()
             && ! $this->due_date->isToday();
+    }
+
+    public function getPipelineStageLabelAttribute(): string
+    {
+        return self::pipelineStages()[$this->pipeline_stage] ?? 'كتابة المحتوى';
+    }
+
+    public function getPipelineStageColorAttribute(): string
+    {
+        return match ($this->pipeline_stage) {
+            'design' => 'purple',
+            'publish' => 'teal',
+            default => 'blue',
+        };
+    }
+
+    public function getPipelineStageIconAttribute(): string
+    {
+        return match ($this->pipeline_stage) {
+            'design' => 'palette',
+            'publish' => 'campaign',
+            default => 'edit_note',
+        };
+    }
+
+    public function getOwnerForCurrentStageAttribute(): ?Employee
+    {
+        return match ($this->pipeline_stage) {
+            'design' => $this->designer ?? $this->assignedEmployee,
+            'publish' => $this->assignedEmployee,
+            default => $this->contentWriter ?? $this->assignedEmployee,
+        };
+    }
+
+    public static function pipelineStages(): array
+    {
+        return [
+            'writing' => 'كتابة المحتوى',
+            'design' => 'التصميم',
+            'publish' => 'النشر',
+        ];
+    }
+
+    public static function nextPipelineStage(?string $stage): ?string
+    {
+        return match ($stage) {
+            'writing' => 'design',
+            'design' => 'publish',
+            default => null,
+        };
+    }
+
+    public static function previousPipelineStage(?string $stage): ?string
+    {
+        return match ($stage) {
+            'design' => 'writing',
+            'publish' => 'design',
+            default => null,
+        };
     }
 
     /**

@@ -128,6 +128,7 @@ Route::middleware(['auth', \App\Http\Middleware\CheckTrialStatus::class])->group
            Route::get('work/{work}/tasks/{task}', [\App\Http\Controllers\WorkTaskController::class, 'show'])->name('work.tasks.show');
            Route::put('work/{work}/tasks/{task}', [\App\Http\Controllers\WorkTaskController::class, 'update'])->name('work.tasks.update');
            Route::post('work/{work}/tasks/{task}/assign', [\App\Http\Controllers\WorkTaskController::class, 'assign'])->name('work.tasks.assign');
+           Route::post('work/{work}/tasks/{task}/move-stage', [\App\Http\Controllers\WorkTaskController::class, 'moveStage'])->name('work.tasks.move-stage');
            Route::post('work/{work}/tasks/{task}/summarize-designer', [\App\Http\Controllers\WorkTaskController::class, 'summarizeDesignerBrief'])->name('work.tasks.summarize-designer');
            Route::delete('work/{work}/tasks/{task}', [\App\Http\Controllers\WorkTaskController::class, 'destroy'])->name('work.tasks.destroy');
 

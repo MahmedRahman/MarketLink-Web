@@ -110,6 +110,7 @@ class WorkActivityController extends Controller
                 'content_writer_id' => WorkTask::suggestAssigneeId($activity->organization_id, 'content'),
                 'designer_id' => WorkTask::suggestAssigneeId($activity->organization_id, 'design'),
                 'status' => 'todo',
+                'pipeline_stage' => 'writing',
                 'due_date' => $dueDate,
                 'publish_date' => ! empty($template['content_type']) ? $dueDate : null,
                 'order' => ++$order,
@@ -130,9 +131,6 @@ class WorkActivityController extends Controller
             ->orderBy('name')
             ->get();
 
-        $employeesById = $employees->keyBy('id');
-        $taskGroups = $this->buildTaskGroupsByPerson($work->tasks, $employeesById);
-
         $contentCounts = [
             'total' => $work->tasks->count(),
             'post' => $work->tasks->where('content_type', 'post')->count(),
@@ -141,10 +139,37 @@ class WorkActivityController extends Controller
             'other' => $work->tasks->filter(fn ($t) => ! in_array($t->content_type, ['post', 'reels', 'carousel'], true))->count(),
         ];
 
+        $pipelineStages = [];
+        foreach (WorkTask::pipelineStages() as $key => $label) {
+            $stageTasks = $work->tasks
+                ->where('pipeline_stage', $key)
+                ->values();
+
+            $pipelineStages[] = [
+                'key' => $key,
+                'label' => $label,
+                'icon' => match ($key) {
+                    'design' => 'palette',
+                    'publish' => 'campaign',
+                    default => 'edit_note',
+                },
+                'color' => match ($key) {
+                    'design' => 'purple',
+                    'publish' => 'teal',
+                    default => 'blue',
+                },
+                'tasks' => $stageTasks,
+                'count' => $stageTasks->count(),
+            ];
+        }
+
+        $designers = $employees->where('role', 'designer')->values();
+
         return view('work.show', [
             'activity' => $work,
             'employees' => $employees,
-            'taskGroups' => $taskGroups,
+            'designers' => $designers,
+            'pipelineStages' => $pipelineStages,
             'contentCounts' => $contentCounts,
             'kinds' => WorkTask::kinds(),
             'taskStatuses' => WorkTask::statuses(),
@@ -153,89 +178,6 @@ class WorkActivityController extends Controller
             'contentTypes' => WorkTask::contentTypes(),
             'platforms' => WorkTask::platforms(),
         ]);
-    }
-
-    /**
-     * يجمع التاسكات في جروبات حسب الشخص المطلوب منه (كاتب / مصمم / معيّن).
-     */
-    private function buildTaskGroupsByPerson($tasks, $employeesById): array
-    {
-        $buckets = [];
-
-        foreach ($tasks as $task) {
-            $rolesByEmployee = [];
-
-            if ($task->content_writer_id) {
-                $rolesByEmployee[$task->content_writer_id][] = 'كاتب محتوى';
-            }
-            if ($task->designer_id) {
-                $rolesByEmployee[$task->designer_id][] = 'مصمم';
-            }
-            if ($task->assigned_to && ! isset($rolesByEmployee[$task->assigned_to])) {
-                $rolesByEmployee[$task->assigned_to][] = 'مسؤول';
-            }
-
-            if ($rolesByEmployee === []) {
-                $key = 'unassigned';
-                if (! isset($buckets[$key])) {
-                    $buckets[$key] = [
-                        'key' => $key,
-                        'employee' => null,
-                        'name' => 'غير معيّن',
-                        'role_label' => null,
-                        'items' => [],
-                    ];
-                }
-                $buckets[$key]['items'][] = [
-                    'task' => $task,
-                    'roles' => [],
-                ];
-                continue;
-            }
-
-            foreach ($rolesByEmployee as $employeeId => $roles) {
-                $key = (string) $employeeId;
-                if (! isset($buckets[$key])) {
-                    $employee = $employeesById->get($employeeId);
-                    if (! $employee) {
-                        if ((int) $task->content_writer_id === (int) $employeeId) {
-                            $employee = $task->contentWriter;
-                        } elseif ((int) $task->designer_id === (int) $employeeId) {
-                            $employee = $task->designer;
-                        } else {
-                            $employee = $task->assignedEmployee;
-                        }
-                    }
-
-                    $buckets[$key] = [
-                        'key' => $key,
-                        'employee' => $employee,
-                        'name' => $employee?->name ?? 'موظف #'.$employeeId,
-                        'role_label' => $employee?->role_badge ?? null,
-                        'items' => [],
-                    ];
-                }
-
-                $buckets[$key]['items'][] = [
-                    'task' => $task,
-                    'roles' => array_values(array_unique($roles)),
-                ];
-            }
-        }
-
-        // رتب: الأشخاص أولاً بالاسم، ثم غير معيّن في الآخر
-        uasort($buckets, function ($a, $b) {
-            if ($a['key'] === 'unassigned') {
-                return 1;
-            }
-            if ($b['key'] === 'unassigned') {
-                return -1;
-            }
-
-            return strcmp($a['name'], $b['name']);
-        });
-
-        return array_values($buckets);
     }
 
     public function update(Request $request, WorkActivity $work)

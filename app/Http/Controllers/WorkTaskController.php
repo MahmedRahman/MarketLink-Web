@@ -65,7 +65,13 @@ class WorkTaskController extends Controller
 
         $validated['work_activity_id'] = $work->id;
         $validated['status'] = 'todo';
+        $validated['pipeline_stage'] = $validated['pipeline_stage'] ?? 'writing';
         $validated['order'] = ($work->tasks()->max('order') ?? 0) + 1;
+
+        // في مرحلة الكتابة: المعيّن الحالي = كاتب المحتوى
+        if (($validated['pipeline_stage'] ?? 'writing') === 'writing' && ! empty($validated['content_writer_id'])) {
+            $validated['assigned_to'] = $validated['content_writer_id'];
+        }
 
         WorkTask::create($validated);
 
@@ -138,6 +144,7 @@ class WorkTaskController extends Controller
                 'platforms' => $platforms,
                 'kind' => 'content',
                 'status' => 'todo',
+                'pipeline_stage' => 'writing',
                 'assigned_to' => $writerId,
                 'content_writer_id' => $writerId,
                 'designer_id' => $designerId,
@@ -200,6 +207,44 @@ class WorkTaskController extends Controller
             'success' => true,
             'designer_brief' => $brief,
         ]);
+    }
+
+    public function moveStage(Request $request, WorkActivity $work, WorkTask $task)
+    {
+        $this->authorizeActivity($request, $work);
+        $this->authorizeTask($work, $task);
+
+        $validated = $request->validate([
+            'pipeline_stage' => 'required|in:writing,design,publish',
+            'designer_id' => 'nullable|exists:employees,id',
+        ]);
+
+        $stage = $validated['pipeline_stage'];
+        $orgId = $request->user()->organization_id;
+        $updates = ['pipeline_stage' => $stage];
+
+        if ($stage === 'writing') {
+            $updates['assigned_to'] = $task->content_writer_id
+                ?? WorkTask::suggestAssigneeId($orgId, 'content');
+            $updates['status'] = $task->status === 'done' ? 'in_progress' : $task->status;
+        } elseif ($stage === 'design') {
+            if (! empty($validated['designer_id'])) {
+                $this->ensureEmployeeInOrg($request, (int) $validated['designer_id']);
+                $updates['designer_id'] = (int) $validated['designer_id'];
+            } elseif (! $task->designer_id) {
+                $updates['designer_id'] = WorkTask::suggestAssigneeId($orgId, 'design');
+            }
+            $updates['assigned_to'] = $updates['designer_id'] ?? $task->designer_id;
+            $updates['status'] = 'review';
+        } else { // publish
+            $updates['assigned_to'] = WorkTask::suggestAssigneeId($orgId, 'publish')
+                ?? $task->assigned_to;
+            $updates['status'] = 'done';
+        }
+
+        $task->update($updates);
+
+        return back()->with('success', 'تم نقل المحتوى إلى مرحلة «'.(WorkTask::pipelineStages()[$stage] ?? $stage).'»');
     }
 
     public function update(Request $request, WorkActivity $work, WorkTask $task)

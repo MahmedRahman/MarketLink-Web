@@ -24,6 +24,7 @@
         <div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
             <div class="min-w-0">
                 <div class="flex items-center gap-2 flex-wrap mb-3">
+                    <span class="role-badge role-{{ $task->pipeline_stage_color }}">{{ $task->pipeline_stage_label }}</span>
                     @if($task->content_type_label)
                         <span class="role-badge role-indigo">{{ $task->content_type_label }}</span>
                     @endif
@@ -36,7 +37,21 @@
                 <h2 class="text-2xl font-bold text-gray-900">{{ $task->title }}</h2>
                 <p class="text-sm text-gray-500 mt-1">{{ $activity->title }}</p>
             </div>
-            <div class="flex items-center gap-2 shrink-0">
+            <div class="flex items-center gap-2 shrink-0 flex-wrap">
+                @if($prev = \App\Models\WorkTask::previousPipelineStage($task->pipeline_stage))
+                    <form method="POST" action="{{ route('work.tasks.move-stage', [$activity, $task]) }}">
+                        @csrf
+                        <input type="hidden" name="pipeline_stage" value="{{ $prev }}">
+                        <button type="submit" class="px-3 py-2 rounded-xl bg-gray-100 text-gray-700 text-sm">← {{ \App\Models\WorkTask::pipelineStages()[$prev] }}</button>
+                    </form>
+                @endif
+                @if($next = \App\Models\WorkTask::nextPipelineStage($task->pipeline_stage))
+                    <form method="POST" action="{{ route('work.tasks.move-stage', [$activity, $task]) }}">
+                        @csrf
+                        <input type="hidden" name="pipeline_stage" value="{{ $next }}">
+                        <button type="submit" class="px-3 py-2 rounded-xl bg-indigo-600 text-white text-sm">إلى {{ \App\Models\WorkTask::pipelineStages()[$next] }} →</button>
+                    </form>
+                @endif
                 <button type="button" onclick="summarizeDesigner({{ $task->id }}, this)"
                         class="px-3 py-2 rounded-xl bg-amber-50 text-amber-700 hover:bg-amber-100 text-sm inline-flex items-center gap-1">
                     <span class="material-icons text-base">tips_and_updates</span>
