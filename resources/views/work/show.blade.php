@@ -304,7 +304,26 @@
                                 <div class="flex flex-col items-end gap-2 shrink-0">
                                     <div class="flex items-center gap-1">
                                         <button type="button"
-                                                onclick='openTaskEdit(@json($task->only(["id","title","idea","tov","caption","content_type","design_reference","designer_brief","platforms","notes","kind","status","assigned_to","content_writer_id","designer_id","due_date","publish_date"])))'
+                                                data-task="{{ json_encode([
+                                                    'id' => $task->id,
+                                                    'title' => $task->title,
+                                                    'idea' => $task->idea,
+                                                    'tov' => $task->tov,
+                                                    'caption' => $task->caption,
+                                                    'content_type' => $task->content_type,
+                                                    'design_reference' => $task->design_reference,
+                                                    'designer_brief' => $task->designer_brief,
+                                                    'platforms' => $task->platforms,
+                                                    'notes' => $task->notes,
+                                                    'kind' => $task->kind,
+                                                    'status' => $task->status,
+                                                    'assigned_to' => $task->assigned_to,
+                                                    'content_writer_id' => $task->content_writer_id,
+                                                    'designer_id' => $task->designer_id,
+                                                    'due_date' => optional($task->due_date)?->format('Y-m-d'),
+                                                    'publish_date' => optional($task->publish_date)?->format('Y-m-d'),
+                                                ], JSON_UNESCAPED_UNICODE) }}"
+                                                onclick="openTaskEdit(JSON.parse(this.getAttribute('data-task')))"
                                                 class="p-2 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200" title="تعديل">
                                             <span class="material-icons text-base">edit</span>
                                         </button>
