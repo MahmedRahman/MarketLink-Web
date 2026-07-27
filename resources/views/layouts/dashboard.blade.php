@@ -1306,6 +1306,18 @@
         
         // Global delete confirmation
         function confirmDelete(url, title = 'تأكيد الحذف', text = 'هل أنت متأكد من حذف هذا العنصر؟') {
+            // لو الصفحة https والرابط اتولد http (خلف proxy) حوّله عشان متصفح كروم مايحذّرش
+            if (window.location.protocol === 'https:' && typeof url === 'string' && url.indexOf('http://') === 0) {
+                url = 'https://' + url.substring('http://'.length);
+            }
+            // فضّل المسار النسبي لو نفس الدومين
+            try {
+                const parsed = new URL(url, window.location.origin);
+                if (parsed.origin === window.location.origin) {
+                    url = parsed.pathname + parsed.search;
+                }
+            } catch (e) {}
+
             Swal.fire({
                 title: title,
                 text: text,

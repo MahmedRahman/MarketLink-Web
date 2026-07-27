@@ -15,6 +15,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'verify.github.webhook' => \App\Http\Middleware\VerifyGitHubWebhook::class,
             'admin' => \App\Http\Middleware\CheckAdmin::class,
         ]);
+
+        // Cloudflare / reverse proxy يمرّر X-Forwarded-Proto
+        $middleware->trustProxies(at: '*');
         
         // استثناء API routes من CSRF protection
         $middleware->validateCsrfTokens(except: [
