@@ -39,6 +39,27 @@ class WorkTaskController extends Controller
         ]);
     }
 
+    public function edit(Request $request, WorkActivity $work, WorkTask $task)
+    {
+        $this->authorizeActivity($request, $work);
+        $this->authorizeTask($work, $task);
+
+        $employees = Employee::where('organization_id', $request->user()->organization_id)
+            ->where('status', 'active')
+            ->orderBy('name')
+            ->get();
+
+        return view('work.tasks.edit', [
+            'activity' => $work,
+            'task' => $task,
+            'employees' => $employees,
+            'kinds' => WorkTask::kinds(),
+            'taskStatuses' => WorkTask::statuses(),
+            'contentTypes' => WorkTask::contentTypes(),
+            'platforms' => WorkTask::platforms(),
+        ]);
+    }
+
     public function store(Request $request, WorkActivity $work)
     {
         $this->authorizeActivity($request, $work);
@@ -360,6 +381,10 @@ class WorkTaskController extends Controller
             return redirect()->route('work.tasks.show', [$work, $task])->with('success', 'تم تحديث المهمة');
         }
 
+        if ($request->boolean('return_to_edit')) {
+            return redirect()->route('work.tasks.edit', [$work, $task])->with('success', 'تم حفظ التعديلات');
+        }
+
         return redirect()->route('work.show', $work)->with('success', 'تم تحديث المهمة');
     }
 
@@ -370,15 +395,41 @@ class WorkTaskController extends Controller
 
         $validated = $request->validate([
             'assigned_to' => 'nullable|exists:employees,id',
+            'employee_id' => 'nullable|exists:employees,id',
+            'pipeline_stage' => 'nullable|in:writing,design,publish',
         ]);
 
-        if (! empty($validated['assigned_to'])) {
-            $this->ensureEmployeeInOrg($request, (int) $validated['assigned_to']);
+        $employeeId = $validated['employee_id'] ?? $validated['assigned_to'] ?? null;
+        if ($employeeId) {
+            $this->ensureEmployeeInOrg($request, (int) $employeeId);
         }
 
-        $task->update(['assigned_to' => $validated['assigned_to'] ?? null]);
+        $stage = $validated['pipeline_stage'] ?? $task->pipeline_stage;
+        $updates = ['assigned_to' => $employeeId];
 
-        return back()->with('success', 'تم تحديث التعيين');
+        if ($stage === 'writing') {
+            $updates['content_writer_id'] = $employeeId;
+        } elseif ($stage === 'design') {
+            $updates['designer_id'] = $employeeId;
+        }
+
+        $task->update($updates);
+        $task->load(['contentWriter', 'designer', 'assignedEmployee']);
+
+        $owner = $task->owner_for_current_stage;
+        $message = 'تم تحديث الموظف المسؤول';
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'employee_id' => $employeeId,
+                'employee_name' => $owner?->name,
+                'pipeline_stage' => $stage,
+            ]);
+        }
+
+        return back()->with('success', $message);
     }
 
     public function destroy(Request $request, WorkActivity $work, WorkTask $task)

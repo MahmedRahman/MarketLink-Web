@@ -245,12 +245,31 @@
                          data-stage="{{ $stage['key'] }}">
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 stage-cards">
                             @foreach($stage['tasks'] as $task)
+                                @php
+                                    $stageOwnerId = match($stage['key']) {
+                                        'design' => $task->designer_id ?? $task->assigned_to,
+                                        'publish' => $task->assigned_to,
+                                        default => $task->content_writer_id ?? $task->assigned_to,
+                                    };
+                                    $assigneePool = match($stage['key']) {
+                                        'design' => ($designers->isNotEmpty() ? $designers : $employees),
+                                        'writing' => (($contentWriters ?? collect())->isNotEmpty() ? $contentWriters : $employees),
+                                        default => $employees,
+                                    };
+                                    // لو المسؤول الحالي مش في القائمة المختصرة، أضفه
+                                    if ($stageOwnerId && ! $assigneePool->contains('id', $stageOwnerId)) {
+                                        $current = $employees->firstWhere('id', $stageOwnerId);
+                                        if ($current) {
+                                            $assigneePool = $assigneePool->push($current)->unique('id')->values();
+                                        }
+                                    }
+                                @endphp
                                 <div role="link" tabindex="0"
                                    draggable="true"
                                    data-task-id="{{ $task->id }}"
                                    data-stage="{{ $stage['key'] }}"
                                    data-href="{{ route('work.tasks.show', [$activity, $task], false) }}"
-                                   class="pipeline-card group rounded-2xl border border-gray-200 bg-white p-4 min-h-[110px] flex flex-col justify-between hover:border-primary/50 hover:shadow-md transition-all cursor-grab active:cursor-grabbing {{ $task->is_overdue ? 'border-r-4 border-r-red-400' : '' }}">
+                                   class="pipeline-card group rounded-2xl border border-gray-200 bg-white p-4 min-h-[110px] flex flex-col justify-between hover:border-primary/50 hover:shadow-md transition-all cursor-grab active:cursor-grabbing {{ $task->is_overdue ? 'border-r-4 border-r-red-400' : '' }} {{ $stage['key'] === 'design' ? 'ring-1 ring-purple-100' : '' }}">
                                     <div>
                                         @if($task->content_type_label)
                                             <span class="inline-block px-2 py-0.5 text-[10px] rounded-md bg-indigo-50 text-indigo-700 mb-2">{{ $task->content_type_label }}</span>
@@ -259,12 +278,38 @@
                                             {{ $task->title }}
                                         </h5>
                                     </div>
-                                    <div class="mt-3 flex items-center justify-between text-[11px] text-gray-400">
-                                        <span>{{ $task->owner_for_current_stage->name ?? '—' }}</span>
-                                        <span class="inline-flex items-center gap-0.5 text-primary opacity-0 group-hover:opacity-100 transition-opacity">
-                                            تفاصيل
-                                            <span class="material-icons text-sm">chevron_left</span>
-                                        </span>
+                                    <div class="mt-3 space-y-2 card-controls" data-no-nav>
+                                        <label class="block text-[10px] text-gray-400 mb-0.5">
+                                            @if($stage['key'] === 'design') المصمم المسؤول
+                                            @elseif($stage['key'] === 'writing') كاتب المحتوى
+                                            @else المسؤول عن النشر
+                                            @endif
+                                        </label>
+                                        <select class="card-assignee w-full px-2 py-1.5 rounded-lg border border-gray-200 text-xs bg-white focus:border-primary focus:outline-none {{ $stage['key'] === 'design' ? 'border-purple-200 bg-purple-50/40' : '' }}"
+                                                data-task-id="{{ $task->id }}"
+                                                data-stage="{{ $stage['key'] }}"
+                                                draggable="false">
+                                            <option value="">— اختر —</option>
+                                            @foreach($assigneePool as $emp)
+                                                <option value="{{ $emp->id }}" @selected((int) $stageOwnerId === (int) $emp->id)>
+                                                    {{ $emp->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        <div class="flex items-center gap-1.5">
+                                            <a href="{{ route('work.tasks.edit', [$activity, $task]) }}"
+                                               class="card-edit-btn flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-gray-100 text-gray-700 text-xs font-medium hover:bg-gray-200"
+                                               draggable="false">
+                                                <span class="material-icons text-sm">edit</span>
+                                                تعديل
+                                            </a>
+                                            <a href="{{ route('work.tasks.show', [$activity, $task]) }}"
+                                               class="card-detail-btn flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 text-xs font-medium hover:bg-indigo-100"
+                                               draggable="false">
+                                                <span class="material-icons text-sm">visibility</span>
+                                                تفاصيل
+                                            </a>
+                                        </div>
                                     </div>
                                 </div>
                             @endforeach
@@ -562,148 +607,6 @@
     </div>
 </div>
 
-{{-- مودال تعديل مهمة --}}
-<div id="editTaskModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-    <div class="bg-white rounded-2xl w-full max-w-2xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
-        <div class="flex items-center justify-between mb-5">
-            <h3 class="text-lg font-bold text-gray-800">تعديل تاسك المحتوى</h3>
-            <button onclick="document.getElementById('editTaskModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
-                <span class="material-icons">close</span>
-            </button>
-        </div>
-        <form method="POST" id="editTaskForm" class="space-y-3">
-            @csrf @method('PUT')
-            <div>
-                <label class="block text-xs font-medium text-gray-600 mb-1">العنوان</label>
-                <input type="text" name="title" id="editTaskTitle" required
-                       class="w-full px-3 py-2 rounded-xl border-2 border-gray-200 text-sm focus:border-primary focus:outline-none">
-            </div>
-            <div>
-                <label class="block text-xs font-medium text-gray-600 mb-1">الفكرة</label>
-                <textarea name="idea" id="editTaskIdea" rows="2"
-                          class="w-full px-3 py-2 rounded-xl border-2 border-gray-200 text-sm focus:border-primary focus:outline-none"></textarea>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">TOV</label>
-                    <textarea name="tov" id="editTaskTov" rows="2"
-                              class="w-full px-3 py-2 rounded-xl border-2 border-gray-200 text-sm focus:border-primary focus:outline-none"></textarea>
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">Caption</label>
-                    <textarea name="caption" id="editTaskCaption" rows="2"
-                              class="w-full px-3 py-2 rounded-xl border-2 border-gray-200 text-sm focus:border-primary focus:outline-none"></textarea>
-                </div>
-            </div>
-            <div>
-                <label class="block text-xs font-medium text-gray-600 mb-1">نوع المحتوى</label>
-                <select name="content_type" id="editTaskContentType" class="w-full px-3 py-2 rounded-xl border-2 border-gray-200 text-sm focus:border-primary focus:outline-none">
-                    <option value="">— اختر —</option>
-                    @foreach($contentTypes as $key => $label)
-                        <option value="{{ $key }}">{{ $label }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div>
-                <label class="block text-xs font-medium text-gray-600 mb-1">مرجع التصميم</label>
-                <textarea name="design_reference" id="editTaskDesignRef" rows="2"
-                          class="w-full px-3 py-2 rounded-xl border-2 border-gray-200 text-sm focus:border-primary focus:outline-none"></textarea>
-            </div>
-            <div>
-                <div class="flex items-center justify-between mb-1">
-                    <label class="block text-xs font-medium text-gray-600">ملخص للمصمم (مساعد)</label>
-                    <button type="button" id="editSummarizeBtn" onclick="summarizeDesignerFromModal()"
-                            class="text-xs text-amber-700 hover:text-amber-900 flex items-center gap-1">
-                        <span class="material-icons text-sm">auto_awesome</span>
-                        ولّد الملخص
-                    </button>
-                </div>
-                <textarea name="designer_brief" id="editTaskDesignerBrief" rows="3"
-                          placeholder="نقاط مختصرة بما يحتاجه المصمم..."
-                          class="w-full px-3 py-2 rounded-xl border-2 border-amber-100 bg-amber-50/40 text-sm focus:border-amber-400 focus:outline-none"></textarea>
-            </div>
-            <div>
-                <label class="block text-xs font-medium text-gray-600 mb-1">المنصات</label>
-                <div class="flex flex-wrap gap-2">
-                    @foreach($platforms as $key => $label)
-                        <label class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-gray-200 text-xs cursor-pointer hover:border-primary">
-                            <input type="checkbox" name="platforms[]" value="{{ $key }}" id="editPlatform_{{ $key }}" class="edit-platform rounded border-gray-300 text-primary focus:ring-primary">
-                            {{ $label }}
-                        </label>
-                    @endforeach
-                </div>
-            </div>
-            <div>
-                <label class="block text-xs font-medium text-gray-600 mb-1">ملاحظات</label>
-                <textarea name="notes" id="editTaskNotes" rows="2"
-                          class="w-full px-3 py-2 rounded-xl border-2 border-gray-200 text-sm focus:border-primary focus:outline-none"></textarea>
-            </div>
-            <div class="grid grid-cols-2 gap-3">
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">نوع الشغل</label>
-                    <select name="kind" id="editTaskKind" class="w-full px-3 py-2 rounded-xl border-2 border-gray-200 text-sm focus:border-primary focus:outline-none">
-                        @foreach($kinds as $key => $label)
-                            <option value="{{ $key }}">{{ $label }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">الحالة</label>
-                    <select name="status" id="editTaskStatus" class="w-full px-3 py-2 rounded-xl border-2 border-gray-200 text-sm focus:border-primary focus:outline-none">
-                        @foreach($taskStatuses as $key => $label)
-                            <option value="{{ $key }}">{{ $label }}</option>
-                        @endforeach
-                    </select>
-                </div>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">كاتب المحتوى</label>
-                    <select name="content_writer_id" id="editTaskWriter" class="w-full px-3 py-2 rounded-xl border-2 border-gray-200 text-sm focus:border-primary focus:outline-none">
-                        <option value="">— غير معيّن —</option>
-                        @foreach($employees as $emp)
-                            <option value="{{ $emp->id }}">{{ $emp->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">المصمم</label>
-                    <select name="designer_id" id="editTaskDesigner" class="w-full px-3 py-2 rounded-xl border-2 border-gray-200 text-sm focus:border-primary focus:outline-none">
-                        <option value="">— غير معيّن —</option>
-                        @foreach($employees as $emp)
-                            <option value="{{ $emp->id }}">{{ $emp->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">الموظف الحالي</label>
-                    <select name="assigned_to" id="editTaskAssignee" class="w-full px-3 py-2 rounded-xl border-2 border-gray-200 text-sm focus:border-primary focus:outline-none">
-                        <option value="">— غير معيّن —</option>
-                        @foreach($employees as $emp)
-                            <option value="{{ $emp->id }}">{{ $emp->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-            </div>
-            <div class="grid grid-cols-2 gap-3">
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">تاريخ التسليم</label>
-                    <input type="date" name="due_date" id="editTaskDue"
-                           class="w-full px-3 py-2 rounded-xl border-2 border-gray-200 text-sm focus:border-primary focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">موعد النشر</label>
-                    <input type="date" name="publish_date" id="editTaskPublish"
-                           class="w-full px-3 py-2 rounded-xl border-2 border-gray-200 text-sm focus:border-primary focus:outline-none">
-                </div>
-            </div>
-            <div class="flex gap-3 pt-2">
-                <button type="submit" class="btn-primary text-white px-5 py-2.5 rounded-xl font-medium flex-1">حفظ</button>
-                <button type="button" onclick="document.getElementById('editTaskModal').classList.add('hidden')"
-                        class="px-5 py-2.5 rounded-xl font-medium bg-gray-100 text-gray-700 hover:bg-gray-200">إلغاء</button>
-            </div>
-        </form>
-    </div>
 </div>
 @endsection
 
@@ -716,7 +619,6 @@
     };
     const kindRoleMap = @json($kindRoleMap);
     const roleEmployeeName = @json($roleEmployee->map(fn($e) => $e->name));
-    let currentEditTaskId = null;
 
     function dateValue(value) {
         if (!value) return '';
@@ -774,106 +676,59 @@
         }
     }
 
-    function openTaskEdit(task) {
-        currentEditTaskId = task.id;
-        const baseUrl = "{{ route('work.tasks.update', [$activity, 'TASK_ID']) }}".replace('TASK_ID', task.id);
-        const form = document.getElementById('editTaskForm');
-        form.action = baseUrl;
-        document.getElementById('editTaskTitle').value = task.title || '';
-        document.getElementById('editTaskIdea').value = task.idea || '';
-        document.getElementById('editTaskTov').value = task.tov || '';
-        document.getElementById('editTaskCaption').value = task.caption || '';
-        document.getElementById('editTaskContentType').value = task.content_type || '';
-        document.getElementById('editTaskDesignRef').value = task.design_reference || '';
-        document.getElementById('editTaskDesignerBrief').value = task.designer_brief || '';
-        document.getElementById('editTaskNotes').value = task.notes || '';
-        document.getElementById('editTaskKind').value = task.kind || 'other';
-        document.getElementById('editTaskStatus').value = task.status || 'todo';
-        document.getElementById('editTaskWriter').value = task.content_writer_id || '';
-        document.getElementById('editTaskDesigner').value = task.designer_id || '';
-        document.getElementById('editTaskAssignee').value = task.assigned_to || '';
-        document.getElementById('editTaskDue').value = dateValue(task.due_date);
-        document.getElementById('editTaskPublish').value = dateValue(task.publish_date);
-
-        const selected = Array.isArray(task.platforms) ? task.platforms : [];
-        document.querySelectorAll('.edit-platform').forEach(function (cb) {
-            cb.checked = selected.includes(cb.value);
-        });
-
-        document.getElementById('editTaskModal').classList.remove('hidden');
-    }
-
-    async function summarizeDesigner(taskId, btn) {
-        if (!taskId) return;
-        const original = btn ? btn.innerHTML : '';
-        if (btn) {
-            btn.disabled = true;
-            btn.innerHTML = '<span class="material-icons text-base animate-spin">progress_activity</span>';
-        }
-        try {
-            const url = "{{ route('work.tasks.summarize-designer', [$activity, 'TASK_ID']) }}".replace('TASK_ID', taskId);
-            const res = await fetch(url, {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({}),
-            });
-            const data = await res.json();
-            if (!data.success) {
-                alert(data.error || 'فشل التلخيص');
-                return;
-            }
-            window.location.reload();
-        } catch (e) {
-            alert('حدث خطأ أثناء التلخيص');
-        } finally {
-            if (btn) {
-                btn.disabled = false;
-                btn.innerHTML = original;
-            }
-        }
-    }
-
-    async function summarizeDesignerFromModal() {
-        if (!currentEditTaskId) return;
-        const btn = document.getElementById('editSummarizeBtn');
-        const original = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = '<span class="material-icons text-sm animate-spin">progress_activity</span> جاري...';
-        try {
-            const url = "{{ route('work.tasks.summarize-designer', [$activity, 'TASK_ID']) }}".replace('TASK_ID', currentEditTaskId);
-            const res = await fetch(url, {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({}),
-            });
-            const data = await res.json();
-            if (!data.success) {
-                alert(data.error || 'فشل التلخيص');
-                return;
-            }
-            document.getElementById('editTaskDesignerBrief').value = data.designer_brief || '';
-        } catch (e) {
-            alert('حدث خطأ أثناء التلخيص');
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = original;
-        }
-    }
-
     document.getElementById('parseBulkForm')?.addEventListener('submit', function () {
         const btn = document.getElementById('parseBulkBtn');
         const label = document.getElementById('parseBulkBtnLabel');
         btn.disabled = true;
         label.textContent = 'جاري التحليل والتقسيم...';
     });
+
+    // —— تغيير المسؤول من على الكارت ——
+    (function initCardAssignee() {
+        const board = document.getElementById('pipelineBoard');
+        if (!board) return;
+        const assignUrlTpl = "{{ route('work.tasks.assign', [$activity, 'TASK_ID'], false) }}";
+
+        function csrfToken() {
+            return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+        }
+
+        board.addEventListener('change', async function (e) {
+            const select = e.target.closest('.card-assignee');
+            if (!select) return;
+            const taskId = select.dataset.taskId;
+            const stage = select.dataset.stage;
+            const employeeId = select.value || '';
+            select.disabled = true;
+            try {
+                const body = new URLSearchParams();
+                body.set('employee_id', employeeId);
+                body.set('pipeline_stage', stage);
+                body.set('_token', csrfToken());
+                const res = await fetch(assignUrlTpl.replace('TASK_ID', taskId), {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken(),
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    credentials: 'same-origin',
+                    body: body.toString(),
+                });
+                const data = await res.json().catch(function () { return {}; });
+                if (!res.ok || !data.success) {
+                    throw new Error(data.message || data.error || 'فشل تحديث المسؤول');
+                }
+                select.classList.add('ring-2', 'ring-teal-300');
+                setTimeout(function () { select.classList.remove('ring-2', 'ring-teal-300'); }, 800);
+            } catch (err) {
+                alert(err.message || 'حدث خطأ');
+            } finally {
+                select.disabled = false;
+            }
+        });
+    })();
 
     // —— Drag & drop بين مراحل البايبلاين ——
     (function initPipelineDragDrop() {
@@ -901,7 +756,23 @@
             });
         }
 
+        board.addEventListener('mousedown', function (e) {
+            if (e.target.closest('.card-controls, .card-assignee, .card-edit-btn, .card-detail-btn, select, a, button')) {
+                const card = e.target.closest('.pipeline-card');
+                if (card) card.setAttribute('draggable', 'false');
+            }
+        });
+        board.addEventListener('mouseup', function () {
+            board.querySelectorAll('.pipeline-card').forEach(function (card) {
+                card.setAttribute('draggable', 'true');
+            });
+        });
+
         board.addEventListener('dragstart', function (e) {
+            if (e.target.closest('.card-controls, select, a, button')) {
+                e.preventDefault();
+                return;
+            }
             const card = e.target.closest('.pipeline-card');
             if (!card) return;
             dragTaskId = card.dataset.taskId;
@@ -919,7 +790,6 @@
             board.querySelectorAll('.stage-dropzone').forEach(function (z) {
                 z.classList.remove('bg-indigo-50', 'ring-2', 'ring-indigo-300', 'ring-inset');
             });
-            // امسح بعد شوية عشان الـ drop يلحق يقرأ القيم
             setTimeout(function () {
                 dragTaskId = null;
                 dragFromStage = null;
@@ -1005,6 +875,9 @@
         });
 
         board.addEventListener('click', function (e) {
+            if (e.target.closest('.card-controls, .card-assignee, .card-edit-btn, .card-detail-btn, select, a, button')) {
+                return;
+            }
             const card = e.target.closest('.pipeline-card');
             if (!card) return;
             if (didDrag) {
@@ -1019,6 +892,7 @@
 
         board.addEventListener('keydown', function (e) {
             if (e.key !== 'Enter' && e.key !== ' ') return;
+            if (e.target.closest('select, a, button')) return;
             const card = e.target.closest('.pipeline-card');
             if (!card?.dataset.href) return;
             e.preventDefault();

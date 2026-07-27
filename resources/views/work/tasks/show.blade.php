@@ -72,11 +72,11 @@
                     <span class="material-icons text-base">tips_and_updates</span>
                     ملخص المصمم
                 </button>
-                <button type="button" onclick="document.getElementById('editTaskModal').classList.remove('hidden')"
+                <a href="{{ route('work.tasks.edit', [$activity, $task]) }}"
                         class="px-3 py-2 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 text-sm inline-flex items-center gap-1">
                     <span class="material-icons text-base">edit</span>
                     تعديل
-                </button>
+                </a>
             </div>
         </div>
 
@@ -291,143 +291,9 @@
     @endif
 </div>
 
-{{-- مودال تعديل سريع --}}
-<div id="editTaskModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-    <div class="bg-white rounded-2xl w-full max-w-2xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
-        <div class="flex items-center justify-between mb-5">
-            <h3 class="text-lg font-bold text-gray-800">تعديل المحتوى</h3>
-            <button type="button" onclick="document.getElementById('editTaskModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
-                <span class="material-icons">close</span>
-            </button>
-        </div>
-        <form method="POST" action="{{ route('work.tasks.update', [$activity, $task]) }}" class="space-y-3">
-            @csrf @method('PUT')
-            <input type="hidden" name="return_to_detail" value="1">
-            <div>
-                <label class="block text-xs font-medium text-gray-600 mb-1">العنوان</label>
-                <input type="text" name="title" value="{{ $task->title }}" required
-                       class="w-full px-3 py-2 rounded-xl border-2 border-gray-200 text-sm focus:border-primary focus:outline-none">
-            </div>
-            <div>
-                <label class="block text-xs font-medium text-violet-700 mb-1">TOV</label>
-                <textarea name="tov" rows="3"
-                          class="w-full px-3 py-2 rounded-xl border-2 border-violet-200 bg-violet-50/40 text-sm focus:border-violet-400 focus:outline-none">{{ $task->tov }}</textarea>
-            </div>
-            <div>
-                <label class="block text-xs font-medium text-sky-700 mb-1">Caption</label>
-                <textarea name="caption" rows="4"
-                          class="w-full px-3 py-2 rounded-xl border-2 border-sky-200 bg-sky-50/40 text-sm focus:border-sky-400 focus:outline-none">{{ $task->caption }}</textarea>
-            </div>
-            <div>
-                <label class="block text-xs font-medium text-gray-600 mb-1">الفكرة</label>
-                <textarea name="idea" rows="2"
-                          class="w-full px-3 py-2 rounded-xl border-2 border-gray-200 text-sm focus:border-primary focus:outline-none">{{ $task->idea }}</textarea>
-            </div>
-            <div>
-                <label class="block text-xs font-medium text-gray-600 mb-1">نوع المحتوى</label>
-                <select name="content_type" class="w-full px-3 py-2 rounded-xl border-2 border-gray-200 text-sm focus:border-primary focus:outline-none">
-                    <option value="">— اختر —</option>
-                    @foreach($contentTypes as $key => $label)
-                        <option value="{{ $key }}" @selected($task->content_type === $key)>{{ $label }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div>
-                <label class="block text-xs font-medium text-gray-600 mb-1">مرجع التصميم</label>
-                <textarea name="design_reference" rows="2"
-                          class="w-full px-3 py-2 rounded-xl border-2 border-gray-200 text-sm focus:border-primary focus:outline-none">{{ $task->design_reference }}</textarea>
-            </div>
-            <div>
-                <label class="block text-xs font-medium text-gray-600 mb-1">ملخص المصمم</label>
-                <textarea name="designer_brief" rows="2"
-                          class="w-full px-3 py-2 rounded-xl border-2 border-amber-100 bg-amber-50/40 text-sm focus:border-amber-400 focus:outline-none">{{ $task->designer_brief }}</textarea>
-            </div>
-            <div>
-                <label class="block text-xs font-medium text-gray-600 mb-1">المنصات</label>
-                <div class="flex flex-wrap gap-2">
-                    @foreach($platforms as $key => $label)
-                        <label class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-gray-200 text-xs cursor-pointer">
-                            <input type="checkbox" name="platforms[]" value="{{ $key }}"
-                                   @checked(in_array($key, $task->platforms ?? [], true))
-                                   class="rounded border-gray-300 text-primary focus:ring-primary">
-                            {{ $label }}
-                        </label>
-                    @endforeach
-                </div>
-            </div>
-            <div class="grid grid-cols-2 gap-3">
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">نوع الشغل</label>
-                    <select name="kind" class="w-full px-3 py-2 rounded-xl border-2 border-gray-200 text-sm focus:border-primary focus:outline-none">
-                        @foreach($kinds as $key => $label)
-                            <option value="{{ $key }}" @selected($task->kind === $key)>{{ $label }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">الحالة</label>
-                    <select name="status" class="w-full px-3 py-2 rounded-xl border-2 border-gray-200 text-sm focus:border-primary focus:outline-none">
-                        @foreach($taskStatuses as $key => $label)
-                            <option value="{{ $key }}" @selected($task->status === $key)>{{ $label }}</option>
-                        @endforeach
-                    </select>
-                </div>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">كاتب المحتوى</label>
-                    <select name="content_writer_id" class="w-full px-3 py-2 rounded-xl border-2 border-gray-200 text-sm focus:border-primary focus:outline-none">
-                        <option value="">—</option>
-                        @foreach($employees as $emp)
-                            <option value="{{ $emp->id }}" @selected($task->content_writer_id === $emp->id)>{{ $emp->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">المصمم</label>
-                    <select name="designer_id" class="w-full px-3 py-2 rounded-xl border-2 border-gray-200 text-sm focus:border-primary focus:outline-none">
-                        <option value="">—</option>
-                        @foreach($employees as $emp)
-                            <option value="{{ $emp->id }}" @selected($task->designer_id === $emp->id)>{{ $emp->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">الموظف الحالي</label>
-                    <select name="assigned_to" class="w-full px-3 py-2 rounded-xl border-2 border-gray-200 text-sm focus:border-primary focus:outline-none">
-                        <option value="">—</option>
-                        @foreach($employees as $emp)
-                            <option value="{{ $emp->id }}" @selected($task->assigned_to === $emp->id)>{{ $emp->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-            </div>
-            <div class="grid grid-cols-2 gap-3">
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">التسليم</label>
-                    <input type="date" name="due_date" value="{{ optional($task->due_date)->format('Y-m-d') }}"
-                           class="w-full px-3 py-2 rounded-xl border-2 border-gray-200 text-sm focus:border-primary focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">موعد النشر</label>
-                    <input type="date" name="publish_date" value="{{ optional($task->publish_date)->format('Y-m-d') }}"
-                           class="w-full px-3 py-2 rounded-xl border-2 border-gray-200 text-sm focus:border-primary focus:outline-none">
-                </div>
-            </div>
-            <div>
-                <label class="block text-xs font-medium text-gray-600 mb-1">ملاحظات</label>
-                <textarea name="notes" rows="2"
-                          class="w-full px-3 py-2 rounded-xl border-2 border-gray-200 text-sm focus:border-primary focus:outline-none">{{ $task->notes }}</textarea>
-            </div>
-            <div class="flex gap-3 pt-2">
-                <button type="submit" class="btn-primary text-white px-5 py-2.5 rounded-xl font-medium flex-1">حفظ</button>
-                <button type="button" onclick="document.getElementById('editTaskModal').classList.add('hidden')"
-                        class="px-5 py-2.5 rounded-xl font-medium bg-gray-100 text-gray-700 hover:bg-gray-200">إلغاء</button>
-            </div>
-        </form>
-    </div>
-</div>
 @endsection
+
+
 
 @section('scripts')
 <script>

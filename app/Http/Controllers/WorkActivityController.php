@@ -163,12 +163,14 @@ class WorkActivityController extends Controller
             ];
         }
 
-        $designers = $employees->where('role', 'designer')->values();
+        $designers = $employees->whereIn('role', ['designer', 'video_editor'])->values();
+        $contentWriters = $employees->where('role', 'content_writer')->values();
 
         return view('work.show', [
             'activity' => $work,
             'employees' => $employees,
             'designers' => $designers,
+            'contentWriters' => $contentWriters,
             'pipelineStages' => $pipelineStages,
             'contentCounts' => $contentCounts,
             'kinds' => WorkTask::kinds(),
