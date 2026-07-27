@@ -19,6 +19,21 @@
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6366f1',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- SweetAlert2 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     @yield('styles')
     
@@ -78,10 +93,23 @@
                 <span class="font-medium">لوحة التحكم</span>
             </a>
 
-            <a href="{{ route('employee.tasks.index') }}" class="flex items-center px-4 py-3 text-gray-700 rounded-xl hover:bg-gray-100 {{ request()->routeIs('employee.tasks.index') || request()->routeIs('employee.work.*') ? 'bg-purple-50 text-purple-700' : '' }}">
-                <span class="material-icons text-lg ml-3">dashboard_customize</span>
-                <span class="font-medium">مساحة العمل</span>
-            </a>
+            @php
+                $employee = Auth::guard('employee')->user();
+                $hasManagerRole = $employee->managedProjects()->count() > 0;
+                $isWorkHubAdmin = $employee->isWorkHubAdmin();
+            @endphp
+
+            @if($isWorkHubAdmin)
+                <a href="{{ route('employee.hub.index') }}" class="flex items-center px-4 py-3 text-gray-700 rounded-xl hover:bg-gray-100 {{ request()->routeIs('employee.hub.*') ? 'bg-purple-50 text-purple-700' : '' }}">
+                    <span class="material-icons text-lg ml-3">dashboard_customize</span>
+                    <span class="font-medium">مساحة العمل</span>
+                </a>
+            @else
+                <a href="{{ route('employee.tasks.index') }}" class="flex items-center px-4 py-3 text-gray-700 rounded-xl hover:bg-gray-100 {{ request()->routeIs('employee.tasks.index') || request()->routeIs('employee.work.*') ? 'bg-purple-50 text-purple-700' : '' }}">
+                    <span class="material-icons text-lg ml-3">dashboard_customize</span>
+                    <span class="font-medium">مساحة العمل</span>
+                </a>
+            @endif
             
             <a href="{{ route('employee.projects.index') }}" class="flex items-center px-4 py-3 text-gray-700 rounded-xl hover:bg-gray-100 {{ request()->routeIs('employee.projects.*') ? 'bg-purple-50 text-purple-700' : '' }}">
                 <span class="material-icons text-lg ml-3">folder</span>
@@ -93,10 +121,6 @@
                 <span class="font-medium">الإيصالات</span>
             </a>
             
-            @php
-                $employee = Auth::guard('employee')->user();
-                $hasManagerRole = $employee->managedProjects()->count() > 0;
-            @endphp
             @if($hasManagerRole)
                 <a href="{{ route('employee.monthly-plans.index') }}" class="flex items-center px-4 py-3 text-gray-700 rounded-xl hover:bg-gray-100 {{ request()->routeIs('employee.monthly-plans.*') ? 'bg-purple-50 text-purple-700' : '' }}">
                     <span class="material-icons text-lg ml-3">calendar_month</span>
@@ -191,6 +215,52 @@
     </div>
     
     @yield('scripts')
+    <script>
+        function confirmDelete(url, title = 'تأكيد الحذف', text = 'هل أنت متأكد من حذف هذا العنصر؟') {
+            if (window.location.protocol === 'https:' && typeof url === 'string' && url.indexOf('http://') === 0) {
+                url = 'https://' + url.substring('http://'.length);
+            }
+            try {
+                const parsed = new URL(url, window.location.origin);
+                if (parsed.origin === window.location.origin) {
+                    url = parsed.pathname + parsed.search;
+                }
+            } catch (e) {}
+
+            Swal.fire({
+                title: title,
+                text: text,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'نعم، احذف',
+                cancelButtonText: 'إلغاء',
+                reverseButtons: true
+            }).then((result) => {
+                if (!result.isConfirmed) return;
+                const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = url;
+                form.style.display = 'none';
+                if (token) {
+                    const csrfInput = document.createElement('input');
+                    csrfInput.type = 'hidden';
+                    csrfInput.name = '_token';
+                    csrfInput.value = token;
+                    form.appendChild(csrfInput);
+                }
+                const methodInput = document.createElement('input');
+                methodInput.type = 'hidden';
+                methodInput.name = '_method';
+                methodInput.value = 'DELETE';
+                form.appendChild(methodInput);
+                document.body.appendChild(form);
+                form.submit();
+            });
+        }
+    </script>
 </body>
 </html>
 

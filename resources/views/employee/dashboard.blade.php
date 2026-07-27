@@ -19,6 +19,15 @@
                     @endif
                 </p>
                 <div class="mt-3 flex items-center space-x-2 space-x-reverse flex-wrap gap-2">
+                    @if($employee->isWorkHubAdmin())
+                        <span class="px-3 py-1 text-xs rounded-full bg-indigo-100 text-indigo-700 flex items-center">
+                            <span class="material-icons text-xs ml-1">dashboard_customize</span>
+                            أدمن مساحة العمل
+                        </span>
+                        <a href="{{ route('employee.hub.index') }}" class="text-sm text-indigo-600 hover:text-indigo-700 font-medium">
+                            فتح مساحة العمل →
+                        </a>
+                    @endif
                     @if($hasManagerRole)
                         <span class="px-3 py-1 text-xs rounded-full bg-orange-100 text-orange-700 flex items-center">
                             <span class="material-icons text-xs ml-1">admin_panel_settings</span>
@@ -48,8 +57,8 @@
                 <span class="material-icons text-purple-600">dashboard_customize</span>
                 مهامي من مساحة العمل
             </h3>
-            <a href="{{ route('employee.tasks.index') }}" class="text-sm text-purple-600 hover:text-purple-700 font-medium">
-                كل المهام ←
+            <a href="{{ $employee->isWorkHubAdmin() ? route('employee.hub.index') : route('employee.tasks.index') }}" class="text-sm text-purple-600 hover:text-purple-700 font-medium">
+                {{ $employee->isWorkHubAdmin() ? 'مساحة العمل ←' : 'كل المهام ←' }}
             </a>
         </div>
         <div class="space-y-3">

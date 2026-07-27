@@ -1,4 +1,4 @@
-@extends('layouts.dashboard')
+@extends($workLayout ?? 'layouts.dashboard')
 
 @section('title', $activity->title)
 @section('page-title', 'مساحة العمل')
@@ -36,7 +36,7 @@
         </div>
     @endif
 
-    <a href="{{ route('work.index') }}" class="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-primary">
+    <a href="{{ work_route('index') }}" class="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-primary">
         <span class="material-icons text-lg">arrow_forward</span>
         رجوع لمساحة العمل
     </a>
@@ -67,7 +67,7 @@
                     رابط عام
                 </button>
                 {{-- تغيير الحالة سريعًا --}}
-                <form method="POST" action="{{ route('work.update', $activity) }}" class="flex items-center gap-2">
+                <form method="POST" action="{{ work_route('update', $activity) }}" class="flex items-center gap-2">
                     @csrf @method('PUT')
                     <input type="hidden" name="title" value="{{ $activity->title }}">
                     <input type="hidden" name="type" value="{{ $activity->type }}">
@@ -83,7 +83,7 @@
                         class="p-2.5 rounded-xl bg-gray-100 text-gray-600 hover:bg-gray-200" title="تعديل">
                     <span class="material-icons text-lg">edit</span>
                 </button>
-                <button onclick="confirmDelete('{{ route('work.destroy', $activity, false) }}', 'حذف النشاط', 'سيتم حذف النشاط وكل مهامه.')"
+                <button onclick="confirmDelete('{{ work_route('destroy', $activity, false) }}', 'حذف النشاط', 'سيتم حذف النشاط وكل مهامه.')"
                         class="p-2.5 rounded-xl bg-red-50 text-red-600 hover:bg-red-100" title="حذف">
                     <span class="material-icons text-lg">delete</span>
                 </button>
@@ -295,7 +295,7 @@
                                    draggable="true"
                                    data-task-id="{{ $task->id }}"
                                    data-stage="{{ $stage['key'] }}"
-                                   data-href="{{ route('work.tasks.show', [$activity, $task], false) }}"
+                                   data-href="{{ work_route('tasks.show', [$activity, $task], false) }}"
                                    class="pipeline-card group rounded-2xl border border-gray-200 bg-white p-4 min-h-[110px] flex flex-col justify-between hover:border-primary/50 hover:shadow-md transition-all cursor-grab active:cursor-grabbing {{ $task->is_overdue ? 'border-r-4 border-r-red-400' : '' }} {{ $stage['key'] === 'design' ? 'ring-1 ring-purple-100' : '' }}">
                                     <div>
                                         @if($task->content_type_label)
@@ -333,19 +333,19 @@
                                             @endforelse
                                         </div>
                                         <div class="flex items-center gap-1.5">
-                                            <a href="{{ route('work.tasks.edit', [$activity, $task]) }}"
+                                            <a href="{{ work_route('tasks.edit', [$activity, $task]) }}"
                                                class="card-edit-btn flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-gray-100 text-gray-700 text-xs font-medium hover:bg-gray-200"
                                                draggable="false">
                                                 <span class="material-icons text-sm">edit</span>
                                                 تعديل
                                             </a>
-                                            <a href="{{ route('work.tasks.show', [$activity, $task]) }}"
+                                            <a href="{{ work_route('tasks.show', [$activity, $task]) }}"
                                                class="card-detail-btn flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 text-xs font-medium hover:bg-indigo-100"
                                                draggable="false">
                                                 <span class="material-icons text-sm">visibility</span>
                                                 تفاصيل
                                             </a>
-                                            <a href="{{ route('work.tasks.show', [$activity, $task]) }}#task-log"
+                                            <a href="{{ work_route('tasks.show', [$activity, $task]) }}#task-log"
                                                class="card-detail-btn inline-flex items-center justify-center px-2 py-1.5 rounded-lg bg-amber-50 text-amber-700 text-xs font-medium hover:bg-amber-100"
                                                draggable="false" title="سجل التغييرات">
                                                 <span class="material-icons text-sm">history</span>
@@ -399,17 +399,17 @@
                     <span class="material-icons text-base">open_in_new</span>
                     فتح
                 </a>
-                <form method="POST" action="{{ route('work.share.regenerate', $activity) }}" onsubmit="return confirm('تجديد الرابط؟ الرابط القديم هيتوقف.')">
+                <form method="POST" action="{{ work_route('share.regenerate', $activity) }}" onsubmit="return confirm('تجديد الرابط؟ الرابط القديم هيتوقف.')">
                     @csrf
                     <button type="submit" class="px-4 py-2 rounded-xl bg-amber-50 text-amber-700 text-sm hover:bg-amber-100">تجديد الرابط</button>
                 </form>
-                <form method="POST" action="{{ route('work.share.disable', $activity) }}" onsubmit="return confirm('إيقاف الرابط العام؟')">
+                <form method="POST" action="{{ work_route('share.disable', $activity) }}" onsubmit="return confirm('إيقاف الرابط العام؟')">
                     @csrf
                     <button type="submit" class="px-4 py-2 rounded-xl bg-red-50 text-red-600 text-sm hover:bg-red-100">إيقاف</button>
                 </form>
             </div>
         @else
-            <form method="POST" action="{{ route('work.share.enable', $activity) }}">
+            <form method="POST" action="{{ work_route('share.enable', $activity) }}">
                 @csrf
                 <button type="submit" class="btn-primary text-white w-full py-2.5 rounded-xl font-medium inline-flex items-center justify-center gap-2">
                     <span class="material-icons text-base">link</span>
@@ -435,7 +435,7 @@
         <p class="text-xs text-gray-500 mb-4">
             الصق النص كامل مرة واحدة — DeepSeek يقسّمه لتاسكات بدون ما يغيّر الكابشن أو المطلوب، ويلخّص المطلوب من المصمم.
         </p>
-        <form method="POST" action="{{ route('work.tasks.parse-bulk', $activity) }}" id="parseBulkForm" class="space-y-3">
+        <form method="POST" action="{{ work_route('tasks.parse-bulk', $activity) }}" id="parseBulkForm" class="space-y-3">
             @csrf
             <textarea name="bulk_text" id="bulkText" rows="8" required minlength="20"
                       placeholder="الصق هنا كل المحتوى مرة واحدة: البوستات، الكابشن، TOV، مرجع التصميم، المنصات، مواعيد النشر..."
@@ -485,7 +485,7 @@
                 <span class="material-icons">close</span>
             </button>
         </div>
-        <form method="POST" action="{{ route('work.tasks.store', $activity) }}" class="space-y-3">
+        <form method="POST" action="{{ work_route('tasks.store', $activity) }}" class="space-y-3">
             @csrf
             <div>
                 <label class="block text-xs font-medium text-gray-600 mb-1">العنوان</label>
@@ -604,7 +604,7 @@
                 <span class="material-icons">close</span>
             </button>
         </div>
-        <form method="POST" action="{{ route('work.update', $activity) }}" class="space-y-4">
+        <form method="POST" action="{{ work_route('update', $activity) }}" class="space-y-4">
             @csrf @method('PUT')
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">العنوان</label>
@@ -728,7 +728,7 @@
     (function initCardAssignee() {
         const board = document.getElementById('pipelineBoard');
         if (!board) return;
-        const assignUrlTpl = "{{ route('work.tasks.assign', [$activity, 'TASK_ID'], false) }}";
+        const assignUrlTpl = "{{ work_route('tasks.assign', [$activity, 'TASK_ID'], false) }}";
 
         function csrfToken() {
             return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
@@ -798,8 +798,8 @@
         const board = document.getElementById('pipelineBoard');
         if (!board) return;
 
-        const moveUrlTpl = "{{ route('work.tasks.move-stage', [$activity, 'TASK_ID'], false) }}";
-        const reorderUrl = "{{ route('work.tasks.reorder', $activity, false) }}";
+        const moveUrlTpl = "{{ work_route('tasks.move-stage', [$activity, 'TASK_ID'], false) }}";
+        const reorderUrl = "{{ work_route('tasks.reorder', $activity, false) }}";
         let dragTaskId = null;
         let dragFromStage = null;
         let dragCard = null;

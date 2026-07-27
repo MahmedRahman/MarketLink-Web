@@ -1,4 +1,4 @@
-@extends('layouts.dashboard')
+@extends($workLayout ?? 'layouts.dashboard')
 
 @section('title', 'مساحة العمل')
 @section('page-title', 'مساحة العمل')
@@ -70,7 +70,7 @@
                 @endforeach
             </select>
             @if($filterType || $filterStatus)
-                <a href="{{ route('work.index') }}" class="text-sm text-gray-500 hover:text-gray-700 px-2">مسح</a>
+                <a href="{{ work_route('index') }}" class="text-sm text-gray-500 hover:text-gray-700 px-2">مسح</a>
             @endif
         </form>
 
@@ -91,7 +91,7 @@
     @else
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             @foreach($activities as $activity)
-                <a href="{{ route('work.show', $activity) }}" class="card rounded-2xl p-5 block hover:no-underline">
+                <a href="{{ work_route('show', $activity) }}" class="card rounded-2xl p-5 block hover:no-underline">
                     <div class="flex items-start justify-between mb-3">
                         <div class="flex items-center gap-3">
                             <div class="w-11 h-11 rounded-xl bg-indigo-50 text-primary flex items-center justify-center">
@@ -136,7 +136,7 @@
                 <span class="material-icons">close</span>
             </button>
         </div>
-        <form method="POST" action="{{ route('work.store') }}" class="space-y-4">
+        <form method="POST" action="{{ work_route('store') }}" class="space-y-4">
             @csrf
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">العنوان</label>

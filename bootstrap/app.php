@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'verify.github.webhook' => \App\Http\Middleware\VerifyGitHubWebhook::class,
             'admin' => \App\Http\Middleware\CheckAdmin::class,
+            'employee.work_hub' => \App\Http\Middleware\EnsureEmployeeWorkHubAdmin::class,
         ]);
 
         // Cloudflare / reverse proxy يمرّر X-Forwarded-Proto

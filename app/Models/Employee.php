@@ -91,6 +91,14 @@ class Employee extends Authenticatable
         };
     }
 
+    /**
+     * أكونت منجر = أدمن مساحة العمل من حساب الموظف.
+     */
+    public function isWorkHubAdmin(): bool
+    {
+        return $this->role === 'account_manager';
+    }
+
     public function organization(): BelongsTo
     {
         return $this->belongsTo(Organization::class);

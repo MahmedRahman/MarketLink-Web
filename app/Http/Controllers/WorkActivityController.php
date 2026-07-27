@@ -3,16 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Models\Employee;
+use App\Models\User;
 use App\Models\WorkActivity;
 use App\Models\WorkTask;
+use App\Support\WorkHub;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class WorkActivityController extends Controller
 {
     public function index(Request $request)
     {
-        $organizationId = $request->user()->organization_id;
+        $organizationId = WorkHub::organizationId($request);
+        abort_unless($organizationId, 403);
 
         $query = WorkActivity::where('organization_id', $organizationId)
             ->withCount([
@@ -57,6 +59,9 @@ class WorkActivityController extends Controller
 
     public function store(Request $request)
     {
+        $organizationId = WorkHub::organizationId($request);
+        abort_unless($organizationId, 403);
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'type' => 'required|in:free_lecture,live_lecture,paid_round,educational,other',
@@ -68,8 +73,9 @@ class WorkActivityController extends Controller
         $withTemplate = (bool) ($validated['with_template'] ?? false);
         unset($validated['with_template']);
 
-        $validated['organization_id'] = $request->user()->organization_id;
-        $validated['created_by'] = $request->user()->id;
+        $actor = WorkHub::actor($request);
+        $validated['organization_id'] = $organizationId;
+        $validated['created_by'] = $actor instanceof User ? $actor->id : null;
         $validated['status'] = 'planning';
 
         $activity = WorkActivity::create($validated);
@@ -84,7 +90,7 @@ class WorkActivityController extends Controller
             ? "تم إنشاء النشاط مع {$tasksCreated} مهمة قياسية موزّعة على الفريق"
             : 'تم إنشاء النشاط بنجاح';
 
-        return redirect()->route('work.show', $activity)->with('success', $message);
+        return redirect()->route(WorkHub::routeName('show'), $activity)->with('success', $message);
     }
 
     /**
@@ -126,7 +132,7 @@ class WorkActivityController extends Controller
 
         $work->load(['tasks.assignedEmployee', 'tasks.contentWriter', 'tasks.designer']);
 
-        $employees = Employee::where('organization_id', $request->user()->organization_id)
+        $employees = Employee::where('organization_id', WorkHub::organizationId($request))
             ->where('status', 'active')
             ->orderBy('name')
             ->get();
@@ -203,7 +209,7 @@ class WorkActivityController extends Controller
 
         $work->update($validated);
 
-        return redirect()->route('work.show', $work)->with('success', 'تم تحديث النشاط');
+        return redirect()->route(WorkHub::routeName('show'), $work)->with('success', 'تم تحديث النشاط');
     }
 
     public function destroy(Request $request, WorkActivity $work)
@@ -212,7 +218,7 @@ class WorkActivityController extends Controller
 
         $work->delete();
 
-        return redirect()->route('work.index')->with('success', 'تم حذف النشاط');
+        return redirect()->route(WorkHub::routeName('index'))->with('success', 'تم حذف النشاط');
     }
 
     public function enableShare(Request $request, WorkActivity $work)
@@ -228,7 +234,7 @@ class WorkActivityController extends Controller
         $this->authorizeActivity($request, $work);
         $work->regenerateShareToken();
 
-        return back()->with('success', 'تم تجديد الرابط العام — الرابط القديم لم يعد يعمل');
+        return back()->with('success', 'تم تجديد الرابط العام — الرابط السابق لم يعد يعمل');
     }
 
     public function disableShare(Request $request, WorkActivity $work)
@@ -241,6 +247,6 @@ class WorkActivityController extends Controller
 
     private function authorizeActivity(Request $request, WorkActivity $work): void
     {
-        abort_unless($work->organization_id === $request->user()->organization_id, 403);
+        WorkHub::authorizeOrganization($request, (int) $work->organization_id);
     }
 }

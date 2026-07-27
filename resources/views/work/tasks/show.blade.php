@@ -1,4 +1,4 @@
-@extends('layouts.dashboard')
+@extends($workLayout ?? 'layouts.dashboard')
 
 @section('title', $task->title)
 @section('page-title', 'تفاصيل المحتوى')
@@ -29,7 +29,7 @@
         </div>
     @endif
 
-    <a href="{{ route('work.show', $activity) }}" class="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-primary">
+    <a href="{{ work_route('show', $activity) }}" class="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-primary">
         <span class="material-icons text-lg">arrow_forward</span>
         رجوع للنشاط
     </a>
@@ -54,14 +54,14 @@
             </div>
             <div class="flex items-center gap-2 shrink-0 flex-wrap">
                 @if($prev = \App\Models\WorkTask::previousPipelineStage($task->pipeline_stage))
-                    <form method="POST" action="{{ route('work.tasks.move-stage', [$activity, $task]) }}">
+                    <form method="POST" action="{{ work_route('tasks.move-stage', [$activity, $task]) }}">
                         @csrf
                         <input type="hidden" name="pipeline_stage" value="{{ $prev }}">
                         <button type="submit" class="px-3 py-2 rounded-xl bg-gray-100 text-gray-700 text-sm">← {{ \App\Models\WorkTask::pipelineStages()[$prev] }}</button>
                     </form>
                 @endif
                 @if($next = \App\Models\WorkTask::nextPipelineStage($task->pipeline_stage))
-                    <form method="POST" action="{{ route('work.tasks.move-stage', [$activity, $task]) }}">
+                    <form method="POST" action="{{ work_route('tasks.move-stage', [$activity, $task]) }}">
                         @csrf
                         <input type="hidden" name="pipeline_stage" value="{{ $next }}">
                         <button type="submit" class="px-3 py-2 rounded-xl bg-indigo-600 text-white text-sm">إلى {{ \App\Models\WorkTask::pipelineStages()[$next] }} →</button>
@@ -72,7 +72,7 @@
                     <span class="material-icons text-base">tips_and_updates</span>
                     ملخص المصمم
                 </button>
-                <a href="{{ route('work.tasks.edit', [$activity, $task]) }}"
+                <a href="{{ work_route('tasks.edit', [$activity, $task]) }}"
                         class="px-3 py-2 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 text-sm inline-flex items-center gap-1">
                     <span class="material-icons text-base">edit</span>
                     تعديل
@@ -176,7 +176,7 @@
             </div>
         </div>
 
-        <form method="POST" action="{{ route('work.tasks.files.upload', [$activity, $task]) }}"
+        <form method="POST" action="{{ work_route('tasks.files.upload', [$activity, $task]) }}"
               enctype="multipart/form-data" id="designUploadForm" class="space-y-3">
             @csrf
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -236,7 +236,7 @@
                                     @endif
                                 </p>
                                 <div class="flex items-center gap-2 mt-2">
-                                    <a href="{{ route('work.tasks.files.download', [$activity, $task, $file]) }}"
+                                    <a href="{{ work_route('tasks.files.download', [$activity, $task, $file]) }}"
                                        class="text-xs text-primary hover:underline inline-flex items-center gap-0.5">
                                         <span class="material-icons text-sm">download</span>
                                         تحميل
@@ -248,7 +248,7 @@
                                             عرض
                                         </a>
                                     @endif
-                                    <form method="POST" action="{{ route('work.tasks.files.destroy', [$activity, $task, $file]) }}"
+                                    <form method="POST" action="{{ work_route('tasks.files.destroy', [$activity, $task, $file]) }}"
                                           onsubmit="return confirm('حذف هذا الملف؟');" class="inline">
                                         @csrf @method('DELETE')
                                         <button type="submit" class="text-xs text-red-600 hover:underline inline-flex items-center gap-0.5">
@@ -283,7 +283,7 @@
         </div>
 
         @if(!empty($task->platforms))
-            <form method="POST" action="{{ route('work.tasks.publish-links', [$activity, $task]) }}" class="space-y-3">
+            <form method="POST" action="{{ work_route('tasks.publish-links', [$activity, $task]) }}" class="space-y-3">
                 @csrf
                 <div class="space-y-3">
                     @foreach($task->platforms as $plat)
@@ -312,7 +312,7 @@
         @else
             <p class="text-sm text-teal-700">
                 لا توجد منصات محددة لهذا المحتوى.
-                <a href="{{ route('work.tasks.edit', [$activity, $task]) }}" class="underline font-medium">حدد المنصات من التعديل</a>
+                <a href="{{ work_route('tasks.edit', [$activity, $task]) }}" class="underline font-medium">حدد المنصات من التعديل</a>
             </p>
         @endif
     </div>
@@ -408,7 +408,7 @@ async function summarizeDesigner(taskId, btn) {
     btn.disabled = true;
     btn.innerHTML = '<span class="material-icons text-base animate-spin">progress_activity</span>';
     try {
-        const url = "{{ route('work.tasks.summarize-designer', [$activity, $task]) }}";
+        const url = "{{ work_route('tasks.summarize-designer', [$activity, $task]) }}";
         const res = await fetch(url, {
             method: 'POST',
             headers: {

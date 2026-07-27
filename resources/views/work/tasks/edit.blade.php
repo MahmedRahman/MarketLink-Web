@@ -1,4 +1,4 @@
-@extends('layouts.dashboard')
+@extends($workLayout ?? 'layouts.dashboard')
 
 @section('title', 'تعديل: '.$task->title)
 @section('page-title', 'تعديل المحتوى')
@@ -24,11 +24,11 @@
     @endif
 
     <div class="flex flex-wrap items-center justify-between gap-3">
-        <a href="{{ route('work.show', $activity) }}" class="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-primary">
+        <a href="{{ work_route('show', $activity) }}" class="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-primary">
             <span class="material-icons text-lg">arrow_forward</span>
             رجوع للنشاط
         </a>
-        <a href="{{ route('work.tasks.show', [$activity, $task]) }}" class="inline-flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-800">
+        <a href="{{ work_route('tasks.show', [$activity, $task]) }}" class="inline-flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-800">
             <span class="material-icons text-base">visibility</span>
             عرض التفاصيل
         </a>
@@ -43,7 +43,7 @@
             @endif
         </div>
 
-        <form method="POST" action="{{ route('work.tasks.update', [$activity, $task]) }}" class="space-y-4">
+        <form method="POST" action="{{ work_route('tasks.update', [$activity, $task]) }}" class="space-y-4">
             @csrf @method('PUT')
 
             <div>
@@ -247,7 +247,7 @@
                 <button type="submit" class="btn-primary text-white px-5 py-2.5 rounded-xl font-medium flex-1">حفظ والرجوع للنشاط</button>
                 <button type="submit" name="return_to_detail" value="1"
                         class="px-5 py-2.5 rounded-xl font-medium bg-indigo-50 text-indigo-700 hover:bg-indigo-100">حفظ وعرض التفاصيل</button>
-                <a href="{{ route('work.show', $activity) }}"
+                <a href="{{ work_route('show', $activity) }}"
                    class="px-5 py-2.5 rounded-xl font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 text-center">إلغاء</a>
             </div>
         </form>
@@ -293,7 +293,7 @@ async function summarizeDesigner() {
     btn.disabled = true;
     btn.innerHTML = '<span class="material-icons text-sm animate-spin">progress_activity</span> جاري...';
     try {
-        const res = await fetch("{{ route('work.tasks.summarize-designer', [$activity, $task], false) }}", {
+        const res = await fetch("{{ work_route('tasks.summarize-designer', [$activity, $task], false) }}", {
             method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,

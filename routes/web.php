@@ -244,10 +244,36 @@ Route::middleware('auth:employee')->prefix('employee')->name('employee.')->group
     Route::get('/monthly-plans', [EmployeeMonthlyPlanController::class, 'index'])->name('monthly-plans.index');
     Route::get('/monthly-plans/{monthlyPlan}', [EmployeeMonthlyPlanController::class, 'show'])->name('monthly-plans.show');
 
-    // Academy Work Hub Tasks (مساحة العمل)
+    // Academy Work Hub Tasks (مساحة العمل - مهامي)
     Route::get('/my-tasks', [\App\Http\Controllers\Employee\EmployeeWorkTaskController::class, 'index'])->name('tasks.index');
     Route::get('/work-tasks/{task}', [\App\Http\Controllers\Employee\EmployeeWorkTaskController::class, 'show'])->name('work.show');
     Route::patch('/work-tasks/{task}/status', [\App\Http\Controllers\Employee\EmployeeWorkTaskController::class, 'updateStatus'])->name('work.status');
+
+    // مساحة العمل الكاملة للأكونت منجر (أدمن الحتة دي)
+    Route::middleware('employee.work_hub')->prefix('hub')->name('hub.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\WorkActivityController::class, 'index'])->name('index');
+        Route::post('/', [\App\Http\Controllers\WorkActivityController::class, 'store'])->name('store');
+        Route::get('/{work}', [\App\Http\Controllers\WorkActivityController::class, 'show'])->name('show');
+        Route::put('/{work}', [\App\Http\Controllers\WorkActivityController::class, 'update'])->name('update');
+        Route::delete('/{work}', [\App\Http\Controllers\WorkActivityController::class, 'destroy'])->name('destroy');
+        Route::post('/{work}/share/enable', [\App\Http\Controllers\WorkActivityController::class, 'enableShare'])->name('share.enable');
+        Route::post('/{work}/share/regenerate', [\App\Http\Controllers\WorkActivityController::class, 'regenerateShare'])->name('share.regenerate');
+        Route::post('/{work}/share/disable', [\App\Http\Controllers\WorkActivityController::class, 'disableShare'])->name('share.disable');
+        Route::post('/{work}/tasks', [\App\Http\Controllers\WorkTaskController::class, 'store'])->name('tasks.store');
+        Route::post('/{work}/tasks/parse-bulk', [\App\Http\Controllers\WorkTaskController::class, 'parseBulk'])->name('tasks.parse-bulk');
+        Route::post('/{work}/tasks/reorder', [\App\Http\Controllers\WorkTaskController::class, 'reorder'])->name('tasks.reorder');
+        Route::get('/{work}/tasks/{task}', [\App\Http\Controllers\WorkTaskController::class, 'show'])->name('tasks.show');
+        Route::get('/{work}/tasks/{task}/edit', [\App\Http\Controllers\WorkTaskController::class, 'edit'])->name('tasks.edit');
+        Route::put('/{work}/tasks/{task}', [\App\Http\Controllers\WorkTaskController::class, 'update'])->name('tasks.update');
+        Route::post('/{work}/tasks/{task}/assign', [\App\Http\Controllers\WorkTaskController::class, 'assign'])->name('tasks.assign');
+        Route::post('/{work}/tasks/{task}/publish-links', [\App\Http\Controllers\WorkTaskController::class, 'updatePublishLinks'])->name('tasks.publish-links');
+        Route::post('/{work}/tasks/{task}/move-stage', [\App\Http\Controllers\WorkTaskController::class, 'moveStage'])->name('tasks.move-stage');
+        Route::post('/{work}/tasks/{task}/files', [\App\Http\Controllers\WorkTaskController::class, 'uploadFile'])->name('tasks.files.upload');
+        Route::get('/{work}/tasks/{task}/files/{file}/download', [\App\Http\Controllers\WorkTaskController::class, 'downloadFile'])->name('tasks.files.download');
+        Route::delete('/{work}/tasks/{task}/files/{file}', [\App\Http\Controllers\WorkTaskController::class, 'deleteFile'])->name('tasks.files.destroy');
+        Route::post('/{work}/tasks/{task}/summarize-designer', [\App\Http\Controllers\WorkTaskController::class, 'summarizeDesignerBrief'])->name('tasks.summarize-designer');
+        Route::delete('/{work}/tasks/{task}', [\App\Http\Controllers\WorkTaskController::class, 'destroy'])->name('tasks.destroy');
+    });
     
     // Tasks Routes - Update route to include destroy
     Route::delete('/tasks/{task}', [EmployeeTaskController::class, 'destroy'])->name('tasks.destroy');

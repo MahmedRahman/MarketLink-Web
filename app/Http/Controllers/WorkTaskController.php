@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use App\Support\WorkHub;
 
 class WorkTaskController extends Controller
 {
@@ -27,7 +28,7 @@ class WorkTaskController extends Controller
             'logs.user',
         ]);
 
-        $employees = Employee::where('organization_id', $request->user()->organization_id)
+        $employees = Employee::where('organization_id', WorkHub::organizationId($request))
             ->where('status', 'active')
             ->orderBy('name')
             ->get();
@@ -50,7 +51,7 @@ class WorkTaskController extends Controller
         $this->authorizeActivity($request, $work);
         $this->authorizeTask($work, $task);
 
-        $employees = Employee::where('organization_id', $request->user()->organization_id)
+        $employees = Employee::where('organization_id', WorkHub::organizationId($request))
             ->where('status', 'active')
             ->orderBy('name')
             ->get();
@@ -83,13 +84,13 @@ class WorkTaskController extends Controller
         // اقتراح كاتب/مصمم حسب الدور إن لم يُحددا
         if (empty($validated['content_writer_id'])) {
             $validated['content_writer_id'] = WorkTask::suggestAssigneeId(
-                $request->user()->organization_id,
+                WorkHub::organizationId($request),
                 'content'
             );
         }
         if (empty($validated['designer_id'])) {
             $validated['designer_id'] = WorkTask::suggestAssigneeId(
-                $request->user()->organization_id,
+                WorkHub::organizationId($request),
                 'design'
             );
         }
@@ -114,7 +115,7 @@ class WorkTaskController extends Controller
             ['status' => $task->status]
         );
 
-        return redirect()->route('work.show', $work)->with('success', 'تمت إضافة المهمة');
+        return redirect()->route(WorkHub::routeName('show'), $work)->with('success', 'تمت إضافة المهمة');
     }
 
     /**
@@ -132,7 +133,7 @@ class WorkTaskController extends Controller
 
         $this->ensureOptionalEmployeesInOrg($request, $validated);
 
-        $orgId = $request->user()->organization_id;
+        $orgId = WorkHub::organizationId($request);
         $writerId = $validated['content_writer_id']
             ?? WorkTask::suggestAssigneeId($orgId, 'content');
         $designerId = $validated['designer_id']
@@ -146,12 +147,12 @@ class WorkTaskController extends Controller
                 'error' => $e->getMessage(),
             ]);
 
-            return redirect()->route('work.show', $work)
+            return redirect()->route(WorkHub::routeName('show'), $work)
                 ->with('error', $e->getMessage() ?: 'فشل تحليل النص. حاول مرة أخرى.');
         }
 
         if (empty($parsed)) {
-            return redirect()->route('work.show', $work)
+            return redirect()->route(WorkHub::routeName('show'), $work)
                 ->with('error', 'لم يتم استخراج أي تاسكات من النص.');
         }
 
@@ -203,11 +204,11 @@ class WorkTaskController extends Controller
         }
 
         if ($created === 0) {
-            return redirect()->route('work.show', $work)
+            return redirect()->route(WorkHub::routeName('show'), $work)
                 ->with('error', 'التحليل رجع بدون عناوين صالحة.');
         }
 
-        return redirect()->route('work.show', $work)
+        return redirect()->route(WorkHub::routeName('show'), $work)
             ->with('success', "تم إنشاء {$created} تاسك محتوى من النص");
     }
 
@@ -267,7 +268,7 @@ class WorkTaskController extends Controller
         ]);
 
         $stage = $validated['pipeline_stage'];
-        $orgId = $request->user()->organization_id;
+        $orgId = WorkHub::organizationId($request);
         $updates = ['pipeline_stage' => $stage];
 
         if ($stage === 'writing') {
@@ -435,7 +436,7 @@ class WorkTaskController extends Controller
             'file_type' => $ext,
             'asset_kind' => $validated['asset_kind'],
             'file_size' => $file->getSize(),
-            'uploaded_by' => $request->user()->id,
+            'uploaded_by' => WorkHub::webUserId($request),
             'description' => $validated['description'] ?? null,
         ]);
 
@@ -450,7 +451,7 @@ class WorkTaskController extends Controller
         );
 
         return redirect()
-            ->route('work.tasks.show', [$work, $task])
+            ->route(WorkHub::routeName('tasks.show'), [$work, $task])
             ->with('success', 'تم رفع ملف التصميم');
     }
 
@@ -466,7 +467,7 @@ class WorkTaskController extends Controller
         $file->delete();
 
         return redirect()
-            ->route('work.tasks.show', [$work, $task])
+            ->route(WorkHub::routeName('tasks.show'), [$work, $task])
             ->with('success', 'تم حذف الملف');
     }
 
@@ -499,14 +500,14 @@ class WorkTaskController extends Controller
         $this->logTaskFieldChanges($task, $before, $task->fresh()->only(array_keys($before)));
 
         if ($request->boolean('return_to_detail')) {
-            return redirect()->route('work.tasks.show', [$work, $task])->with('success', 'تم تحديث المهمة');
+            return redirect()->route(WorkHub::routeName('tasks.show'), [$work, $task])->with('success', 'تم تحديث المهمة');
         }
 
         if ($request->boolean('return_to_edit')) {
-            return redirect()->route('work.tasks.edit', [$work, $task])->with('success', 'تم حفظ التعديلات');
+            return redirect()->route(WorkHub::routeName('tasks.edit'), [$work, $task])->with('success', 'تم حفظ التعديلات');
         }
 
-        return redirect()->route('work.show', $work)->with('success', 'تم تحديث المهمة');
+        return redirect()->route(WorkHub::routeName('show'), $work)->with('success', 'تم تحديث المهمة');
     }
 
     public function assign(Request $request, WorkActivity $work, WorkTask $task)
@@ -597,7 +598,7 @@ class WorkTaskController extends Controller
         );
 
         return redirect()
-            ->route('work.tasks.show', [$work, $task])
+            ->route(WorkHub::routeName('tasks.show'), [$work, $task])
             ->with('success', 'تم حفظ روابط النشر');
     }
 
@@ -608,7 +609,7 @@ class WorkTaskController extends Controller
 
         $task->delete();
 
-        return redirect()->route('work.show', $work)->with('success', 'تم حذف المهمة');
+        return redirect()->route(WorkHub::routeName('show'), $work)->with('success', 'تم حذف المهمة');
     }
 
     private function callDeepSeekSplitTasks(string $bulkText, string $activityTitle): array
@@ -942,20 +943,20 @@ PROMPT;
 
     private function suggestAssignee(Request $request, string $kind): ?int
     {
-        return WorkTask::suggestAssigneeId($request->user()->organization_id, $kind);
+        return WorkTask::suggestAssigneeId(WorkHub::organizationId($request), $kind);
     }
 
     private function ensureEmployeeInOrg(Request $request, int $employeeId): void
     {
         $ok = Employee::where('id', $employeeId)
-            ->where('organization_id', $request->user()->organization_id)
+            ->where('organization_id', WorkHub::organizationId($request))
             ->exists();
         abort_unless($ok, 403);
     }
 
     private function authorizeActivity(Request $request, WorkActivity $work): void
     {
-        abort_unless($work->organization_id === $request->user()->organization_id, 403);
+        WorkHub::authorizeOrganization($request, (int) $work->organization_id);
     }
 
     private function authorizeTask(WorkActivity $work, WorkTask $task): void

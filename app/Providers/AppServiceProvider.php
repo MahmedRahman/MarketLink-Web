@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Support\WorkHub;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -24,5 +26,9 @@ class AppServiceProvider extends ServiceProvider
         if (str_starts_with((string) config('app.url'), 'https://')) {
             URL::forceScheme('https');
         }
+
+        View::composer(['work.*'], function () {
+            WorkHub::shareContext();
+        });
     }
 }
