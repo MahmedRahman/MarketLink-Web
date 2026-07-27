@@ -92,12 +92,18 @@
                 <span class="material-icons text-base text-purple-600">folder</span>
                 ملفات التصميم ({{ $task->files->count() }})
             </h2>
+            @include('partials.share-link', [
+                'label' => 'رابط شير لملفات التصميم كلها',
+                'hint' => 'انسخ الرابط وابعت كل الملفات مرة واحدة',
+                'url' => $cardShareUrl.'#files',
+                'inputId' => 'public-files-share',
+            ])
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 @foreach($task->files as $file)
                     @php
                         $fileShareUrl = route('public.work.file', [$shareToken, $task, $file]);
                     @endphp
-                    <div class="rounded-xl border border-gray-200 bg-gray-50 p-3 space-y-2">
+                    <div class="rounded-xl border border-gray-200 bg-gray-50 p-3">
                         <div class="flex gap-3">
                             <div class="w-14 h-14 rounded-lg bg-white border border-gray-200 flex items-center justify-center overflow-hidden shrink-0">
                                 @if($file->isImage())
@@ -113,11 +119,6 @@
                                    class="text-xs text-indigo-600 hover:underline mt-1 inline-block">فتح الملف</a>
                             </div>
                         </div>
-                        @include('partials.share-link', [
-                            'label' => 'رابط شير للملف',
-                            'url' => $fileShareUrl,
-                            'inputId' => 'file-share-'.$file->id,
-                        ])
                     </div>
                 @endforeach
             </div>

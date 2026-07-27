@@ -272,7 +272,15 @@
                 $fileGroups = $task->files->groupBy(fn ($f) => $f->upload_batch ?: 'single-'.$f->id);
             @endphp
             <div class="border-t border-gray-100 pt-4 space-y-4">
-                <p class="text-xs font-semibold text-gray-500">الملفات المرفوعة ({{ $task->files->count() }})</p>
+                <p class="text-xs font-semibold text-gray-500">ملفات التصميم ({{ $task->files->count() }})</p>
+                @if(!empty($cardShareUrl))
+                    @include('partials.share-link', [
+                        'label' => 'رابط شير لملفات التصميم كلها',
+                        'hint' => 'رابط واحد يفتح كل الملفات ('.$task->files->count().') بدون تسجيل دخول',
+                        'url' => $cardShareUrl.'#files',
+                        'inputId' => 'files-share-'.$task->id,
+                    ])
+                @endif
                 @foreach($fileGroups as $batchKey => $groupFiles)
                     @php
                         $folderName = optional($groupFiles->first())->nas_folder;
@@ -329,15 +337,6 @@
                                                     <span class="material-icons text-sm">open_in_new</span>
                                                     عرض
                                                 </a>
-                                            @endif
-                                            @if($task->activity?->share_token)
-                                                <button type="button"
-                                                        data-share-url="{{ route('public.work.file', [$task->activity->share_token, $task, $file]) }}"
-                                                        onclick="window.copyShareText && window.copyShareText(this.dataset.shareUrl, this)"
-                                                        class="text-xs text-indigo-600 hover:underline inline-flex items-center gap-0.5">
-                                                    <span class="material-icons text-sm">share</span>
-                                                    نسخ رابط الشير
-                                                </button>
                                             @endif
                                             <form method="POST" action="{{ route('employee.work.files.destroy', [$task, $file]) }}"
                                                   onsubmit="return confirm('حذف هذا الملف؟');" class="inline">
