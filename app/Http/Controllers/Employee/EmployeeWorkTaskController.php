@@ -254,6 +254,150 @@ class EmployeeWorkTaskController extends Controller
         return redirect()->route('employee.work.show', $task)->with('success', $message);
     }
 
+    public function moveStage(Request $request, WorkActivity $work, WorkTask $task)
+    {
+        $employee = Auth::guard('employee')->user();
+
+        if ($employee->isWorkHubAdmin()) {
+            return redirect()->route('employee.hub.show', $work);
+        }
+
+        abort_unless((int) $work->organization_id === (int) $employee->organization_id, 403);
+        abort_unless((int) $task->work_activity_id === (int) $work->id, 404);
+        abort_unless($task->isVisibleToEmployee($employee->id), 403);
+
+        $validated = $request->validate([
+            'pipeline_stage' => 'required|in:writing,design,ready_to_publish,published',
+        ]);
+
+        $stage = $validated['pipeline_stage'];
+        $orgId = (int) $employee->organization_id;
+        $updates = ['pipeline_stage' => $stage];
+
+        if ($stage === 'writing') {
+            $updates['assigned_to'] = $task->content_writer_id
+                ?? WorkTask::suggestAssigneeId($orgId, 'content')
+                ?? $task->assigned_to;
+            $updates['status'] = $task->status === 'done' ? 'in_progress' : $task->status;
+        } elseif ($stage === 'design') {
+            if (! $task->designer_id) {
+                $updates['designer_id'] = WorkTask::suggestAssigneeId($orgId, 'design');
+            }
+            $updates['assigned_to'] = $updates['designer_id'] ?? $task->designer_id ?? $task->assigned_to;
+            $updates['status'] = 'review';
+        } elseif ($stage === 'ready_to_publish') {
+            $updates['assigned_to'] = WorkTask::suggestAssigneeId($orgId, 'publish')
+                ?? $task->assigned_to;
+            $updates['status'] = $task->status === 'done' ? 'review' : ($task->status ?: 'review');
+        } else {
+            $updates['assigned_to'] = WorkTask::suggestAssigneeId($orgId, 'publish')
+                ?? $task->assigned_to;
+            $updates['status'] = 'done';
+        }
+
+        $fromStage = $task->pipeline_stage;
+        $fromStatus = $task->status;
+        $fromAssignee = $task->assigned_to;
+
+        $task->update($updates);
+        $task->refresh();
+
+        if ($fromStage !== $task->pipeline_stage) {
+            $task->logEvent(
+                'stage_changed',
+                'نُقل من «'.(WorkTask::pipelineStages()[$fromStage] ?? $fromStage).'» إلى «'.(WorkTask::pipelineStages()[$task->pipeline_stage] ?? $task->pipeline_stage).'» بواسطة '.$employee->name,
+                'pipeline_stage',
+                $fromStage,
+                $task->pipeline_stage,
+                ['employee_id' => $employee->id]
+            );
+        }
+        if ($fromStatus !== $task->status) {
+            $task->logEvent(
+                'status_changed',
+                'تغيّرت الحالة من «'.(WorkTask::statuses()[$fromStatus] ?? $fromStatus).'» إلى «'.(WorkTask::statuses()[$task->status] ?? $task->status).'» بواسطة '.$employee->name,
+                'status',
+                $fromStatus,
+                $task->status,
+                ['employee_id' => $employee->id]
+            );
+        }
+        if ((int) $fromAssignee !== (int) $task->assigned_to) {
+            $task->logEvent(
+                'assignee_changed',
+                'تغيّر المسؤول بعد نقل المرحلة بواسطة '.$employee->name,
+                'assigned_to',
+                $fromAssignee,
+                $task->assigned_to,
+                ['employee_id' => $employee->id]
+            );
+        }
+
+        $stillVisible = $task->isVisibleToEmployee($employee->id);
+        $message = 'تم نقل المحتوى إلى مرحلة «'.(WorkTask::pipelineStages()[$stage] ?? $stage).'»';
+
+        return response()->json([
+            'success' => true,
+            'message' => $message,
+            'pipeline_stage' => $stage,
+            'task_id' => $task->id,
+            'removed' => ! $stillVisible,
+        ]);
+    }
+
+    public function reorder(Request $request, WorkActivity $work)
+    {
+        $employee = Auth::guard('employee')->user();
+
+        if ($employee->isWorkHubAdmin()) {
+            return redirect()->route('employee.hub.show', $work);
+        }
+
+        abort_unless((int) $work->organization_id === (int) $employee->organization_id, 403);
+
+        $validated = $request->validate([
+            'pipeline_stage' => 'required|in:writing,design,ready_to_publish,published',
+            'task_ids' => 'required|array|min:1',
+            'task_ids.*' => 'integer',
+        ]);
+
+        $taskIds = array_values(array_unique(array_map('intval', $validated['task_ids'])));
+        $stage = $validated['pipeline_stage'];
+
+        $visibleIds = WorkTask::forEmployeeCurrentStage($employee->id)
+            ->where('work_activity_id', $work->id)
+            ->where('pipeline_stage', $stage)
+            ->whereIn('id', $taskIds)
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        // بعد النقل لمرحلة جديدة، التاسك ممكن يبقى مش visible للموظف — نسمح بأي ID تابع للنشاط
+        $ownedIds = $work->tasks()
+            ->whereIn('id', $taskIds)
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        if (count($ownedIds) !== count($taskIds)) {
+            return response()->json(['success' => false, 'message' => 'بعض المهام غير موجودة'], 422);
+        }
+
+        foreach ($taskIds as $index => $taskId) {
+            WorkTask::where('work_activity_id', $work->id)
+                ->where('id', $taskId)
+                ->update(['order' => $index + 1]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'تم حفظ الترتيب',
+            'pipeline_stage' => $stage,
+            'task_ids' => $taskIds,
+            'visible_ids' => $visibleIds,
+        ]);
+    }
+
     public function uploadFile(Request $request, WorkTask $task)
     {
         $employee = Auth::guard('employee')->user();
