@@ -245,10 +245,11 @@
                          data-stage="{{ $stage['key'] }}">
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 stage-cards">
                             @foreach($stage['tasks'] as $task)
-                                <a href="{{ route('work.tasks.show', [$activity, $task]) }}"
+                                <div role="link" tabindex="0"
                                    draggable="true"
                                    data-task-id="{{ $task->id }}"
                                    data-stage="{{ $stage['key'] }}"
+                                   data-href="{{ route('work.tasks.show', [$activity, $task], false) }}"
                                    class="pipeline-card group rounded-2xl border border-gray-200 bg-white p-4 min-h-[110px] flex flex-col justify-between hover:border-primary/50 hover:shadow-md transition-all cursor-grab active:cursor-grabbing {{ $task->is_overdue ? 'border-r-4 border-r-red-400' : '' }}">
                                     <div>
                                         @if($task->content_type_label)
@@ -265,7 +266,7 @@
                                             <span class="material-icons text-sm">chevron_left</span>
                                         </span>
                                     </div>
-                                </a>
+                                </div>
                             @endforeach
                         </div>
                         <div class="stage-empty text-center py-8 text-sm text-gray-400 {{ $stage['tasks']->count() ? 'hidden' : '' }}">
@@ -879,15 +880,18 @@
         const board = document.getElementById('pipelineBoard');
         if (!board) return;
 
-        const moveUrlTpl = "{{ route('work.tasks.move-stage', [$activity, 'TASK_ID']) }}";
+        const moveUrlTpl = @json(route('work.tasks.move-stage', [$activity, 'TASK_ID'], false));
         let dragTaskId = null;
         let dragFromStage = null;
         let dragCard = null;
-        let suppressClick = false;
+        let didDrag = false;
+
+        function csrfToken() {
+            return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+        }
 
         function refreshStageCounts() {
             board.querySelectorAll('.pipeline-stage').forEach(function (section) {
-                const stage = section.dataset.stage;
                 const zone = section.querySelector('.stage-dropzone');
                 const count = zone.querySelectorAll('.pipeline-card').length;
                 section.querySelectorAll('.stage-count').forEach(function (el) { el.textContent = count; });
@@ -903,10 +907,10 @@
             dragTaskId = card.dataset.taskId;
             dragFromStage = card.dataset.stage;
             dragCard = card;
-            suppressClick = false;
+            didDrag = true;
             card.classList.add('opacity-50');
             e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/plain', dragTaskId);
+            e.dataTransfer.setData('text/plain', String(dragTaskId));
         });
 
         board.addEventListener('dragend', function (e) {
@@ -915,9 +919,13 @@
             board.querySelectorAll('.stage-dropzone').forEach(function (z) {
                 z.classList.remove('bg-indigo-50', 'ring-2', 'ring-indigo-300', 'ring-inset');
             });
-            dragTaskId = null;
-            dragFromStage = null;
-            dragCard = null;
+            // امسح بعد شوية عشان الـ drop يلحق يقرأ القيم
+            setTimeout(function () {
+                dragTaskId = null;
+                dragFromStage = null;
+                dragCard = null;
+                didDrag = false;
+            }, 50);
         });
 
         board.addEventListener('dragover', function (e) {
@@ -941,9 +949,11 @@
         });
 
         board.addEventListener('drop', async function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
             const zone = e.target.closest('.stage-dropzone');
             if (!zone || !dragTaskId || !dragCard) return;
-            e.preventDefault();
             zone.classList.remove('bg-indigo-50', 'ring-2', 'ring-indigo-300', 'ring-inset');
 
             const toStage = zone.dataset.stage;
@@ -956,26 +966,33 @@
             const cardsWrap = zone.querySelector('.stage-cards');
             if (!cardsWrap) return;
 
-            suppressClick = true;
             cardsWrap.appendChild(card);
             card.dataset.stage = toStage;
             refreshStageCounts();
 
             try {
                 const url = moveUrlTpl.replace('TASK_ID', taskId);
+                const body = new URLSearchParams();
+                body.set('pipeline_stage', toStage);
+                body.set('_token', csrfToken());
+
                 const res = await fetch(url, {
                     method: 'POST',
                     headers: {
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'X-CSRF-TOKEN': csrfToken(),
                         'Accept': 'application/json',
-                        'Content-Type': 'application/json',
+                        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
                         'X-Requested-With': 'XMLHttpRequest',
                     },
-                    body: JSON.stringify({ pipeline_stage: toStage }),
+                    credentials: 'same-origin',
+                    body: body.toString(),
                 });
-                const data = await res.json();
+
+                let data = {};
+                try { data = await res.json(); } catch (_) {}
+
                 if (!res.ok || !data.success) {
-                    throw new Error(data.message || data.error || 'فشل النقل');
+                    throw new Error(data.message || data.error || ('فشل النقل (' + res.status + ')'));
                 }
             } catch (err) {
                 if (fromZone) {
@@ -988,13 +1005,25 @@
         });
 
         board.addEventListener('click', function (e) {
-            if (!suppressClick) return;
             const card = e.target.closest('.pipeline-card');
             if (!card) return;
+            if (didDrag) {
+                e.preventDefault();
+                e.stopPropagation();
+                didDrag = false;
+                return;
+            }
+            const href = card.dataset.href;
+            if (href) window.location.href = href;
+        });
+
+        board.addEventListener('keydown', function (e) {
+            if (e.key !== 'Enter' && e.key !== ' ') return;
+            const card = e.target.closest('.pipeline-card');
+            if (!card?.dataset.href) return;
             e.preventDefault();
-            e.stopPropagation();
-            suppressClick = false;
-        }, true);
+            window.location.href = card.dataset.href;
+        });
     })();
 
     @if(old('bulk_text'))
