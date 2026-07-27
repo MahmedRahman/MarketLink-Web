@@ -129,7 +129,7 @@
 
 {{-- مودال نشاط جديد --}}
 <div id="newActivityModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-    <div class="bg-white rounded-2xl w-full max-w-lg p-6 shadow-2xl">
+    <div class="bg-white rounded-2xl w-full max-w-xl p-6 shadow-2xl">
         <div class="flex items-center justify-between mb-5">
             <h3 class="text-lg font-bold text-gray-800">نشاط جديد</h3>
             <button onclick="document.getElementById('newActivityModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
@@ -140,24 +140,40 @@
             @csrf
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">العنوان</label>
-                <input type="text" name="title" required placeholder="مثال: محاضرة لايف - أساسيات التسويق"
+                <input type="text" name="title" required placeholder="مثال: حملة محتوى سوشيال — مارس"
                        class="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 focus:border-primary focus:outline-none">
             </div>
-            <div class="grid grid-cols-2 gap-3">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">النوع</label>
-                    <select name="type" id="newActivityType" onchange="toggleTemplateOption()"
-                            class="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 focus:border-primary focus:outline-none">
-                        @foreach($types as $key => $label)
-                            <option value="{{ $key }}">{{ $label }}</option>
-                        @endforeach
-                    </select>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">النوع</label>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2" id="newActivityTypeCards">
+                    @php
+                        $typeIcons = [
+                            'free_lecture' => 'smart_display',
+                            'live_lecture' => 'live_tv',
+                            'paid_round' => 'workspace_premium',
+                            'educational' => 'menu_book',
+                            'other' => 'category',
+                        ];
+                        $defaultType = 'other';
+                    @endphp
+                    @foreach($types as $key => $label)
+                        <label class="relative cursor-pointer">
+                            <input type="radio" name="type" value="{{ $key }}" class="peer sr-only activity-type-radio"
+                                   @checked($key === $defaultType) onchange="toggleTemplateOption()">
+                            <span class="flex flex-col items-center gap-1.5 rounded-2xl border-2 border-gray-200 bg-white px-2 py-3 text-center
+                                         peer-checked:border-indigo-500 peer-checked:bg-indigo-50 peer-checked:shadow-sm
+                                         hover:border-gray-300 transition-all min-h-[88px]">
+                                <span class="material-icons text-xl text-gray-400 type-card-icon">{{ $typeIcons[$key] ?? 'category' }}</span>
+                                <span class="text-xs font-semibold text-gray-700 leading-snug">{{ $label }}</span>
+                            </span>
+                        </label>
+                    @endforeach
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">تاريخ المحاضرة / النشاط</label>
-                    <input type="date" name="event_date"
-                           class="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 focus:border-primary focus:outline-none">
-                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">تاريخ المحاضرة / النشاط</label>
+                <input type="date" name="event_date"
+                       class="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 focus:border-primary focus:outline-none">
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">وصف مختصر</label>
@@ -165,9 +181,9 @@
                           class="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 focus:border-primary focus:outline-none"></textarea>
             </div>
             {{-- قالب تاسكات المحاضرة القياسية (من دليل تنظيم ملفات المحاضرة) --}}
-            <div id="templateOption" class="bg-teal-50 border border-teal-200 rounded-xl p-3">
+            <div id="templateOption" class="hidden bg-teal-50 border border-teal-200 rounded-xl p-3">
                 <label class="flex items-start gap-2 cursor-pointer">
-                    <input type="checkbox" name="with_template" value="1" checked
+                    <input type="checkbox" name="with_template" value="1" id="withTemplateCheckbox"
                            class="mt-1 rounded border-gray-300 text-teal-600 focus:ring-teal-500">
                     <span class="text-sm text-gray-700">
                         <span class="font-semibold">إنشاء تاسكات المحاضرة القياسية تلقائيًا</span>
@@ -188,10 +204,24 @@
 
 <script>
     function toggleTemplateOption() {
-        const type = document.getElementById('newActivityType').value;
+        const selected = document.querySelector('input[name="type"]:checked');
+        const type = selected ? selected.value : 'other';
         const box = document.getElementById('templateOption');
+        const checkbox = document.getElementById('withTemplateCheckbox');
         const isLecture = type === 'free_lecture' || type === 'live_lecture';
         box.classList.toggle('hidden', !isLecture);
+        if (!isLecture && checkbox) checkbox.checked = false;
+        if (isLecture && checkbox) checkbox.checked = true;
+
+        document.querySelectorAll('#newActivityTypeCards label').forEach(function (label) {
+            const input = label.querySelector('input');
+            const icon = label.querySelector('.type-card-icon');
+            const on = input && input.checked;
+            if (icon) {
+                icon.classList.toggle('text-indigo-600', !!on);
+                icon.classList.toggle('text-gray-400', !on);
+            }
+        });
     }
     document.addEventListener('DOMContentLoaded', toggleTemplateOption);
 </script>
