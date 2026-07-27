@@ -20,9 +20,10 @@ class PublicWorkShareController extends Controller
             $pipelineStages[] = [
                 'key' => $key,
                 'label' => $label,
-                'icon' => match ($key) {
+                    'icon' => match ($key) {
                     'design' => 'palette',
-                    'publish' => 'campaign',
+                    'ready_to_publish' => 'schedule_send',
+                    'published' => 'check_circle',
                     default => 'edit_note',
                 },
                 'tasks' => $stageTasks,

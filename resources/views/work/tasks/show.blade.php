@@ -265,6 +265,58 @@
         @endif
     </div>
 
+    {{-- روابط النشر حسب المنصات --}}
+    <div class="rounded-2xl border border-teal-200 bg-teal-50/50 p-5 space-y-4">
+        <div class="flex items-start justify-between gap-3 flex-wrap">
+            <div>
+                <h3 class="text-sm font-bold text-teal-900 flex items-center gap-1">
+                    <span class="material-icons text-base">link</span>
+                    روابط النشر
+                </h3>
+                <p class="text-xs text-teal-700 mt-1">حسب المنصات المختارة للمحتوى</p>
+            </div>
+            @if($task->pipeline_stage === 'ready_to_publish')
+                <span class="px-2.5 py-1 rounded-lg bg-teal-100 text-teal-800 text-[11px] font-semibold">جاهز للنشر — أضف الروابط ثم انقل لـ تم النشر</span>
+            @elseif($task->pipeline_stage === 'published')
+                <span class="px-2.5 py-1 rounded-lg bg-green-100 text-green-800 text-[11px] font-semibold">تم النشر · الحالة اكتمال</span>
+            @endif
+        </div>
+
+        @if(!empty($task->platforms))
+            <form method="POST" action="{{ route('work.tasks.publish-links', [$activity, $task]) }}" class="space-y-3">
+                @csrf
+                <div class="space-y-3">
+                    @foreach($task->platforms as $plat)
+                        <div class="bg-white rounded-xl border border-teal-100 p-3">
+                            <div class="flex items-center justify-between gap-2 mb-2">
+                                <label class="text-xs font-semibold text-teal-900">{{ $platforms[$plat] ?? $plat }}</label>
+                                @if($link = $task->publishLinkFor($plat))
+                                    <a href="{{ $link }}" target="_blank" rel="noopener" class="text-xs text-indigo-600 hover:underline inline-flex items-center gap-0.5">
+                                        <span class="material-icons text-sm">open_in_new</span>
+                                        فتح
+                                    </a>
+                                @endif
+                            </div>
+                            <input type="url" name="publish_links[{{ $plat }}]" dir="ltr"
+                                   value="{{ $task->publishLinkFor($plat) }}"
+                                   placeholder="https:// رابط منشور {{ $platforms[$plat] ?? $plat }}"
+                                   class="w-full px-3 py-2 rounded-xl border-2 border-teal-100 text-sm focus:border-teal-400 focus:outline-none">
+                        </div>
+                    @endforeach
+                </div>
+                <button type="submit" class="px-4 py-2.5 rounded-xl bg-teal-600 text-white text-sm font-medium hover:bg-teal-700 inline-flex items-center gap-1">
+                    <span class="material-icons text-base">save</span>
+                    حفظ روابط النشر
+                </button>
+            </form>
+        @else
+            <p class="text-sm text-teal-700">
+                لا توجد منصات محددة لهذا المحتوى.
+                <a href="{{ route('work.tasks.edit', [$activity, $task]) }}" class="underline font-medium">حدد المنصات من التعديل</a>
+            </p>
+        @endif
+    </div>
+
     <div class="card rounded-2xl p-5">
         <h3 class="text-sm font-bold text-gray-700 mb-3">الفريق</h3>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">

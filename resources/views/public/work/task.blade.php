@@ -106,5 +106,30 @@
             </div>
         </div>
     @endif
+
+    @if(!empty($task->platforms))
+        <div class="bg-white rounded-2xl border border-teal-100 p-5 space-y-3">
+            <h2 class="text-sm font-bold text-teal-900 flex items-center gap-1">
+                <span class="material-icons text-base">link</span>
+                روابط النشر
+            </h2>
+            <div class="space-y-2">
+                @foreach($task->platforms as $plat)
+                    @php
+                        $platLabel = \App\Models\WorkTask::platforms()[$plat] ?? $plat;
+                        $link = $task->publishLinkFor($plat);
+                    @endphp
+                    <div class="flex items-center justify-between gap-3 rounded-xl bg-teal-50/60 border border-teal-100 px-3 py-2.5">
+                        <span class="text-sm font-medium text-teal-900">{{ $platLabel }}</span>
+                        @if($link)
+                            <a href="{{ $link }}" target="_blank" rel="noopener" class="text-xs text-indigo-600 hover:underline truncate max-w-[60%]" dir="ltr">{{ $link }}</a>
+                        @else
+                            <span class="text-xs text-teal-500">لم يُضف رابط بعد</span>
+                        @endif
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    @endif
 </div>
 @endsection

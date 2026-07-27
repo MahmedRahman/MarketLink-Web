@@ -240,7 +240,7 @@ class WorkTaskController extends Controller
         $this->authorizeTask($work, $task);
 
         $validated = $request->validate([
-            'pipeline_stage' => 'required|in:writing,design,publish',
+            'pipeline_stage' => 'required|in:writing,design,ready_to_publish,published',
             'designer_id' => 'nullable|exists:employees,id',
         ]);
 
@@ -261,7 +261,11 @@ class WorkTaskController extends Controller
             }
             $updates['assigned_to'] = $updates['designer_id'] ?? $task->designer_id;
             $updates['status'] = 'review';
-        } else { // publish
+        } elseif ($stage === 'ready_to_publish') {
+            $updates['assigned_to'] = WorkTask::suggestAssigneeId($orgId, 'publish')
+                ?? $task->assigned_to;
+            $updates['status'] = $task->status === 'done' ? 'review' : ($task->status ?: 'review');
+        } else { // published
             $updates['assigned_to'] = WorkTask::suggestAssigneeId($orgId, 'publish')
                 ?? $task->assigned_to;
             $updates['status'] = 'done';
@@ -288,7 +292,7 @@ class WorkTaskController extends Controller
         $this->authorizeActivity($request, $work);
 
         $validated = $request->validate([
-            'pipeline_stage' => 'required|in:writing,design,publish',
+            'pipeline_stage' => 'required|in:writing,design,ready_to_publish,published',
             'task_ids' => 'required|array|min:1',
             'task_ids.*' => 'integer',
         ]);
@@ -420,6 +424,7 @@ class WorkTaskController extends Controller
             $validated['platforms'] = [];
         }
         $validated = $this->normalizePlatforms($validated);
+        $validated['publish_links'] = $this->normalizePublishLinks($request, $validated['platforms'] ?? []);
 
         $this->ensureOptionalEmployeesInOrg($request, $validated);
 
@@ -444,7 +449,7 @@ class WorkTaskController extends Controller
         $validated = $request->validate([
             'assigned_to' => 'nullable|exists:employees,id',
             'employee_id' => 'nullable|exists:employees,id',
-            'pipeline_stage' => 'nullable|in:writing,design,publish',
+            'pipeline_stage' => 'nullable|in:writing,design,ready_to_publish,published',
         ]);
 
         $employeeId = $validated['employee_id'] ?? $validated['assigned_to'] ?? null;
@@ -478,6 +483,20 @@ class WorkTaskController extends Controller
         }
 
         return back()->with('success', $message);
+    }
+
+    public function updatePublishLinks(Request $request, WorkActivity $work, WorkTask $task)
+    {
+        $this->authorizeActivity($request, $work);
+        $this->authorizeTask($work, $task);
+
+        $platforms = $task->platforms ?? [];
+        $links = $this->normalizePublishLinks($request, $platforms);
+        $task->update(['publish_links' => $links]);
+
+        return redirect()
+            ->route('work.tasks.show', [$work, $task])
+            ->with('success', 'تم حفظ روابط النشر');
     }
 
     public function destroy(Request $request, WorkActivity $work, WorkTask $task)
@@ -709,6 +728,8 @@ PROMPT;
             'designer_brief' => 'nullable|string',
             'platforms' => 'nullable|array',
             'platforms.*' => 'in:facebook,instagram,linkedin,tiktok,twitter',
+            'publish_links' => 'nullable|array',
+            'publish_links.*' => 'nullable|string|max:1000',
             'notes' => 'nullable|string',
             'kind' => 'required|in:design,video,content,publish,other',
             'assigned_to' => 'nullable|exists:employees,id',
@@ -730,6 +751,34 @@ PROMPT;
         $validated['platforms'] = array_values(array_unique($validated['platforms'] ?? []));
 
         return $validated;
+    }
+
+    private function normalizePublishLinks(Request $request, array $platforms): array
+    {
+        $allowed = array_keys(WorkTask::platforms());
+        $raw = $request->input('publish_links', []);
+        if (! is_array($raw)) {
+            return [];
+        }
+
+        $links = [];
+        foreach ($raw as $platform => $url) {
+            $platform = (string) $platform;
+            if (! in_array($platform, $allowed, true)) {
+                continue;
+            }
+            // لو فيه منصات محددة، احفظ روابطها فقط
+            if ($platforms && ! in_array($platform, $platforms, true)) {
+                continue;
+            }
+            $url = trim((string) $url);
+            if ($url === '') {
+                continue;
+            }
+            $links[$platform] = $url;
+        }
+
+        return $links;
     }
 
     private function ensureOptionalEmployeesInOrg(Request $request, array $validated): void

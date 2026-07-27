@@ -22,6 +22,7 @@ class WorkTask extends Model
         'design_reference',
         'designer_brief',
         'platforms',
+        'publish_links',
         'notes',
         'kind',
         'status',
@@ -35,6 +36,7 @@ class WorkTask extends Model
         'due_date' => 'date',
         'publish_date' => 'date',
         'platforms' => 'array',
+        'publish_links' => 'array',
         'order' => 'integer',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
@@ -112,7 +114,7 @@ class WorkTask extends Model
             'todo' => 'لم تبدأ',
             'in_progress' => 'قيد التنفيذ',
             'review' => 'قيد المراجعة',
-            'done' => 'منجزة',
+            'done' => 'اكتمال',
             default => 'غير محدد',
         };
     }
@@ -165,7 +167,8 @@ class WorkTask extends Model
     {
         return match ($this->pipeline_stage) {
             'design' => 'purple',
-            'publish' => 'teal',
+            'ready_to_publish' => 'teal',
+            'published' => 'green',
             default => 'blue',
         };
     }
@@ -174,7 +177,8 @@ class WorkTask extends Model
     {
         return match ($this->pipeline_stage) {
             'design' => 'palette',
-            'publish' => 'campaign',
+            'ready_to_publish' => 'schedule_send',
+            'published' => 'check_circle',
             default => 'edit_note',
         };
     }
@@ -183,7 +187,7 @@ class WorkTask extends Model
     {
         return match ($this->pipeline_stage) {
             'design' => $this->designer ?? $this->assignedEmployee,
-            'publish' => $this->assignedEmployee,
+            'ready_to_publish', 'published' => $this->assignedEmployee,
             default => $this->contentWriter ?? $this->assignedEmployee,
         };
     }
@@ -210,7 +214,8 @@ class WorkTask extends Model
         return [
             'writing' => 'كتابة المحتوى',
             'design' => 'التصميم',
-            'publish' => 'النشر',
+            'ready_to_publish' => 'جاهز للنشر',
+            'published' => 'تم النشر',
         ];
     }
 
@@ -218,7 +223,8 @@ class WorkTask extends Model
     {
         return match ($stage) {
             'writing' => 'design',
-            'design' => 'publish',
+            'design' => 'ready_to_publish',
+            'ready_to_publish' => 'published',
             default => null,
         };
     }
@@ -227,9 +233,17 @@ class WorkTask extends Model
     {
         return match ($stage) {
             'design' => 'writing',
-            'publish' => 'design',
+            'ready_to_publish' => 'design',
+            'published' => 'ready_to_publish',
             default => null,
         };
+    }
+
+    public function publishLinkFor(string $platform): ?string
+    {
+        $links = $this->publish_links ?? [];
+
+        return is_array($links) ? ($links[$platform] ?? null) : null;
     }
 
     /**
@@ -279,7 +293,7 @@ class WorkTask extends Model
             'todo' => 'لم تبدأ',
             'in_progress' => 'قيد التنفيذ',
             'review' => 'قيد المراجعة',
-            'done' => 'منجزة',
+            'done' => 'اكتمال',
         ];
     }
 

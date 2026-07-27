@@ -215,10 +215,18 @@
                 <section class="card rounded-2xl overflow-hidden pipeline-stage"
                          data-stage="{{ $stage['key'] }}">
                     <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between gap-3
-                        {{ $stage['key'] === 'writing' ? 'bg-blue-50' : ($stage['key'] === 'design' ? 'bg-purple-50' : 'bg-teal-50') }}">
+                        @if($stage['key'] === 'writing') bg-blue-50
+                        @elseif($stage['key'] === 'design') bg-purple-50
+                        @elseif($stage['key'] === 'ready_to_publish') bg-teal-50
+                        @else bg-green-50
+                        @endif">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 rounded-xl flex items-center justify-center
-                                {{ $stage['key'] === 'writing' ? 'bg-blue-100 text-blue-700' : ($stage['key'] === 'design' ? 'bg-purple-100 text-purple-700' : 'bg-teal-100 text-teal-700') }}">
+                                @if($stage['key'] === 'writing') bg-blue-100 text-blue-700
+                                @elseif($stage['key'] === 'design') bg-purple-100 text-purple-700
+                                @elseif($stage['key'] === 'ready_to_publish') bg-teal-100 text-teal-700
+                                @else bg-green-100 text-green-700
+                                @endif">
                                 <span class="material-icons">{{ $stage['icon'] }}</span>
                             </div>
                             <div>
@@ -228,15 +236,21 @@
                                         عند كاتب المحتوى
                                     @elseif($stage['key'] === 'design')
                                         عند فريق التصميم — ارفع صورة / فيديو / PDF من صفحة التفاصيل
+                                    @elseif($stage['key'] === 'ready_to_publish')
+                                        جاهز للنشر — أضف روابط النشر من التفاصيل
                                     @else
-                                        جاهز / قيد النشر
+                                        تم النشر — الحالة تتحول لاكتمال
                                     @endif
                                     · <span class="stage-count">{{ $stage['count'] }}</span> عنصر
                                 </p>
                             </div>
                         </div>
                         <span class="stage-count-badge px-2.5 py-1 rounded-lg text-xs font-bold
-                            {{ $stage['key'] === 'writing' ? 'bg-blue-100 text-blue-700' : ($stage['key'] === 'design' ? 'bg-purple-100 text-purple-700' : 'bg-teal-100 text-teal-700') }}">
+                            @if($stage['key'] === 'writing') bg-blue-100 text-blue-700
+                            @elseif($stage['key'] === 'design') bg-purple-100 text-purple-700
+                            @elseif($stage['key'] === 'ready_to_publish') bg-teal-100 text-teal-700
+                            @else bg-green-100 text-green-700
+                            @endif">
                             {{ $stage['count'] }}
                         </span>
                     </div>
@@ -248,7 +262,7 @@
                                 @php
                                     $stageOwnerId = match($stage['key']) {
                                         'design' => $task->designer_id ?? $task->assigned_to,
-                                        'publish' => $task->assigned_to,
+                                        'ready_to_publish', 'published' => $task->assigned_to,
                                         default => $task->content_writer_id ?? $task->assigned_to,
                                     };
                                     $assigneePool = match($stage['key']) {
@@ -282,7 +296,8 @@
                                         <label class="block text-[10px] text-gray-400 mb-0.5">
                                             @if($stage['key'] === 'design') المصمم المسؤول
                                             @elseif($stage['key'] === 'writing') كاتب المحتوى
-                                            @else المسؤول عن النشر
+                                            @elseif($stage['key'] === 'ready_to_publish') مسؤول النشر
+                                            @else ناشر المحتوى
                                             @endif
                                         </label>
                                         <select class="card-assignee w-full px-2 py-1.5 rounded-lg border border-gray-200 text-xs bg-white focus:border-primary focus:outline-none {{ $stage['key'] === 'design' ? 'border-purple-200 bg-purple-50/40' : '' }}"

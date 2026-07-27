@@ -150,12 +150,14 @@ class WorkActivityController extends Controller
                 'label' => $label,
                 'icon' => match ($key) {
                     'design' => 'palette',
-                    'publish' => 'campaign',
+                    'ready_to_publish' => 'schedule_send',
+                    'published' => 'check_circle',
                     default => 'edit_note',
                 },
                 'color' => match ($key) {
                     'design' => 'purple',
-                    'publish' => 'teal',
+                    'ready_to_publish' => 'teal',
+                    'published' => 'green',
                     default => 'blue',
                 },
                 'tasks' => $stageTasks,

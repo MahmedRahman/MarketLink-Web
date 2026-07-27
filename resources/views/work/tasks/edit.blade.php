@@ -106,9 +106,10 @@
                         @php $platformChecked = in_array($key, old('platforms', $task->platforms ?? []), true); @endphp
                         <label class="choice-card relative cursor-pointer rounded-xl border-2 p-3 text-center transition-all
                             {{ $platformChecked ? 'border-indigo-500 bg-indigo-50 text-indigo-800 shadow-sm' : 'border-gray-200 bg-white text-gray-700 hover:border-indigo-300' }}">
-                            <input type="checkbox" name="platforms[]" value="{{ $key }}" class="sr-only peer"
+                            <input type="checkbox" name="platforms[]" value="{{ $key }}" class="sr-only peer platform-toggle"
+                                   data-platform="{{ $key }}"
                                    @checked($platformChecked)
-                                   onchange="this.closest('label').classList.toggle('border-indigo-500', this.checked); this.closest('label').classList.toggle('bg-indigo-50', this.checked); this.closest('label').classList.toggle('text-indigo-800', this.checked); this.closest('label').classList.toggle('shadow-sm', this.checked); this.closest('label').classList.toggle('border-gray-200', !this.checked); this.closest('label').classList.toggle('bg-white', !this.checked); this.closest('label').classList.toggle('text-gray-700', !this.checked);">
+                                   onchange="this.closest('label').classList.toggle('border-indigo-500', this.checked); this.closest('label').classList.toggle('bg-indigo-50', this.checked); this.closest('label').classList.toggle('text-indigo-800', this.checked); this.closest('label').classList.toggle('shadow-sm', this.checked); this.closest('label').classList.toggle('border-gray-200', !this.checked); this.closest('label').classList.toggle('bg-white', !this.checked); this.closest('label').classList.toggle('text-gray-700', !this.checked); syncPublishLinkFields();">
                             <span class="material-icons text-xl mb-1 block
                                 {{ $key === 'facebook' ? 'text-blue-600' : ($key === 'instagram' ? 'text-pink-500' : ($key === 'linkedin' ? 'text-sky-700' : ($key === 'tiktok' ? 'text-gray-900' : 'text-slate-700'))) }}">
                                 {{ $key === 'facebook' ? 'facebook' : ($key === 'instagram' ? 'photo_camera' : ($key === 'linkedin' ? 'work' : ($key === 'tiktok' ? 'smart_display' : 'tag'))) }}
@@ -117,6 +118,28 @@
                         </label>
                     @endforeach
                 </div>
+            </div>
+
+            <div id="publishLinksSection" class="rounded-2xl border border-teal-100 bg-teal-50/40 p-4 space-y-3">
+                <div>
+                    <label class="block text-sm font-bold text-teal-900">روابط النشر</label>
+                    <p class="text-xs text-teal-700 mt-0.5">ظهر حسب المنصات المختارة — الصق رابط المنشور بعد النشر</p>
+                </div>
+                <div class="space-y-2">
+                    @foreach($platforms as $key => $label)
+                        @php $showLink = in_array($key, old('platforms', $task->platforms ?? []), true); @endphp
+                        <div class="publish-link-row {{ $showLink ? '' : 'hidden' }}" data-platform="{{ $key }}">
+                            <label class="block text-xs font-medium text-teal-800 mb-1">{{ $label }}</label>
+                            <input type="url" name="publish_links[{{ $key }}]" dir="ltr"
+                                   value="{{ old('publish_links.'.$key, $task->publishLinkFor($key)) }}"
+                                   placeholder="https://..."
+                                   class="w-full px-3 py-2.5 rounded-xl border-2 border-teal-100 bg-white text-sm focus:border-teal-400 focus:outline-none">
+                        </div>
+                    @endforeach
+                </div>
+                <p id="publishLinksEmpty" class="text-xs text-teal-600 {{ !empty(old('platforms', $task->platforms ?? [])) ? 'hidden' : '' }}">
+                    اختَر منصة أولاً عشان تظهر خانات الروابط
+                </p>
             </div>
 
             <div class="rounded-2xl border border-gray-100 bg-gray-50/60 p-4 space-y-3">
@@ -234,6 +257,18 @@
 
 @section('scripts')
 <script>
+function syncPublishLinkFields() {
+    let any = false;
+    document.querySelectorAll('.platform-toggle').forEach(function (cb) {
+        const row = document.querySelector('.publish-link-row[data-platform="' + cb.value + '"]');
+        if (!row) return;
+        row.classList.toggle('hidden', !cb.checked);
+        if (cb.checked) any = true;
+    });
+    const empty = document.getElementById('publishLinksEmpty');
+    if (empty) empty.classList.toggle('hidden', any);
+}
+
 const statusCardStyles = {
     todo: { on: ['border-gray-500', 'bg-gray-100', 'text-gray-800', 'shadow-sm'], off: ['border-gray-200', 'bg-white', 'text-gray-700', 'hover:border-gray-400'] },
     in_progress: { on: ['border-blue-500', 'bg-blue-50', 'text-blue-900', 'shadow-sm'], off: ['border-gray-200', 'bg-white', 'text-gray-700', 'hover:border-blue-300'] },
