@@ -209,9 +209,11 @@
             </div>
         </div>
 
-        <div class="space-y-4">
+        <div class="space-y-4" id="pipelineBoard">
+            <p class="text-xs text-gray-500">اسحب الكارت وأفلته على مرحلة تانية عشان تنقله.</p>
             @foreach($pipelineStages as $stage)
-                <section class="card rounded-2xl overflow-hidden">
+                <section class="card rounded-2xl overflow-hidden pipeline-stage"
+                         data-stage="{{ $stage['key'] }}">
                     <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between gap-3
                         {{ $stage['key'] === 'writing' ? 'bg-blue-50' : ($stage['key'] === 'design' ? 'bg-purple-50' : 'bg-teal-50') }}">
                         <div class="flex items-center gap-3">
@@ -225,49 +227,50 @@
                                     @if($stage['key'] === 'writing')
                                         عند كاتب المحتوى
                                     @elseif($stage['key'] === 'design')
-                                        عند فريق التصميم
+                                        عند فريق التصميم — ارفع صورة / فيديو / PDF من صفحة التفاصيل
                                     @else
                                         جاهز / قيد النشر
                                     @endif
-                                    · {{ $stage['count'] }} عنصر
+                                    · <span class="stage-count">{{ $stage['count'] }}</span> عنصر
                                 </p>
                             </div>
                         </div>
-                        <span class="px-2.5 py-1 rounded-lg text-xs font-bold
+                        <span class="stage-count-badge px-2.5 py-1 rounded-lg text-xs font-bold
                             {{ $stage['key'] === 'writing' ? 'bg-blue-100 text-blue-700' : ($stage['key'] === 'design' ? 'bg-purple-100 text-purple-700' : 'bg-teal-100 text-teal-700') }}">
                             {{ $stage['count'] }}
                         </span>
                     </div>
 
-                    <div class="p-4">
-                        @if($stage['tasks']->count())
-                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                                @foreach($stage['tasks'] as $task)
-                                    <a href="{{ route('work.tasks.show', [$activity, $task]) }}"
-                                       class="group rounded-2xl border border-gray-200 bg-white p-4 min-h-[110px] flex flex-col justify-between hover:border-primary/50 hover:shadow-md transition-all {{ $task->is_overdue ? 'border-r-4 border-r-red-400' : '' }}">
-                                        <div>
-                                            @if($task->content_type_label)
-                                                <span class="inline-block px-2 py-0.5 text-[10px] rounded-md bg-indigo-50 text-indigo-700 mb-2">{{ $task->content_type_label }}</span>
-                                            @endif
-                                            <h5 class="text-base font-bold text-gray-900 leading-snug line-clamp-3 group-hover:text-primary">
-                                                {{ $task->title }}
-                                            </h5>
-                                        </div>
-                                        <div class="mt-3 flex items-center justify-between text-[11px] text-gray-400">
-                                            <span>{{ $task->owner_for_current_stage->name ?? '—' }}</span>
-                                            <span class="inline-flex items-center gap-0.5 text-primary opacity-0 group-hover:opacity-100 transition-opacity">
-                                                تفاصيل
-                                                <span class="material-icons text-sm">chevron_left</span>
-                                            </span>
-                                        </div>
-                                    </a>
-                                @endforeach
-                            </div>
-                        @else
-                            <div class="text-center py-8 text-sm text-gray-400">
-                                لا يوجد محتوى في هذه المرحلة
-                            </div>
-                        @endif
+                    <div class="p-4 stage-dropzone min-h-[120px] transition-colors"
+                         data-stage="{{ $stage['key'] }}">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 stage-cards">
+                            @foreach($stage['tasks'] as $task)
+                                <a href="{{ route('work.tasks.show', [$activity, $task]) }}"
+                                   draggable="true"
+                                   data-task-id="{{ $task->id }}"
+                                   data-stage="{{ $stage['key'] }}"
+                                   class="pipeline-card group rounded-2xl border border-gray-200 bg-white p-4 min-h-[110px] flex flex-col justify-between hover:border-primary/50 hover:shadow-md transition-all cursor-grab active:cursor-grabbing {{ $task->is_overdue ? 'border-r-4 border-r-red-400' : '' }}">
+                                    <div>
+                                        @if($task->content_type_label)
+                                            <span class="inline-block px-2 py-0.5 text-[10px] rounded-md bg-indigo-50 text-indigo-700 mb-2">{{ $task->content_type_label }}</span>
+                                        @endif
+                                        <h5 class="text-base font-bold text-gray-900 leading-snug line-clamp-3 group-hover:text-primary">
+                                            {{ $task->title }}
+                                        </h5>
+                                    </div>
+                                    <div class="mt-3 flex items-center justify-between text-[11px] text-gray-400">
+                                        <span>{{ $task->owner_for_current_stage->name ?? '—' }}</span>
+                                        <span class="inline-flex items-center gap-0.5 text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                                            تفاصيل
+                                            <span class="material-icons text-sm">chevron_left</span>
+                                        </span>
+                                    </div>
+                                </a>
+                            @endforeach
+                        </div>
+                        <div class="stage-empty text-center py-8 text-sm text-gray-400 {{ $stage['tasks']->count() ? 'hidden' : '' }}">
+                            اسحب كارت هنا أو لا يوجد محتوى
+                        </div>
                     </div>
                 </section>
             @endforeach
@@ -870,6 +873,129 @@
         btn.disabled = true;
         label.textContent = 'جاري التحليل والتقسيم...';
     });
+
+    // —— Drag & drop بين مراحل البايبلاين ——
+    (function initPipelineDragDrop() {
+        const board = document.getElementById('pipelineBoard');
+        if (!board) return;
+
+        const moveUrlTpl = "{{ route('work.tasks.move-stage', [$activity, 'TASK_ID']) }}";
+        let dragTaskId = null;
+        let dragFromStage = null;
+        let dragCard = null;
+        let suppressClick = false;
+
+        function refreshStageCounts() {
+            board.querySelectorAll('.pipeline-stage').forEach(function (section) {
+                const stage = section.dataset.stage;
+                const zone = section.querySelector('.stage-dropzone');
+                const count = zone.querySelectorAll('.pipeline-card').length;
+                section.querySelectorAll('.stage-count').forEach(function (el) { el.textContent = count; });
+                section.querySelectorAll('.stage-count-badge').forEach(function (el) { el.textContent = count; });
+                const empty = zone.querySelector('.stage-empty');
+                if (empty) empty.classList.toggle('hidden', count > 0);
+            });
+        }
+
+        board.addEventListener('dragstart', function (e) {
+            const card = e.target.closest('.pipeline-card');
+            if (!card) return;
+            dragTaskId = card.dataset.taskId;
+            dragFromStage = card.dataset.stage;
+            dragCard = card;
+            suppressClick = false;
+            card.classList.add('opacity-50');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', dragTaskId);
+        });
+
+        board.addEventListener('dragend', function (e) {
+            const card = e.target.closest('.pipeline-card');
+            if (card) card.classList.remove('opacity-50');
+            board.querySelectorAll('.stage-dropzone').forEach(function (z) {
+                z.classList.remove('bg-indigo-50', 'ring-2', 'ring-indigo-300', 'ring-inset');
+            });
+            dragTaskId = null;
+            dragFromStage = null;
+            dragCard = null;
+        });
+
+        board.addEventListener('dragover', function (e) {
+            const zone = e.target.closest('.stage-dropzone');
+            if (!zone || !dragTaskId) return;
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            board.querySelectorAll('.stage-dropzone').forEach(function (z) {
+                z.classList.toggle('bg-indigo-50', z === zone);
+                z.classList.toggle('ring-2', z === zone);
+                z.classList.toggle('ring-indigo-300', z === zone);
+                z.classList.toggle('ring-inset', z === zone);
+            });
+        });
+
+        board.addEventListener('dragleave', function (e) {
+            const zone = e.target.closest('.stage-dropzone');
+            if (!zone) return;
+            if (zone.contains(e.relatedTarget)) return;
+            zone.classList.remove('bg-indigo-50', 'ring-2', 'ring-indigo-300', 'ring-inset');
+        });
+
+        board.addEventListener('drop', async function (e) {
+            const zone = e.target.closest('.stage-dropzone');
+            if (!zone || !dragTaskId || !dragCard) return;
+            e.preventDefault();
+            zone.classList.remove('bg-indigo-50', 'ring-2', 'ring-indigo-300', 'ring-inset');
+
+            const toStage = zone.dataset.stage;
+            const fromStage = dragFromStage;
+            if (toStage === fromStage) return;
+
+            const taskId = dragTaskId;
+            const card = dragCard;
+            const fromZone = board.querySelector('.stage-dropzone[data-stage="' + fromStage + '"]');
+            const cardsWrap = zone.querySelector('.stage-cards');
+            if (!cardsWrap) return;
+
+            suppressClick = true;
+            cardsWrap.appendChild(card);
+            card.dataset.stage = toStage;
+            refreshStageCounts();
+
+            try {
+                const url = moveUrlTpl.replace('TASK_ID', taskId);
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    body: JSON.stringify({ pipeline_stage: toStage }),
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    throw new Error(data.message || data.error || 'فشل النقل');
+                }
+            } catch (err) {
+                if (fromZone) {
+                    fromZone.querySelector('.stage-cards')?.appendChild(card);
+                    card.dataset.stage = fromStage;
+                    refreshStageCounts();
+                }
+                alert(err.message || 'حدث خطأ أثناء نقل الكارت');
+            }
+        });
+
+        board.addEventListener('click', function (e) {
+            if (!suppressClick) return;
+            const card = e.target.closest('.pipeline-card');
+            if (!card) return;
+            e.preventDefault();
+            e.stopPropagation();
+            suppressClick = false;
+        }, true);
+    })();
 
     @if(old('bulk_text'))
     document.addEventListener('DOMContentLoaded', openParseBulkModal);

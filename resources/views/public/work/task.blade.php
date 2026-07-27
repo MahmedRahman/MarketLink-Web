@@ -78,5 +78,33 @@
             @endif
         </div>
     @endif
+
+    @if($task->files->count())
+        <div class="bg-white rounded-2xl border border-gray-200 p-5 space-y-3">
+            <h2 class="text-sm font-bold text-gray-800 flex items-center gap-1">
+                <span class="material-icons text-base text-purple-600">folder</span>
+                ملفات التصميم
+            </h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                @foreach($task->files as $file)
+                    <div class="rounded-xl border border-gray-200 bg-gray-50 p-3 flex gap-3">
+                        <div class="w-14 h-14 rounded-lg bg-white border border-gray-200 flex items-center justify-center overflow-hidden shrink-0">
+                            @if($file->isImage())
+                                <img src="{{ $file->file_url }}" alt="{{ $file->file_name }}" class="w-full h-full object-cover">
+                            @else
+                                <span class="material-icons text-2xl text-gray-400">{{ $file->file_icon }}</span>
+                            @endif
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <p class="text-sm font-medium text-gray-800 truncate">{{ $file->file_name }}</p>
+                            <p class="text-[11px] text-gray-500 mt-0.5">{{ $file->asset_kind_label }} · {{ $file->formatted_file_size }}</p>
+                            <a href="{{ $file->file_url }}" target="_blank" rel="noopener"
+                               class="text-xs text-indigo-600 hover:underline mt-1 inline-block">فتح الملف</a>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    @endif
 </div>
 @endsection

@@ -50,7 +50,7 @@ class PublicWorkShareController extends Controller
         $activity = $this->findSharedActivity($token);
         abort_unless($task->work_activity_id === $activity->id, 404);
 
-        $task->load(['contentWriter', 'designer', 'assignedEmployee']);
+        $task->load(['contentWriter', 'designer', 'assignedEmployee', 'files']);
 
         return view('public.work.task', [
             'activity' => $activity,

@@ -13,6 +13,21 @@
             {{ session('success') }}
         </div>
     @endif
+    @if(session('error'))
+        <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-xl flex items-center">
+            <span class="material-icons ml-2">error</span>
+            {{ session('error') }}
+        </div>
+    @endif
+    @if($errors->any())
+        <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-xl">
+            <ul class="list-disc list-inside text-sm space-y-1">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
 
     <a href="{{ route('work.show', $activity) }}" class="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-primary">
         <span class="material-icons text-lg">arrow_forward</span>
@@ -142,6 +157,112 @@
                 <p id="designerBriefText" class="text-sm text-amber-500">اضغط «ملخص المصمم» للتوليد</p>
             @endif
         </div>
+    </div>
+
+    {{-- ملفات التصميم --}}
+    <div class="card rounded-2xl p-5 space-y-4">
+        <div class="flex items-start justify-between gap-3 flex-wrap">
+            <div>
+                <h3 class="text-sm font-bold text-gray-800 flex items-center gap-1">
+                    <span class="material-icons text-base text-purple-600">cloud_upload</span>
+                    ملفات التصميم
+                </h3>
+                <p class="text-xs text-gray-500 mt-1">
+                    ارفع صورة، فيديو، أو PDF حسب نوع المحتوى
+                    @if($task->content_type_label)
+                        (الحالي: {{ $task->content_type_label }} → مقترح: {{ $designAssetKinds[$suggestedAssetKind] ?? $suggestedAssetKind }})
+                    @endif
+                </p>
+            </div>
+        </div>
+
+        <form method="POST" action="{{ route('work.tasks.files.upload', [$activity, $task]) }}"
+              enctype="multipart/form-data" id="designUploadForm" class="space-y-3">
+            @csrf
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">نوع الملف</label>
+                    <select name="asset_kind" id="assetKindSelect"
+                            class="w-full px-3 py-2 rounded-xl border-2 border-gray-200 text-sm focus:border-primary focus:outline-none">
+                        @foreach($designAssetKinds as $key => $label)
+                            <option value="{{ $key }}" @selected($suggestedAssetKind === $key)>{{ $label }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="sm:col-span-2">
+                    <label class="block text-xs font-medium text-gray-600 mb-1">وصف مختصر (اختياري)</label>
+                    <input type="text" name="description" maxlength="500" placeholder="مثلاً: نسخة نهائية للريلز"
+                           class="w-full px-3 py-2 rounded-xl border-2 border-gray-200 text-sm focus:border-primary focus:outline-none">
+                </div>
+            </div>
+
+            <div id="designDropZone"
+                 class="relative rounded-2xl border-2 border-dashed border-purple-200 bg-purple-50/40 px-4 py-8 text-center transition-colors cursor-pointer hover:border-purple-400 hover:bg-purple-50">
+                <input type="file" name="file" id="designFileInput" required
+                       class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                       accept=".jpg,.jpeg,.png,.gif,.webp">
+                <span class="material-icons text-3xl text-purple-400 mb-2">upload_file</span>
+                <p class="text-sm font-medium text-gray-700" id="designDropHint">اسحب الملف هنا أو اضغط للاختيار</p>
+                <p class="text-xs text-gray-500 mt-1" id="designAcceptHint">صور: JPG, PNG, GIF, WEBP — حتى 100MB</p>
+                <p class="text-xs text-purple-700 mt-2 font-medium hidden" id="designFileName"></p>
+            </div>
+
+            <button type="submit" id="designUploadBtn"
+                    class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-purple-600 text-white text-sm font-medium hover:bg-purple-700 inline-flex items-center justify-center gap-1">
+                <span class="material-icons text-base">cloud_upload</span>
+                رفع الملف
+            </button>
+        </form>
+
+        @if($task->files->count())
+            <div class="border-t border-gray-100 pt-4 space-y-3">
+                <p class="text-xs font-semibold text-gray-500">الملفات المرفوعة ({{ $task->files->count() }})</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    @foreach($task->files as $file)
+                        <div class="rounded-xl border border-gray-200 bg-gray-50 p-3 flex gap-3">
+                            <div class="w-16 h-16 rounded-lg bg-white border border-gray-200 flex items-center justify-center overflow-hidden shrink-0">
+                                @if($file->isImage())
+                                    <img src="{{ $file->file_url }}" alt="{{ $file->file_name }}" class="w-full h-full object-cover">
+                                @else
+                                    <span class="material-icons text-2xl text-gray-400">{{ $file->file_icon }}</span>
+                                @endif
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <p class="text-sm font-medium text-gray-800 truncate" title="{{ $file->file_name }}">{{ $file->file_name }}</p>
+                                <p class="text-[11px] text-gray-500 mt-0.5">
+                                    {{ $file->asset_kind_label }} · {{ $file->formatted_file_size }}
+                                    @if($file->description)
+                                        · {{ $file->description }}
+                                    @endif
+                                </p>
+                                <div class="flex items-center gap-2 mt-2">
+                                    <a href="{{ route('work.tasks.files.download', [$activity, $task, $file]) }}"
+                                       class="text-xs text-primary hover:underline inline-flex items-center gap-0.5">
+                                        <span class="material-icons text-sm">download</span>
+                                        تحميل
+                                    </a>
+                                    @if($file->isImage() || $file->isPdf())
+                                        <a href="{{ $file->file_url }}" target="_blank" rel="noopener"
+                                           class="text-xs text-gray-600 hover:underline inline-flex items-center gap-0.5">
+                                            <span class="material-icons text-sm">open_in_new</span>
+                                            عرض
+                                        </a>
+                                    @endif
+                                    <form method="POST" action="{{ route('work.tasks.files.destroy', [$activity, $task, $file]) }}"
+                                          onsubmit="return confirm('حذف هذا الملف؟');" class="inline">
+                                        @csrf @method('DELETE')
+                                        <button type="submit" class="text-xs text-red-600 hover:underline inline-flex items-center gap-0.5">
+                                            <span class="material-icons text-sm">delete</span>
+                                            حذف
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        @endif
     </div>
 
     <div class="card rounded-2xl p-5">
@@ -339,5 +460,80 @@ async function summarizeDesigner(taskId, btn) {
         btn.innerHTML = original;
     }
 }
+
+(function initDesignUpload() {
+    const kindSelect = document.getElementById('assetKindSelect');
+    const fileInput = document.getElementById('designFileInput');
+    const acceptHint = document.getElementById('designAcceptHint');
+    const fileNameEl = document.getElementById('designFileName');
+    const dropZone = document.getElementById('designDropZone');
+    const form = document.getElementById('designUploadForm');
+    if (!kindSelect || !fileInput) return;
+
+    const acceptMap = {
+        image: { accept: '.jpg,.jpeg,.png,.gif,.webp', hint: 'صور: JPG, PNG, GIF, WEBP — حتى 100MB' },
+        video: { accept: '.mp4,.mov,.webm,.m4v', hint: 'فيديو: MP4, MOV, WEBM, M4V — حتى 100MB' },
+        pdf: { accept: '.pdf', hint: 'ملف PDF فقط — حتى 100MB' },
+    };
+
+    function syncAccept() {
+        const meta = acceptMap[kindSelect.value] || acceptMap.image;
+        fileInput.accept = meta.accept;
+        if (acceptHint) acceptHint.textContent = meta.hint;
+    }
+
+    kindSelect.addEventListener('change', function () {
+        fileInput.value = '';
+        if (fileNameEl) {
+            fileNameEl.textContent = '';
+            fileNameEl.classList.add('hidden');
+        }
+        syncAccept();
+    });
+    syncAccept();
+
+    fileInput.addEventListener('change', function () {
+        const name = fileInput.files?.[0]?.name || '';
+        if (fileNameEl) {
+            fileNameEl.textContent = name ? 'تم اختيار: ' + name : '';
+            fileNameEl.classList.toggle('hidden', !name);
+        }
+    });
+
+    ['dragenter', 'dragover'].forEach(function (evt) {
+        dropZone?.addEventListener(evt, function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.classList.add('border-purple-500', 'bg-purple-100');
+        });
+    });
+    ['dragleave', 'drop'].forEach(function (evt) {
+        dropZone?.addEventListener(evt, function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.classList.remove('border-purple-500', 'bg-purple-100');
+        });
+    });
+    dropZone?.addEventListener('drop', function (e) {
+        const files = e.dataTransfer?.files;
+        if (!files?.length) return;
+        try {
+            const dt = new DataTransfer();
+            dt.items.add(files[0]);
+            fileInput.files = dt.files;
+        } catch (err) {
+            // بعض المتصفحات تمنع التعيين المباشر
+        }
+        fileInput.dispatchEvent(new Event('change'));
+    });
+
+    form?.addEventListener('submit', function () {
+        const btn = document.getElementById('designUploadBtn');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="material-icons text-base animate-spin">progress_activity</span> جاري الرفع...';
+        }
+    });
+})();
 </script>
 @endsection

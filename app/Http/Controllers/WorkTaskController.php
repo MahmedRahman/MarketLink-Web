@@ -5,10 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\Employee;
 use App\Models\WorkActivity;
 use App\Models\WorkTask;
+use App\Models\WorkTaskFile;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class WorkTaskController extends Controller
 {
@@ -17,7 +19,7 @@ class WorkTaskController extends Controller
         $this->authorizeActivity($request, $work);
         $this->authorizeTask($work, $task);
 
-        $task->load(['contentWriter', 'designer', 'assignedEmployee']);
+        $task->load(['contentWriter', 'designer', 'assignedEmployee', 'files']);
 
         $employees = Employee::where('organization_id', $request->user()->organization_id)
             ->where('status', 'active')
@@ -32,6 +34,8 @@ class WorkTaskController extends Controller
             'taskStatuses' => WorkTask::statuses(),
             'contentTypes' => WorkTask::contentTypes(),
             'platforms' => WorkTask::platforms(),
+            'designAssetKinds' => WorkTask::designAssetKinds(),
+            'suggestedAssetKind' => WorkTask::suggestedDesignAssetKind($task->content_type),
         ]);
     }
 
@@ -244,7 +248,97 @@ class WorkTaskController extends Controller
 
         $task->update($updates);
 
-        return back()->with('success', 'تم نقل المحتوى إلى مرحلة «'.(WorkTask::pipelineStages()[$stage] ?? $stage).'»');
+        $message = 'تم نقل المحتوى إلى مرحلة «'.(WorkTask::pipelineStages()[$stage] ?? $stage).'»';
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'pipeline_stage' => $stage,
+                'task_id' => $task->id,
+            ]);
+        }
+
+        return back()->with('success', $message);
+    }
+
+    public function uploadFile(Request $request, WorkActivity $work, WorkTask $task)
+    {
+        $this->authorizeActivity($request, $work);
+        $this->authorizeTask($work, $task);
+
+        $validated = $request->validate([
+            'asset_kind' => 'required|in:image,video,pdf',
+            'file' => 'required|file|max:102400', // 100MB
+            'description' => 'nullable|string|max:500',
+        ]);
+
+        $file = $request->file('file');
+        $ext = strtolower($file->getClientOriginalExtension());
+        $mime = (string) $file->getMimeType();
+
+        $allowed = match ($validated['asset_kind']) {
+            'image' => ['jpg', 'jpeg', 'png', 'gif', 'webp'],
+            'video' => ['mp4', 'mov', 'webm', 'm4v'],
+            'pdf' => ['pdf'],
+        };
+
+        if (! in_array($ext, $allowed, true)) {
+            return back()->with('error', 'امتداد الملف غير مناسب لنوع التصميم المختار');
+        }
+
+        // تحقق خفيف من المايم
+        $mimeOk = match ($validated['asset_kind']) {
+            'image' => str_starts_with($mime, 'image/'),
+            'video' => str_starts_with($mime, 'video/') || in_array($mime, ['application/octet-stream'], true),
+            'pdf' => in_array($mime, ['application/pdf', 'application/octet-stream'], true),
+        };
+        if (! $mimeOk) {
+            return back()->with('error', 'نوع الملف غير مدعوم');
+        }
+
+        $path = $file->store('work-tasks/'.$task->id, 'public');
+
+        WorkTaskFile::create([
+            'work_task_id' => $task->id,
+            'file_name' => $file->getClientOriginalName(),
+            'file_path' => $path,
+            'file_type' => $ext,
+            'asset_kind' => $validated['asset_kind'],
+            'file_size' => $file->getSize(),
+            'uploaded_by' => $request->user()->id,
+            'description' => $validated['description'] ?? null,
+        ]);
+
+        return redirect()
+            ->route('work.tasks.show', [$work, $task])
+            ->with('success', 'تم رفع ملف التصميم');
+    }
+
+    public function deleteFile(Request $request, WorkActivity $work, WorkTask $task, WorkTaskFile $file)
+    {
+        $this->authorizeActivity($request, $work);
+        $this->authorizeTask($work, $task);
+        abort_unless($file->work_task_id === $task->id, 404);
+
+        if ($file->file_path && Storage::disk('public')->exists($file->file_path)) {
+            Storage::disk('public')->delete($file->file_path);
+        }
+        $file->delete();
+
+        return redirect()
+            ->route('work.tasks.show', [$work, $task])
+            ->with('success', 'تم حذف الملف');
+    }
+
+    public function downloadFile(Request $request, WorkActivity $work, WorkTask $task, WorkTaskFile $file)
+    {
+        $this->authorizeActivity($request, $work);
+        $this->authorizeTask($work, $task);
+        abort_unless($file->work_task_id === $task->id, 404);
+        abort_unless(Storage::disk('public')->exists($file->file_path), 404);
+
+        return Storage::disk('public')->download($file->file_path, $file->file_name);
     }
 
     public function update(Request $request, WorkActivity $work, WorkTask $task)

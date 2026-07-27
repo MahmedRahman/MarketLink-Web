@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class WorkTask extends Model
 {
@@ -57,6 +58,11 @@ class WorkTask extends Model
     public function designer(): BelongsTo
     {
         return $this->belongsTo(Employee::class, 'designer_id');
+    }
+
+    public function files(): HasMany
+    {
+        return $this->hasMany(WorkTaskFile::class)->latest();
     }
 
     /**
@@ -180,6 +186,23 @@ class WorkTask extends Model
             'publish' => $this->assignedEmployee,
             default => $this->contentWriter ?? $this->assignedEmployee,
         };
+    }
+
+    public static function suggestedDesignAssetKind(?string $contentType): string
+    {
+        return match ($contentType) {
+            'reels' => 'video',
+            default => 'image',
+        };
+    }
+
+    public static function designAssetKinds(): array
+    {
+        return [
+            'image' => 'صورة',
+            'video' => 'فيديو',
+            'pdf' => 'PDF',
+        ];
     }
 
     public static function pipelineStages(): array
