@@ -88,20 +88,19 @@ class WorkActivity extends Model
 
     public function getTypeLabelAttribute(): string
     {
-        return match ($this->type) {
-            'free_lecture' => 'محاضرة مجانية',
-            'live_lecture' => 'محاضرة لايف',
-            'paid_round' => 'راوند مدفوع',
-            'educational' => 'محتوى تعليمي',
-            default => 'أخرى',
-        };
+        return self::types()[$this->type]
+            ?? match ($this->type) {
+                // توافق مع السجلات القديمة
+                'free_lecture' => 'محاضرة لايف مجانية',
+                default => 'أخرى',
+            };
     }
 
     public function getTypeIconAttribute(): string
     {
         return match ($this->type) {
-            'free_lecture' => 'smart_display',
-            'live_lecture' => 'live_tv',
+            'live_lecture', 'free_lecture' => 'live_tv',
+            'live_lecture_paid' => 'paid',
             'paid_round' => 'workspace_premium',
             'educational' => 'menu_book',
             default => 'category',
@@ -109,11 +108,11 @@ class WorkActivity extends Model
     }
 
     /**
-     * هل النشاط محاضرة (مجانية/لايف) تتبع دليل تنظيم ملفات المحاضرة؟
+     * هل النشاط محاضرة لايف (مجانية/مدفوعة) تتبع دليل تنظيم ملفات المحاضرة؟
      */
     public function getIsLectureAttribute(): bool
     {
-        return in_array($this->type, ['free_lecture', 'live_lecture'], true);
+        return in_array($this->type, ['live_lecture', 'live_lecture_paid', 'free_lecture'], true);
     }
 
     /**
@@ -163,8 +162,8 @@ class WorkActivity extends Model
     public static function types(): array
     {
         return [
-            'free_lecture' => 'محاضرة مجانية',
-            'live_lecture' => 'محاضرة لايف',
+            'live_lecture' => 'محاضرة لايف مجانية',
+            'live_lecture_paid' => 'محاضرة لايف مدفوعة',
             'paid_round' => 'راوند مدفوع',
             'educational' => 'محتوى تعليمي',
             'other' => 'أخرى',

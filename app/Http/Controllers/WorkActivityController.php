@@ -64,7 +64,7 @@ class WorkActivityController extends Controller
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'type' => 'required|in:free_lecture,live_lecture,paid_round,educational,other',
+            'type' => 'required|in:live_lecture,live_lecture_paid,paid_round,educational,other',
             'description' => 'nullable|string',
             'event_date' => 'nullable|date',
             'with_template' => 'nullable|boolean',
@@ -202,7 +202,7 @@ class WorkActivityController extends Controller
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'type' => 'required|in:free_lecture,live_lecture,paid_round,educational,other',
+            'type' => 'required|in:live_lecture,live_lecture_paid,paid_round,educational,other',
             'description' => 'nullable|string',
             'event_date' => 'nullable|date',
             'status' => 'required|in:planning,in_progress,done,cancelled',

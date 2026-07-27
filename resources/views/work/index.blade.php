@@ -148,8 +148,8 @@
                 <div class="grid grid-cols-2 sm:grid-cols-3 gap-2" id="newActivityTypeCards">
                     @php
                         $typeIcons = [
-                            'free_lecture' => 'smart_display',
                             'live_lecture' => 'live_tv',
+                            'live_lecture_paid' => 'paid',
                             'paid_round' => 'workspace_premium',
                             'educational' => 'menu_book',
                             'other' => 'category',
@@ -208,7 +208,7 @@
         const type = selected ? selected.value : 'other';
         const box = document.getElementById('templateOption');
         const checkbox = document.getElementById('withTemplateCheckbox');
-        const isLecture = type === 'free_lecture' || type === 'live_lecture';
+        const isLecture = type === 'live_lecture' || type === 'live_lecture_paid';
         box.classList.toggle('hidden', !isLecture);
         if (!isLecture && checkbox) checkbox.checked = false;
         if (isLecture && checkbox) checkbox.checked = true;
