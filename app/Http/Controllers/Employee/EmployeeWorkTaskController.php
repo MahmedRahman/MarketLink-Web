@@ -181,77 +181,40 @@ class EmployeeWorkTaskController extends Controller
 
         $validated = $request->validate([
             'asset_kind' => 'required|in:image,video,pdf',
-            'file' => 'required|file|max:102400',
+            'files' => 'required|array|min:1|max:30',
+            'files.*' => 'file|max:102400',
             'description' => 'nullable|string|max:500',
         ]);
 
-        $file = $request->file('file');
-        $ext = strtolower($file->getClientOriginalExtension());
-        $mime = (string) $file->getMimeType();
-
-        $allowed = match ($validated['asset_kind']) {
-            'image' => ['jpg', 'jpeg', 'png', 'gif', 'webp'],
-            'video' => ['mp4', 'mov', 'webm', 'm4v'],
-            'pdf' => ['pdf'],
-        };
-
-        if (! in_array($ext, $allowed, true)) {
-            return back()->with('error', 'امتداد الملف غير مناسب لنوع التصميم المختار');
-        }
-
-        $mimeOk = match ($validated['asset_kind']) {
-            'image' => str_starts_with($mime, 'image/'),
-            'video' => str_starts_with($mime, 'video/') || in_array($mime, ['application/octet-stream'], true),
-            'pdf' => in_array($mime, ['application/pdf', 'application/octet-stream'], true),
-        };
-        if (! $mimeOk) {
-            return back()->with('error', 'نوع الملف غير مدعوم');
-        }
-
-        $path = $file->store('work-tasks/'.$task->id, 'public');
-
-        $workFile = WorkTaskFile::create([
-            'work_task_id' => $task->id,
-            'file_name' => $file->getClientOriginalName(),
-            'file_path' => $path,
-            'file_type' => $ext,
-            'asset_kind' => $validated['asset_kind'],
-            'file_size' => $file->getSize(),
-            'uploaded_by' => null,
-            'description' => $validated['description'] ?? null,
-        ]);
-
-        $taskId = $task->id;
-        $workFileId = $workFile->id;
-        $nasEnabled = (bool) config('academy_nas.enabled');
-
-        if ($nasEnabled) {
-            dispatch(function () use ($taskId, $workFileId) {
-                $taskModel = WorkTask::query()->find($taskId);
-                $fileModel = WorkTaskFile::query()->find($workFileId);
-                if ($taskModel && $fileModel) {
-                    app(\App\Services\AcademyNasStorage::class)->syncQuietly($taskModel, $fileModel);
-                }
-            })->afterResponse();
-        }
+        $result = app(\App\Services\DesignFileUploader::class)->uploadMany(
+            $task,
+            $request->file('files', []),
+            $validated['asset_kind'],
+            $validated['description'] ?? null,
+            null
+        );
 
         $kindLabel = WorkTask::designAssetKinds()[$validated['asset_kind']] ?? $validated['asset_kind'];
+        $folderNote = $result['folder'] ? ' داخل فولدر '.$result['folder'] : '';
         $task->logEvent(
             'file_uploaded',
-            'تم رفع ملف تصميم ('.$kindLabel.'): '.$workFile->file_name.' بواسطة '.$employee->name
-                .($nasEnabled ? ' — جاري النسخ إلى NAS' : ''),
+            'تم رفع '.$result['count'].' ملف تصميم ('.$kindLabel.')'.$folderNote.' بواسطة '.$employee->name,
             'file',
             null,
-            $workFile->file_name,
+            (string) $result['count'],
             [
                 'asset_kind' => $validated['asset_kind'],
                 'employee_id' => $employee->id,
+                'batch' => $result['batch'],
+                'folder' => $result['folder'],
             ]
         );
 
-        $message = 'تم رفع ملف التصميم';
-        if ($nasEnabled) {
-            $message .= ' — هيتنسخ لسيرفر الملفات خلال لحظات';
+        $message = $result['count'] === 1
+            ? 'تم رفع ملف التصميم'
+            : 'تم رفع '.$result['count'].' ملفات في فولدر واحد';
+        if (config('academy_nas.enabled')) {
+            $message .= ' — هيتنسخوا لسيرفر الملفات خلال لحظات';
         }
 
         return redirect()

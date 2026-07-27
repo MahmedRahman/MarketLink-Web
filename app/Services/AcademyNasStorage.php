@@ -26,8 +26,12 @@ class AcademyNasStorage
      *
      * @return array{relative_path: string, absolute_path: string, file_name: string}|null
      */
-    public function syncWorkTaskFile(WorkTask $task, WorkTaskFile $workFile): ?array
-    {
+    public function syncWorkTaskFile(
+        WorkTask $task,
+        WorkTaskFile $workFile,
+        ?string $batchFolder = null,
+        ?int $index = null
+    ): ?array {
         if (! $this->isEnabled()) {
             return null;
         }
@@ -40,9 +44,18 @@ class AcademyNasStorage
         $ext = strtolower((string) ($workFile->file_type ?: pathinfo($workFile->file_name, PATHINFO_EXTENSION)));
         $month = $this->monthFolder($task);
         $typeFolder = $this->typeFolder($task);
-        $fileName = $this->buildFileName($task, $ext);
+        $batchFolder = $batchFolder ?: $workFile->nas_folder;
 
-        $relativeDir = $month.'/'.$typeFolder;
+        if ($batchFolder) {
+            $fileName = $index
+                ? $this->buildIndexedFileName($task, $ext, $index)
+                : (string) $workFile->file_name;
+            $relativeDir = $month.'/'.$typeFolder.'/'.$batchFolder;
+        } else {
+            $fileName = $this->buildFileName($task, $ext);
+            $relativeDir = $month.'/'.$typeFolder;
+        }
+
         $base = rtrim((string) config('academy_nas.base_path'), '/');
         $remoteDir = $base.'/'.$relativeDir;
 
@@ -120,14 +133,37 @@ class AcademyNasStorage
     {
         $date = ($task->publish_date ?? now())->format('Ymd');
         $type = $this->contentTypeKey($task);
+        $slug = $this->taskSlug($task);
+        $ext = ltrim(strtolower($ext), '.');
+
+        return "{$date}_{$type}_{$task->id}_{$slug}.{$ext}";
+    }
+
+    public function buildBatchFolderName(WorkTask $task): string
+    {
+        $date = ($task->publish_date ?? now())->format('Ymd');
+        $type = $this->contentTypeKey($task);
+        $slug = $this->taskSlug($task);
+
+        return "{$date}_{$type}_{$task->id}_{$slug}";
+    }
+
+    public function buildIndexedFileName(WorkTask $task, string $ext, int $index): string
+    {
+        $slug = $this->taskSlug($task);
+        $ext = ltrim(strtolower($ext), '.');
+
+        return sprintf('%s_%02d.%s', $slug, $index, $ext);
+    }
+
+    public function taskSlug(WorkTask $task): string
+    {
         $slug = Str::slug($task->title);
         if ($slug === '') {
             $slug = 'task-'.$task->id;
         }
-        $slug = Str::limit($slug, 40, '');
-        $ext = ltrim(strtolower($ext), '.');
 
-        return "{$date}_{$type}_{$task->id}_{$slug}.{$ext}";
+        return Str::limit($slug, 40, '');
     }
 
     protected function uniqueRemoteName(SFTP $sftp, string $remoteDir, string $fileName): string
@@ -168,10 +204,14 @@ class AcademyNasStorage
     /**
      * مزامنة آمنة: تُسجّل الخطأ ولا ترمي للمستدعي إن طُلب.
      */
-    public function syncQuietly(WorkTask $task, WorkTaskFile $workFile): bool
-    {
+    public function syncQuietly(
+        WorkTask $task,
+        WorkTaskFile $workFile,
+        ?string $batchFolder = null,
+        ?int $index = null
+    ): bool {
         try {
-            $result = $this->syncWorkTaskFile($task, $workFile);
+            $result = $this->syncWorkTaskFile($task, $workFile, $batchFolder, $index);
             if (! $result) {
                 return false;
             }
@@ -179,8 +219,8 @@ class AcademyNasStorage
             $workFile->update([
                 'nas_path' => $result['relative_path'],
                 'nas_synced_at' => now(),
-                // احتفظ باسم الملف الأصلي للعرض المحلي إن لزم، لكن حدّث ليعكس الاسم المنظّم على NAS
                 'file_name' => $result['file_name'],
+                'nas_folder' => $batchFolder ?: $workFile->nas_folder,
             ]);
 
             return true;

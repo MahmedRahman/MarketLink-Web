@@ -168,7 +168,7 @@
                     ملفات التصميم
                 </h3>
                 <p class="text-xs text-gray-500 mt-1">
-                    ارفع صورة، فيديو، أو PDF حسب نوع المحتوى
+                    ارفع صورة أو أكثر، فيديو، أو PDF حسب نوع المحتوى — لو رفعت أكتر من ملف هيتجمعوا في فولدر واحد
                     @if($task->content_type_label)
                         (الحالي: {{ $task->content_type_label }} → مقترح: {{ $designAssetKinds[$suggestedAssetKind] ?? $suggestedAssetKind }})
                     @endif
@@ -198,82 +198,100 @@
 
             <div id="designDropZone"
                  class="relative rounded-2xl border-2 border-dashed border-purple-200 bg-purple-50/40 px-4 py-8 text-center transition-colors cursor-pointer hover:border-purple-400 hover:bg-purple-50">
-                <input type="file" name="file" id="designFileInput" required
+                <input type="file" name="files[]" id="designFileInput" required multiple
                        class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                        accept=".jpg,.jpeg,.png,.gif,.webp">
                 <span class="material-icons text-3xl text-purple-400 mb-2">upload_file</span>
-                <p class="text-sm font-medium text-gray-700" id="designDropHint">اسحب الملف هنا أو اضغط للاختيار</p>
-                <p class="text-xs text-gray-500 mt-1" id="designAcceptHint">صور: JPG, PNG, GIF, WEBP — حتى 100MB</p>
+                <p class="text-sm font-medium text-gray-700" id="designDropHint">اسحب ملف أو أكثر هنا أو اضغط للاختيار</p>
+                <p class="text-xs text-gray-500 mt-1" id="designAcceptHint">صور: JPG, PNG, GIF, WEBP — حتى 100MB لكل ملف · أكتر من ملف = فولدر</p>
                 <p class="text-xs text-purple-700 mt-2 font-medium hidden" id="designFileName"></p>
             </div>
 
             <button type="submit" id="designUploadBtn"
                     class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-purple-600 text-white text-sm font-medium hover:bg-purple-700 inline-flex items-center justify-center gap-1">
                 <span class="material-icons text-base">cloud_upload</span>
-                رفع الملف
+                رفع الملفات
             </button>
         </form>
 
         @if($task->files->count())
-            <div class="border-t border-gray-100 pt-4 space-y-3">
+            @php
+                $fileGroups = $task->files->groupBy(fn ($f) => $f->upload_batch ?: 'single-'.$f->id);
+            @endphp
+            <div class="border-t border-gray-100 pt-4 space-y-4">
                 <p class="text-xs font-semibold text-gray-500">الملفات المرفوعة ({{ $task->files->count() }})</p>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    @foreach($task->files as $file)
-                        <div class="rounded-xl border border-gray-200 bg-gray-50 p-3 flex gap-3">
-                            <div class="w-16 h-16 rounded-lg bg-white border border-gray-200 flex items-center justify-center overflow-hidden shrink-0">
-                                @if($file->isImage())
-                                    <img src="{{ $file->file_url }}" alt="{{ $file->file_name }}" class="w-full h-full object-cover">
-                                @else
-                                    <span class="material-icons text-2xl text-gray-400">{{ $file->file_icon }}</span>
-                                @endif
+                @foreach($fileGroups as $batchKey => $groupFiles)
+                    @php
+                        $folderName = optional($groupFiles->first())->nas_folder;
+                        $isFolder = filled($folderName);
+                    @endphp
+                    <div class="space-y-2">
+                        @if($isFolder)
+                            <div class="flex items-center gap-1.5 text-xs font-semibold text-purple-800">
+                                <span class="material-icons text-sm">folder</span>
+                                <span dir="ltr">{{ $folderName }}</span>
+                                <span class="font-normal text-gray-500">({{ $groupFiles->count() }} ملفات)</span>
                             </div>
-                            <div class="min-w-0 flex-1">
-                                <p class="text-sm font-medium text-gray-800 truncate" title="{{ $file->file_name }}">{{ $file->file_name }}</p>
-                                <p class="text-[11px] text-gray-500 mt-0.5">
-                                    {{ $file->asset_kind_label }} · {{ $file->formatted_file_size }}
-                                    @if($file->description)
-                                        · {{ $file->description }}
-                                    @endif
-                                </p>
-                                @if($file->nas_path)
-                                    <p class="text-[11px] text-teal-700 mt-1 flex items-start gap-1" dir="ltr">
-                                        <span class="material-icons text-sm text-teal-600 shrink-0">folder</span>
-                                        <span class="break-all">{{ $file->nas_display_path }}</span>
-                                    </p>
-                                    @if($file->nas_public_url)
-                                        <a href="{{ $file->nas_public_url }}" target="_blank" rel="noopener"
-                                           class="text-xs text-teal-700 hover:underline inline-flex items-center gap-0.5 mt-1">
-                                            <span class="material-icons text-sm">open_in_new</span>
-                                            فتح على سيرفر الملفات
-                                        </a>
-                                    @endif
-                                @endif
-                                <div class="flex items-center gap-2 mt-2">
-                                    <a href="{{ work_route('tasks.files.download', [$activity, $task, $file]) }}"
-                                       class="text-xs text-primary hover:underline inline-flex items-center gap-0.5">
-                                        <span class="material-icons text-sm">download</span>
-                                        تحميل
-                                    </a>
-                                    @if($file->isImage() || $file->isPdf())
-                                        <a href="{{ $file->file_url }}" target="_blank" rel="noopener"
-                                           class="text-xs text-gray-600 hover:underline inline-flex items-center gap-0.5">
-                                            <span class="material-icons text-sm">open_in_new</span>
-                                            عرض
-                                        </a>
-                                    @endif
-                                    <form method="POST" action="{{ work_route('tasks.files.destroy', [$activity, $task, $file]) }}"
-                                          onsubmit="return confirm('حذف هذا الملف؟');" class="inline">
-                                        @csrf @method('DELETE')
-                                        <button type="submit" class="text-xs text-red-600 hover:underline inline-flex items-center gap-0.5">
-                                            <span class="material-icons text-sm">delete</span>
-                                            حذف
-                                        </button>
-                                    </form>
+                        @endif
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 {{ $isFolder ? 'ms-2 border-s-2 border-purple-100 ps-3' : '' }}">
+                            @foreach($groupFiles as $file)
+                                <div class="rounded-xl border border-gray-200 bg-gray-50 p-3 flex gap-3">
+                                    <div class="w-16 h-16 rounded-lg bg-white border border-gray-200 flex items-center justify-center overflow-hidden shrink-0">
+                                        @if($file->isImage())
+                                            <img src="{{ $file->file_url }}" alt="{{ $file->file_name }}" class="w-full h-full object-cover">
+                                        @else
+                                            <span class="material-icons text-2xl text-gray-400">{{ $file->file_icon }}</span>
+                                        @endif
+                                    </div>
+                                    <div class="min-w-0 flex-1">
+                                        <p class="text-sm font-medium text-gray-800 truncate" title="{{ $file->file_name }}">{{ $file->file_name }}</p>
+                                        <p class="text-[11px] text-gray-500 mt-0.5">
+                                            {{ $file->asset_kind_label }} · {{ $file->formatted_file_size }}
+                                            @if($file->description)
+                                                · {{ $file->description }}
+                                            @endif
+                                        </p>
+                                        @if($file->nas_path)
+                                            <p class="text-[11px] text-teal-700 mt-1 flex items-start gap-1" dir="ltr">
+                                                <span class="material-icons text-sm text-teal-600 shrink-0">folder</span>
+                                                <span class="break-all">{{ $file->nas_display_path }}</span>
+                                            </p>
+                                            @if($file->nas_public_url)
+                                                <a href="{{ $file->nas_public_url }}" target="_blank" rel="noopener"
+                                                   class="text-xs text-teal-700 hover:underline inline-flex items-center gap-0.5 mt-1">
+                                                    <span class="material-icons text-sm">open_in_new</span>
+                                                    فتح على سيرفر الملفات
+                                                </a>
+                                            @endif
+                                        @endif
+                                        <div class="flex items-center gap-2 mt-2">
+                                            <a href="{{ work_route('tasks.files.download', [$activity, $task, $file]) }}"
+                                               class="text-xs text-primary hover:underline inline-flex items-center gap-0.5">
+                                                <span class="material-icons text-sm">download</span>
+                                                تحميل
+                                            </a>
+                                            @if($file->isImage() || $file->isPdf())
+                                                <a href="{{ $file->file_url }}" target="_blank" rel="noopener"
+                                                   class="text-xs text-gray-600 hover:underline inline-flex items-center gap-0.5">
+                                                    <span class="material-icons text-sm">open_in_new</span>
+                                                    عرض
+                                                </a>
+                                            @endif
+                                            <form method="POST" action="{{ work_route('tasks.files.destroy', [$activity, $task, $file]) }}"
+                                                  onsubmit="return confirm('حذف هذا الملف؟');" class="inline">
+                                                @csrf @method('DELETE')
+                                                <button type="submit" class="text-xs text-red-600 hover:underline inline-flex items-center gap-0.5">
+                                                    <span class="material-icons text-sm">delete</span>
+                                                    حذف
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
+                            @endforeach
                         </div>
-                    @endforeach
-                </div>
+                    </div>
+                @endforeach
             </div>
         @endif
     </div>
@@ -456,9 +474,9 @@ async function summarizeDesigner(taskId, btn) {
     if (!kindSelect || !fileInput) return;
 
     const acceptMap = {
-        image: { accept: '.jpg,.jpeg,.png,.gif,.webp', hint: 'صور: JPG, PNG, GIF, WEBP — حتى 100MB' },
-        video: { accept: '.mp4,.mov,.webm,.m4v', hint: 'فيديو: MP4, MOV, WEBM, M4V — حتى 100MB' },
-        pdf: { accept: '.pdf', hint: 'ملف PDF فقط — حتى 100MB' },
+        image: { accept: '.jpg,.jpeg,.png,.gif,.webp', hint: 'صور: JPG, PNG, GIF, WEBP — حتى 100MB لكل ملف · أكتر من ملف = فولدر' },
+        video: { accept: '.mp4,.mov,.webm,.m4v', hint: 'فيديو: MP4, MOV, WEBM, M4V — حتى 100MB لكل ملف · أكتر من ملف = فولدر' },
+        pdf: { accept: '.pdf', hint: 'ملف PDF — حتى 100MB لكل ملف · أكتر من ملف = فولدر' },
     };
 
     function syncAccept() {
@@ -467,23 +485,30 @@ async function summarizeDesigner(taskId, btn) {
         if (acceptHint) acceptHint.textContent = meta.hint;
     }
 
-    kindSelect.addEventListener('change', function () {
-        fileInput.value = '';
-        if (fileNameEl) {
+    function updateSelectedLabel() {
+        const list = fileInput.files ? Array.from(fileInput.files) : [];
+        if (!fileNameEl) return;
+        if (!list.length) {
             fileNameEl.textContent = '';
             fileNameEl.classList.add('hidden');
+            return;
         }
+        if (list.length === 1) {
+            fileNameEl.textContent = 'تم اختيار: ' + list[0].name;
+        } else {
+            fileNameEl.textContent = 'تم اختيار ' + list.length + ' ملفات — هيتجمعوا في فولدر واحد';
+        }
+        fileNameEl.classList.remove('hidden');
+    }
+
+    kindSelect.addEventListener('change', function () {
+        fileInput.value = '';
+        updateSelectedLabel();
         syncAccept();
     });
     syncAccept();
 
-    fileInput.addEventListener('change', function () {
-        const name = fileInput.files?.[0]?.name || '';
-        if (fileNameEl) {
-            fileNameEl.textContent = name ? 'تم اختيار: ' + name : '';
-            fileNameEl.classList.toggle('hidden', !name);
-        }
-    });
+    fileInput.addEventListener('change', updateSelectedLabel);
 
     ['dragenter', 'dragover'].forEach(function (evt) {
         dropZone?.addEventListener(evt, function (e) {
@@ -504,7 +529,7 @@ async function summarizeDesigner(taskId, btn) {
         if (!files?.length) return;
         try {
             const dt = new DataTransfer();
-            dt.items.add(files[0]);
+            Array.from(files).forEach(function (f) { dt.items.add(f); });
             fileInput.files = dt.files;
         } catch (err) {
             // بعض المتصفحات تمنع التعيين المباشر

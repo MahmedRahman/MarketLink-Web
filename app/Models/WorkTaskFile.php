@@ -19,6 +19,8 @@ class WorkTaskFile extends Model
         'description',
         'nas_path',
         'nas_synced_at',
+        'upload_batch',
+        'nas_folder',
     ];
 
     protected $casts = [
