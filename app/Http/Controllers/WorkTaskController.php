@@ -19,7 +19,13 @@ class WorkTaskController extends Controller
         $this->authorizeActivity($request, $work);
         $this->authorizeTask($work, $task);
 
-        $task->load(['contentWriter', 'designer', 'assignedEmployee', 'files']);
+        $task->load([
+            'contentWriter',
+            'designer',
+            'assignedEmployee',
+            'files',
+            'logs.user',
+        ]);
 
         $employees = Employee::where('organization_id', $request->user()->organization_id)
             ->where('status', 'active')
@@ -98,7 +104,15 @@ class WorkTaskController extends Controller
             $validated['assigned_to'] = $validated['content_writer_id'];
         }
 
-        WorkTask::create($validated);
+        $task = WorkTask::create($validated);
+        $task->logEvent(
+            'created',
+            'تم إنشاء المحتوى في مرحلة «'.(WorkTask::pipelineStages()[$task->pipeline_stage] ?? 'كتابة المحتوى').'»',
+            'pipeline_stage',
+            null,
+            $task->pipeline_stage,
+            ['status' => $task->status]
+        );
 
         return redirect()->route('work.show', $work)->with('success', 'تمت إضافة المهمة');
     }
@@ -157,7 +171,7 @@ class WorkTaskController extends Controller
 
             $platforms = $this->normalizePlatformList($item['platforms'] ?? []);
 
-            WorkTask::create([
+            $task = WorkTask::create([
                 'work_activity_id' => $work->id,
                 'title' => mb_substr($title, 0, 255),
                 'idea' => $this->nullableString($item['idea'] ?? null),
@@ -177,6 +191,14 @@ class WorkTaskController extends Controller
                 'due_date' => $this->nullableDate($item['due_date'] ?? null),
                 'order' => ++$order,
             ]);
+            $task->logEvent(
+                'created',
+                'تم إنشاء المحتوى من لصق جماعي',
+                'pipeline_stage',
+                null,
+                'writing',
+                ['source' => 'parse_bulk']
+            );
             $created++;
         }
 
@@ -271,7 +293,42 @@ class WorkTaskController extends Controller
             $updates['status'] = 'done';
         }
 
+        $fromStage = $task->pipeline_stage;
+        $fromStatus = $task->status;
+        $fromAssignee = $task->assigned_to;
+
         $task->update($updates);
+        $task->refresh();
+
+        if ($fromStage !== $task->pipeline_stage) {
+            $task->logEvent(
+                'stage_changed',
+                'نُقل من «'.(WorkTask::pipelineStages()[$fromStage] ?? $fromStage).'» إلى «'.(WorkTask::pipelineStages()[$task->pipeline_stage] ?? $task->pipeline_stage).'»',
+                'pipeline_stage',
+                $fromStage,
+                $task->pipeline_stage
+            );
+        }
+        if ($fromStatus !== $task->status) {
+            $task->logEvent(
+                'status_changed',
+                'تغيّرت الحالة من «'.(WorkTask::statuses()[$fromStatus] ?? $fromStatus).'» إلى «'.(WorkTask::statuses()[$task->status] ?? $task->status).'»',
+                'status',
+                $fromStatus,
+                $task->status
+            );
+        }
+        if ((int) $fromAssignee !== (int) $task->assigned_to) {
+            $fromName = $fromAssignee ? (Employee::find($fromAssignee)?->name ?? '#'.$fromAssignee) : 'غير معيّن';
+            $toName = $task->assigned_to ? (Employee::find($task->assigned_to)?->name ?? '#'.$task->assigned_to) : 'غير معيّن';
+            $task->logEvent(
+                'assignee_changed',
+                'تغيّر المسؤول من «'.$fromName.'» إلى «'.$toName.'»',
+                'assigned_to',
+                $fromAssignee,
+                $task->assigned_to
+            );
+        }
 
         $message = 'تم نقل المحتوى إلى مرحلة «'.(WorkTask::pipelineStages()[$stage] ?? $stage).'»';
 
@@ -318,7 +375,6 @@ class WorkTaskController extends Controller
             WorkTask::where('work_activity_id', $work->id)
                 ->where('id', $taskId)
                 ->update([
-                    'pipeline_stage' => $stage,
                     'order' => $index + 1,
                 ]);
         }
@@ -383,6 +439,16 @@ class WorkTaskController extends Controller
             'description' => $validated['description'] ?? null,
         ]);
 
+        $kindLabel = WorkTask::designAssetKinds()[$validated['asset_kind']] ?? $validated['asset_kind'];
+        $task->logEvent(
+            'file_uploaded',
+            'تم رفع ملف تصميم ('.$kindLabel.'): '.$file->getClientOriginalName(),
+            'file',
+            null,
+            $file->getClientOriginalName(),
+            ['asset_kind' => $validated['asset_kind']]
+        );
+
         return redirect()
             ->route('work.tasks.show', [$work, $task])
             ->with('success', 'تم رفع ملف التصميم');
@@ -428,7 +494,9 @@ class WorkTaskController extends Controller
 
         $this->ensureOptionalEmployeesInOrg($request, $validated);
 
+        $before = $task->only(['status', 'pipeline_stage', 'assigned_to', 'content_writer_id', 'designer_id', 'title']);
         $task->update($validated);
+        $this->logTaskFieldChanges($task, $before, $task->fresh()->only(array_keys($before)));
 
         if ($request->boolean('return_to_detail')) {
             return redirect()->route('work.tasks.show', [$work, $task])->with('success', 'تم تحديث المهمة');
@@ -466,11 +534,35 @@ class WorkTaskController extends Controller
             $updates['designer_id'] = $employeeId;
         }
 
+        $fromAssignee = $task->assigned_to;
+        $fromWriter = $task->content_writer_id;
+        $fromDesigner = $task->designer_id;
+
         $task->update($updates);
         $task->load(['contentWriter', 'designer', 'assignedEmployee']);
 
         $owner = $task->owner_for_current_stage;
         $message = 'تم تحديث الموظف المسؤول';
+
+        $fromName = $fromAssignee ? (Employee::find($fromAssignee)?->name ?? '#'.$fromAssignee) : 'غير معيّن';
+        $toName = $owner?->name ?? ($employeeId ? '#'.$employeeId : 'غير معيّن');
+        if ((int) $fromAssignee !== (int) $task->assigned_to
+            || (int) $fromWriter !== (int) $task->content_writer_id
+            || (int) $fromDesigner !== (int) $task->designer_id) {
+            $roleLabel = match ($stage) {
+                'design' => 'المصمم',
+                'writing' => 'كاتب المحتوى',
+                default => 'المسؤول',
+            };
+            $task->logEvent(
+                'assignee_changed',
+                'تم تعيين '.$roleLabel.' «'.$toName.'»'.($fromName !== $toName ? ' (كان: '.$fromName.')' : ''),
+                $stage === 'design' ? 'designer_id' : ($stage === 'writing' ? 'content_writer_id' : 'assigned_to'),
+                $stage === 'design' ? $fromDesigner : ($stage === 'writing' ? $fromWriter : $fromAssignee),
+                $stage === 'design' ? $task->designer_id : ($stage === 'writing' ? $task->content_writer_id : $task->assigned_to),
+                ['pipeline_stage' => $stage]
+            );
+        }
 
         if ($request->expectsJson() || $request->ajax()) {
             return response()->json([
@@ -492,7 +584,17 @@ class WorkTaskController extends Controller
 
         $platforms = $task->platforms ?? [];
         $links = $this->normalizePublishLinks($request, $platforms);
+        $before = $task->publish_links ?? [];
         $task->update(['publish_links' => $links]);
+
+        $filled = collect($links)->filter()->count();
+        $task->logEvent(
+            'publish_links_updated',
+            'تم تحديث روابط النشر ('.$filled.' رابط'.($filled === 1 ? '' : 'ات').')',
+            'publish_links',
+            json_encode($before, JSON_UNESCAPED_UNICODE),
+            json_encode($links, JSON_UNESCAPED_UNICODE)
+        );
 
         return redirect()
             ->route('work.tasks.show', [$work, $task])
@@ -714,6 +816,54 @@ PROMPT;
         }
 
         return $text;
+    }
+
+    private function logTaskFieldChanges(WorkTask $task, array $before, array $after): void
+    {
+        if (($before['status'] ?? null) !== ($after['status'] ?? null)) {
+            $task->logEvent(
+                'status_changed',
+                'تغيّرت الحالة من «'.(WorkTask::statuses()[$before['status']] ?? $before['status']).'» إلى «'.(WorkTask::statuses()[$after['status']] ?? $after['status']).'»',
+                'status',
+                $before['status'] ?? null,
+                $after['status'] ?? null
+            );
+        }
+
+        if (($before['pipeline_stage'] ?? null) !== ($after['pipeline_stage'] ?? null)) {
+            $task->logEvent(
+                'stage_changed',
+                'نُقل من «'.(WorkTask::pipelineStages()[$before['pipeline_stage']] ?? $before['pipeline_stage']).'» إلى «'.(WorkTask::pipelineStages()[$after['pipeline_stage']] ?? $after['pipeline_stage']).'»',
+                'pipeline_stage',
+                $before['pipeline_stage'] ?? null,
+                $after['pipeline_stage'] ?? null
+            );
+        }
+
+        foreach (['assigned_to' => 'المسؤول', 'content_writer_id' => 'كاتب المحتوى', 'designer_id' => 'المصمم'] as $field => $label) {
+            if ((int) ($before[$field] ?? 0) === (int) ($after[$field] ?? 0)) {
+                continue;
+            }
+            $fromName = ! empty($before[$field]) ? (Employee::find($before[$field])?->name ?? '#'.$before[$field]) : 'غير معيّن';
+            $toName = ! empty($after[$field]) ? (Employee::find($after[$field])?->name ?? '#'.$after[$field]) : 'غير معيّن';
+            $task->logEvent(
+                'assignee_changed',
+                'تغيّر '.$label.' من «'.$fromName.'» إلى «'.$toName.'»',
+                $field,
+                $before[$field] ?? null,
+                $after[$field] ?? null
+            );
+        }
+
+        if (($before['title'] ?? null) !== ($after['title'] ?? null)) {
+            $task->logEvent(
+                'updated',
+                'تم تعديل العنوان',
+                'title',
+                $before['title'] ?? null,
+                $after['title'] ?? null
+            );
+        }
     }
 
     private function validateContentTask(Request $request, bool $forUpdate = false): array

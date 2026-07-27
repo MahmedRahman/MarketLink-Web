@@ -67,6 +67,34 @@ class WorkTask extends Model
         return $this->hasMany(WorkTaskFile::class)->latest();
     }
 
+    public function logs(): HasMany
+    {
+        return $this->hasMany(WorkTaskLog::class)->latest();
+    }
+
+    /**
+     * يسجّل حدثًا في سجل التاسك.
+     */
+    public function logEvent(
+        string $action,
+        string $message,
+        ?string $field = null,
+        mixed $from = null,
+        mixed $to = null,
+        ?array $meta = null,
+        ?int $userId = null
+    ): WorkTaskLog {
+        return $this->logs()->create([
+            'user_id' => $userId ?? auth()->id(),
+            'action' => $action,
+            'field' => $field,
+            'from_value' => $from !== null ? (string) $from : null,
+            'to_value' => $to !== null ? (string) $to : null,
+            'message' => $message,
+            'meta' => $meta,
+        ]);
+    }
+
     /**
      * مهام يظهر فيها الموظف كمعيّن أو كاتب محتوى أو مصمم.
      */

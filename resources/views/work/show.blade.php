@@ -345,6 +345,11 @@
                                                 <span class="material-icons text-sm">visibility</span>
                                                 تفاصيل
                                             </a>
+                                            <a href="{{ route('work.tasks.show', [$activity, $task]) }}#task-log"
+                                               class="card-detail-btn inline-flex items-center justify-center px-2 py-1.5 rounded-lg bg-amber-50 text-amber-700 text-xs font-medium hover:bg-amber-100"
+                                               draggable="false" title="سجل التغييرات">
+                                                <span class="material-icons text-sm">history</span>
+                                            </a>
                                         </div>
                                     </div>
                                 </div>

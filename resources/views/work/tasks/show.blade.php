@@ -341,6 +341,60 @@
             <p class="text-sm text-gray-700 whitespace-pre-line">{{ $task->notes }}</p>
         </div>
     @endif
+
+    {{-- سجل التنقلات والحالات --}}
+    <div id="task-log" class="card rounded-2xl p-5 space-y-4">
+        <div class="flex items-center justify-between gap-3 flex-wrap">
+            <h3 class="text-sm font-bold text-gray-800 flex items-center gap-1">
+                <span class="material-icons text-base text-indigo-600">history</span>
+                سجل التغييرات
+            </h3>
+            <span class="text-xs text-gray-400">{{ $task->logs->count() }} حدث</span>
+        </div>
+
+        @if($task->logs->count())
+            <div class="relative space-y-0">
+                <div class="absolute top-2 bottom-2 right-[15px] w-px bg-gray-200"></div>
+                @foreach($task->logs as $log)
+                    @php
+                        $tone = $log->action_color;
+                        $toneMap = [
+                            'indigo' => ['bg' => 'bg-indigo-100', 'text' => 'text-indigo-700', 'ring' => 'ring-indigo-200'],
+                            'amber' => ['bg' => 'bg-amber-100', 'text' => 'text-amber-800', 'ring' => 'ring-amber-200'],
+                            'purple' => ['bg' => 'bg-purple-100', 'text' => 'text-purple-700', 'ring' => 'ring-purple-200'],
+                            'teal' => ['bg' => 'bg-teal-100', 'text' => 'text-teal-700', 'ring' => 'ring-teal-200'],
+                            'blue' => ['bg' => 'bg-blue-100', 'text' => 'text-blue-700', 'ring' => 'ring-blue-200'],
+                            'green' => ['bg' => 'bg-green-100', 'text' => 'text-green-700', 'ring' => 'ring-green-200'],
+                            'gray' => ['bg' => 'bg-gray-100', 'text' => 'text-gray-600', 'ring' => 'ring-gray-200'],
+                        ];
+                        $c = $toneMap[$tone] ?? $toneMap['gray'];
+                    @endphp
+                    <div class="relative flex gap-3 pb-4 last:pb-0">
+                        <div class="relative z-10 w-8 h-8 rounded-full {{ $c['bg'] }} {{ $c['text'] }} ring-4 ring-white flex items-center justify-center shrink-0">
+                            <span class="material-icons text-base">{{ $log->action_icon }}</span>
+                        </div>
+                        <div class="flex-1 min-w-0 rounded-xl border border-gray-100 bg-gray-50/70 px-3 py-2.5">
+                            <p class="text-sm text-gray-800 leading-6">{{ $log->message }}</p>
+                            <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-gray-500">
+                                <span class="inline-flex items-center gap-0.5">
+                                    <span class="material-icons text-sm">schedule</span>
+                                    {{ $log->created_at?->timezone(config('app.timezone'))->format('Y/m/d h:i A') }}
+                                </span>
+                                @if($log->user)
+                                    <span class="inline-flex items-center gap-0.5">
+                                        <span class="material-icons text-sm">person</span>
+                                        {{ $log->user->name }}
+                                    </span>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        @else
+            <p class="text-sm text-gray-400 text-center py-4">لا يوجد سجل بعد — أي تنقّل أو تغيير حالة هيتسجل هنا</p>
+        @endif
+    </div>
 </div>
 
 @endsection
