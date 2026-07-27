@@ -880,7 +880,7 @@
         const board = document.getElementById('pipelineBoard');
         if (!board) return;
 
-        const moveUrlTpl = @json(route('work.tasks.move-stage', [$activity, 'TASK_ID'], false));
+        const moveUrlTpl = "{{ route('work.tasks.move-stage', [$activity, 'TASK_ID'], false) }}";
         let dragTaskId = null;
         let dragFromStage = null;
         let dragCard = null;
