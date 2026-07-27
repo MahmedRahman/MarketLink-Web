@@ -42,6 +42,7 @@ Route::post('/content-creation/upload-reference-image', [ContentCreationControll
 Route::get('/share/w/{token}', [\App\Http\Controllers\PublicWorkShareController::class, 'show'])->name('public.work.show');
 Route::get('/share/w/{token}/t/{task}', [\App\Http\Controllers\PublicWorkShareController::class, 'showTask'])->name('public.work.task');
 Route::get('/share/w/{token}/t/{task}/files/{file}', [\App\Http\Controllers\PublicWorkShareController::class, 'showFile'])->name('public.work.file');
+Route::get('/share/w/{token}/t/{task}/download-all', [\App\Http\Controllers\PublicWorkShareController::class, 'downloadAllFiles'])->name('public.work.files.download-all');
 
 Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 

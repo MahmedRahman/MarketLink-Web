@@ -73,30 +73,49 @@
                         </span>
                         ملفات التصميم
                     </h2>
-                    <p class="text-sm text-slate-500 mt-1">{{ $task->files->count() }} ملفات · اضغط أي صورة للفتح بحجم أكبر</p>
+                    <p class="text-sm text-slate-500 mt-1">{{ $task->files->count() }} ملفات · اضغط الصورة للعرض أو حَمّلها</p>
                 </div>
-                <button type="button"
-                        data-share-url="{{ $cardShareUrl }}#files"
-                        onclick="window.copyShareText && window.copyShareText(this.dataset.shareUrl, this)"
-                        class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-teal-200 bg-teal-50 text-teal-800 text-xs font-bold hover:bg-teal-100 transition-colors">
-                    <span class="material-icons text-sm">ios_share</span>
-                    نسخ رابط الملفات
-                </button>
+                <div class="flex items-center gap-2 flex-wrap">
+                    <a href="{{ route('public.work.files.download-all', [$shareToken, $task]) }}"
+                       class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition-colors">
+                        <span class="material-icons text-sm">download</span>
+                        تحميل الكل (ZIP)
+                    </a>
+                    <button type="button"
+                            data-share-url="{{ $cardShareUrl }}#files"
+                            onclick="window.copyShareText && window.copyShareText(this.dataset.shareUrl, this)"
+                            class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-teal-200 bg-teal-50 text-teal-800 text-xs font-bold hover:bg-teal-100 transition-colors">
+                        <span class="material-icons text-sm">ios_share</span>
+                        نسخ الرابط
+                    </button>
+                </div>
             </div>
 
             @if($imageFiles->count())
                 <div class="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
                     @foreach($imageFiles as $file)
-                        @php $fileUrl = route('public.work.file', [$shareToken, $task, $file]); @endphp
-                        <a href="{{ $fileUrl }}" target="_blank" rel="noopener"
-                           class="file-tile group relative block overflow-hidden rounded-2xl bg-slate-100 aspect-square border border-slate-200/80">
-                            <img src="{{ $fileUrl }}" alt="{{ $file->file_name }}"
-                                 class="absolute inset-0 w-full h-full object-cover">
-                            <div class="absolute inset-x-0 bottom-0 p-2.5 bg-gradient-to-t from-slate-950/75 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                                <p class="text-[11px] text-white font-semibold truncate">{{ $file->file_name }}</p>
-                                <p class="text-[10px] text-slate-200">{{ $file->formatted_file_size }}</p>
+                        @php
+                            $fileUrl = route('public.work.file', [$shareToken, $task, $file]);
+                            $downloadUrl = route('public.work.file', [$shareToken, $task, $file, 'download' => 1]);
+                        @endphp
+                        <div class="file-tile group relative overflow-hidden rounded-2xl bg-slate-100 aspect-square border border-slate-200/80">
+                            <a href="{{ $fileUrl }}" target="_blank" rel="noopener" class="absolute inset-0 block">
+                                <img src="{{ $fileUrl }}" alt="{{ $file->file_name }}"
+                                     class="absolute inset-0 w-full h-full object-cover">
+                            </a>
+                            <div class="absolute inset-x-0 bottom-0 p-2.5 bg-gradient-to-t from-slate-950/80 via-slate-950/35 to-transparent flex items-end justify-between gap-2 pointer-events-none">
+                                <div class="min-w-0 hidden sm:block">
+                                    <p class="text-[11px] text-white font-semibold truncate">{{ $file->file_name }}</p>
+                                    <p class="text-[10px] text-slate-200">{{ $file->formatted_file_size }}</p>
+                                </div>
+                                <a href="{{ $downloadUrl }}"
+                                   class="pointer-events-auto relative z-10 shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white text-slate-900 text-[11px] font-bold shadow-md hover:bg-teal-50"
+                                   title="تحميل {{ $file->file_name }}">
+                                    <span class="material-icons text-sm">download</span>
+                                    تحميل
+                                </a>
                             </div>
-                        </a>
+                        </div>
                     @endforeach
                 </div>
             @endif
@@ -104,18 +123,25 @@
             @if($otherFiles->count())
                 <div class="space-y-2 {{ $imageFiles->count() ? 'pt-2 border-t border-slate-100' : '' }}">
                     @foreach($otherFiles as $file)
-                        @php $fileUrl = route('public.work.file', [$shareToken, $task, $file]); @endphp
-                        <a href="{{ $fileUrl }}" target="_blank" rel="noopener"
-                           class="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-3 hover:border-teal-300 hover:bg-teal-50/40 transition-colors">
-                            <span class="w-11 h-11 rounded-xl bg-white border border-slate-200 text-slate-500 flex items-center justify-center shrink-0">
+                        @php
+                            $fileUrl = route('public.work.file', [$shareToken, $task, $file]);
+                            $downloadUrl = route('public.work.file', [$shareToken, $task, $file, 'download' => 1]);
+                        @endphp
+                        <div class="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-3">
+                            <a href="{{ $fileUrl }}" target="_blank" rel="noopener"
+                               class="w-11 h-11 rounded-xl bg-white border border-slate-200 text-slate-500 flex items-center justify-center shrink-0 hover:border-teal-300">
                                 <span class="material-icons">{{ $file->file_icon }}</span>
-                            </span>
-                            <div class="min-w-0 flex-1">
+                            </a>
+                            <a href="{{ $fileUrl }}" target="_blank" rel="noopener" class="min-w-0 flex-1 hover:opacity-80">
                                 <p class="text-sm font-bold text-slate-800 truncate">{{ $file->file_name }}</p>
                                 <p class="text-[11px] text-slate-500">{{ $file->asset_kind_label }} · {{ $file->formatted_file_size }}</p>
-                            </div>
-                            <span class="material-icons text-teal-600">open_in_new</span>
-                        </a>
+                            </a>
+                            <a href="{{ $downloadUrl }}"
+                               class="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800">
+                                <span class="material-icons text-sm">download</span>
+                                تحميل
+                            </a>
+                        </div>
                     @endforeach
                 </div>
             @endif
