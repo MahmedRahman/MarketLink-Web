@@ -369,7 +369,14 @@
             </div>
             <div>
                 <h3 class="font-bold text-gray-800">تحديث المهمة</h3>
-                <p class="text-xs text-gray-500">غيّر الحالة وأضف ملاحظاتك</p>
+                <p class="text-xs text-gray-500">
+                    غيّر الحالة وأضف ملاحظاتك
+                    @if(in_array($task->pipeline_stage, ['writing', 'design'], true))
+                        — اختيار <strong>اكتمال</strong> بينقل البوست لمرحلة «{{ \App\Models\WorkTask::pipelineStages()[\App\Models\WorkTask::nextPipelineStage($task->pipeline_stage)] ?? 'التالية' }}»
+                    @elseif($task->pipeline_stage === 'ready_to_publish')
+                        — اختيار <strong>اكتمال</strong> بينقل البوست لـ «تم النشر»
+                    @endif
+                </p>
             </div>
         </div>
 

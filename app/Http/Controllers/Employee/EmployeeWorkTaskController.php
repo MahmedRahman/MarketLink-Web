@@ -169,9 +169,89 @@ class EmployeeWorkTaskController extends Controller
             'notes' => 'nullable|string',
         ]);
 
-        $task->update($validated);
+        $fromStatus = $task->status;
+        $fromStage = $task->pipeline_stage;
+        $fromAssignee = $task->assigned_to;
 
-        return redirect()->route('employee.work.show', $task)->with('success', 'تم تحديث حالة المهمة');
+        $updates = [
+            'status' => $validated['status'],
+            'notes' => $validated['notes'] ?? $task->notes,
+        ];
+
+        // اكتمال المرحلة الحالية → نقل للمرحلة التالية
+        if ($validated['status'] === 'done' && $fromStatus !== 'done') {
+            $nextStage = WorkTask::nextPipelineStage($fromStage);
+            if ($nextStage) {
+                $orgId = (int) $employee->organization_id;
+                $updates['pipeline_stage'] = $nextStage;
+
+                if ($nextStage === 'design') {
+                    if (! $task->designer_id) {
+                        $updates['designer_id'] = WorkTask::suggestAssigneeId($orgId, 'design');
+                    }
+                    $updates['assigned_to'] = $updates['designer_id'] ?? $task->designer_id ?? $task->assigned_to;
+                    $updates['status'] = 'review';
+                } elseif ($nextStage === 'ready_to_publish') {
+                    $updates['assigned_to'] = WorkTask::suggestAssigneeId($orgId, 'publish')
+                        ?? $task->assigned_to;
+                    $updates['status'] = 'review';
+                } else { // published
+                    $updates['assigned_to'] = WorkTask::suggestAssigneeId($orgId, 'publish')
+                        ?? $task->assigned_to;
+                    $updates['status'] = 'done';
+                }
+            }
+        }
+
+        $task->update($updates);
+        $task->refresh();
+
+        if ($fromStatus !== $task->status) {
+            $task->logEvent(
+                'status_changed',
+                'تغيّرت الحالة من «'.(WorkTask::statuses()[$fromStatus] ?? $fromStatus).'» إلى «'.(WorkTask::statuses()[$task->status] ?? $task->status).'» بواسطة '.$employee->name,
+                'status',
+                $fromStatus,
+                $task->status,
+                ['employee_id' => $employee->id]
+            );
+        }
+
+        if ($fromStage !== $task->pipeline_stage) {
+            $task->logEvent(
+                'stage_changed',
+                'نُقل من «'.(WorkTask::pipelineStages()[$fromStage] ?? $fromStage).'» إلى «'.(WorkTask::pipelineStages()[$task->pipeline_stage] ?? $task->pipeline_stage).'» بعد اكتمال المرحلة بواسطة '.$employee->name,
+                'pipeline_stage',
+                $fromStage,
+                $task->pipeline_stage,
+                ['employee_id' => $employee->id]
+            );
+        }
+
+        if ((int) $fromAssignee !== (int) $task->assigned_to) {
+            $task->logEvent(
+                'assignee_changed',
+                'تغيّر المسؤول بعد اكتمال المرحلة بواسطة '.$employee->name,
+                'assigned_to',
+                $fromAssignee,
+                $task->assigned_to,
+                ['employee_id' => $employee->id]
+            );
+        }
+
+        $message = 'تم تحديث حالة المهمة';
+        if ($fromStage !== $task->pipeline_stage) {
+            $message = 'تم اكتمال المرحلة ونقل المحتوى إلى «'.(WorkTask::pipelineStages()[$task->pipeline_stage] ?? $task->pipeline_stage).'»';
+        }
+
+        // لو المهمة اتقلت لمرحلة مش مسئوليته، رجّعه لصفحة النشاط
+        if (! $task->isVisibleToEmployee($employee->id) && $task->work_activity_id) {
+            return redirect()
+                ->route('employee.work.activity', $task->work_activity_id)
+                ->with('success', $message);
+        }
+
+        return redirect()->route('employee.work.show', $task)->with('success', $message);
     }
 
     public function uploadFile(Request $request, WorkTask $task)
