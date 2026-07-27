@@ -332,7 +332,8 @@
                                             @endif
                                             @if($task->activity?->share_token)
                                                 <button type="button"
-                                                        onclick="window.copyShareText && window.copyShareText(@json(route('public.work.file', [$task->activity->share_token, $task, $file])), this)"
+                                                        data-share-url="{{ route('public.work.file', [$task->activity->share_token, $task, $file]) }}"
+                                                        onclick="window.copyShareText && window.copyShareText(this.dataset.shareUrl, this)"
                                                         class="text-xs text-indigo-600 hover:underline inline-flex items-center gap-0.5">
                                                     <span class="material-icons text-sm">share</span>
                                                     نسخ رابط الشير
