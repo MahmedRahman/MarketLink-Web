@@ -141,7 +141,7 @@
                 مرجع التصميم
             </h3>
             @if($task->design_reference)
-                <p class="text-sm text-gray-700 whitespace-pre-line leading-7">{{ $task->design_reference }}</p>
+                <div class="text-sm text-gray-700 leading-7">{!! linkify_text($task->design_reference) !!}</div>
             @else
                 <p class="text-sm text-gray-400">لا يوجد مرجع</p>
             @endif

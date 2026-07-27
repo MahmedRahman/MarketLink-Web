@@ -142,7 +142,7 @@
                             </div>
                             <h3 class="font-bold text-gray-800">مرجع التصميم</h3>
                         </div>
-                        <p class="text-sm text-gray-700 leading-7 whitespace-pre-line">{{ $task->design_reference }}</p>
+                        <div class="text-sm text-gray-700 leading-7">{!! linkify_text($task->design_reference) !!}</div>
                     </section>
                 @endif
                 @if($task->designer_brief)

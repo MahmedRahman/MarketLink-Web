@@ -67,7 +67,7 @@
             @if($task->design_reference)
                 <div class="bg-white rounded-2xl border border-gray-200 p-5">
                     <h2 class="text-sm font-bold text-gray-700 mb-2">مرجع التصميم</h2>
-                    <p class="text-sm text-gray-700 whitespace-pre-line leading-7">{{ $task->design_reference }}</p>
+                    <div class="text-sm text-gray-700 leading-7">{!! linkify_text($task->design_reference) !!}</div>
                 </div>
             @endif
             @if($task->designer_brief)
