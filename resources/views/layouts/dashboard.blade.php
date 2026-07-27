@@ -996,137 +996,123 @@
             </div>
             
             <!-- Navigation -->
-            <nav class="mt-6 flex-1 overflow-y-auto">
+            <nav class="mt-6 flex-1 overflow-y-auto pb-4">
+                @php
+                    $archiveOpen = request()->routeIs([
+                        'clients.*',
+                        'projects.*',
+                        'meetings.*',
+                        'contracts.*',
+                        'brand-style-extractors.*',
+                        'monthly-plans.*',
+                        'revenues.*',
+                        'expenses.*',
+                        'reports.receivables',
+                        'reports.total-employees-financial',
+                        'admin.*',
+                    ]);
+                @endphp
                 <div class="px-4 space-y-1">
-                    <!-- Dashboard -->
                     <a href="{{ route('dashboard') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('dashboard') ? 'active' : '' }}">
-                        <i class="fas fa-tachometer-alt text-lg ml-3"></i>
-                        <span class="font-medium">لوحة التحكم</span>
-                    </a>
-                    
-                    <!-- Divider -->
-                    <div class="my-6 mx-4 border-t border-gray-200"></div>
-                    
-                    <!-- Basic Data Section -->
-                    <div class="px-2 mb-3 mt-3">
-                        <div class="bg-gradient-to-r from-gray-50 to-gray-100 px-4 py-2.5 rounded-xl border-r-4 border-primary shadow-sm">
-                            <h3 class="text-sm font-bold text-gray-700 tracking-wide">بيانات أساسية</h3>
-                        </div>
-                    </div>
-                    
-                    <!-- Clients -->
-                    <a href="{{ route('clients.index') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('clients.*') ? 'active' : '' }}">
-                        <i class="fas fa-users text-lg ml-3"></i>
-                        <span class="font-medium">العملاء</span>
-                    </a>
-                    
-                    <!-- Employees -->
-                    <a href="{{ route('employees.index') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('employees.*') ? 'active' : '' }}">
-                        <i class="fas fa-users-cog text-lg ml-3"></i>
-                        <span class="font-medium">الموظفين</span>
-                    </a>
-                    
-                    <!-- Projects -->
-                    <a href="{{ route('projects.index') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('projects.*') ? 'active' : '' }}">
-                        <i class="fas fa-project-diagram text-lg ml-3"></i>
-                        <span class="font-medium">المشاريع</span>
-                    </a>
-                    
-                    <!-- Meetings -->
-                    <a href="{{ route('meetings.index') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('meetings.*') ? 'active' : '' }}">
-                        <i class="fas fa-calendar-alt text-lg ml-3"></i>
-                        <span class="font-medium">الاجتماعات</span>
-                    </a>
-                    
-                    <!-- Contracts -->
-                    <a href="{{ route('contracts.index') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('contracts.*') ? 'active' : '' }}">
-                        <i class="fas fa-file-contract text-lg ml-3"></i>
-                        <span class="font-medium">العقود</span>
-                    </a>
-                    
-                    <!-- Brand Style Extractor -->
-                    <a href="{{ route('brand-style-extractors.index') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('brand-style-extractors.*') ? 'active' : '' }}">
-                        <i class="fas fa-palette text-lg ml-3"></i>
-                        <span class="font-medium">Brand Style Extractor</span>
-                    </a>
-                    
-                    <!-- Divider -->
-                    <div class="my-6 mx-4 border-t border-gray-200"></div>
-                    
-
-
-              
-                    <!-- Basic Data Section -->
-                    <div class="px-2 mb-3 mt-3">
-                        <div class="bg-gradient-to-r from-gray-50 to-gray-100 px-4 py-2.5 rounded-xl border-r-4 border-primary shadow-sm">
-                            <h3 class="text-sm font-bold text-gray-700 tracking-wide">الخطه</h3>
-                        </div>
-                    </div>
-                    <!-- Monthly Plans -->
-                    <a href="{{ route('monthly-plans.index') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('monthly-plans.*') ? 'active' : '' }}">
-                        <span class="material-icons text-lg ml-3">calendar_month</span>
-                        <span class="font-medium">الحملات الإعلانية</span>
+                        <span class="material-icons text-lg ml-3">home</span>
+                        <span class="font-medium">الرئيسية</span>
                     </a>
 
-                    <!-- Academy Work Hub -->
                     <a href="{{ route('work.index') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('work.*') ? 'active' : '' }}">
                         <span class="material-icons text-lg ml-3">dashboard_customize</span>
                         <span class="font-medium">مساحة العمل</span>
                     </a>
-                    
-                    <!-- Divider -->
-                    <div class="my-6 mx-4 border-t border-gray-200"></div>
-                    
-                    <!-- Reports Section -->
-                    <div class="px-2 mb-3 mt-3">
-                        <div class="bg-gradient-to-r from-gray-50 to-gray-100 px-4 py-2.5 rounded-xl border-r-4 border-primary shadow-sm">
-                            <h3 class="text-sm font-bold text-gray-700 tracking-wide">الحسابات</h3>
-                        </div>
-                    </div>
-                    
-                    <!-- Project Revenues -->
-                    <a href="{{ route('revenues.all') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('revenues.*') ? 'active' : '' }}">
-                        <i class="fas fa-money-bill-wave text-lg ml-3"></i>
-                        <span class="font-medium">إيرادات المشاريع</span>
+
+                    <a href="{{ route('employees.index') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('employees.*') ? 'active' : '' }}">
+                        <span class="material-icons text-lg ml-3">groups</span>
+                        <span class="font-medium">الموظفين</span>
                     </a>
-                    
-                    <!-- Project Expenses -->
-                    <a href="{{ route('expenses.all') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('expenses.*') ? 'active' : '' }}">
-                        <i class="fas fa-receipt text-lg ml-3"></i>
-                        <span class="font-medium">مصروفات المشاريع</span>
-                    </a>
-                    
-                    <!-- Receivables Report -->
-                    <a href="{{ route('reports.receivables') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('reports.receivables') ? 'active' : '' }}">
-                        <i class="fas fa-file-invoice-dollar text-lg ml-3"></i>
-                        <span class="font-medium">تحصيلات العملاء</span>
-                    </a>
-                    
-                    <!-- Total Employees Financial Report -->
-                    <a href="{{ route('reports.total-employees-financial') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('reports.total-employees-financial') ? 'active' : '' }}">
-                        <i class="fas fa-users-cog text-lg ml-3"></i>
-                        <span class="font-medium">حسابات الموظفين</span>
-                    </a>
-                    
-                    <!-- Divider -->
-                    <div class="my-6 mx-4 border-t border-gray-200"></div>
-                    
-                    @if(Auth::check() && Auth::user()->is_admin)
-                    <!-- Admin Panel -->
-                    <a href="{{ route('admin.dashboard') }}" class="sidebar-item flex items-center px-4 py-3 rounded-xl {{ request()->routeIs('admin.*') ? 'active' : '' }}" style="background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%); color: white;">
-                        <i class="fas fa-shield-alt text-lg ml-3"></i>
-                        <span class="font-medium">لوحة تحكم المدير</span>
-                    </a>
-                    @endif
-                    
-                    <!-- Divider -->
-                    <div class="my-6 mx-4 border-t border-gray-200"></div>
-                    
-                    <!-- Settings -->
+
                     <a href="{{ route('profile.edit') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('profile.*') ? 'active' : '' }}">
-                        <i class="fas fa-cog text-lg ml-3"></i>
+                        <span class="material-icons text-lg ml-3">settings</span>
                         <span class="font-medium">الإعدادات</span>
                     </a>
+
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit" class="sidebar-item w-full flex items-center px-4 py-3 text-gray-700 rounded-xl hover:!bg-red-50 hover:!text-red-600 hover:!shadow-none hover:!transform-none">
+                            <span class="material-icons text-lg ml-3">logout</span>
+                            <span class="font-medium">خروج</span>
+                        </button>
+                    </form>
+
+                    <div class="my-4 mx-2 border-t border-gray-200"></div>
+
+                    <button type="button"
+                            id="archiveMenuToggle"
+                            onclick="toggleArchiveMenu()"
+                            class="w-full flex items-center justify-between px-4 py-3 text-gray-600 rounded-xl hover:bg-gray-100 transition-colors"
+                            aria-expanded="{{ $archiveOpen ? 'true' : 'false' }}">
+                        <span class="flex items-center">
+                            <span class="material-icons text-lg ml-3">inventory_2</span>
+                            <span class="font-medium text-sm">أرشيف</span>
+                        </span>
+                        <span id="archiveMenuChevron" class="material-icons text-base transition-transform duration-200 {{ $archiveOpen ? 'rotate-180' : '' }}">expand_more</span>
+                    </button>
+
+                    <div id="archiveMenu" class="space-y-1 {{ $archiveOpen ? '' : 'hidden' }}">
+                        <a href="{{ route('clients.index') }}" class="sidebar-item flex items-center px-4 py-2.5 text-gray-700 rounded-xl text-sm {{ request()->routeIs('clients.*') ? 'active' : '' }}">
+                            <i class="fas fa-users text-base ml-3 w-5 text-center"></i>
+                            <span class="font-medium">العملاء</span>
+                        </a>
+
+                        <a href="{{ route('projects.index') }}" class="sidebar-item flex items-center px-4 py-2.5 text-gray-700 rounded-xl text-sm {{ request()->routeIs('projects.*') ? 'active' : '' }}">
+                            <i class="fas fa-project-diagram text-base ml-3 w-5 text-center"></i>
+                            <span class="font-medium">المشاريع</span>
+                        </a>
+
+                        <a href="{{ route('meetings.index') }}" class="sidebar-item flex items-center px-4 py-2.5 text-gray-700 rounded-xl text-sm {{ request()->routeIs('meetings.*') ? 'active' : '' }}">
+                            <i class="fas fa-calendar-alt text-base ml-3 w-5 text-center"></i>
+                            <span class="font-medium">الاجتماعات</span>
+                        </a>
+
+                        <a href="{{ route('contracts.index') }}" class="sidebar-item flex items-center px-4 py-2.5 text-gray-700 rounded-xl text-sm {{ request()->routeIs('contracts.*') ? 'active' : '' }}">
+                            <i class="fas fa-file-contract text-base ml-3 w-5 text-center"></i>
+                            <span class="font-medium">العقود</span>
+                        </a>
+
+                        <a href="{{ route('brand-style-extractors.index') }}" class="sidebar-item flex items-center px-4 py-2.5 text-gray-700 rounded-xl text-sm {{ request()->routeIs('brand-style-extractors.*') ? 'active' : '' }}">
+                            <i class="fas fa-palette text-base ml-3 w-5 text-center"></i>
+                            <span class="font-medium">Brand Style</span>
+                        </a>
+
+                        <a href="{{ route('monthly-plans.index') }}" class="sidebar-item flex items-center px-4 py-2.5 text-gray-700 rounded-xl text-sm {{ request()->routeIs('monthly-plans.*') ? 'active' : '' }}">
+                            <span class="material-icons text-base ml-3">calendar_month</span>
+                            <span class="font-medium">الحملات الإعلانية</span>
+                        </a>
+
+                        <a href="{{ route('revenues.all') }}" class="sidebar-item flex items-center px-4 py-2.5 text-gray-700 rounded-xl text-sm {{ request()->routeIs('revenues.*') ? 'active' : '' }}">
+                            <i class="fas fa-money-bill-wave text-base ml-3 w-5 text-center"></i>
+                            <span class="font-medium">إيرادات المشاريع</span>
+                        </a>
+
+                        <a href="{{ route('expenses.all') }}" class="sidebar-item flex items-center px-4 py-2.5 text-gray-700 rounded-xl text-sm {{ request()->routeIs('expenses.*') ? 'active' : '' }}">
+                            <i class="fas fa-receipt text-base ml-3 w-5 text-center"></i>
+                            <span class="font-medium">مصروفات المشاريع</span>
+                        </a>
+
+                        <a href="{{ route('reports.receivables') }}" class="sidebar-item flex items-center px-4 py-2.5 text-gray-700 rounded-xl text-sm {{ request()->routeIs('reports.receivables') ? 'active' : '' }}">
+                            <i class="fas fa-file-invoice-dollar text-base ml-3 w-5 text-center"></i>
+                            <span class="font-medium">تحصيلات العملاء</span>
+                        </a>
+
+                        <a href="{{ route('reports.total-employees-financial') }}" class="sidebar-item flex items-center px-4 py-2.5 text-gray-700 rounded-xl text-sm {{ request()->routeIs('reports.total-employees-financial') ? 'active' : '' }}">
+                            <i class="fas fa-users-cog text-base ml-3 w-5 text-center"></i>
+                            <span class="font-medium">حسابات الموظفين</span>
+                        </a>
+
+                        @if(Auth::check() && Auth::user()->is_admin)
+                            <a href="{{ route('admin.dashboard') }}" class="sidebar-item flex items-center px-4 py-2.5 rounded-xl text-sm {{ request()->routeIs('admin.*') ? 'active' : '' }}" style="background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%); color: white;">
+                                <i class="fas fa-shield-alt text-base ml-3 w-5 text-center"></i>
+                                <span class="font-medium">لوحة تحكم المدير</span>
+                            </a>
+                        @endif
+                    </div>
                 </div>
             </nav>
         </div>
@@ -1257,6 +1243,16 @@
         $('.select2-container').addClass('select2-custom');
         
         // Sidebar toggle functionality
+        function toggleArchiveMenu() {
+            const menu = document.getElementById('archiveMenu');
+            const chevron = document.getElementById('archiveMenuChevron');
+            const toggle = document.getElementById('archiveMenuToggle');
+            if (!menu) return;
+            const open = menu.classList.toggle('hidden') === false;
+            chevron?.classList.toggle('rotate-180', open);
+            toggle?.setAttribute('aria-expanded', open ? 'true' : 'false');
+        }
+
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('sidebarOverlay');
