@@ -99,36 +99,69 @@
                           class="w-full px-3 py-2.5 rounded-xl border-2 border-amber-100 bg-amber-50/40 text-sm focus:border-amber-400 focus:outline-none">{{ old('designer_brief', $task->designer_brief) }}</textarea>
             </div>
 
-            <div>
-                <label class="block text-xs font-medium text-gray-600 mb-1">المنصات</label>
-                <div class="flex flex-wrap gap-2">
+            <div class="rounded-2xl border border-gray-100 bg-gray-50/60 p-4 space-y-3">
+                <label class="block text-sm font-bold text-gray-800">المنصات</label>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     @foreach($platforms as $key => $label)
-                        <label class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-gray-200 text-xs cursor-pointer hover:border-primary">
-                            <input type="checkbox" name="platforms[]" value="{{ $key }}"
-                                   @checked(in_array($key, old('platforms', $task->platforms ?? []), true))
-                                   class="rounded border-gray-300 text-primary focus:ring-primary">
-                            {{ $label }}
+                        @php $platformChecked = in_array($key, old('platforms', $task->platforms ?? []), true); @endphp
+                        <label class="choice-card relative cursor-pointer rounded-xl border-2 p-3 text-center transition-all
+                            {{ $platformChecked ? 'border-indigo-500 bg-indigo-50 text-indigo-800 shadow-sm' : 'border-gray-200 bg-white text-gray-700 hover:border-indigo-300' }}">
+                            <input type="checkbox" name="platforms[]" value="{{ $key }}" class="sr-only peer"
+                                   @checked($platformChecked)
+                                   onchange="this.closest('label').classList.toggle('border-indigo-500', this.checked); this.closest('label').classList.toggle('bg-indigo-50', this.checked); this.closest('label').classList.toggle('text-indigo-800', this.checked); this.closest('label').classList.toggle('shadow-sm', this.checked); this.closest('label').classList.toggle('border-gray-200', !this.checked); this.closest('label').classList.toggle('bg-white', !this.checked); this.closest('label').classList.toggle('text-gray-700', !this.checked);">
+                            <span class="material-icons text-xl mb-1 block
+                                {{ $key === 'facebook' ? 'text-blue-600' : ($key === 'instagram' ? 'text-pink-500' : ($key === 'linkedin' ? 'text-sky-700' : ($key === 'tiktok' ? 'text-gray-900' : 'text-slate-700'))) }}">
+                                {{ $key === 'facebook' ? 'facebook' : ($key === 'instagram' ? 'photo_camera' : ($key === 'linkedin' ? 'work' : ($key === 'tiktok' ? 'smart_display' : 'tag'))) }}
+                            </span>
+                            <span class="text-xs font-semibold">{{ $label }}</span>
                         </label>
                     @endforeach
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-3">
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">نوع الشغل</label>
-                    <select name="kind" class="w-full px-3 py-2.5 rounded-xl border-2 border-gray-200 text-sm focus:border-primary focus:outline-none">
-                        @foreach($kinds as $key => $label)
-                            <option value="{{ $key }}" @selected(old('kind', $task->kind) === $key)>{{ $label }}</option>
-                        @endforeach
-                    </select>
+            <div class="rounded-2xl border border-gray-100 bg-gray-50/60 p-4 space-y-3">
+                <label class="block text-sm font-bold text-gray-800">نوع الشغل</label>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    @foreach($kinds as $key => $label)
+                        @php $kindSelected = old('kind', $task->kind) === $key; @endphp
+                        <label class="relative cursor-pointer rounded-xl border-2 p-3 text-center transition-all
+                            {{ $kindSelected ? 'border-teal-500 bg-teal-50 text-teal-900 shadow-sm' : 'border-gray-200 bg-white text-gray-700 hover:border-teal-300' }}">
+                            <input type="radio" name="kind" value="{{ $key }}" class="sr-only"
+                                   @checked($kindSelected)
+                                   onchange="document.querySelectorAll('input[name=kind]').forEach(function(r){ var l=r.closest('label'); var on=r.checked; l.classList.toggle('border-teal-500', on); l.classList.toggle('bg-teal-50', on); l.classList.toggle('text-teal-900', on); l.classList.toggle('shadow-sm', on); l.classList.toggle('border-gray-200', !on); l.classList.toggle('bg-white', !on); l.classList.toggle('text-gray-700', !on); });">
+                            <span class="material-icons text-xl mb-1 block text-teal-600">
+                                {{ $key === 'design' ? 'palette' : ($key === 'video' ? 'movie' : ($key === 'content' ? 'edit_note' : ($key === 'publish' ? 'campaign' : 'more_horiz'))) }}
+                            </span>
+                            <span class="text-xs font-semibold">{{ $label }}</span>
+                        </label>
+                    @endforeach
                 </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">الحالة</label>
-                    <select name="status" class="w-full px-3 py-2.5 rounded-xl border-2 border-gray-200 text-sm focus:border-primary focus:outline-none">
-                        @foreach($taskStatuses as $key => $label)
-                            <option value="{{ $key }}" @selected(old('status', $task->status) === $key)>{{ $label }}</option>
-                        @endforeach
-                    </select>
+            </div>
+
+            <div class="rounded-2xl border border-gray-100 bg-gray-50/60 p-4 space-y-3">
+                <label class="block text-sm font-bold text-gray-800">الحالة</label>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    @foreach($taskStatuses as $key => $label)
+                        @php
+                            $statusSelected = old('status', $task->status) === $key;
+                            $statusTone = match($key) {
+                                'todo' => ['border' => 'border-gray-500', 'bg' => 'bg-gray-100', 'text' => 'text-gray-800', 'icon' => 'radio_button_unchecked', 'hover' => 'hover:border-gray-400'],
+                                'in_progress' => ['border' => 'border-blue-500', 'bg' => 'bg-blue-50', 'text' => 'text-blue-900', 'icon' => 'autorenew', 'hover' => 'hover:border-blue-300'],
+                                'review' => ['border' => 'border-amber-500', 'bg' => 'bg-amber-50', 'text' => 'text-amber-900', 'icon' => 'rate_review', 'hover' => 'hover:border-amber-300'],
+                                'done' => ['border' => 'border-green-500', 'bg' => 'bg-green-50', 'text' => 'text-green-900', 'icon' => 'check_circle', 'hover' => 'hover:border-green-300'],
+                                default => ['border' => 'border-indigo-500', 'bg' => 'bg-indigo-50', 'text' => 'text-indigo-900', 'icon' => 'flag', 'hover' => 'hover:border-indigo-300'],
+                            };
+                        @endphp
+                        <label class="relative cursor-pointer rounded-xl border-2 p-3 text-center transition-all
+                            {{ $statusSelected ? $statusTone['border'].' '.$statusTone['bg'].' '.$statusTone['text'].' shadow-sm' : 'border-gray-200 bg-white text-gray-700 '.$statusTone['hover'] }}"
+                               data-status-card="{{ $key }}">
+                            <input type="radio" name="status" value="{{ $key }}" class="sr-only"
+                                   @checked($statusSelected)
+                                   onchange="syncStatusCards()">
+                            <span class="material-icons text-xl mb-1 block">{{ $statusTone['icon'] }}</span>
+                            <span class="text-xs font-semibold">{{ $label }}</span>
+                        </label>
+                    @endforeach
                 </div>
             </div>
 
@@ -201,6 +234,24 @@
 
 @section('scripts')
 <script>
+const statusCardStyles = {
+    todo: { on: ['border-gray-500', 'bg-gray-100', 'text-gray-800', 'shadow-sm'], off: ['border-gray-200', 'bg-white', 'text-gray-700', 'hover:border-gray-400'] },
+    in_progress: { on: ['border-blue-500', 'bg-blue-50', 'text-blue-900', 'shadow-sm'], off: ['border-gray-200', 'bg-white', 'text-gray-700', 'hover:border-blue-300'] },
+    review: { on: ['border-amber-500', 'bg-amber-50', 'text-amber-900', 'shadow-sm'], off: ['border-gray-200', 'bg-white', 'text-gray-700', 'hover:border-amber-300'] },
+    done: { on: ['border-green-500', 'bg-green-50', 'text-green-900', 'shadow-sm'], off: ['border-gray-200', 'bg-white', 'text-gray-700', 'hover:border-green-300'] },
+};
+
+function syncStatusCards() {
+    document.querySelectorAll('[data-status-card]').forEach(function (label) {
+        const key = label.dataset.statusCard;
+        const input = label.querySelector('input[type="radio"]');
+        const styles = statusCardStyles[key] || statusCardStyles.todo;
+        const all = styles.on.concat(styles.off);
+        all.forEach(function (c) { label.classList.remove(c); });
+        (input.checked ? styles.on : styles.off).forEach(function (c) { label.classList.add(c); });
+    });
+}
+
 async function summarizeDesigner() {
     const btn = document.getElementById('editSummarizeBtn');
     const original = btn.innerHTML;
