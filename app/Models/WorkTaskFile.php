@@ -17,10 +17,13 @@ class WorkTaskFile extends Model
         'file_size',
         'uploaded_by',
         'description',
+        'nas_path',
+        'nas_synced_at',
     ];
 
     protected $casts = [
         'file_size' => 'integer',
+        'nas_synced_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
@@ -82,5 +85,23 @@ class WorkTaskFile extends Model
     public function isPdf(): bool
     {
         return $this->asset_kind === 'pdf';
+    }
+
+    public function getNasPublicUrlAttribute(): ?string
+    {
+        if (! $this->nas_path) {
+            return null;
+        }
+
+        return app(\App\Services\AcademyNasStorage::class)->publicUrl($this->nas_path);
+    }
+
+    public function getNasDisplayPathAttribute(): ?string
+    {
+        if (! $this->nas_path) {
+            return null;
+        }
+
+        return '03_Social_Content/'.$this->nas_path;
     }
 }

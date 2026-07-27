@@ -235,6 +235,19 @@
                                         · {{ $file->description }}
                                     @endif
                                 </p>
+                                @if($file->nas_path)
+                                    <p class="text-[11px] text-teal-700 mt-1 flex items-start gap-1" dir="ltr">
+                                        <span class="material-icons text-sm text-teal-600 shrink-0">folder</span>
+                                        <span class="break-all">{{ $file->nas_display_path }}</span>
+                                    </p>
+                                    @if($file->nas_public_url)
+                                        <a href="{{ $file->nas_public_url }}" target="_blank" rel="noopener"
+                                           class="text-xs text-teal-700 hover:underline inline-flex items-center gap-0.5 mt-1">
+                                            <span class="material-icons text-sm">open_in_new</span>
+                                            فتح على سيرفر الملفات
+                                        </a>
+                                    @endif
+                                @endif
                                 <div class="flex items-center gap-2 mt-2">
                                     <a href="{{ work_route('tasks.files.download', [$activity, $task, $file]) }}"
                                        class="text-xs text-primary hover:underline inline-flex items-center gap-0.5">

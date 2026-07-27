@@ -429,7 +429,7 @@ class WorkTaskController extends Controller
 
         $path = $file->store('work-tasks/'.$task->id, 'public');
 
-        WorkTaskFile::create([
+        $workFile = WorkTaskFile::create([
             'work_task_id' => $task->id,
             'file_name' => $file->getClientOriginalName(),
             'file_path' => $path,
@@ -440,19 +440,33 @@ class WorkTaskController extends Controller
             'description' => $validated['description'] ?? null,
         ]);
 
+        $nasOk = app(\App\Services\AcademyNasStorage::class)->syncQuietly($task, $workFile);
+        $workFile->refresh();
+
         $kindLabel = WorkTask::designAssetKinds()[$validated['asset_kind']] ?? $validated['asset_kind'];
         $task->logEvent(
             'file_uploaded',
-            'تم رفع ملف تصميم ('.$kindLabel.'): '.$file->getClientOriginalName(),
+            'تم رفع ملف تصميم ('.$kindLabel.'): '.$workFile->file_name
+                .($nasOk ? ' — ونُسخ إلى NAS' : ''),
             'file',
             null,
-            $file->getClientOriginalName(),
-            ['asset_kind' => $validated['asset_kind']]
+            $workFile->file_name,
+            [
+                'asset_kind' => $validated['asset_kind'],
+                'nas_path' => $workFile->nas_path,
+            ]
         );
+
+        $message = 'تم رفع ملف التصميم';
+        if ($nasOk) {
+            $message .= ' وحُفظ على سيرفر الملفات ('.$workFile->nas_display_path.')';
+        } elseif (config('academy_nas.enabled')) {
+            $message .= ' — تعذّر النسخ إلى سيرفر الملفات، الملف محفوظ على الموقع';
+        }
 
         return redirect()
             ->route(WorkHub::routeName('tasks.show'), [$work, $task])
-            ->with('success', 'تم رفع ملف التصميم');
+            ->with($nasOk || ! config('academy_nas.enabled') ? 'success' : 'error', $message);
     }
 
     public function deleteFile(Request $request, WorkActivity $work, WorkTask $task, WorkTaskFile $file)
