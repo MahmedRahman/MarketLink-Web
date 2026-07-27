@@ -9,18 +9,25 @@
         رجوع للمحتوى
     </a>
 
-    <div class="bg-white rounded-2xl border border-gray-200 p-6">
-        <div class="flex flex-wrap gap-2 mb-3">
+    <div class="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
+        <div class="flex flex-wrap gap-2">
             <span class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-gray-100 text-gray-700">{{ $task->pipeline_stage_label }}</span>
             @if($task->content_type_label)
                 <span class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-indigo-50 text-indigo-700">{{ $task->content_type_label }}</span>
             @endif
         </div>
         <h1 class="text-2xl font-extrabold text-gray-900">{{ $task->title }}</h1>
-        <p class="text-sm text-gray-500 mt-1">{{ $activity->title }}</p>
+        <p class="text-sm text-gray-500">{{ $activity->title }}</p>
+
+        @include('partials.share-link', [
+            'label' => 'رابط شير للكارت كامل',
+            'hint' => 'انسخ وابعت لأي حد يشوف الكارت ده',
+            'url' => $cardShareUrl,
+            'inputId' => 'public-card-share',
+        ])
 
         @if(!empty($task->platform_labels) || $task->publish_date)
-            <div class="flex flex-wrap gap-2 mt-4 pt-4 border-t border-gray-100 text-xs text-gray-600">
+            <div class="flex flex-wrap gap-2 pt-4 border-t border-gray-100 text-xs text-gray-600">
                 @foreach($task->platform_labels as $plat)
                     <span class="px-2 py-1 rounded-lg bg-gray-100">{{ $plat }}</span>
                 @endforeach
@@ -80,27 +87,37 @@
     @endif
 
     @if($task->files->count())
-        <div class="bg-white rounded-2xl border border-gray-200 p-5 space-y-3">
+        <div id="files" class="bg-white rounded-2xl border border-gray-200 p-5 space-y-3">
             <h2 class="text-sm font-bold text-gray-800 flex items-center gap-1">
                 <span class="material-icons text-base text-purple-600">folder</span>
-                ملفات التصميم
+                ملفات التصميم ({{ $task->files->count() }})
             </h2>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 @foreach($task->files as $file)
-                    <div class="rounded-xl border border-gray-200 bg-gray-50 p-3 flex gap-3">
-                        <div class="w-14 h-14 rounded-lg bg-white border border-gray-200 flex items-center justify-center overflow-hidden shrink-0">
-                            @if($file->isImage())
-                                <img src="{{ $file->file_url }}" alt="{{ $file->file_name }}" class="w-full h-full object-cover">
-                            @else
-                                <span class="material-icons text-2xl text-gray-400">{{ $file->file_icon }}</span>
-                            @endif
+                    @php
+                        $fileShareUrl = route('public.work.file', [$shareToken, $task, $file]);
+                    @endphp
+                    <div class="rounded-xl border border-gray-200 bg-gray-50 p-3 space-y-2">
+                        <div class="flex gap-3">
+                            <div class="w-14 h-14 rounded-lg bg-white border border-gray-200 flex items-center justify-center overflow-hidden shrink-0">
+                                @if($file->isImage())
+                                    <img src="{{ $fileShareUrl }}" alt="{{ $file->file_name }}" class="w-full h-full object-cover">
+                                @else
+                                    <span class="material-icons text-2xl text-gray-400">{{ $file->file_icon }}</span>
+                                @endif
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <p class="text-sm font-medium text-gray-800 truncate">{{ $file->file_name }}</p>
+                                <p class="text-[11px] text-gray-500 mt-0.5">{{ $file->asset_kind_label }} · {{ $file->formatted_file_size }}</p>
+                                <a href="{{ $fileShareUrl }}" target="_blank" rel="noopener"
+                                   class="text-xs text-indigo-600 hover:underline mt-1 inline-block">فتح الملف</a>
+                            </div>
                         </div>
-                        <div class="min-w-0 flex-1">
-                            <p class="text-sm font-medium text-gray-800 truncate">{{ $file->file_name }}</p>
-                            <p class="text-[11px] text-gray-500 mt-0.5">{{ $file->asset_kind_label }} · {{ $file->formatted_file_size }}</p>
-                            <a href="{{ $file->file_url }}" target="_blank" rel="noopener"
-                               class="text-xs text-indigo-600 hover:underline mt-1 inline-block">فتح الملف</a>
-                        </div>
+                        @include('partials.share-link', [
+                            'label' => 'رابط شير للملف',
+                            'url' => $fileShareUrl,
+                            'inputId' => 'file-share-'.$file->id,
+                        ])
                     </div>
                 @endforeach
             </div>

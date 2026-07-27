@@ -333,6 +333,13 @@
                                             @endforelse
                                         </div>
                                         <div class="flex items-center gap-1.5">
+                                            <button type="button"
+                                                    class="card-share-btn inline-flex items-center justify-center px-2 py-1.5 rounded-lg bg-teal-50 text-teal-700 text-xs font-medium hover:bg-teal-100"
+                                                    data-share-url="{{ $activity->publicTaskUrl($task) }}"
+                                                    draggable="false"
+                                                    title="نسخ رابط شير الكارت">
+                                                <span class="material-icons text-sm">share</span>
+                                            </button>
                                             <a href="{{ work_route('tasks.edit', [$activity, $task]) }}"
                                                class="card-edit-btn flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-gray-100 text-gray-700 text-xs font-medium hover:bg-gray-200"
                                                draggable="false">
@@ -1027,7 +1034,7 @@
         });
 
         board.addEventListener('click', function (e) {
-            if (e.target.closest('.card-controls, .card-assignee-group, .card-assignee-chip, .card-edit-btn, .card-detail-btn, select, a, button')) {
+            if (e.target.closest('.card-controls, .card-assignee-group, .card-assignee-chip, .card-edit-btn, .card-detail-btn, .card-share-btn, select, a, button')) {
                 return;
             }
             const card = e.target.closest('.pipeline-card');

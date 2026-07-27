@@ -95,6 +95,8 @@ class EmployeeWorkTaskController extends Controller
 
         abort_unless((int) $work->organization_id === (int) $employee->organization_id, 403);
 
+        $work->ensureShareToken();
+
         $myTasks = WorkTask::forEmployeeCurrentStage($employee->id)
             ->where('work_activity_id', $work->id)
             ->with(['assignedEmployee', 'contentWriter', 'designer'])
@@ -149,13 +151,17 @@ class EmployeeWorkTaskController extends Controller
         $employee = Auth::guard('employee')->user();
         abort_unless($task->isVisibleToEmployee($employee->id), 403);
 
-        $task->load(['activity', 'contentWriter', 'designer', 'assignedEmployee', 'files']);
+        $task->load(['activity', 'contentWriter', 'designer', 'assignedEmployee', 'files.task.activity']);
+        if ($task->activity) {
+            $task->activity->ensureShareToken();
+        }
 
         return view('employee.work.show', [
             'task' => $task,
             'statuses' => WorkTask::statuses(),
             'designAssetKinds' => WorkTask::designAssetKinds(),
             'suggestedAssetKind' => WorkTask::suggestedDesignAssetKind($task->content_type),
+            'cardShareUrl' => $task->public_share_url,
         ]);
     }
 

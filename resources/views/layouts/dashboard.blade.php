@@ -1384,6 +1384,33 @@
         }
     </script>
     
+    <script>
+        window.copyShareText = async function (text, btn) {
+            try {
+                await navigator.clipboard.writeText(text);
+                if (btn) {
+                    const original = btn.innerHTML;
+                    btn.innerHTML = '<span class="material-icons text-sm">check</span>';
+                    setTimeout(function () { btn.innerHTML = original; }, 1500);
+                }
+            } catch (e) {
+                prompt('انسخ الرابط:', text);
+            }
+        };
+        window.copyShareLink = async function (inputId, btn) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            await window.copyShareText(input.value, btn);
+        };
+        document.addEventListener('click', function (e) {
+            const btn = e.target.closest('.card-share-btn');
+            if (!btn) return;
+            e.preventDefault();
+            e.stopPropagation();
+            window.copyShareText(btn.dataset.shareUrl || '', btn);
+        });
+    </script>
+    
     @yield('scripts')
 </body>
 </html>

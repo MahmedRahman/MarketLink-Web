@@ -106,4 +106,15 @@ class WorkTaskFile extends Model
 
         return '03_Social_Content/'.$this->nas_path;
     }
+
+    public function getPublicShareUrlAttribute(): ?string
+    {
+        $task = $this->relationLoaded('task') ? $this->task : $this->task()->with('activity')->first();
+        $token = $task?->activity?->share_token;
+        if (! $token) {
+            return null;
+        }
+
+        return route('public.work.file', [$token, $task->id, $this->id]);
+    }
 }

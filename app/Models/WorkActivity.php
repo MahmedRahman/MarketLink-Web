@@ -75,6 +75,17 @@ class WorkActivity extends Model
         return route('public.work.show', $this->share_token);
     }
 
+    public function publicTaskUrl(WorkTask|int $task): ?string
+    {
+        if (! $this->share_token) {
+            return null;
+        }
+
+        $taskId = $task instanceof WorkTask ? $task->id : $task;
+
+        return route('public.work.task', [$this->share_token, $taskId]);
+    }
+
     public function getTypeLabelAttribute(): string
     {
         return match ($this->type) {

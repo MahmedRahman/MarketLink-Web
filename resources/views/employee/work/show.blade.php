@@ -66,6 +66,17 @@
                 </div>
             </div>
 
+            @if(!empty($cardShareUrl))
+                <div class="mt-5">
+                    @include('partials.share-link', [
+                        'label' => 'رابط شير للكارت كامل',
+                        'hint' => 'ابعت الرابط لأي حد — يشوف المحتوى والملفات بدون تسجيل دخول',
+                        'url' => $cardShareUrl,
+                        'inputId' => 'card-share-'.$task->id,
+                    ])
+                </div>
+            @endif
+
             @if($task->due_date || $task->publish_date || !empty($task->platform_labels))
                 <div class="mt-5 pt-4 border-t border-gray-200/70 flex flex-wrap gap-3">
                     @if($task->due_date)
@@ -318,6 +329,14 @@
                                                     <span class="material-icons text-sm">open_in_new</span>
                                                     عرض
                                                 </a>
+                                            @endif
+                                            @if($task->activity?->share_token)
+                                                <button type="button"
+                                                        onclick="window.copyShareText && window.copyShareText(@json(route('public.work.file', [$task->activity->share_token, $task, $file])), this)"
+                                                        class="text-xs text-indigo-600 hover:underline inline-flex items-center gap-0.5">
+                                                    <span class="material-icons text-sm">share</span>
+                                                    نسخ رابط الشير
+                                                </button>
                                             @endif
                                             <form method="POST" action="{{ route('employee.work.files.destroy', [$task, $file]) }}"
                                                   onsubmit="return confirm('حذف هذا الملف؟');" class="inline">

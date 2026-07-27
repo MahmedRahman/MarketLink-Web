@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\WorkActivity;
 use App\Models\WorkTask;
-use Illuminate\Http\Request;
+use App\Models\WorkTaskFile;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PublicWorkShareController extends Controller
 {
@@ -20,7 +22,7 @@ class PublicWorkShareController extends Controller
             $pipelineStages[] = [
                 'key' => $key,
                 'label' => $label,
-                    'icon' => match ($key) {
+                'icon' => match ($key) {
                     'design' => 'palette',
                     'ready_to_publish' => 'schedule_send',
                     'published' => 'check_circle',
@@ -57,7 +59,25 @@ class PublicWorkShareController extends Controller
             'activity' => $activity,
             'task' => $task,
             'shareToken' => $token,
+            'cardShareUrl' => route('public.work.task', [$token, $task]),
         ]);
+    }
+
+    public function showFile(string $token, WorkTask $task, WorkTaskFile $file): StreamedResponse
+    {
+        $activity = $this->findSharedActivity($token);
+        abort_unless($task->work_activity_id === $activity->id, 404);
+        abort_unless($file->work_task_id === $task->id, 404);
+        abort_unless(Storage::disk('public')->exists($file->file_path), 404);
+
+        $disposition = $file->isImage() || $file->isPdf() ? 'inline' : 'attachment';
+
+        return Storage::disk('public')->response(
+            $file->file_path,
+            $file->file_name,
+            [],
+            $disposition
+        );
     }
 
     private function findSharedActivity(string $token): WorkActivity

@@ -20,13 +20,17 @@ class WorkTaskController extends Controller
         $this->authorizeActivity($request, $work);
         $this->authorizeTask($work, $task);
 
+        $work->ensureShareToken();
+
         $task->load([
             'contentWriter',
             'designer',
             'assignedEmployee',
-            'files',
+            'files.task.activity',
             'logs.user',
+            'activity',
         ]);
+        $task->setRelation('activity', $work);
 
         $employees = Employee::where('organization_id', WorkHub::organizationId($request))
             ->where('status', 'active')
@@ -38,6 +42,7 @@ class WorkTaskController extends Controller
             'task' => $task,
             'employees' => $employees,
             'kinds' => WorkTask::kinds(),
+            'cardShareUrl' => $task->public_share_url,
             'taskStatuses' => WorkTask::statuses(),
             'contentTypes' => WorkTask::contentTypes(),
             'platforms' => WorkTask::platforms(),

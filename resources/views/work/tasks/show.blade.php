@@ -95,6 +95,15 @@
         @endif
     </div>
 
+    @if(!empty($cardShareUrl))
+        @include('partials.share-link', [
+            'label' => 'رابط شير للكارت كامل',
+            'hint' => 'ابعت الرابط لأي حد — يشوف المحتوى والملفات بدون تسجيل دخول',
+            'url' => $cardShareUrl,
+            'inputId' => 'card-share-'.$task->id,
+        ])
+    @endif
+
     {{-- TOV و Caption واضحين --}}
     <div class="grid grid-cols-1 gap-4">
         <div class="rounded-2xl border-2 border-violet-200 bg-violet-50/60 p-5">
@@ -264,7 +273,7 @@
                                                 </a>
                                             @endif
                                         @endif
-                                        <div class="flex items-center gap-2 mt-2">
+                                        <div class="flex items-center gap-2 mt-2 flex-wrap">
                                             <a href="{{ work_route('tasks.files.download', [$activity, $task, $file]) }}"
                                                class="text-xs text-primary hover:underline inline-flex items-center gap-0.5">
                                                 <span class="material-icons text-sm">download</span>
@@ -276,6 +285,14 @@
                                                     <span class="material-icons text-sm">open_in_new</span>
                                                     عرض
                                                 </a>
+                                            @endif
+                                            @if($activity->share_token)
+                                                <button type="button"
+                                                        onclick="window.copyShareText && window.copyShareText(@json(route('public.work.file', [$activity->share_token, $task, $file])), this)"
+                                                        class="text-xs text-indigo-600 hover:underline inline-flex items-center gap-0.5">
+                                                    <span class="material-icons text-sm">share</span>
+                                                    نسخ رابط الشير
+                                                </button>
                                             @endif
                                             <form method="POST" action="{{ work_route('tasks.files.destroy', [$activity, $task, $file]) }}"
                                                   onsubmit="return confirm('حذف هذا الملف؟');" class="inline">

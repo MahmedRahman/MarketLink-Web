@@ -157,12 +157,23 @@
                                         <span class="px-2 py-0.5 text-[11px] rounded-lg {{ $stColors[$task->status] ?? $stColors['todo'] }}">
                                             {{ $task->status_label }}
                                         </span>
-                                        @if($task->due_date)
-                                            <span class="text-[11px] text-gray-500 flex items-center gap-0.5">
-                                                <span class="material-icons text-sm">event</span>
-                                                {{ $task->due_date->format('m/d') }}
-                                            </span>
-                                        @endif
+                                        <div class="flex items-center gap-1">
+                                            @if($activity->share_token)
+                                                <button type="button"
+                                                        class="card-share-btn p-1.5 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
+                                                        data-share-url="{{ $activity->publicTaskUrl($task) }}"
+                                                        title="نسخ رابط شير الكارت"
+                                                        draggable="false">
+                                                    <span class="material-icons text-sm">share</span>
+                                                </button>
+                                            @endif
+                                            @if($task->due_date)
+                                                <span class="text-[11px] text-gray-500 flex items-center gap-0.5">
+                                                    <span class="material-icons text-sm">event</span>
+                                                    {{ $task->due_date->format('m/d') }}
+                                                </span>
+                                            @endif
+                                        </div>
                                     </div>
                                 </div>
                             @endforeach
@@ -388,6 +399,11 @@
     });
 
     board.addEventListener('click', function (e) {
+        if (e.target.closest('.card-share-btn')) {
+            e.preventDefault();
+            e.stopPropagation();
+            return;
+        }
         const card = e.target.closest('.pipeline-card');
         if (!card) return;
         if (didDrag) {

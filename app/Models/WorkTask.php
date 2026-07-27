@@ -47,6 +47,28 @@ class WorkTask extends Model
         return $this->belongsTo(WorkActivity::class, 'work_activity_id');
     }
 
+    public function getPublicShareUrlAttribute(): ?string
+    {
+        $activity = $this->relationLoaded('activity') ? $this->activity : $this->activity()->first();
+        if (! $activity?->share_token) {
+            return null;
+        }
+
+        return route('public.work.task', [$activity->share_token, $this->id]);
+    }
+
+    public function ensurePublicShareUrl(): ?string
+    {
+        $activity = $this->activity;
+        if (! $activity) {
+            return null;
+        }
+
+        $activity->ensureShareToken();
+
+        return route('public.work.task', [$activity->share_token, $this->id]);
+    }
+
     public function assignedEmployee(): BelongsTo
     {
         return $this->belongsTo(Employee::class, 'assigned_to');

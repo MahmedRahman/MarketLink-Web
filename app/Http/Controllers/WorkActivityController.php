@@ -130,6 +130,7 @@ class WorkActivityController extends Controller
     {
         $this->authorizeActivity($request, $work);
 
+        $work->ensureShareToken();
         $work->load(['tasks.assignedEmployee', 'tasks.contentWriter', 'tasks.designer']);
 
         $employees = Employee::where('organization_id', WorkHub::organizationId($request))

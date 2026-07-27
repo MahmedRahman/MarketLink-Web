@@ -24,5 +24,24 @@
     <main class="max-w-5xl mx-auto px-4 py-6">
         @yield('content')
     </main>
+    <script>
+        window.copyShareText = async function (text, btn) {
+            try {
+                await navigator.clipboard.writeText(text);
+                if (btn) {
+                    const original = btn.innerHTML;
+                    btn.innerHTML = '<span class="material-icons text-sm">check</span> تم';
+                    setTimeout(function () { btn.innerHTML = original; }, 1500);
+                }
+            } catch (e) {
+                prompt('انسخ الرابط:', text);
+            }
+        };
+        window.copyShareLink = async function (inputId, btn) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            await window.copyShareText(input.value, btn);
+        };
+    </script>
 </body>
 </html>
