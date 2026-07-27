@@ -126,6 +126,22 @@ class WorkActivity extends Model
         return "04_Rounds/Free_Lectures/{$date}_[الموضوع]_[المحاضر]/";
     }
 
+    public function getMonthLabelAttribute(): string
+    {
+        $date = $this->event_date ?? $this->created_at;
+        if (! $date) {
+            return '';
+        }
+
+        $months = [
+            1 => 'يناير', 2 => 'فبراير', 3 => 'مارس', 4 => 'أبريل',
+            5 => 'مايو', 6 => 'يونيو', 7 => 'يوليو', 8 => 'أغسطس',
+            9 => 'سبتمبر', 10 => 'أكتوبر', 11 => 'نوفمبر', 12 => 'ديسمبر',
+        ];
+
+        return ($months[(int) $date->format('n')] ?? $date->format('m')).' '.$date->format('Y');
+    }
+
     public function getStatusLabelAttribute(): string
     {
         return match ($this->status) {

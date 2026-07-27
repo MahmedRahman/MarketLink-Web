@@ -93,16 +93,24 @@
             @foreach($activities as $activity)
                 <a href="{{ work_route('show', $activity) }}" class="card rounded-2xl p-5 block hover:no-underline">
                     <div class="flex items-start justify-between mb-3">
-                        <div class="flex items-center gap-3">
-                            <div class="w-11 h-11 rounded-xl bg-indigo-50 text-primary flex items-center justify-center">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <div class="w-11 h-11 rounded-xl bg-indigo-50 text-primary flex items-center justify-center shrink-0">
                                 <span class="material-icons">{{ $activity->type_icon }}</span>
                             </div>
-                            <div>
-                                <h3 class="font-bold text-gray-800 leading-tight">{{ $activity->title }}</h3>
+                            <div class="min-w-0">
+                                <h3 class="font-bold text-gray-800 leading-tight truncate">{{ $activity->title }}</h3>
                                 <span class="text-xs text-gray-500">{{ $activity->type_label }}</span>
                             </div>
                         </div>
-                        <span class="role-badge role-{{ $activity->status_color }}">{{ $activity->status_label }}</span>
+                        <div class="flex flex-col items-end gap-1.5 shrink-0">
+                            <span class="role-badge role-{{ $activity->status_color }}">{{ $activity->status_label }}</span>
+                            @if($activity->month_label)
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-teal-50 text-teal-800 text-[11px] font-bold border border-teal-100">
+                                    <span class="material-icons text-sm">calendar_month</span>
+                                    {{ $activity->month_label }}
+                                </span>
+                            @endif
+                        </div>
                     </div>
 
                     @if($activity->event_date)
@@ -171,14 +179,10 @@
                 </div>
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">تاريخ المحاضرة / النشاط</label>
-                <input type="date" name="event_date"
-                       class="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 focus:border-primary focus:outline-none">
-            </div>
-            <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">وصف مختصر</label>
                 <textarea name="description" rows="3" placeholder="تفاصيل النشاط والأفكار العامة..."
                           class="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 focus:border-primary focus:outline-none"></textarea>
+                <p class="text-[11px] text-gray-400 mt-1.5">تاريخ النشاط بيتسجّل تلقائيًا بتاريخ الإنشاء</p>
             </div>
             {{-- قالب تاسكات المحاضرة القياسية (من دليل تنظيم ملفات المحاضرة) --}}
             <div id="templateOption" class="hidden bg-teal-50 border border-teal-200 rounded-xl p-3">

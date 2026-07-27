@@ -66,7 +66,6 @@ class WorkActivityController extends Controller
             'title' => 'required|string|max:255',
             'type' => 'required|in:live_lecture,live_lecture_paid,paid_round,educational,other',
             'description' => 'nullable|string',
-            'event_date' => 'nullable|date',
             'with_template' => 'nullable|boolean',
         ]);
 
@@ -77,6 +76,8 @@ class WorkActivityController extends Controller
         $validated['organization_id'] = $organizationId;
         $validated['created_by'] = $actor instanceof User ? $actor->id : null;
         $validated['status'] = 'planning';
+        // تاريخ النشاط = تاريخ إنشاء السجل تلقائيًا
+        $validated['event_date'] = now()->toDateString();
 
         $activity = WorkActivity::create($validated);
 
