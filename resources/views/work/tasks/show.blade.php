@@ -514,10 +514,11 @@ async function summarizeDesigner(taskId, btn) {
 
     form?.addEventListener('submit', function () {
         const btn = document.getElementById('designUploadBtn');
-        if (btn) {
-            btn.disabled = true;
-            btn.innerHTML = '<span class="material-icons text-base animate-spin">progress_activity</span> جاري الرفع...';
-        }
+        if (!btn) return;
+        // لا نعطّل الزر فورًا — بعض المتصفحات تلغي الإرسال لو الزر اتـ disable أثناء submit
+        btn.innerHTML = '<span class="material-icons text-base animate-spin">progress_activity</span> جاري الرفع...';
+        btn.setAttribute('aria-busy', 'true');
+        setTimeout(function () { btn.disabled = true; }, 50);
     });
 })();
 </script>

@@ -432,8 +432,10 @@
 
         form?.addEventListener('submit', function () {
             if (!btn) return;
-            btn.disabled = true;
+            // لا نعطّل الزر فورًا — بعض المتصفحات تلغي الإرسال لو الزر اتـ disable أثناء submit
             btn.innerHTML = '<span class="material-icons text-base animate-pulse">hourglass_top</span> جاري الرفع...';
+            btn.setAttribute('aria-busy', 'true');
+            setTimeout(function () { btn.disabled = true; }, 50);
         });
     })();
 </script>

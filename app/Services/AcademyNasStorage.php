@@ -157,6 +157,7 @@ class AcademyNasStorage
         $password = (string) config('academy_nas.password');
 
         $sftp = new SFTP($host, $port);
+        $sftp->setTimeout(45);
         if (! $sftp->login($user, $password)) {
             throw new RuntimeException('فشل الاتصال بسيرفر الملفات (NAS)');
         }

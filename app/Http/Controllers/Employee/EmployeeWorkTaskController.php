@@ -221,34 +221,42 @@ class EmployeeWorkTaskController extends Controller
             'description' => $validated['description'] ?? null,
         ]);
 
-        $nasOk = app(\App\Services\AcademyNasStorage::class)->syncQuietly($task, $workFile);
-        $workFile->refresh();
+        $taskId = $task->id;
+        $workFileId = $workFile->id;
+        $nasEnabled = (bool) config('academy_nas.enabled');
+
+        if ($nasEnabled) {
+            dispatch(function () use ($taskId, $workFileId) {
+                $taskModel = WorkTask::query()->find($taskId);
+                $fileModel = WorkTaskFile::query()->find($workFileId);
+                if ($taskModel && $fileModel) {
+                    app(\App\Services\AcademyNasStorage::class)->syncQuietly($taskModel, $fileModel);
+                }
+            })->afterResponse();
+        }
 
         $kindLabel = WorkTask::designAssetKinds()[$validated['asset_kind']] ?? $validated['asset_kind'];
         $task->logEvent(
             'file_uploaded',
             'تم رفع ملف تصميم ('.$kindLabel.'): '.$workFile->file_name.' بواسطة '.$employee->name
-                .($nasOk ? ' — ونُسخ إلى NAS' : ''),
+                .($nasEnabled ? ' — جاري النسخ إلى NAS' : ''),
             'file',
             null,
             $workFile->file_name,
             [
                 'asset_kind' => $validated['asset_kind'],
                 'employee_id' => $employee->id,
-                'nas_path' => $workFile->nas_path,
             ]
         );
 
         $message = 'تم رفع ملف التصميم';
-        if ($nasOk) {
-            $message .= ' وحُفظ على سيرفر الملفات ('.$workFile->nas_display_path.')';
-        } elseif (config('academy_nas.enabled')) {
-            $message .= ' — تعذّر النسخ إلى سيرفر الملفات، الملف محفوظ على الموقع';
+        if ($nasEnabled) {
+            $message .= ' — هيتنسخ لسيرفر الملفات خلال لحظات';
         }
 
         return redirect()
             ->route('employee.work.show', $task)
-            ->with($nasOk || ! config('academy_nas.enabled') ? 'success' : 'error', $message);
+            ->with('success', $message);
     }
 
     public function downloadFile(WorkTask $task, WorkTaskFile $file)
