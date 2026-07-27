@@ -111,16 +111,6 @@
                 </a>
             @endif
             
-            <a href="{{ route('employee.projects.index') }}" class="flex items-center px-4 py-3 text-gray-700 rounded-xl hover:bg-gray-100 {{ request()->routeIs('employee.projects.*') ? 'bg-purple-50 text-purple-700' : '' }}">
-                <span class="material-icons text-lg ml-3">folder</span>
-                <span class="font-medium">المشاريع</span>
-            </a>
-            
-            <a href="{{ route('employee.expenses.index') }}" class="flex items-center px-4 py-3 text-gray-700 rounded-xl hover:bg-gray-100 {{ request()->routeIs('employee.expenses.*') ? 'bg-purple-50 text-purple-700' : '' }}">
-                <span class="material-icons text-lg ml-3">receipt</span>
-                <span class="font-medium">الإيصالات</span>
-            </a>
-            
             @if($hasManagerRole)
                 <a href="{{ route('employee.monthly-plans.index') }}" class="flex items-center px-4 py-3 text-gray-700 rounded-xl hover:bg-gray-100 {{ request()->routeIs('employee.monthly-plans.*') ? 'bg-purple-50 text-purple-700' : '' }}">
                     <span class="material-icons text-lg ml-3">calendar_month</span>
