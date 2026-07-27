@@ -192,8 +192,16 @@
     const board = document.getElementById('pipelineBoard');
     if (!board) return;
 
-    const moveUrlTpl = @json(str_replace('999999', 'TASK_ID', route('employee.work.move-stage', [$activity, 999999])));
-    const reorderUrl = @json(route('employee.work.reorder', $activity));
+    @php
+        $employeeMoveUrlTpl = str_replace(
+            '999999',
+            'TASK_ID',
+            route('employee.work.move-stage', [$activity, 999999])
+        );
+        $employeeReorderUrl = route('employee.work.reorder', $activity);
+    @endphp
+    const moveUrlTpl = @json($employeeMoveUrlTpl);
+    const reorderUrl = @json($employeeReorderUrl);
     let dragTaskId = null;
     let dragFromStage = null;
     let dragCard = null;
