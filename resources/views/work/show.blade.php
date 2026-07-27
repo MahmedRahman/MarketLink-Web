@@ -268,6 +268,7 @@
                                     $assigneePool = match($stage['key']) {
                                         'design' => ($designers->isNotEmpty() ? $designers : $employees),
                                         'writing' => (($contentWriters ?? collect())->isNotEmpty() ? $contentWriters : $employees),
+                                        'ready_to_publish', 'published' => (($publishers ?? collect())->isNotEmpty() ? $publishers : $employees),
                                         default => $employees,
                                     };
                                     // لو المسؤول الحالي مش في القائمة المختصرة، أضفه
@@ -277,6 +278,18 @@
                                             $assigneePool = $assigneePool->push($current)->unique('id')->values();
                                         }
                                     }
+                                    $chipActive = match($stage['key']) {
+                                        'design' => 'bg-purple-600 text-white border-purple-600 shadow-sm',
+                                        'ready_to_publish' => 'bg-teal-600 text-white border-teal-600 shadow-sm',
+                                        'published' => 'bg-green-600 text-white border-green-600 shadow-sm',
+                                        default => 'bg-blue-600 text-white border-blue-600 shadow-sm',
+                                    };
+                                    $chipIdle = match($stage['key']) {
+                                        'design' => 'bg-purple-50 text-purple-800 border-purple-200 hover:border-purple-400',
+                                        'ready_to_publish' => 'bg-teal-50 text-teal-800 border-teal-200 hover:border-teal-400',
+                                        'published' => 'bg-green-50 text-green-800 border-green-200 hover:border-green-400',
+                                        default => 'bg-blue-50 text-blue-800 border-blue-200 hover:border-blue-400',
+                                    };
                                 @endphp
                                 <div role="link" tabindex="0"
                                    draggable="true"
@@ -294,23 +307,31 @@
                                     </div>
                                     <div class="mt-3 space-y-2 card-controls" data-no-nav>
                                         <label class="block text-[10px] text-gray-400 mb-0.5">
-                                            @if($stage['key'] === 'design') المصمم المسؤول
-                                            @elseif($stage['key'] === 'writing') كاتب المحتوى
-                                            @elseif($stage['key'] === 'ready_to_publish') مسؤول النشر
-                                            @else ناشر المحتوى
+                                            @if($stage['key'] === 'design') اختَر المصمم
+                                            @elseif($stage['key'] === 'writing') اختَر كاتب المحتوى
+                                            @elseif($stage['key'] === 'ready_to_publish') اختَر مسؤول النشر
+                                            @else اختَر الناشر
                                             @endif
                                         </label>
-                                        <select class="card-assignee w-full px-2 py-1.5 rounded-lg border border-gray-200 text-xs bg-white focus:border-primary focus:outline-none {{ $stage['key'] === 'design' ? 'border-purple-200 bg-purple-50/40' : '' }}"
-                                                data-task-id="{{ $task->id }}"
-                                                data-stage="{{ $stage['key'] }}"
-                                                draggable="false">
-                                            <option value="">— اختر —</option>
-                                            @foreach($assigneePool as $emp)
-                                                <option value="{{ $emp->id }}" @selected((int) $stageOwnerId === (int) $emp->id)>
+                                        <div class="card-assignee-group flex flex-wrap gap-1.5"
+                                             data-task-id="{{ $task->id }}"
+                                             data-stage="{{ $stage['key'] }}"
+                                             data-active-class="{{ $chipActive }}"
+                                             data-idle-class="{{ $chipIdle }}">
+                                            @forelse($assigneePool as $emp)
+                                                @php $isSelected = (int) $stageOwnerId === (int) $emp->id; @endphp
+                                                <button type="button"
+                                                        class="card-assignee-chip px-2.5 py-1 rounded-lg border text-[11px] font-semibold transition-all {{ $isSelected ? $chipActive : $chipIdle }}"
+                                                        data-employee-id="{{ $emp->id }}"
+                                                        data-selected="{{ $isSelected ? '1' : '0' }}"
+                                                        draggable="false"
+                                                        title="{{ $emp->role_badge }}">
                                                     {{ $emp->name }}
-                                                </option>
-                                            @endforeach
-                                        </select>
+                                                </button>
+                                            @empty
+                                                <span class="text-[11px] text-gray-400">لا يوجد موظفون لهذا الدور</span>
+                                            @endforelse
+                                        </div>
                                         <div class="flex items-center gap-1.5">
                                             <a href="{{ route('work.tasks.edit', [$activity, $task]) }}"
                                                class="card-edit-btn flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-gray-100 text-gray-700 text-xs font-medium hover:bg-gray-200"
@@ -698,7 +719,7 @@
         label.textContent = 'جاري التحليل والتقسيم...';
     });
 
-    // —— تغيير المسؤول من على الكارت ——
+    // —— تغيير المسؤول من على الكارت (أسماء جنب بعض) ——
     (function initCardAssignee() {
         const board = document.getElementById('pipelineBoard');
         if (!board) return;
@@ -708,13 +729,36 @@
             return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
         }
 
-        board.addEventListener('change', async function (e) {
-            const select = e.target.closest('.card-assignee');
-            if (!select) return;
-            const taskId = select.dataset.taskId;
-            const stage = select.dataset.stage;
-            const employeeId = select.value || '';
-            select.disabled = true;
+        function applyChipSelection(group, selectedId) {
+            const active = (group.dataset.activeClass || '').split(/\s+/).filter(Boolean);
+            const idle = (group.dataset.idleClass || '').split(/\s+/).filter(Boolean);
+            group.querySelectorAll('.card-assignee-chip').forEach(function (chip) {
+                const on = String(chip.dataset.employeeId) === String(selectedId);
+                [...active, ...idle].forEach(function (c) { chip.classList.remove(c); });
+                (on ? active : idle).forEach(function (c) { chip.classList.add(c); });
+                chip.dataset.selected = on ? '1' : '0';
+            });
+        }
+
+        board.addEventListener('click', async function (e) {
+            const chip = e.target.closest('.card-assignee-chip');
+            if (!chip) return;
+            e.preventDefault();
+            e.stopPropagation();
+
+            const group = chip.closest('.card-assignee-group');
+            if (!group) return;
+            const taskId = group.dataset.taskId;
+            const stage = group.dataset.stage;
+            const employeeId = chip.dataset.employeeId || '';
+            if (chip.dataset.selected === '1') return;
+
+            const previousId = Array.from(group.querySelectorAll('.card-assignee-chip'))
+                .find(function (c) { return c.dataset.selected === '1'; })?.dataset.employeeId || '';
+
+            applyChipSelection(group, employeeId);
+            group.querySelectorAll('.card-assignee-chip').forEach(function (c) { c.disabled = true; });
+
             try {
                 const body = new URLSearchParams();
                 body.set('employee_id', employeeId);
@@ -735,12 +779,11 @@
                 if (!res.ok || !data.success) {
                     throw new Error(data.message || data.error || 'فشل تحديث المسؤول');
                 }
-                select.classList.add('ring-2', 'ring-teal-300');
-                setTimeout(function () { select.classList.remove('ring-2', 'ring-teal-300'); }, 800);
             } catch (err) {
+                applyChipSelection(group, previousId);
                 alert(err.message || 'حدث خطأ');
             } finally {
-                select.disabled = false;
+                group.querySelectorAll('.card-assignee-chip').forEach(function (c) { c.disabled = false; });
             }
         });
     })();
@@ -856,7 +899,7 @@
         }
 
         board.addEventListener('mousedown', function (e) {
-            if (e.target.closest('.card-controls, .card-assignee, .card-edit-btn, .card-detail-btn, select, a, button')) {
+            if (e.target.closest('.card-controls, .card-assignee-group, .card-assignee-chip, .card-edit-btn, .card-detail-btn, select, a, button')) {
                 const card = e.target.closest('.pipeline-card');
                 if (card) card.setAttribute('draggable', 'false');
             }
@@ -868,7 +911,7 @@
         });
 
         board.addEventListener('dragstart', function (e) {
-            if (e.target.closest('.card-controls, select, a, button')) {
+            if (e.target.closest('.card-controls, .card-assignee-chip, select, a, button')) {
                 e.preventDefault();
                 return;
             }
@@ -979,7 +1022,7 @@
         });
 
         board.addEventListener('click', function (e) {
-            if (e.target.closest('.card-controls, .card-assignee, .card-edit-btn, .card-detail-btn, select, a, button')) {
+            if (e.target.closest('.card-controls, .card-assignee-group, .card-assignee-chip, .card-edit-btn, .card-detail-btn, select, a, button')) {
                 return;
             }
             const card = e.target.closest('.pipeline-card');

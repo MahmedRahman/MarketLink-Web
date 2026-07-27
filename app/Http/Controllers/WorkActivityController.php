@@ -167,12 +167,17 @@ class WorkActivityController extends Controller
 
         $designers = $employees->whereIn('role', ['designer', 'video_editor'])->values();
         $contentWriters = $employees->where('role', 'content_writer')->values();
+        $publishers = $employees->whereIn('role', ['account_manager', 'page_manager'])->values();
+        if ($publishers->isEmpty()) {
+            $publishers = $employees->whereIn('role', ['account_manager', 'page_manager', 'media_buyer', 'ad_manager'])->values();
+        }
 
         return view('work.show', [
             'activity' => $work,
             'employees' => $employees,
             'designers' => $designers,
             'contentWriters' => $contentWriters,
+            'publishers' => $publishers,
             'pipelineStages' => $pipelineStages,
             'contentCounts' => $contentCounts,
             'kinds' => WorkTask::kinds(),
