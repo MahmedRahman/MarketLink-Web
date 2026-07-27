@@ -1,8 +1,8 @@
 @extends('layouts.employee')
 
-@section('title', 'المهام')
-@section('page-title', 'المهام')
-@section('page-description', 'كل المهام المعيّنة لك')
+@section('title', 'مساحة العمل')
+@section('page-title', 'مساحة العمل')
+@section('page-description', 'كل المهام المعيّنة لك من مساحة العمل')
 
 @section('content')
 @php
