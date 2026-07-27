@@ -210,7 +210,7 @@
         </div>
 
         <div class="space-y-4" id="pipelineBoard">
-            <p class="text-xs text-gray-500">اسحب الكارت وأفلته على مرحلة تانية عشان تنقله.</p>
+            <p class="text-xs text-gray-500">اسحب الكارت لترتيب داخل المرحلة، أو أفلت على مرحلة تانية للنقل.</p>
             @foreach($pipelineStages as $stage)
                 <section class="card rounded-2xl overflow-hidden pipeline-stage"
                          data-stage="{{ $stage['key'] }}">
@@ -730,15 +730,17 @@
         });
     })();
 
-    // —— Drag & drop بين مراحل البايبلاين ——
+    // —— Drag & drop: ترتيب داخل المرحلة + نقل بين المراحل ——
     (function initPipelineDragDrop() {
         const board = document.getElementById('pipelineBoard');
         if (!board) return;
 
         const moveUrlTpl = "{{ route('work.tasks.move-stage', [$activity, 'TASK_ID'], false) }}";
+        const reorderUrl = "{{ route('work.tasks.reorder', $activity, false) }}";
         let dragTaskId = null;
         let dragFromStage = null;
         let dragCard = null;
+        let dragFromIndex = null;
         let didDrag = false;
 
         function csrfToken() {
@@ -754,6 +756,88 @@
                 const empty = zone.querySelector('.stage-empty');
                 if (empty) empty.classList.toggle('hidden', count > 0);
             });
+        }
+
+        function stageTaskIds(stage) {
+            const zone = board.querySelector('.stage-dropzone[data-stage="' + stage + '"]');
+            if (!zone) return [];
+            return Array.from(zone.querySelectorAll('.pipeline-card')).map(function (card) {
+                return card.dataset.taskId;
+            });
+        }
+
+        function placeCard(cardsWrap, card, clientX, clientY) {
+            const others = Array.from(cardsWrap.querySelectorAll('.pipeline-card')).filter(function (el) {
+                return el !== card;
+            });
+            if (!others.length) {
+                cardsWrap.appendChild(card);
+                return;
+            }
+
+            let closest = null;
+            let closestOffset = Number.NEGATIVE_INFINITY;
+            others.forEach(function (child) {
+                const box = child.getBoundingClientRect();
+                const offset = clientY - (box.top + box.height / 2);
+                if (offset < 0 && offset > closestOffset) {
+                    closestOffset = offset;
+                    closest = child;
+                }
+            });
+
+            if (closest) {
+                cardsWrap.insertBefore(card, closest);
+            } else {
+                // لو تحت كل الكروت أو على يمين/يسار آخر كارت: حط في الآخر
+                const last = others[others.length - 1];
+                const box = last.getBoundingClientRect();
+                if (clientX > box.left + box.width / 2 && clientY < box.bottom) {
+                    // في شبكة RTL/LTR: لو الماوس على الجانب التاني من آخر عنصر ظاهر في نفس الصف
+                    let insertBeforeEl = null;
+                    for (let i = 0; i < others.length; i++) {
+                        const b = others[i].getBoundingClientRect();
+                        if (clientY >= b.top - 8 && clientY <= b.bottom + 8 && clientX > b.left + b.width / 2) {
+                            insertBeforeEl = others[i];
+                            break;
+                        }
+                    }
+                    if (insertBeforeEl) cardsWrap.insertBefore(card, insertBeforeEl);
+                    else cardsWrap.appendChild(card);
+                } else {
+                    cardsWrap.appendChild(card);
+                }
+            }
+        }
+
+        async function postForm(url, fields) {
+            const body = new URLSearchParams();
+            Object.keys(fields).forEach(function (key) {
+                const value = fields[key];
+                if (Array.isArray(value)) {
+                    value.forEach(function (item) { body.append(key + '[]', item); });
+                } else {
+                    body.set(key, value);
+                }
+            });
+            body.set('_token', csrfToken());
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken(),
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                credentials: 'same-origin',
+                body: body.toString(),
+            });
+            let data = {};
+            try { data = await res.json(); } catch (_) {}
+            if (!res.ok || data.success === false) {
+                throw new Error(data.message || data.error || ('فشل الطلب (' + res.status + ')'));
+            }
+            return data;
         }
 
         board.addEventListener('mousedown', function (e) {
@@ -778,6 +862,7 @@
             dragTaskId = card.dataset.taskId;
             dragFromStage = card.dataset.stage;
             dragCard = card;
+            dragFromIndex = Array.from(card.parentElement?.children || []).indexOf(card);
             didDrag = true;
             card.classList.add('opacity-50');
             e.dataTransfer.effectAllowed = 'move';
@@ -794,13 +879,14 @@
                 dragTaskId = null;
                 dragFromStage = null;
                 dragCard = null;
+                dragFromIndex = null;
                 didDrag = false;
             }, 50);
         });
 
         board.addEventListener('dragover', function (e) {
             const zone = e.target.closest('.stage-dropzone');
-            if (!zone || !dragTaskId) return;
+            if (!zone || !dragTaskId || !dragCard) return;
             e.preventDefault();
             e.dataTransfer.dropEffect = 'move';
             board.querySelectorAll('.stage-dropzone').forEach(function (z) {
@@ -809,6 +895,9 @@
                 z.classList.toggle('ring-indigo-300', z === zone);
                 z.classList.toggle('ring-inset', z === zone);
             });
+
+            const cardsWrap = zone.querySelector('.stage-cards');
+            if (cardsWrap) placeCard(cardsWrap, dragCard, e.clientX, e.clientY);
         });
 
         board.addEventListener('dragleave', function (e) {
@@ -828,49 +917,49 @@
 
             const toStage = zone.dataset.stage;
             const fromStage = dragFromStage;
-            if (toStage === fromStage) return;
-
             const taskId = dragTaskId;
             const card = dragCard;
+            const fromIndex = dragFromIndex;
             const fromZone = board.querySelector('.stage-dropzone[data-stage="' + fromStage + '"]');
             const cardsWrap = zone.querySelector('.stage-cards');
             if (!cardsWrap) return;
 
-            cardsWrap.appendChild(card);
+            placeCard(cardsWrap, card, e.clientX, e.clientY);
             card.dataset.stage = toStage;
             refreshStageCounts();
 
+            const newIds = stageTaskIds(toStage);
+            const newIndex = newIds.indexOf(String(taskId));
+            const sameStage = toStage === fromStage;
+            const samePosition = sameStage && newIndex === fromIndex;
+            if (samePosition) return;
+
             try {
-                const url = moveUrlTpl.replace('TASK_ID', taskId);
-                const body = new URLSearchParams();
-                body.set('pipeline_stage', toStage);
-                body.set('_token', csrfToken());
-
-                const res = await fetch(url, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': csrfToken(),
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-                        'X-Requested-With': 'XMLHttpRequest',
-                    },
-                    credentials: 'same-origin',
-                    body: body.toString(),
-                });
-
-                let data = {};
-                try { data = await res.json(); } catch (_) {}
-
-                if (!res.ok || !data.success) {
-                    throw new Error(data.message || data.error || ('فشل النقل (' + res.status + ')'));
+                if (!sameStage) {
+                    await postForm(moveUrlTpl.replace('TASK_ID', taskId), {
+                        pipeline_stage: toStage,
+                    });
                 }
+                await postForm(reorderUrl, {
+                    pipeline_stage: toStage,
+                    task_ids: newIds,
+                });
             } catch (err) {
+                // رجّع للكارت مكانه القديم تقريبًا
                 if (fromZone) {
-                    fromZone.querySelector('.stage-cards')?.appendChild(card);
+                    const fromWrap = fromZone.querySelector('.stage-cards');
+                    if (fromWrap) {
+                        const children = Array.from(fromWrap.children);
+                        if (fromIndex != null && fromIndex < children.length) {
+                            fromWrap.insertBefore(card, children[fromIndex]);
+                        } else {
+                            fromWrap.appendChild(card);
+                        }
+                    }
                     card.dataset.stage = fromStage;
                     refreshStageCounts();
                 }
-                alert(err.message || 'حدث خطأ أثناء نقل الكارت');
+                alert(err.message || 'حدث خطأ أثناء ترتيب الكارت');
             }
         });
 

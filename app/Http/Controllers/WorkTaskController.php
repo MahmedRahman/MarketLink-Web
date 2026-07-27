@@ -283,6 +283,54 @@ class WorkTaskController extends Controller
         return back()->with('success', $message);
     }
 
+    public function reorder(Request $request, WorkActivity $work)
+    {
+        $this->authorizeActivity($request, $work);
+
+        $validated = $request->validate([
+            'pipeline_stage' => 'required|in:writing,design,publish',
+            'task_ids' => 'required|array|min:1',
+            'task_ids.*' => 'integer',
+        ]);
+
+        $taskIds = array_values(array_unique(array_map('intval', $validated['task_ids'])));
+        $stage = $validated['pipeline_stage'];
+
+        $ownedIds = $work->tasks()
+            ->whereIn('id', $taskIds)
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        if (count($ownedIds) !== count($taskIds)) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => 'بعض المهام غير موجودة'], 422);
+            }
+
+            return back()->with('error', 'بعض المهام غير موجودة');
+        }
+
+        foreach ($taskIds as $index => $taskId) {
+            WorkTask::where('work_activity_id', $work->id)
+                ->where('id', $taskId)
+                ->update([
+                    'pipeline_stage' => $stage,
+                    'order' => $index + 1,
+                ]);
+        }
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'تم حفظ الترتيب',
+                'pipeline_stage' => $stage,
+                'task_ids' => $taskIds,
+            ]);
+        }
+
+        return back()->with('success', 'تم حفظ الترتيب');
+    }
+
     public function uploadFile(Request $request, WorkActivity $work, WorkTask $task)
     {
         $this->authorizeActivity($request, $work);
