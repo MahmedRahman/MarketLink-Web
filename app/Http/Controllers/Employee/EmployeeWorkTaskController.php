@@ -22,7 +22,7 @@ class EmployeeWorkTaskController extends Controller
             return redirect()->route('employee.hub.index');
         }
 
-        $myTasks = WorkTask::forEmployee($employee->id)
+        $myTasks = WorkTask::forEmployeeCurrentStage($employee->id)
             ->with('activity')
             ->get();
 
@@ -93,7 +93,7 @@ class EmployeeWorkTaskController extends Controller
 
         abort_unless((int) $work->organization_id === (int) $employee->organization_id, 403);
 
-        $myTasks = WorkTask::forEmployee($employee->id)
+        $myTasks = WorkTask::forEmployeeCurrentStage($employee->id)
             ->where('work_activity_id', $work->id)
             ->with(['assignedEmployee', 'contentWriter', 'designer'])
             ->orderBy('order')

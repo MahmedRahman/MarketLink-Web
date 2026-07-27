@@ -107,11 +107,52 @@ class WorkTask extends Model
         });
     }
 
+    /**
+     * مهام الموظف حسب مسؤول المرحلة الحالية فقط
+     * (كتابة → كاتب | تصميم → مصمم | نشر → المسؤول).
+     */
+    public function scopeForEmployeeCurrentStage(Builder $query, int $employeeId): Builder
+    {
+        return $query->where(function (Builder $q) use ($employeeId) {
+            $q->where(function (Builder $writing) use ($employeeId) {
+                $writing->where('pipeline_stage', 'writing')
+                    ->where(function (Builder $owner) use ($employeeId) {
+                        $owner->where('content_writer_id', $employeeId)
+                            ->orWhere(function (Builder $fallback) use ($employeeId) {
+                                $fallback->whereNull('content_writer_id')
+                                    ->where('assigned_to', $employeeId);
+                            });
+                    });
+            })->orWhere(function (Builder $design) use ($employeeId) {
+                $design->where('pipeline_stage', 'design')
+                    ->where(function (Builder $owner) use ($employeeId) {
+                        $owner->where('designer_id', $employeeId)
+                            ->orWhere(function (Builder $fallback) use ($employeeId) {
+                                $fallback->whereNull('designer_id')
+                                    ->where('assigned_to', $employeeId);
+                            });
+                    });
+            })->orWhere(function (Builder $publish) use ($employeeId) {
+                $publish->whereIn('pipeline_stage', ['ready_to_publish', 'published'])
+                    ->where('assigned_to', $employeeId);
+            });
+        });
+    }
+
+    public function stageOwnerId(?string $stage = null): ?int
+    {
+        $stage ??= $this->pipeline_stage;
+
+        return match ($stage) {
+            'design' => $this->designer_id ?? $this->assigned_to,
+            'ready_to_publish', 'published' => $this->assigned_to,
+            default => $this->content_writer_id ?? $this->assigned_to,
+        };
+    }
+
     public function isVisibleToEmployee(int $employeeId): bool
     {
-        return (int) $this->assigned_to === $employeeId
-            || (int) $this->content_writer_id === $employeeId
-            || (int) $this->designer_id === $employeeId;
+        return (int) $this->stageOwnerId() === (int) $employeeId;
     }
 
     public function getKindLabelAttribute(): string
