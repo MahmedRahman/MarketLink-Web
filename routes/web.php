@@ -249,6 +249,9 @@ Route::middleware('auth:employee')->prefix('employee')->name('employee.')->group
     Route::get('/activities/{work}', [\App\Http\Controllers\Employee\EmployeeWorkTaskController::class, 'showActivity'])->name('work.activity');
     Route::get('/work-tasks/{task}', [\App\Http\Controllers\Employee\EmployeeWorkTaskController::class, 'show'])->name('work.show');
     Route::patch('/work-tasks/{task}/status', [\App\Http\Controllers\Employee\EmployeeWorkTaskController::class, 'updateStatus'])->name('work.status');
+    Route::post('/work-tasks/{task}/files', [\App\Http\Controllers\Employee\EmployeeWorkTaskController::class, 'uploadFile'])->name('work.files.upload');
+    Route::get('/work-tasks/{task}/files/{file}/download', [\App\Http\Controllers\Employee\EmployeeWorkTaskController::class, 'downloadFile'])->name('work.files.download');
+    Route::delete('/work-tasks/{task}/files/{file}', [\App\Http\Controllers\Employee\EmployeeWorkTaskController::class, 'deleteFile'])->name('work.files.destroy');
 
     // مساحة العمل الكاملة للأكونت منجر (أدمن الحتة دي)
     Route::middleware('employee.work_hub')->prefix('hub')->name('hub.')->group(function () {

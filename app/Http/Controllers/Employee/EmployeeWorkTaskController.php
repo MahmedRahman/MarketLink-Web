@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\PlanTask;
 use App\Models\WorkActivity;
 use App\Models\WorkTask;
+use App\Models\WorkTaskFile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class EmployeeWorkTaskController extends Controller
 {
@@ -152,6 +154,8 @@ class EmployeeWorkTaskController extends Controller
         return view('employee.work.show', [
             'task' => $task,
             'statuses' => WorkTask::statuses(),
+            'designAssetKinds' => WorkTask::designAssetKinds(),
+            'suggestedAssetKind' => WorkTask::suggestedDesignAssetKind($task->content_type),
         ]);
     }
 
@@ -168,5 +172,102 @@ class EmployeeWorkTaskController extends Controller
         $task->update($validated);
 
         return redirect()->route('employee.work.show', $task)->with('success', 'تم تحديث حالة المهمة');
+    }
+
+    public function uploadFile(Request $request, WorkTask $task)
+    {
+        $employee = Auth::guard('employee')->user();
+        abort_unless($task->isVisibleToEmployee($employee->id), 403);
+
+        $validated = $request->validate([
+            'asset_kind' => 'required|in:image,video,pdf',
+            'file' => 'required|file|max:102400',
+            'description' => 'nullable|string|max:500',
+        ]);
+
+        $file = $request->file('file');
+        $ext = strtolower($file->getClientOriginalExtension());
+        $mime = (string) $file->getMimeType();
+
+        $allowed = match ($validated['asset_kind']) {
+            'image' => ['jpg', 'jpeg', 'png', 'gif', 'webp'],
+            'video' => ['mp4', 'mov', 'webm', 'm4v'],
+            'pdf' => ['pdf'],
+        };
+
+        if (! in_array($ext, $allowed, true)) {
+            return back()->with('error', 'امتداد الملف غير مناسب لنوع التصميم المختار');
+        }
+
+        $mimeOk = match ($validated['asset_kind']) {
+            'image' => str_starts_with($mime, 'image/'),
+            'video' => str_starts_with($mime, 'video/') || in_array($mime, ['application/octet-stream'], true),
+            'pdf' => in_array($mime, ['application/pdf', 'application/octet-stream'], true),
+        };
+        if (! $mimeOk) {
+            return back()->with('error', 'نوع الملف غير مدعوم');
+        }
+
+        $path = $file->store('work-tasks/'.$task->id, 'public');
+
+        WorkTaskFile::create([
+            'work_task_id' => $task->id,
+            'file_name' => $file->getClientOriginalName(),
+            'file_path' => $path,
+            'file_type' => $ext,
+            'asset_kind' => $validated['asset_kind'],
+            'file_size' => $file->getSize(),
+            'uploaded_by' => null,
+            'description' => $validated['description'] ?? null,
+        ]);
+
+        $kindLabel = WorkTask::designAssetKinds()[$validated['asset_kind']] ?? $validated['asset_kind'];
+        $task->logEvent(
+            'file_uploaded',
+            'تم رفع ملف تصميم ('.$kindLabel.'): '.$file->getClientOriginalName().' بواسطة '.$employee->name,
+            'file',
+            null,
+            $file->getClientOriginalName(),
+            ['asset_kind' => $validated['asset_kind'], 'employee_id' => $employee->id]
+        );
+
+        return redirect()
+            ->route('employee.work.show', $task)
+            ->with('success', 'تم رفع ملف التصميم');
+    }
+
+    public function downloadFile(WorkTask $task, WorkTaskFile $file)
+    {
+        $employee = Auth::guard('employee')->user();
+        abort_unless($task->isVisibleToEmployee($employee->id), 403);
+        abort_unless($file->work_task_id === $task->id, 404);
+        abort_unless(Storage::disk('public')->exists($file->file_path), 404);
+
+        return Storage::disk('public')->download($file->file_path, $file->file_name);
+    }
+
+    public function deleteFile(WorkTask $task, WorkTaskFile $file)
+    {
+        $employee = Auth::guard('employee')->user();
+        abort_unless($task->isVisibleToEmployee($employee->id), 403);
+        abort_unless($file->work_task_id === $task->id, 404);
+
+        if ($file->file_path && Storage::disk('public')->exists($file->file_path)) {
+            Storage::disk('public')->delete($file->file_path);
+        }
+        $file->delete();
+
+        $task->logEvent(
+            'file_deleted',
+            'تم حذف ملف تصميم: '.$file->file_name.' بواسطة '.$employee->name,
+            'file',
+            $file->file_name,
+            null,
+            ['employee_id' => $employee->id]
+        );
+
+        return redirect()
+            ->route('employee.work.show', $task)
+            ->with('success', 'تم حذف الملف');
     }
 }

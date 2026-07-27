@@ -200,32 +200,112 @@
     @endif
 
     {{-- ملفات التصميم --}}
-    @if(($task->files ?? collect())->isNotEmpty())
-        <section class="card rounded-2xl p-5">
-            <div class="flex items-center gap-2 mb-4">
+    <section class="card rounded-2xl p-5 space-y-4">
+        <div class="flex items-start justify-between gap-3 flex-wrap">
+            <div class="flex items-center gap-2">
                 <div class="w-9 h-9 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
-                    <span class="material-icons text-xl">attach_file</span>
+                    <span class="material-icons text-xl">cloud_upload</span>
                 </div>
-                <h3 class="font-bold text-gray-800">ملفات التصميم</h3>
-                <span class="px-2 py-0.5 rounded-lg bg-purple-50 text-purple-700 text-xs font-semibold">{{ $task->files->count() }}</span>
-            </div>
-            <div class="space-y-2">
-                @foreach($task->files as $file)
-                    <div class="flex items-center justify-between gap-3 rounded-xl border border-gray-100 bg-gray-50 px-3 py-2.5">
-                        <div class="min-w-0 flex items-center gap-2">
-                            <span class="material-icons text-gray-400 text-lg">
-                                {{ ($file->asset_kind ?? '') === 'video' ? 'movie' : (($file->asset_kind ?? '') === 'pdf' ? 'picture_as_pdf' : 'image') }}
-                            </span>
-                            <span class="text-sm text-gray-800 truncate">{{ $file->file_name }}</span>
-                        </div>
-                        @if($file->description)
-                            <span class="hidden sm:inline text-xs text-gray-400 truncate max-w-[140px]">{{ $file->description }}</span>
+                <div>
+                    <h3 class="font-bold text-gray-800">رفع التصميم</h3>
+                    <p class="text-xs text-gray-500 mt-0.5">
+                        ارفع صورة، فيديو، أو PDF
+                        @if($task->content_type_label)
+                            · الحالي: {{ $task->content_type_label }} → مقترح: {{ $designAssetKinds[$suggestedAssetKind] ?? $suggestedAssetKind }}
                         @endif
-                    </div>
-                @endforeach
+                    </p>
+                </div>
             </div>
-        </section>
-    @endif
+        </div>
+
+        <form method="POST" action="{{ route('employee.work.files.upload', $task) }}"
+              enctype="multipart/form-data" id="designUploadForm" class="space-y-3">
+            @csrf
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">نوع الملف</label>
+                    <select name="asset_kind" id="assetKindSelect"
+                            class="w-full px-3 py-2.5 rounded-xl border-2 border-gray-200 text-sm focus:border-purple-500 focus:outline-none">
+                        @foreach($designAssetKinds as $key => $label)
+                            <option value="{{ $key }}" @selected($suggestedAssetKind === $key)>{{ $label }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="sm:col-span-2">
+                    <label class="block text-xs font-medium text-gray-600 mb-1">وصف مختصر (اختياري)</label>
+                    <input type="text" name="description" maxlength="500" placeholder="مثلاً: نسخة نهائية للريلز"
+                           class="w-full px-3 py-2.5 rounded-xl border-2 border-gray-200 text-sm focus:border-purple-500 focus:outline-none">
+                </div>
+            </div>
+
+            <div id="designDropZone"
+                 class="relative rounded-2xl border-2 border-dashed border-purple-200 bg-purple-50/40 px-4 py-8 text-center transition-colors cursor-pointer hover:border-purple-400 hover:bg-purple-50">
+                <input type="file" name="file" id="designFileInput" required
+                       class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                       accept=".jpg,.jpeg,.png,.gif,.webp">
+                <span class="material-icons text-3xl text-purple-400 mb-2">upload_file</span>
+                <p class="text-sm font-medium text-gray-700" id="designDropHint">اسحب الملف هنا أو اضغط للاختيار</p>
+                <p class="text-xs text-gray-500 mt-1" id="designAcceptHint">صور: JPG, PNG, GIF, WEBP — حتى 100MB</p>
+                <p class="text-xs text-purple-700 mt-2 font-medium hidden" id="designFileName"></p>
+            </div>
+
+            <button type="submit" id="designUploadBtn"
+                    class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-purple-600 text-white text-sm font-semibold hover:bg-purple-700 inline-flex items-center justify-center gap-1.5">
+                <span class="material-icons text-base">cloud_upload</span>
+                رفع الملف
+            </button>
+        </form>
+
+        @if($task->files->count())
+            <div class="border-t border-gray-100 pt-4 space-y-3">
+                <p class="text-xs font-semibold text-gray-500">الملفات المرفوعة ({{ $task->files->count() }})</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    @foreach($task->files as $file)
+                        <div class="rounded-xl border border-gray-200 bg-gray-50 p-3 flex gap-3">
+                            <div class="w-16 h-16 rounded-lg bg-white border border-gray-200 flex items-center justify-center overflow-hidden shrink-0">
+                                @if($file->isImage())
+                                    <img src="{{ $file->file_url }}" alt="{{ $file->file_name }}" class="w-full h-full object-cover">
+                                @else
+                                    <span class="material-icons text-2xl text-gray-400">{{ $file->file_icon }}</span>
+                                @endif
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <p class="text-sm font-medium text-gray-800 truncate" title="{{ $file->file_name }}">{{ $file->file_name }}</p>
+                                <p class="text-[11px] text-gray-500 mt-0.5">
+                                    {{ $file->asset_kind_label }} · {{ $file->formatted_file_size }}
+                                    @if($file->description)
+                                        · {{ $file->description }}
+                                    @endif
+                                </p>
+                                <div class="flex items-center gap-2 mt-2 flex-wrap">
+                                    <a href="{{ route('employee.work.files.download', [$task, $file]) }}"
+                                       class="text-xs text-indigo-600 hover:underline inline-flex items-center gap-0.5">
+                                        <span class="material-icons text-sm">download</span>
+                                        تحميل
+                                    </a>
+                                    @if($file->isImage() || $file->isPdf())
+                                        <a href="{{ $file->file_url }}" target="_blank" rel="noopener"
+                                           class="text-xs text-gray-600 hover:underline inline-flex items-center gap-0.5">
+                                            <span class="material-icons text-sm">open_in_new</span>
+                                            عرض
+                                        </a>
+                                    @endif
+                                    <form method="POST" action="{{ route('employee.work.files.destroy', [$task, $file]) }}"
+                                          onsubmit="return confirm('حذف هذا الملف؟');" class="inline">
+                                        @csrf @method('DELETE')
+                                        <button type="submit" class="text-xs text-red-600 hover:underline inline-flex items-center gap-0.5">
+                                            <span class="material-icons text-sm">delete</span>
+                                            حذف
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        @endif
+    </section>
 
     {{-- روابط النشر --}}
     @if(!empty($task->publish_links) && is_array($task->publish_links))
@@ -291,4 +371,57 @@
         </form>
     </section>
 </div>
+@endsection
+
+@section('scripts')
+<script>
+    (function () {
+        const kindSelect = document.getElementById('assetKindSelect');
+        const fileInput = document.getElementById('designFileInput');
+        const acceptHint = document.getElementById('designAcceptHint');
+        const fileNameEl = document.getElementById('designFileName');
+        const form = document.getElementById('designUploadForm');
+        const btn = document.getElementById('designUploadBtn');
+
+        const kinds = {
+            image: {
+                accept: '.jpg,.jpeg,.png,.gif,.webp',
+                hint: 'صور: JPG, PNG, GIF, WEBP — حتى 100MB',
+            },
+            video: {
+                accept: '.mp4,.mov,.webm,.m4v',
+                hint: 'فيديو: MP4, MOV, WEBM — حتى 100MB',
+            },
+            pdf: {
+                accept: '.pdf',
+                hint: 'PDF فقط — حتى 100MB',
+            },
+        };
+
+        function syncKind() {
+            const meta = kinds[kindSelect?.value] || kinds.image;
+            if (fileInput) fileInput.setAttribute('accept', meta.accept);
+            if (acceptHint) acceptHint.textContent = meta.hint;
+        }
+
+        kindSelect?.addEventListener('change', syncKind);
+        syncKind();
+
+        fileInput?.addEventListener('change', function () {
+            if (!fileNameEl) return;
+            if (fileInput.files && fileInput.files[0]) {
+                fileNameEl.textContent = fileInput.files[0].name;
+                fileNameEl.classList.remove('hidden');
+            } else {
+                fileNameEl.classList.add('hidden');
+            }
+        });
+
+        form?.addEventListener('submit', function () {
+            if (!btn) return;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="material-icons text-base animate-pulse">hourglass_top</span> جاري الرفع...';
+        });
+    })();
+</script>
 @endsection
