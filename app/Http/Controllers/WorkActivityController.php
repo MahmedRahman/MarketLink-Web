@@ -206,6 +206,30 @@ class WorkActivityController extends Controller
         return redirect()->route('work.index')->with('success', 'تم حذف النشاط');
     }
 
+    public function enableShare(Request $request, WorkActivity $work)
+    {
+        $this->authorizeActivity($request, $work);
+        $work->ensureShareToken();
+
+        return back()->with('success', 'تم تفعيل الرابط العام — انسخه وشاركه');
+    }
+
+    public function regenerateShare(Request $request, WorkActivity $work)
+    {
+        $this->authorizeActivity($request, $work);
+        $work->regenerateShareToken();
+
+        return back()->with('success', 'تم تجديد الرابط العام — الرابط القديم لم يعد يعمل');
+    }
+
+    public function disableShare(Request $request, WorkActivity $work)
+    {
+        $this->authorizeActivity($request, $work);
+        $work->disableShareToken();
+
+        return back()->with('success', 'تم إيقاف الرابط العام');
+    }
+
     private function authorizeActivity(Request $request, WorkActivity $work): void
     {
         abort_unless($work->organization_id === $request->user()->organization_id, 403);

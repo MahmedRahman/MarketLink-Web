@@ -60,7 +60,12 @@
                 </div>
             </div>
 
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 flex-wrap">
+                <button type="button" onclick="document.getElementById('shareModal').classList.remove('hidden')"
+                        class="px-3 py-2 rounded-xl bg-indigo-50 text-indigo-700 hover:bg-indigo-100 text-sm inline-flex items-center gap-1" title="رابط عام">
+                    <span class="material-icons text-lg">share</span>
+                    رابط عام
+                </button>
                 {{-- تغيير الحالة سريعًا --}}
                 <form method="POST" action="{{ route('work.update', $activity) }}" class="flex items-center gap-2">
                     @csrf @method('PUT')
@@ -267,6 +272,61 @@
                 </section>
             @endforeach
         </div>
+    </div>
+</div>
+
+{{-- مودال الرابط العام --}}
+<div id="shareModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
+    <div class="bg-white rounded-2xl w-full max-w-lg p-6 shadow-2xl">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+                <span class="material-icons text-indigo-600">share</span>
+                رابط عام للمحتوى
+            </h3>
+            <button type="button" onclick="document.getElementById('shareModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
+                <span class="material-icons">close</span>
+            </button>
+        </div>
+        <p class="text-sm text-gray-500 mb-4">
+            أي شخص معه الرابط يقدر يشوف المحتوى بدون تسجيل دخول (عرض فقط).
+        </p>
+
+        @if($activity->share_token)
+            <label class="block text-xs font-medium text-gray-600 mb-1">الرابط</label>
+            <div class="flex gap-2 mb-4">
+                <input type="text" id="publicShareUrl" readonly
+                       value="{{ $activity->public_share_url }}"
+                       class="flex-1 px-3 py-2.5 rounded-xl border-2 border-indigo-100 bg-indigo-50/40 text-sm focus:outline-none" dir="ltr">
+                <button type="button" onclick="copyShareUrl()"
+                        class="px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 shrink-0">
+                    نسخ
+                </button>
+            </div>
+            <p id="copyShareHint" class="text-xs text-teal-600 mb-4 hidden">تم نسخ الرابط</p>
+            <div class="flex flex-wrap gap-2">
+                <a href="{{ $activity->public_share_url }}" target="_blank"
+                   class="px-4 py-2 rounded-xl bg-gray-100 text-gray-700 text-sm hover:bg-gray-200 inline-flex items-center gap-1">
+                    <span class="material-icons text-base">open_in_new</span>
+                    فتح
+                </a>
+                <form method="POST" action="{{ route('work.share.regenerate', $activity) }}" onsubmit="return confirm('تجديد الرابط؟ الرابط القديم هيتوقف.')">
+                    @csrf
+                    <button type="submit" class="px-4 py-2 rounded-xl bg-amber-50 text-amber-700 text-sm hover:bg-amber-100">تجديد الرابط</button>
+                </form>
+                <form method="POST" action="{{ route('work.share.disable', $activity) }}" onsubmit="return confirm('إيقاف الرابط العام؟')">
+                    @csrf
+                    <button type="submit" class="px-4 py-2 rounded-xl bg-red-50 text-red-600 text-sm hover:bg-red-100">إيقاف</button>
+                </form>
+            </div>
+        @else
+            <form method="POST" action="{{ route('work.share.enable', $activity) }}">
+                @csrf
+                <button type="submit" class="btn-primary text-white w-full py-2.5 rounded-xl font-medium inline-flex items-center justify-center gap-2">
+                    <span class="material-icons text-base">link</span>
+                    تفعيل رابط عام
+                </button>
+            </form>
+        @endif
     </div>
 </div>
 
@@ -666,6 +726,21 @@
 
     function closeParseBulkModal() {
         document.getElementById('parseBulkModal').classList.add('hidden');
+    }
+
+    function copyShareUrl() {
+        const input = document.getElementById('publicShareUrl');
+        if (!input) return;
+        navigator.clipboard.writeText(input.value).then(function () {
+            const hint = document.getElementById('copyShareHint');
+            if (hint) {
+                hint.classList.remove('hidden');
+                setTimeout(function () { hint.classList.add('hidden'); }, 2000);
+            }
+        }).catch(function () {
+            input.select();
+            document.execCommand('copy');
+        });
     }
 
     function openAddTaskModal() {

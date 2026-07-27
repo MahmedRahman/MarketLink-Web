@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 class WorkActivity extends Model
 {
@@ -16,6 +17,7 @@ class WorkActivity extends Model
         'description',
         'event_date',
         'status',
+        'share_token',
     ];
 
     protected $casts = [
@@ -37,6 +39,40 @@ class WorkActivity extends Model
     public function tasks(): HasMany
     {
         return $this->hasMany(WorkTask::class)->orderBy('order')->orderBy('id');
+    }
+
+    public function ensureShareToken(): string
+    {
+        if (! $this->share_token) {
+            $this->forceFill([
+                'share_token' => Str::random(40),
+            ])->save();
+        }
+
+        return $this->share_token;
+    }
+
+    public function regenerateShareToken(): string
+    {
+        $this->forceFill([
+            'share_token' => Str::random(40),
+        ])->save();
+
+        return $this->share_token;
+    }
+
+    public function disableShareToken(): void
+    {
+        $this->forceFill(['share_token' => null])->save();
+    }
+
+    public function getPublicShareUrlAttribute(): ?string
+    {
+        if (! $this->share_token) {
+            return null;
+        }
+
+        return route('public.work.show', $this->share_token);
     }
 
     public function getTypeLabelAttribute(): string

@@ -38,6 +38,10 @@ Route::get('/content-creation', [ContentCreationController::class, 'index'])->na
 Route::post('/content-creation/generate', [ContentCreationController::class, 'generateContent'])->name('content-creation.generate');
 Route::post('/content-creation/upload-reference-image', [ContentCreationController::class, 'uploadReferenceImage'])->name('content-creation.upload-image');
 
+// رابط عام لمساحة العمل — بدون تسجيل دخول
+Route::get('/share/w/{token}', [\App\Http\Controllers\PublicWorkShareController::class, 'show'])->name('public.work.show');
+Route::get('/share/w/{token}/t/{task}', [\App\Http\Controllers\PublicWorkShareController::class, 'showTask'])->name('public.work.task');
+
 Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware(['auth', \App\Http\Middleware\CheckTrialStatus::class])->group(function () {
@@ -123,6 +127,9 @@ Route::middleware(['auth', \App\Http\Middleware\CheckTrialStatus::class])->group
            Route::get('work/{work}', [\App\Http\Controllers\WorkActivityController::class, 'show'])->name('work.show');
            Route::put('work/{work}', [\App\Http\Controllers\WorkActivityController::class, 'update'])->name('work.update');
            Route::delete('work/{work}', [\App\Http\Controllers\WorkActivityController::class, 'destroy'])->name('work.destroy');
+           Route::post('work/{work}/share/enable', [\App\Http\Controllers\WorkActivityController::class, 'enableShare'])->name('work.share.enable');
+           Route::post('work/{work}/share/regenerate', [\App\Http\Controllers\WorkActivityController::class, 'regenerateShare'])->name('work.share.regenerate');
+           Route::post('work/{work}/share/disable', [\App\Http\Controllers\WorkActivityController::class, 'disableShare'])->name('work.share.disable');
            Route::post('work/{work}/tasks', [\App\Http\Controllers\WorkTaskController::class, 'store'])->name('work.tasks.store');
            Route::post('work/{work}/tasks/parse-bulk', [\App\Http\Controllers\WorkTaskController::class, 'parseBulk'])->name('work.tasks.parse-bulk');
            Route::get('work/{work}/tasks/{task}', [\App\Http\Controllers\WorkTaskController::class, 'show'])->name('work.tasks.show');
