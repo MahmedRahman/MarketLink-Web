@@ -70,6 +70,25 @@
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
         }
+
+        .role-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.6rem;
+            border-radius: 9999px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .role-blue { background: #dbeafe; color: #1d4ed8; }
+        .role-green { background: #dcfce7; color: #15803d; }
+        .role-purple { background: #f3e8ff; color: #7e22ce; }
+        .role-red { background: #fee2e2; color: #b91c1c; }
+        .role-yellow { background: #fef9c3; color: #a16207; }
+        .role-indigo { background: #e0e7ff; color: #4338ca; }
+        .role-pink { background: #fce7f3; color: #be185d; }
+        .role-teal { background: #ccfbf1; color: #0f766e; }
+        .role-gray { background: #f3f4f6; color: #4b5563; }
     </style>
 </head>
 <body class="bg-gray-50">

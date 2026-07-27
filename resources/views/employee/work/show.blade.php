@@ -7,9 +7,9 @@
 @section('content')
 <div class="max-w-2xl mx-auto space-y-6">
 
-    <a href="{{ route('employee.tasks.index') }}" class="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-purple-600">
+    <a href="{{ $task->activity ? route('employee.work.activity', $task->activity) : route('employee.tasks.index') }}" class="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-purple-600">
         <span class="material-icons text-lg">arrow_forward</span>
-        رجوع للمهام
+        رجوع للنشاط
     </a>
 
     <div class="card p-6">

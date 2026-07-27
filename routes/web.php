@@ -246,6 +246,7 @@ Route::middleware('auth:employee')->prefix('employee')->name('employee.')->group
 
     // Academy Work Hub Tasks (مساحة العمل - مهامي)
     Route::get('/my-tasks', [\App\Http\Controllers\Employee\EmployeeWorkTaskController::class, 'index'])->name('tasks.index');
+    Route::get('/activities/{work}', [\App\Http\Controllers\Employee\EmployeeWorkTaskController::class, 'showActivity'])->name('work.activity');
     Route::get('/work-tasks/{task}', [\App\Http\Controllers\Employee\EmployeeWorkTaskController::class, 'show'])->name('work.show');
     Route::patch('/work-tasks/{task}/status', [\App\Http\Controllers\Employee\EmployeeWorkTaskController::class, 'updateStatus'])->name('work.status');
 
