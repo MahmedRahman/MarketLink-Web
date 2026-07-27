@@ -450,14 +450,49 @@ class WorkTaskController extends Controller
         $this->authorizeTask($work, $task);
         abort_unless($file->work_task_id === $task->id, 404);
 
+        $fileName = $file->file_name;
+        $nasDeleted = app(\App\Services\AcademyNasStorage::class)->deleteQuietly($file);
+
         if ($file->file_path && Storage::disk('public')->exists($file->file_path)) {
             Storage::disk('public')->delete($file->file_path);
+            $this->cleanupEmptyLocalDir($file->file_path);
         }
         $file->delete();
 
+        $task->logEvent(
+            'file_deleted',
+            'تم حذف ملف تصميم: '.$fileName.($nasDeleted ? ' من الموقع وسيرفر الملفات' : ''),
+            'file',
+            $fileName,
+            null
+        );
+
+        $message = 'تم حذف الملف';
+        if ($nasDeleted) {
+            $message .= ' من الموقع وسيرفر الملفات';
+        }
+
         return redirect()
             ->route(WorkHub::routeName('tasks.show'), [$work, $task])
-            ->with('success', 'تم حذف الملف');
+            ->with('success', $message);
+    }
+
+    protected function cleanupEmptyLocalDir(string $filePath): void
+    {
+        $dir = dirname($filePath);
+        if ($dir === '.' || $dir === '' || ! str_contains($dir, 'work-tasks/')) {
+            return;
+        }
+
+        $absolute = Storage::disk('public')->path($dir);
+        if (! is_dir($absolute)) {
+            return;
+        }
+
+        $remaining = array_values(array_filter(scandir($absolute) ?: [], fn ($n) => $n !== '.' && $n !== '..'));
+        if ($remaining === []) {
+            @rmdir($absolute);
+        }
     }
 
     public function downloadFile(Request $request, WorkActivity $work, WorkTask $task, WorkTaskFile $file)

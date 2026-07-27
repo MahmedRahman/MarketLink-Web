@@ -468,22 +468,40 @@ class EmployeeWorkTaskController extends Controller
         abort_unless($task->isVisibleToEmployee($employee->id), 403);
         abort_unless($file->work_task_id === $task->id, 404);
 
+        $fileName = $file->file_name;
+        $nasDeleted = app(\App\Services\AcademyNasStorage::class)->deleteQuietly($file);
+
         if ($file->file_path && Storage::disk('public')->exists($file->file_path)) {
             Storage::disk('public')->delete($file->file_path);
+            $dir = dirname($file->file_path);
+            if ($dir !== '.' && str_contains($dir, 'work-tasks/')) {
+                $absolute = Storage::disk('public')->path($dir);
+                if (is_dir($absolute)) {
+                    $remaining = array_values(array_filter(scandir($absolute) ?: [], fn ($n) => $n !== '.' && $n !== '..'));
+                    if ($remaining === []) {
+                        @rmdir($absolute);
+                    }
+                }
+            }
         }
         $file->delete();
 
         $task->logEvent(
             'file_deleted',
-            'تم حذف ملف تصميم: '.$file->file_name.' بواسطة '.$employee->name,
+            'تم حذف ملف تصميم: '.$fileName.' بواسطة '.$employee->name.($nasDeleted ? ' من الموقع وسيرفر الملفات' : ''),
             'file',
-            $file->file_name,
+            $fileName,
             null,
-            ['employee_id' => $employee->id]
+            ['employee_id' => $employee->id, 'nas_deleted' => $nasDeleted]
         );
+
+        $message = 'تم حذف الملف';
+        if ($nasDeleted) {
+            $message .= ' من الموقع وسيرفر الملفات';
+        }
 
         return redirect()
             ->route('employee.work.show', $task)
-            ->with('success', 'تم حذف الملف');
+            ->with('success', $message);
     }
 }

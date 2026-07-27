@@ -234,4 +234,57 @@ class AcademyNasStorage
             return false;
         }
     }
+
+    /**
+     * يحذف الملف من NAS إن وُجد مسار nas_path، ويمسح الفولدر لو فاضي.
+     */
+    public function deleteQuietly(WorkTaskFile $workFile): bool
+    {
+        if (! $this->isEnabled() || ! filled($workFile->nas_path)) {
+            return false;
+        }
+
+        try {
+            $base = rtrim((string) config('academy_nas.base_path'), '/');
+            $remotePath = $base.'/'.ltrim((string) $workFile->nas_path, '/');
+            $sftp = $this->connect();
+
+            try {
+                if ($sftp->file_exists($remotePath)) {
+                    if (! $sftp->delete($remotePath)) {
+                        throw new RuntimeException('فشل حذف الملف من NAS: '.$remotePath);
+                    }
+                }
+
+                // لو كان جوه فولدر باتش وبقى فاضي، امسحه
+                $parentDir = dirname($remotePath);
+                if ($workFile->nas_folder && $sftp->is_dir($parentDir)) {
+                    $entries = array_values(array_filter(
+                        $sftp->nlist($parentDir) ?: [],
+                        fn ($name) => $name !== '.' && $name !== '..'
+                    ));
+                    if ($entries === []) {
+                        $sftp->rmdir($parentDir);
+                    }
+                }
+
+                Log::info('Academy NAS file deleted', [
+                    'file_id' => $workFile->id,
+                    'nas_path' => $workFile->nas_path,
+                ]);
+
+                return true;
+            } finally {
+                $sftp->disconnect();
+            }
+        } catch (Throwable $e) {
+            Log::warning('Academy NAS delete failed', [
+                'file_id' => $workFile->id,
+                'nas_path' => $workFile->nas_path,
+                'message' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
+    }
 }
