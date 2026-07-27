@@ -204,7 +204,6 @@
             </div>
         </div>
 
-        @php $designers = $designers ?? collect(); @endphp
         <div class="space-y-4">
             @foreach($pipelineStages as $stage)
                 <section class="card rounded-2xl overflow-hidden">
@@ -219,9 +218,9 @@
                                 <h4 class="font-bold text-gray-800">{{ $stage['label'] }}</h4>
                                 <p class="text-xs text-gray-500">
                                     @if($stage['key'] === 'writing')
-                                        عند كاتب المحتوى (مثل نيرة)
+                                        عند كاتب المحتوى
                                     @elseif($stage['key'] === 'design')
-                                        عند فريق التصميم — يمكن تغيير المصمم
+                                        عند فريق التصميم
                                     @else
                                         جاهز / قيد النشر
                                     @endif
@@ -235,88 +234,35 @@
                         </span>
                     </div>
 
-                    <div class="p-3">
-                        @forelse($stage['tasks'] as $task)
-                            <div class="rounded-xl border border-gray-200 bg-white p-3 mb-2 last:mb-0 {{ $task->is_overdue ? 'border-r-4 border-r-red-400' : '' }}">
-                                <div class="flex flex-col sm:flex-row sm:items-start gap-3">
-                                    <a href="{{ route('work.tasks.show', [$activity, $task]) }}" class="flex-1 min-w-0 hover:opacity-90">
-                                        <div class="flex items-center gap-1.5 flex-wrap mb-1.5">
+                    <div class="p-4">
+                        @if($stage['tasks']->count())
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                @foreach($stage['tasks'] as $task)
+                                    <a href="{{ route('work.tasks.show', [$activity, $task]) }}"
+                                       class="group rounded-2xl border border-gray-200 bg-white p-4 min-h-[110px] flex flex-col justify-between hover:border-primary/50 hover:shadow-md transition-all {{ $task->is_overdue ? 'border-r-4 border-r-red-400' : '' }}">
+                                        <div>
                                             @if($task->content_type_label)
-                                                <span class="px-1.5 py-0.5 text-[10px] rounded-md bg-indigo-50 text-indigo-700">{{ $task->content_type_label }}</span>
+                                                <span class="inline-block px-2 py-0.5 text-[10px] rounded-md bg-indigo-50 text-indigo-700 mb-2">{{ $task->content_type_label }}</span>
                                             @endif
-                                            <span class="px-1.5 py-0.5 text-[10px] rounded-md bg-gray-100 text-gray-600">{{ $task->status_label }}</span>
+                                            <h5 class="text-base font-bold text-gray-900 leading-snug line-clamp-3 group-hover:text-primary">
+                                                {{ $task->title }}
+                                            </h5>
                                         </div>
-                                        <p class="font-semibold text-sm text-gray-800">{{ $task->title }}</p>
-                                        @if($task->caption)
-                                            <p class="text-xs text-sky-700 mt-1 line-clamp-2"><span class="font-semibold">Caption:</span> {{ $task->caption }}</p>
-                                        @endif
-                                        @if($task->tov)
-                                            <p class="text-xs text-violet-700 mt-1 line-clamp-1"><span class="font-semibold">TOV:</span> {{ $task->tov }}</p>
-                                        @endif
-                                        <div class="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-[11px] text-gray-500">
-                                            @if($task->contentWriter)
-                                                <span class="flex items-center gap-0.5"><span class="material-icons text-sm">edit_note</span>{{ $task->contentWriter->name }}</span>
-                                            @endif
-                                            @if($task->designer)
-                                                <span class="flex items-center gap-0.5"><span class="material-icons text-sm">palette</span>{{ $task->designer->name }}</span>
-                                            @endif
-                                            @if($task->publish_date)
-                                                <span class="flex items-center gap-0.5"><span class="material-icons text-sm">campaign</span>{{ $task->publish_date->format('Y/m/d') }}</span>
-                                            @endif
+                                        <div class="mt-3 flex items-center justify-between text-[11px] text-gray-400">
+                                            <span>{{ $task->owner_for_current_stage->name ?? '—' }}</span>
+                                            <span class="inline-flex items-center gap-0.5 text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                                                تفاصيل
+                                                <span class="material-icons text-sm">chevron_left</span>
+                                            </span>
                                         </div>
                                     </a>
-
-                                    <div class="flex flex-col gap-2 shrink-0 sm:items-end">
-                                        @if($stage['key'] === 'design')
-                                            <form method="POST" action="{{ route('work.tasks.move-stage', [$activity, $task]) }}" class="flex items-center gap-1">
-                                                @csrf
-                                                <input type="hidden" name="pipeline_stage" value="design">
-                                                <select name="designer_id" onchange="this.form.submit()"
-                                                        class="px-2 py-1.5 rounded-lg border border-purple-200 text-xs focus:border-purple-400 focus:outline-none max-w-[150px]">
-                                                    <option value="">المصمم...</option>
-                                                    @foreach($designers as $designer)
-                                                        <option value="{{ $designer->id }}" @selected($task->designer_id === $designer->id)>{{ $designer->name }}</option>
-                                                    @endforeach
-                                                </select>
-                                            </form>
-                                        @endif
-
-                                        <div class="flex items-center gap-1 flex-wrap justify-end">
-                                            @if($prev = \App\Models\WorkTask::previousPipelineStage($task->pipeline_stage))
-                                                <form method="POST" action="{{ route('work.tasks.move-stage', [$activity, $task]) }}">
-                                                    @csrf
-                                                    <input type="hidden" name="pipeline_stage" value="{{ $prev }}">
-                                                    <button type="submit" class="px-2.5 py-1.5 rounded-lg text-[11px] bg-gray-100 text-gray-600 hover:bg-gray-200">
-                                                        ← رجوع
-                                                    </button>
-                                                </form>
-                                            @endif
-                                            @if($next = \App\Models\WorkTask::nextPipelineStage($task->pipeline_stage))
-                                                <form method="POST" action="{{ route('work.tasks.move-stage', [$activity, $task]) }}">
-                                                    @csrf
-                                                    <input type="hidden" name="pipeline_stage" value="{{ $next }}">
-                                                    @if($next === 'design' && $task->designer_id)
-                                                        <input type="hidden" name="designer_id" value="{{ $task->designer_id }}">
-                                                    @endif
-                                                    <button type="submit" class="px-2.5 py-1.5 rounded-lg text-[11px] font-medium
-                                                        {{ $next === 'design' ? 'bg-purple-100 text-purple-700 hover:bg-purple-200' : 'bg-teal-100 text-teal-700 hover:bg-teal-200' }}">
-                                                        إلى {{ \App\Models\WorkTask::pipelineStages()[$next] }} →
-                                                    </button>
-                                                </form>
-                                            @endif
-                                            <a href="{{ route('work.tasks.show', [$activity, $task]) }}"
-                                               class="px-2.5 py-1.5 rounded-lg text-[11px] bg-indigo-50 text-indigo-700 hover:bg-indigo-100">
-                                                تفاصيل
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
+                                @endforeach
                             </div>
-                        @empty
+                        @else
                             <div class="text-center py-8 text-sm text-gray-400">
                                 لا يوجد محتوى في هذه المرحلة
                             </div>
-                        @endforelse
+                        @endif
                     </div>
                 </section>
             @endforeach
