@@ -451,48 +451,20 @@ class WorkTaskController extends Controller
         abort_unless($file->work_task_id === $task->id, 404);
 
         $fileName = $file->file_name;
-        $nasDeleted = app(\App\Services\AcademyNasStorage::class)->deleteQuietly($file);
-
-        if ($file->file_path && Storage::disk('public')->exists($file->file_path)) {
-            Storage::disk('public')->delete($file->file_path);
-            $this->cleanupEmptyLocalDir($file->file_path);
-        }
-        $file->delete();
+        $result = app(\App\Services\DesignFileArchiver::class)->archiveFile($file, true);
 
         $task->logEvent(
             'file_deleted',
-            'تم حذف ملف تصميم: '.$fileName.($nasDeleted ? ' من الموقع وسيرفر الملفات' : ''),
+            'تم أرشفة ملف تصميم إلى deleted: '.$fileName,
             'file',
             $fileName,
-            null
+            null,
+            ['local' => $result['local'], 'nas' => $result['nas']]
         );
-
-        $message = 'تم حذف الملف';
-        if ($nasDeleted) {
-            $message .= ' من الموقع وسيرفر الملفات';
-        }
 
         return redirect()
             ->route(WorkHub::routeName('tasks.show'), [$work, $task])
-            ->with('success', $message);
-    }
-
-    protected function cleanupEmptyLocalDir(string $filePath): void
-    {
-        $dir = dirname($filePath);
-        if ($dir === '.' || $dir === '' || ! str_contains($dir, 'work-tasks/')) {
-            return;
-        }
-
-        $absolute = Storage::disk('public')->path($dir);
-        if (! is_dir($absolute)) {
-            return;
-        }
-
-        $remaining = array_values(array_filter(scandir($absolute) ?: [], fn ($n) => $n !== '.' && $n !== '..'));
-        if ($remaining === []) {
-            @rmdir($absolute);
-        }
+            ->with('success', 'تم نقل الملف لفولدر deleted على الموقع وسيرفر الملفات');
     }
 
     public function downloadFile(Request $request, WorkActivity $work, WorkTask $task, WorkTaskFile $file)
@@ -631,9 +603,11 @@ class WorkTaskController extends Controller
         $this->authorizeActivity($request, $work);
         $this->authorizeTask($work, $task);
 
-        $task->delete();
+        $filesCount = app(\App\Services\DesignFileArchiver::class)->archiveTask($task);
 
-        return redirect()->route(WorkHub::routeName('show'), $work)->with('success', 'تم حذف المهمة');
+        return redirect()
+            ->route(WorkHub::routeName('show'), $work)
+            ->with('success', 'تم حذف التاسك — الملفات اتنقلت لفولدر deleted ('.$filesCount.' ملف)');
     }
 
     private function callDeepSeekSplitTasks(string $bulkText, string $activityTitle): array

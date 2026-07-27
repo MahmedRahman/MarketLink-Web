@@ -217,9 +217,11 @@ class WorkActivityController extends Controller
     {
         $this->authorizeActivity($request, $work);
 
-        $work->delete();
+        $result = app(\App\Services\DesignFileArchiver::class)->archiveActivity($work);
 
-        return redirect()->route(WorkHub::routeName('index'))->with('success', 'تم حذف النشاط');
+        return redirect()
+            ->route(WorkHub::routeName('index'))
+            ->with('success', 'تم حذف النشاط و'.$result['tasks'].' تاسك — الملفات اتنقلت لفولدر deleted ('.$result['files'].' ملف)');
     }
 
     public function enableShare(Request $request, WorkActivity $work)

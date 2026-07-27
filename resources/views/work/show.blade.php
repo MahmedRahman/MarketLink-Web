@@ -83,7 +83,7 @@
                         class="p-2.5 rounded-xl bg-gray-100 text-gray-600 hover:bg-gray-200" title="تعديل">
                     <span class="material-icons text-lg">edit</span>
                 </button>
-                <button onclick="confirmDelete('{{ work_route('destroy', $activity, false) }}', 'حذف النشاط', 'سيتم حذف النشاط وكل مهامه.')"
+                <button onclick="confirmDelete('{{ work_route('destroy', $activity, false) }}', 'حذف النشاط', 'هيتنقلوا كل ملفات التصميم لفولدر deleted على السيرفر، ويتشال النشاط وكل التاسكات.')"
                         class="p-2.5 rounded-xl bg-red-50 text-red-600 hover:bg-red-100" title="حذف">
                     <span class="material-icons text-lg">delete</span>
                 </button>

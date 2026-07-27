@@ -339,7 +339,7 @@
                                                 </a>
                                             @endif
                                             <form method="POST" action="{{ route('employee.work.files.destroy', [$task, $file]) }}"
-                                                  onsubmit="return confirm('حذف هذا الملف؟');" class="inline">
+                                                  onsubmit="return confirm('نقل الملف لفولدر deleted بدل الحذف النهائي؟');" class="inline">
                                                 @csrf @method('DELETE')
                                                 <button type="submit" class="text-xs text-red-600 hover:underline inline-flex items-center gap-0.5">
                                                     <span class="material-icons text-sm">delete</span>
