@@ -100,11 +100,21 @@
                         
                         <div class="pt-4 border-t border-gray-200">
                             <div class="flex flex-col space-y-2">
+                                @if($employee->status === 'active')
+                                    <form method="POST" action="{{ route('employees.login-as', $employee) }}"
+                                          onsubmit="return confirm('الدخول كموظف: {{ $employee->name }}؟');">
+                                        @csrf
+                                        <button type="submit" class="w-full bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-xl flex items-center justify-center transition-colors">
+                                            <i class="fas fa-sign-in-alt text-sm ml-2"></i>
+                                            دخول كموظف
+                                        </button>
+                                    </form>
+                                @endif
                                 <a href="{{ route('employees.edit', $employee) }}" class="w-full btn-primary text-white px-4 py-2 rounded-xl flex items-center justify-center hover:no-underline">
                                     <i class="fas fa-edit text-sm ml-2"></i>
                                     تعديل الموظف
                                 </a>
-                                <button onclick="confirmDelete('{{ route('employees.destroy', $employee) }}', 'تأكيد حذف الموظف', 'هل أنت متأكد من حذف الموظف {{ $employee->name }}؟')" class="w-full bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl flex items-center justify-center transition-colors">
+                                <button onclick="confirmDelete('{{ route('employees.destroy', $employee, false) }}', 'تأكيد حذف الموظف', 'هل أنت متأكد من حذف الموظف {{ $employee->name }}؟')" class="w-full bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl flex items-center justify-center transition-colors">
                                     <i class="fas fa-trash text-sm ml-2"></i>
                                     حذف الموظف
                                 </button>

@@ -234,13 +234,22 @@
                                 </td>
                                 <td>
                                     <div class="flex items-center justify-center space-x-2 rtl:space-x-reverse">
+                                        @if($employee->status === 'active')
+                                            <form method="POST" action="{{ route('employees.login-as', $employee) }}" class="inline"
+                                                  onsubmit="return confirm('الدخول كموظف: {{ $employee->name }}؟');">
+                                                @csrf
+                                                <button type="submit" class="text-green-600 hover:text-green-800 p-1" title="دخول كموظف">
+                                                    <i class="fas fa-sign-in-alt text-sm"></i>
+                                                </button>
+                                            </form>
+                                        @endif
                                         <a href="{{ route('employees.show', $employee) }}" class="text-blue-600 hover:text-blue-900 p-1" title="عرض التفاصيل">
                                             <i class="fas fa-eye text-sm"></i>
                                         </a>
                                         <a href="{{ route('employees.edit', $employee) }}" class="text-yellow-600 hover:text-yellow-900 p-1" title="تعديل">
                                             <i class="fas fa-edit text-sm"></i>
                                         </a>
-                                        <button onclick="confirmDelete('{{ route('employees.destroy', $employee) }}', 'تأكيد حذف الموظف', 'هل أنت متأكد من حذف الموظف {{ $employee->name }}؟')" class="text-red-600 hover:text-red-900 p-1" title="حذف">
+                                        <button onclick="confirmDelete('{{ route('employees.destroy', $employee, false) }}', 'تأكيد حذف الموظف', 'هل أنت متأكد من حذف الموظف {{ $employee->name }}؟')" class="text-red-600 hover:text-red-900 p-1" title="حذف">
                                             <i class="fas fa-trash text-sm"></i>
                                         </button>
                                     </div>

@@ -103,6 +103,7 @@ Route::middleware(['auth', \App\Http\Middleware\CheckTrialStatus::class])->group
            
            // Employees Routes
            Route::resource('employees', EmployeeController::class);
+           Route::post('employees/{employee}/login-as', [EmployeeController::class, 'loginAs'])->name('employees.login-as');
            
            // Monthly Plans Routes
            Route::resource('monthly-plans', \App\Http\Controllers\MonthlyPlanController::class);
@@ -219,6 +220,7 @@ Route::middleware('guest:employee')->prefix('employee')->name('employee.')->grou
 Route::middleware('auth:employee')->prefix('employee')->name('employee.')->group(function () {
     Route::get('/dashboard', [EmployeeDashboardController::class, 'index'])->name('dashboard');
     Route::post('/logout', [EmployeeAuthController::class, 'destroy'])->name('logout');
+    Route::post('/stop-login-as', [EmployeeController::class, 'stopLoginAs'])->name('stop-login-as');
     
     // Profile Routes
     Route::get('/profile', [EmployeeProfileController::class, 'edit'])->name('profile.edit');

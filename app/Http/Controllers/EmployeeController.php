@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Employee;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 class EmployeeController extends Controller
@@ -148,5 +149,51 @@ class EmployeeController extends Controller
 
         return redirect()->route('employees.index')
             ->with('success', 'تم حذف الموظف بنجاح');
+    }
+
+    /**
+     * الدخول كموظف من لوحة الإدارة.
+     */
+    public function loginAs(Request $request, Employee $employee)
+    {
+        if ($employee->organization_id !== $request->user()->organization_id) {
+            abort(403);
+        }
+
+        if ($employee->status !== 'active') {
+            return back()->with('error', 'لا يمكن الدخول إلا كموظف نشط');
+        }
+
+        session()->put('impersonating_employee', true);
+        session()->put('admin_user_id', $request->user()->id);
+
+        Auth::guard('employee')->login($employee);
+
+        return redirect()
+            ->route('employee.dashboard')
+            ->with('success', 'تم الدخول كموظف: '.$employee->name);
+    }
+
+    /**
+     * الرجوع من وضع الموظف لحساب الإدارة.
+     */
+    public function stopLoginAs(Request $request)
+    {
+        if (! session('impersonating_employee')) {
+            return redirect()->route('employee.dashboard');
+        }
+
+        $adminId = session('admin_user_id');
+        session()->forget(['impersonating_employee', 'admin_user_id']);
+
+        Auth::guard('employee')->logout();
+
+        if ($adminId && ! Auth::guard('web')->check()) {
+            Auth::guard('web')->loginUsingId($adminId);
+        }
+
+        return redirect()
+            ->route('employees.index')
+            ->with('success', 'تم الرجوع لحساب الإدارة');
     }
 }

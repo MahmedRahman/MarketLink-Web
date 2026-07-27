@@ -136,6 +136,19 @@
     
     <!-- Main Content -->
     <div class="mr-64 min-h-screen">
+        @if(session('impersonating_employee'))
+            <div class="bg-amber-500 text-white px-6 py-3 flex flex-wrap items-center justify-between gap-3">
+                <p class="text-sm font-medium">
+                    أنت داخل حساب الموظف: {{ Auth::guard('employee')->user()->name }}
+                </p>
+                <form method="POST" action="{{ route('employee.stop-login-as') }}">
+                    @csrf
+                    <button type="submit" class="px-4 py-1.5 rounded-lg bg-white text-amber-700 text-sm font-semibold hover:bg-amber-50">
+                        الرجوع للإدارة
+                    </button>
+                </form>
+            </div>
+        @endif
         <!-- Header -->
         <header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-40">
             <div class="px-6 py-4">
