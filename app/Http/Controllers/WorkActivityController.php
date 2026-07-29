@@ -22,6 +22,7 @@ class WorkActivityController extends Controller
             ->withCount([
                 'tasks',
                 'tasks as done_tasks_count' => fn ($q) => $q->where('status', 'done'),
+                'tasks as ready_to_publish_count' => fn ($q) => $q->where('pipeline_stage', 'ready_to_publish'),
             ])
             ->with('tasks');
 

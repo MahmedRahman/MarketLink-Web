@@ -48,13 +48,19 @@
         @endif
 
         <div class="mt-2">
-            <div class="flex items-center justify-between text-xs text-gray-500 mb-1">
+            <div class="flex items-center justify-between text-xs text-gray-500 mb-1 gap-2">
                 <span>{{ $activity->done_tasks_count }} / {{ $activity->tasks_count }} مهمة</span>
                 <span>{{ $activity->progress }}%</span>
             </div>
             <div class="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
                 <div class="h-full bg-gradient-to-l from-primary to-secondary rounded-full" style="width: {{ $activity->progress }}%"></div>
             </div>
+            @if(($activity->ready_to_publish_count ?? 0) > 0)
+                <p class="mt-2.5 inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-teal-50 text-teal-800 text-[11px] font-bold border border-teal-100">
+                    <span class="material-icons text-sm">schedule_send</span>
+                    {{ $activity->ready_to_publish_count }} جاهز للنشر
+                </p>
+            @endif
         </div>
     </a>
 
