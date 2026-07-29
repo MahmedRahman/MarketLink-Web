@@ -154,6 +154,10 @@ Route::middleware(['auth', \App\Http\Middleware\CheckTrialStatus::class])->group
            // Academy Work Hub (مساحة العمل)
            Route::get('work', [\App\Http\Controllers\WorkActivityController::class, 'index'])->name('work.index');
            Route::post('work', [\App\Http\Controllers\WorkActivityController::class, 'store'])->name('work.store');
+           Route::post('work/folders', [\App\Http\Controllers\WorkFolderController::class, 'store'])->name('work.folders.store');
+           Route::put('work/folders/{folder}', [\App\Http\Controllers\WorkFolderController::class, 'update'])->name('work.folders.update');
+           Route::delete('work/folders/{folder}', [\App\Http\Controllers\WorkFolderController::class, 'destroy'])->name('work.folders.destroy');
+           Route::post('work/{work}/move-folder', [\App\Http\Controllers\WorkFolderController::class, 'moveActivity'])->name('work.move-folder');
            Route::get('work/{work}', [\App\Http\Controllers\WorkActivityController::class, 'show'])->name('work.show');
            Route::put('work/{work}', [\App\Http\Controllers\WorkActivityController::class, 'update'])->name('work.update');
            Route::delete('work/{work}', [\App\Http\Controllers\WorkActivityController::class, 'destroy'])->name('work.destroy');
@@ -288,6 +292,10 @@ Route::middleware('auth:employee')->prefix('employee')->name('employee.')->group
     Route::middleware('employee.work_hub')->prefix('hub')->name('hub.')->group(function () {
         Route::get('/', [\App\Http\Controllers\WorkActivityController::class, 'index'])->name('index');
         Route::post('/', [\App\Http\Controllers\WorkActivityController::class, 'store'])->name('store');
+        Route::post('/folders', [\App\Http\Controllers\WorkFolderController::class, 'store'])->name('folders.store');
+        Route::put('/folders/{folder}', [\App\Http\Controllers\WorkFolderController::class, 'update'])->name('folders.update');
+        Route::delete('/folders/{folder}', [\App\Http\Controllers\WorkFolderController::class, 'destroy'])->name('folders.destroy');
+        Route::post('/{work}/move-folder', [\App\Http\Controllers\WorkFolderController::class, 'moveActivity'])->name('move-folder');
         Route::get('/{work}', [\App\Http\Controllers\WorkActivityController::class, 'show'])->name('show');
         Route::put('/{work}', [\App\Http\Controllers\WorkActivityController::class, 'update'])->name('update');
         Route::delete('/{work}', [\App\Http\Controllers\WorkActivityController::class, 'destroy'])->name('destroy');

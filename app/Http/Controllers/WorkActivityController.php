@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Employee;
 use App\Models\User;
 use App\Models\WorkActivity;
+use App\Models\WorkFolder;
 use App\Models\WorkTask;
 use App\Models\WorkIdea;
 use App\Support\WorkHub;
@@ -36,16 +37,21 @@ class WorkActivityController extends Controller
             ->latest()
             ->get();
 
-        // خيار "حسب الشهر" مطلوب للإدمن فقط.
-        // صفحة الموظف تعتمد على `resources/views/employee/work/index.blade.php`
-        // ولسنا محتاجين نجمع الأنشطة هناك.
-        $viewMode = 'title';
-        if (! WorkHub::isEmployeeHub($request)) {
-            $viewMode = $request->input('view', 'title');
-            if (! in_array($viewMode, ['title', 'month'], true)) {
-                $viewMode = 'title';
-            }
+        $viewMode = $request->input('view', 'title');
+        if (! in_array($viewMode, ['title', 'month', 'folder'], true)) {
+            $viewMode = 'title';
         }
+
+        // "حسب الشهر" متاح من لوحة الويب فقط (مش من employee hub).
+        if (WorkHub::isEmployeeHub($request) && $viewMode === 'month') {
+            $viewMode = 'title';
+        }
+
+        $folders = WorkFolder::query()
+            ->where('organization_id', $organizationId)
+            ->orderBy('order')
+            ->orderBy('title')
+            ->get();
 
         $activitiesByMonth = collect();
         if ($viewMode === 'month') {
@@ -68,6 +74,26 @@ class WorkActivityController extends Controller
                 ->values();
         }
 
+        $activitiesByFolder = collect();
+        if ($viewMode === 'folder') {
+            $grouped = $activities->groupBy(fn (WorkActivity $a) => $a->folder_id ?: 0);
+
+            $activitiesByFolder = $folders->map(function (WorkFolder $folder) use ($grouped) {
+                return [
+                    'folder' => $folder,
+                    'activities' => ($grouped->get($folder->id) ?? collect())->values(),
+                ];
+            })->values();
+
+            $unfiled = ($grouped->get(0) ?? collect())->values();
+            if ($unfiled->isNotEmpty()) {
+                $activitiesByFolder->push([
+                    'folder' => null,
+                    'activities' => $unfiled,
+                ]);
+            }
+        }
+
         // متابعة عامة عبر كل الأنشطة
         $allTasks = WorkTask::whereHas('activity', fn ($q) => $q->where('organization_id', $organizationId))
             ->with(['activity', 'assignedEmployee'])
@@ -83,12 +109,16 @@ class WorkActivityController extends Controller
         return view('work.index', [
             'activities' => $activities,
             'activitiesByMonth' => $activitiesByMonth,
+            'activitiesByFolder' => $activitiesByFolder,
+            'folders' => $folders,
             'viewMode' => $viewMode,
             'follow' => $follow,
             'types' => WorkActivity::types(),
             'statuses' => WorkActivity::statuses(),
             'filterType' => $request->type,
             'filterStatus' => $request->status,
+            'canManageFolders' => WorkHub::canManageFolders($request),
+            'showMonthView' => ! WorkHub::isEmployeeHub($request),
         ]);
     }
 
@@ -103,6 +133,7 @@ class WorkActivityController extends Controller
             'description' => 'nullable|string',
             'with_template' => 'nullable|boolean',
             'idea_id' => 'nullable|exists:work_ideas,id',
+            'folder_id' => 'nullable|exists:work_folders,id',
         ]);
 
         $withTemplate = (bool) ($validated['with_template'] ?? false);
@@ -110,6 +141,14 @@ class WorkActivityController extends Controller
 
         $ideaId = $validated['idea_id'] ?? null;
         unset($validated['idea_id']);
+
+        $folderId = $validated['folder_id'] ?? null;
+        unset($validated['folder_id']);
+        if ($folderId) {
+            $folder = WorkFolder::query()->findOrFail($folderId);
+            abort_unless((int) $folder->organization_id === (int) $organizationId, 403);
+            $validated['folder_id'] = (int) $folderId;
+        }
 
         $actor = WorkHub::actor($request);
         $validated['organization_id'] = $organizationId;

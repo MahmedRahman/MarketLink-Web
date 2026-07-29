@@ -72,4 +72,18 @@ class WorkHub
     {
         abort_unless(self::organizationId($request) === $organizationId, 403);
     }
+
+    /**
+     * إدارة فولدرات مساحة العمل: أدمن ويب أو أكونت منجر.
+     */
+    public static function canManageFolders(?Request $request = null): bool
+    {
+        $actor = self::actor($request ?? request());
+
+        if ($actor instanceof User && $actor->is_admin) {
+            return true;
+        }
+
+        return $actor instanceof Employee && $actor->isWorkHubAdmin();
+    }
 }

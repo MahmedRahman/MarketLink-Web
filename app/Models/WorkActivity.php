@@ -11,6 +11,7 @@ class WorkActivity extends Model
 {
     protected $fillable = [
         'organization_id',
+        'folder_id',
         'created_by',
         'title',
         'type',
@@ -29,6 +30,11 @@ class WorkActivity extends Model
     public function organization(): BelongsTo
     {
         return $this->belongsTo(Organization::class);
+    }
+
+    public function folder(): BelongsTo
+    {
+        return $this->belongsTo(WorkFolder::class, 'folder_id');
     }
 
     public function creator(): BelongsTo

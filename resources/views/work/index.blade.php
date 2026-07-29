@@ -57,22 +57,29 @@
     {{-- شريط الأدوات --}}
     <div class="card rounded-2xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div class="flex flex-col sm:flex-row sm:items-center gap-3 flex-wrap">
-            <div class="inline-flex rounded-xl border-2 border-gray-200 p-1 bg-gray-50">
+            <div class="inline-flex rounded-xl border-2 border-gray-200 p-1 bg-gray-50 flex-wrap">
                 <a href="{{ work_route('index', array_filter(['type' => $filterType, 'status' => $filterStatus, 'view' => 'title'])) }}"
                    class="px-3 py-1.5 rounded-lg text-sm font-semibold inline-flex items-center gap-1 transition-colors {{ ($viewMode ?? 'title') === 'title' ? 'bg-white text-primary shadow-sm' : 'text-gray-600 hover:text-gray-800' }}">
                     <span class="material-icons text-base">title</span>
                     حسب العنوان
                 </a>
-                <a href="{{ work_route('index', array_filter(['type' => $filterType, 'status' => $filterStatus, 'view' => 'month'])) }}"
-                   class="px-3 py-1.5 rounded-lg text-sm font-semibold inline-flex items-center gap-1 transition-colors {{ ($viewMode ?? 'title') === 'month' ? 'bg-white text-primary shadow-sm' : 'text-gray-600 hover:text-gray-800' }}">
-                    <span class="material-icons text-base">calendar_month</span>
-                    حسب الشهر
+                @if($showMonthView ?? true)
+                    <a href="{{ work_route('index', array_filter(['type' => $filterType, 'status' => $filterStatus, 'view' => 'month'])) }}"
+                       class="px-3 py-1.5 rounded-lg text-sm font-semibold inline-flex items-center gap-1 transition-colors {{ ($viewMode ?? 'title') === 'month' ? 'bg-white text-primary shadow-sm' : 'text-gray-600 hover:text-gray-800' }}">
+                        <span class="material-icons text-base">calendar_month</span>
+                        حسب الشهر
+                    </a>
+                @endif
+                <a href="{{ work_route('index', array_filter(['type' => $filterType, 'status' => $filterStatus, 'view' => 'folder'])) }}"
+                   class="px-3 py-1.5 rounded-lg text-sm font-semibold inline-flex items-center gap-1 transition-colors {{ ($viewMode ?? 'title') === 'folder' ? 'bg-white text-primary shadow-sm' : 'text-gray-600 hover:text-gray-800' }}">
+                    <span class="material-icons text-base">folder</span>
+                    حسب الفولدر
                 </a>
             </div>
 
             <form method="GET" class="flex flex-wrap items-center gap-2">
-                @if(($viewMode ?? 'title') === 'month')
-                    <input type="hidden" name="view" value="month">
+                @if(in_array(($viewMode ?? 'title'), ['month', 'folder'], true))
+                    <input type="hidden" name="view" value="{{ $viewMode }}">
                 @endif
                 <select name="type" onchange="this.form.submit()" class="px-3 py-2 rounded-xl border-2 border-gray-200 text-sm focus:border-primary focus:outline-none">
                     <option value="">كل الأنواع</option>
@@ -87,24 +94,98 @@
                     @endforeach
                 </select>
                 @if($filterType || $filterStatus)
-                    <a href="{{ work_route('index', ($viewMode ?? 'title') === 'month' ? ['view' => 'month'] : []) }}" class="text-sm text-gray-500 hover:text-gray-700 px-2">مسح</a>
+                    <a href="{{ work_route('index', in_array(($viewMode ?? 'title'), ['month', 'folder'], true) ? ['view' => $viewMode] : []) }}" class="text-sm text-gray-500 hover:text-gray-700 px-2">مسح</a>
                 @endif
             </form>
         </div>
 
-        <button onclick="document.getElementById('newActivityModal').classList.remove('hidden')"
-                class="btn-primary text-white px-5 py-2.5 rounded-xl font-medium flex items-center justify-center gap-2">
-            <span class="material-icons text-lg">add</span>
-            نشاط جديد
-        </button>
+        <div class="flex flex-wrap items-center gap-2">
+            @if($canManageFolders ?? false)
+                <button type="button" onclick="document.getElementById('newFolderModal').classList.remove('hidden')"
+                        class="px-4 py-2.5 rounded-xl font-medium bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 inline-flex items-center gap-2">
+                    <span class="material-icons text-lg">create_new_folder</span>
+                    فولدر جديد
+                </button>
+            @endif
+            <button onclick="document.getElementById('newActivityModal').classList.remove('hidden')"
+                    class="btn-primary text-white px-5 py-2.5 rounded-xl font-medium flex items-center justify-center gap-2">
+                <span class="material-icons text-lg">add</span>
+                نشاط جديد
+            </button>
+        </div>
     </div>
 
     {{-- كروت الأنشطة --}}
-    @if($activities->isEmpty())
+    @if($activities->isEmpty() && ($viewMode ?? 'title') !== 'folder')
         <div class="card rounded-2xl p-12 text-center">
             <span class="material-icons text-6xl text-gray-300">dashboard_customize</span>
             <h3 class="text-lg font-bold text-gray-700 mt-4">لا توجد أنشطة بعد</h3>
             <p class="text-gray-500 text-sm mt-1">ابدأ بإضافة أول نشاط للأكاديمية (محاضرة لايف، راوند، محتوى...)</p>
+        </div>
+    @elseif(($viewMode ?? 'title') === 'folder')
+        <div class="space-y-6">
+            @forelse($activitiesByFolder as $folderGroup)
+                @php
+                    $folder = $folderGroup['folder'];
+                    $folderActivities = $folderGroup['activities'];
+                @endphp
+                <section class="card rounded-2xl overflow-hidden" @if($folder) id="folder-{{ $folder->id }}" @endif>
+                    <div class="px-5 py-4 bg-gradient-to-l {{ $folder ? 'from-amber-50 to-white border-b border-amber-100' : 'from-slate-50 to-white border-b border-gray-100' }} flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            <div class="w-10 h-10 rounded-xl {{ $folder ? 'bg-amber-600' : 'bg-slate-500' }} text-white flex items-center justify-center shrink-0">
+                                <span class="material-icons">{{ $folder ? 'folder' : 'folder_off' }}</span>
+                            </div>
+                            <div class="min-w-0">
+                                <h3 class="font-bold text-gray-800 text-lg leading-tight">{{ $folder?->title ?? 'بدون فولدر' }}</h3>
+                                <p class="text-xs text-gray-500 mt-0.5">
+                                    @if($folder?->description)
+                                        {{ $folder->description }}
+                                    @else
+                                        {{ $folder ? 'مجموعة أنشطة' : 'أنشطة غير مضافة لأي فولدر' }}
+                                    @endif
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="shrink-0 text-xs font-bold {{ $folder ? 'text-amber-800 bg-amber-100' : 'text-slate-700 bg-slate-100' }} px-2.5 py-1 rounded-lg">
+                                {{ $folderActivities->count() }} نشاط
+                            </span>
+                            @if($folder && ($canManageFolders ?? false))
+                                <button type="button"
+                                        class="text-xs font-medium text-gray-600 hover:text-gray-900 px-2.5 py-1 rounded-lg bg-white border border-gray-200"
+                                        onclick="openEditFolderModal({{ $folder->id }}, @js($folder->title), @js($folder->description))">
+                                    تعديل
+                                </button>
+                                <form method="POST" action="{{ work_route('folders.destroy', $folder) }}"
+                                      onsubmit="return confirm('حذف الفولدر؟ الأنشطة هترجع بدون فولدر.')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="text-xs font-medium text-red-600 hover:text-red-800 px-2.5 py-1 rounded-lg bg-red-50 border border-red-100">
+                                        حذف
+                                    </button>
+                                </form>
+                            @endif
+                        </div>
+                    </div>
+                    <div class="p-5">
+                        @if($folderActivities->isEmpty())
+                            <p class="text-sm text-gray-400 text-center py-6">لا توجد أنشطة في هذا الفولدر</p>
+                        @else
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                                @foreach($folderActivities as $activity)
+                                    @include('work.partials.activity-card', ['activity' => $activity])
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
+                </section>
+            @empty
+                <div class="card rounded-2xl p-12 text-center">
+                    <span class="material-icons text-6xl text-gray-300">folder</span>
+                    <h3 class="text-lg font-bold text-gray-700 mt-4">لا توجد فولدرات بعد</h3>
+                    <p class="text-gray-500 text-sm mt-1">أنشئ فولدر كبير لتجميع أكتر من نشاط مع بعض</p>
+                </div>
+            @endforelse
         </div>
     @elseif(($viewMode ?? 'title') === 'month')
         <div class="space-y-6">
@@ -142,6 +223,70 @@
         </div>
     @endif
 </div>
+
+</div>
+
+@if($canManageFolders ?? false)
+{{-- مودال فولدر جديد --}}
+<div id="newFolderModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
+    <div class="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl">
+        <div class="flex items-center justify-between mb-5">
+            <h3 class="text-lg font-bold text-gray-800">فولدر جديد</h3>
+            <button type="button" onclick="document.getElementById('newFolderModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
+                <span class="material-icons">close</span>
+            </button>
+        </div>
+        <form method="POST" action="{{ work_route('folders.store') }}" class="space-y-4">
+            @csrf
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">اسم الفولدر</label>
+                <input type="text" name="title" required placeholder="مثال: حملة يوليو"
+                       class="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 focus:border-primary focus:outline-none">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">وصف (اختياري)</label>
+                <textarea name="description" rows="2" class="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 focus:border-primary focus:outline-none"></textarea>
+            </div>
+            <div class="flex gap-3 pt-2">
+                <button type="submit" class="btn-primary text-white px-5 py-2.5 rounded-xl font-medium flex-1">إنشاء</button>
+                <button type="button" onclick="document.getElementById('newFolderModal').classList.add('hidden')"
+                        class="px-5 py-2.5 rounded-xl font-medium bg-gray-100 text-gray-700 hover:bg-gray-200">إلغاء</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{{-- مودال تعديل فولدر --}}
+<div id="editFolderModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
+    <div class="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl">
+        <div class="flex items-center justify-between mb-5">
+            <h3 class="text-lg font-bold text-gray-800">تعديل الفولدر</h3>
+            <button type="button" onclick="document.getElementById('editFolderModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
+                <span class="material-icons">close</span>
+            </button>
+        </div>
+        <form method="POST" id="editFolderForm" action="#" class="space-y-4">
+            @csrf
+            @method('PUT')
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">اسم الفولدر</label>
+                <input type="text" name="title" id="editFolderTitle" required
+                       class="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 focus:border-primary focus:outline-none">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">وصف (اختياري)</label>
+                <textarea name="description" id="editFolderDescription" rows="2"
+                          class="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 focus:border-primary focus:outline-none"></textarea>
+            </div>
+            <div class="flex gap-3 pt-2">
+                <button type="submit" class="btn-primary text-white px-5 py-2.5 rounded-xl font-medium flex-1">حفظ</button>
+                <button type="button" onclick="document.getElementById('editFolderModal').classList.add('hidden')"
+                        class="px-5 py-2.5 rounded-xl font-medium bg-gray-100 text-gray-700 hover:bg-gray-200">إلغاء</button>
+            </div>
+        </form>
+    </div>
+</div>
+@endif
 
 {{-- مودال نشاط جديد --}}
 <div id="newActivityModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
@@ -204,6 +349,17 @@
                           class="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 focus:border-primary focus:outline-none"></textarea>
                 <p class="text-[11px] text-gray-400 mt-1.5">تاريخ النشاط بيتسجّل تلقائيًا بتاريخ الإنشاء</p>
             </div>
+            @if(($folders ?? collect())->isNotEmpty())
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">الفولدر (اختياري)</label>
+                    <select name="folder_id" class="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 focus:border-primary focus:outline-none text-sm">
+                        <option value="">بدون فولدر</option>
+                        @foreach($folders as $folderOption)
+                            <option value="{{ $folderOption->id }}">{{ $folderOption->title }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            @endif
             {{-- قالب تاسكات المحاضرة القياسية (من دليل تنظيم ملفات المحاضرة) --}}
             <div id="templateOption" class="hidden bg-teal-50 border border-teal-200 rounded-xl p-3">
                 <label class="flex items-start gap-2 cursor-pointer">
@@ -227,6 +383,16 @@
 </div>
 
 <script>
+    function openEditFolderModal(id, title, description) {
+        const modal = document.getElementById('editFolderModal');
+        const form = document.getElementById('editFolderForm');
+        if (!modal || !form) return;
+        form.action = @json(rtrim(work_route('folders.store', [], false), '/')) + '/' + id;
+        document.getElementById('editFolderTitle').value = title || '';
+        document.getElementById('editFolderDescription').value = description || '';
+        modal.classList.remove('hidden');
+    }
+
     function toggleTemplateOption() {
         const selected = document.querySelector('input[name="type"]:checked');
         const box = document.getElementById('templateOption');
