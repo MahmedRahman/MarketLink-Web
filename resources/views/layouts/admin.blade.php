@@ -75,6 +75,12 @@
                         <span class="material-icons ml-3">dashboard_customize</span>
                         مساحة العمل
                     </a>
+
+                    <a href="{{ route('ideas.index') }}" class="flex items-center px-4 py-3 rounded-lg hover:bg-gray-800 transition-colors {{ request()->routeIs('ideas.*') ? 'bg-gray-800' : '' }}">
+                        <span class="material-icons ml-3">lightbulb</span>
+                        الأفكار المقترحة
+                    </a>
+
                     <a href="{{ route('employees.index') }}" class="flex items-center px-4 py-3 rounded-lg hover:bg-gray-800 transition-colors {{ request()->routeIs('employees.*') ? 'bg-gray-800' : '' }}">
                         <span class="material-icons ml-3">badge</span>
                         الموظفين
