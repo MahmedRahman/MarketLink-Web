@@ -12,6 +12,36 @@
 </button>
 @endsection
 
+@php
+    $reviewData = [];
+    foreach ($items as $itemIndex => $item) {
+        $task = $item['task'];
+        $files = ($item['type'] ?? 'single') === 'carousel'
+            ? $item['files']
+            : collect([$item['file']]);
+
+        $reviewData[(string) $itemIndex] = [
+            'title' => $task->title,
+            'typeLabel' => $task->content_type_label,
+            'isCarousel' => ($item['type'] ?? 'single') === 'carousel',
+            'caption' => $task->caption,
+            'tov' => $task->tov,
+            'idea' => $task->idea,
+            'platforms' => $task->platform_labels ?? [],
+            'publishDate' => $task->publish_date?->format('Y/m/d'),
+            'taskUrl' => route('public.work.task', [$shareToken, $task]),
+            'slides' => $files->map(function ($file) use ($shareToken, $task) {
+                return [
+                    'url' => route('public.work.file', [$shareToken, $task, $file]),
+                    'download' => route('public.work.file', [$shareToken, $task, $file, 'download' => 1]),
+                    'name' => $file->file_name,
+                    'kind' => $file->isVideo() ? 'video' : 'image',
+                ];
+            })->values()->all(),
+        ];
+    }
+@endphp
+
 @push('head')
 <style>
     .carousel-strip {
@@ -35,44 +65,81 @@
     @media (min-width: 768px) {
         .carousel-strip-item { width: min(28%, 12rem); }
     }
-    .carousel-lightbox {
+    .review-modal {
         position: fixed;
         inset: 0;
         z-index: 80;
-        background: rgba(15, 23, 42, 0.92);
+        background: rgba(15, 23, 42, 0.88);
         display: none;
-        flex-direction: column;
+        align-items: stretch;
+        justify-content: center;
+        padding: 0.75rem;
     }
-    .carousel-lightbox.is-open { display: flex; }
-    .carousel-lightbox-track {
+    .review-modal.is-open { display: flex; }
+    .review-shell {
+        width: min(1100px, 100%);
+        max-height: calc(100vh - 1.5rem);
+        margin: auto;
+        background: #fff;
+        border-radius: 1.5rem;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 30px 80px rgba(0,0,0,.35);
+    }
+    .review-body {
+        display: grid;
+        grid-template-columns: 1fr;
+        min-height: 0;
+        flex: 1;
+        overflow: auto;
+    }
+    @media (min-width: 900px) {
+        .review-body {
+            grid-template-columns: 1.15fr 0.85fr;
+            overflow: hidden;
+        }
+        .review-media, .review-content {
+            overflow: auto;
+            max-height: calc(100vh - 5.5rem);
+        }
+    }
+    .review-media-track {
         display: flex;
         gap: 0.75rem;
         overflow-x: auto;
         scroll-snap-type: x mandatory;
         -webkit-overflow-scrolling: touch;
         padding: 1rem;
-        flex: 1;
         align-items: center;
+        min-height: 280px;
+        background:
+            radial-gradient(600px 280px at 20% 0%, rgba(13,148,136,.18), transparent 55%),
+            linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
     }
-    .carousel-lightbox-slide {
+    .review-slide {
         scroll-snap-align: center;
         flex: 0 0 auto;
-        height: min(78vh, 860px);
-        max-width: min(86vw, 520px);
+        max-width: min(88vw, 420px);
+        max-height: min(62vh, 640px);
         display: flex;
         align-items: center;
         justify-content: center;
     }
-    .carousel-lightbox-slide img,
-    .carousel-lightbox-slide video {
-        max-height: 100%;
+    .review-slide.is-single {
+        width: 100%;
+        max-width: none;
+    }
+    .review-slide img,
+    .review-slide video {
+        max-height: min(62vh, 640px);
         max-width: 100%;
         width: auto;
         height: auto;
         object-fit: contain;
         border-radius: 1rem;
-        background: #0f172a;
-        box-shadow: 0 20px 50px rgba(0,0,0,.35);
+        background: #020617;
+        box-shadow: 0 18px 40px rgba(0,0,0,.35);
     }
 </style>
 @endpush
@@ -100,7 +167,7 @@
                 معرض تصميم الحملة
             </p>
             <h1 class="text-2xl md:text-4xl font-extrabold leading-tight tracking-tight">{{ $activity->title }}</h1>
-            <p class="text-sm md:text-base text-slate-300 mt-2">كل صور وفيديوهات التصميم في مكان واحد</p>
+            <p class="text-sm md:text-base text-slate-300 mt-2">اضغط أي تصميم لمراجعة الصورة والمحتوى مع بعض</p>
         </div>
     </section>
 
@@ -120,23 +187,11 @@
                     @endphp
 
                     @if(($item['type'] ?? 'single') === 'carousel')
-                        @php
-                            $files = $item['files'];
-                            $slides = $files->map(function ($file) use ($shareToken, $task) {
-                                return [
-                                    'url' => route('public.work.file', [$shareToken, $task, $file]),
-                                    'download' => route('public.work.file', [$shareToken, $task, $file, 'download' => 1]),
-                                    'name' => $file->file_name,
-                                    'kind' => $file->isVideo() ? 'video' : 'image',
-                                ];
-                            })->values();
-                        @endphp
+                        @php $files = $item['files']; @endphp
                         <article class="file-tile col-span-2 md:col-span-3 rounded-2xl overflow-hidden border border-slate-200 bg-white flex flex-col">
                             <button type="button"
                                     class="text-start w-full p-3 pb-2"
-                                    data-carousel-open="{{ $itemIndex }}"
-                                    data-carousel-slides='@json($slides)'
-                                    data-carousel-title="{{ $task->title }}">
+                                    data-review-open="{{ $itemIndex }}">
                                 <div class="carousel-strip" dir="ltr">
                                     @foreach($files as $file)
                                         @php $fileUrl = route('public.work.file', [$shareToken, $task, $file]); @endphp
@@ -157,9 +212,10 @@
                                 </div>
                             </button>
                             <div class="px-3 pb-3 space-y-2">
-                                <a href="{{ $taskUrl }}" class="block text-sm font-bold text-slate-800 leading-snug line-clamp-2 hover:text-teal-700">
+                                <button type="button" data-review-open="{{ $itemIndex }}"
+                                        class="block w-full text-start text-sm font-bold text-slate-800 leading-snug line-clamp-2 hover:text-teal-700">
                                     {{ $task->title }}
-                                </a>
+                                </button>
                                 <div class="flex items-center justify-between gap-2">
                                     <span class="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-orange-50 text-orange-700 inline-flex items-center gap-1">
                                         <span class="material-icons text-xs">view_carousel</span>
@@ -167,11 +223,9 @@
                                     </span>
                                     <button type="button"
                                             class="inline-flex items-center gap-0.5 text-[11px] font-semibold text-teal-700 hover:text-teal-900"
-                                            data-carousel-open="{{ $itemIndex }}"
-                                            data-carousel-slides='@json($slides)'
-                                            data-carousel-title="{{ $task->title }}">
-                                        <span class="material-icons text-sm">open_in_full</span>
-                                        عرض الكل
+                                            data-review-open="{{ $itemIndex }}">
+                                        <span class="material-icons text-sm">rate_review</span>
+                                        مراجعة
                                     </button>
                                 </div>
                             </div>
@@ -183,27 +237,27 @@
                             $downloadUrl = route('public.work.file', [$shareToken, $task, $file, 'download' => 1]);
                         @endphp
                         <article class="file-tile rounded-2xl overflow-hidden border border-slate-200 bg-white flex flex-col">
-                            @if($file->isImage())
-                                <a href="{{ $fileUrl }}" target="_blank" class="block aspect-square bg-slate-100 relative group">
+                            <button type="button" data-review-open="{{ $itemIndex }}"
+                                    class="block aspect-square bg-slate-100 relative group text-start w-full">
+                                @if($file->isImage())
                                     <img src="{{ $fileUrl }}" alt="{{ $file->file_name }}"
                                          class="w-full h-full object-cover"
                                          loading="lazy">
                                     <span class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                                        <span class="opacity-0 group-hover:opacity-100 material-icons text-white text-3xl drop-shadow">zoom_in</span>
+                                        <span class="opacity-0 group-hover:opacity-100 material-icons text-white text-3xl drop-shadow">rate_review</span>
                                     </span>
-                                </a>
-                            @else
-                                <a href="{{ $fileUrl }}" target="_blank" class="block aspect-square bg-slate-900 relative">
+                                @else
                                     <video src="{{ $fileUrl }}" class="w-full h-full object-cover" muted playsinline preload="metadata"></video>
                                     <span class="absolute inset-0 flex items-center justify-center bg-black/25">
                                         <span class="material-icons text-white text-4xl">play_circle</span>
                                     </span>
-                                </a>
-                            @endif
+                                @endif
+                            </button>
                             <div class="p-3 space-y-2">
-                                <a href="{{ $taskUrl }}" class="block text-sm font-bold text-slate-800 leading-snug line-clamp-2 hover:text-teal-700">
+                                <button type="button" data-review-open="{{ $itemIndex }}"
+                                        class="block w-full text-start text-sm font-bold text-slate-800 leading-snug line-clamp-2 hover:text-teal-700">
                                     {{ $task->title }}
-                                </a>
+                                </button>
                                 <div class="flex items-center justify-between gap-2">
                                     @if($task->content_type_label)
                                         <span class="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-teal-50 text-teal-700">{{ $task->content_type_label }}</span>
@@ -211,7 +265,8 @@
                                         <span class="text-[10px] text-slate-400">{{ $file->asset_kind_label }}</span>
                                     @endif
                                     <a href="{{ $downloadUrl }}"
-                                       class="inline-flex items-center gap-0.5 text-[11px] font-semibold text-slate-500 hover:text-slate-800">
+                                       class="inline-flex items-center gap-0.5 text-[11px] font-semibold text-slate-500 hover:text-slate-800"
+                                       onclick="event.stopPropagation()">
                                         <span class="material-icons text-sm">download</span>
                                         تحميل
                                     </a>
@@ -225,49 +280,135 @@
     @endif
 </div>
 
-{{-- Lightbox: كل شرائح الكروسيل جنب بعض --}}
-<div id="carouselLightbox" class="carousel-lightbox" aria-hidden="true">
-    <div class="flex items-center justify-between gap-3 px-4 py-3 text-white border-b border-white/10">
-        <div class="min-w-0">
-            <p id="carouselLightboxTitle" class="text-sm font-bold truncate"></p>
-            <p id="carouselLightboxMeta" class="text-[11px] text-slate-300 mt-0.5"></p>
+{{-- مراجعة: تصميم + محتوى النشر --}}
+<div id="reviewModal" class="review-modal" aria-hidden="true">
+    <div class="review-shell" role="dialog" aria-modal="true" aria-labelledby="reviewTitle">
+        <div class="flex items-center justify-between gap-3 px-4 py-3 border-b border-slate-200 bg-white">
+            <div class="min-w-0">
+                <p id="reviewTitle" class="text-sm md:text-base font-extrabold text-slate-900 truncate"></p>
+                <p id="reviewMeta" class="text-[11px] text-slate-500 mt-0.5"></p>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+                <a id="reviewTaskLink" href="#"
+                   class="hidden sm:inline-flex items-center gap-1 px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50">
+                    <span class="material-icons text-sm">open_in_new</span>
+                    التفاصيل
+                </a>
+                <button type="button" id="reviewClose"
+                        class="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800">
+                    <span class="material-icons text-sm">close</span>
+                    إغلاق
+                </button>
+            </div>
         </div>
-        <button type="button" id="carouselLightboxClose"
-                class="shrink-0 inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold">
-            <span class="material-icons text-sm">close</span>
-            إغلاق
-        </button>
+
+        <div class="review-body">
+            <div class="review-media border-b md:border-b-0 md:border-l border-slate-200">
+                <div id="reviewMediaTrack" class="review-media-track" dir="ltr"></div>
+            </div>
+
+            <div class="review-content p-4 md:p-5 space-y-4 bg-slate-50/70">
+                <section class="rounded-2xl bg-white border border-slate-200 p-4">
+                    <h3 class="text-[11px] font-bold uppercase tracking-wide text-slate-400 mb-2 flex items-center gap-1">
+                        <span class="material-icons text-sm text-teal-600">notes</span>
+                        المحتوى اللي هينزل (Caption)
+                    </h3>
+                    <p id="reviewCaption" class="text-sm md:text-base leading-7 text-slate-800 whitespace-pre-line font-semibold"></p>
+                </section>
+
+                <section id="reviewTovBox" class="rounded-2xl bg-white border border-slate-200 p-4 hidden">
+                    <h3 class="text-[11px] font-bold uppercase tracking-wide text-slate-400 mb-2">Tone of Voice</h3>
+                    <p id="reviewTov" class="text-sm leading-7 text-slate-700 whitespace-pre-line"></p>
+                </section>
+
+                <section id="reviewIdeaBox" class="rounded-2xl bg-white border border-slate-200 p-4 hidden">
+                    <h3 class="text-[11px] font-bold uppercase tracking-wide text-slate-400 mb-2">الفكرة</h3>
+                    <p id="reviewIdea" class="text-sm leading-7 text-slate-700 whitespace-pre-line"></p>
+                </section>
+
+                <section id="reviewMetaBox" class="rounded-2xl bg-white border border-slate-200 p-4 hidden">
+                    <h3 class="text-[11px] font-bold uppercase tracking-wide text-slate-400 mb-2">بيانات النشر</h3>
+                    <div id="reviewPlatforms" class="flex flex-wrap gap-1.5 mb-2"></div>
+                    <p id="reviewPublishDate" class="text-xs text-slate-600"></p>
+                </section>
+
+                <div class="flex flex-wrap gap-2 pt-1">
+                    <a id="reviewDownload" href="#"
+                       class="inline-flex items-center gap-1 px-3.5 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800">
+                        <span class="material-icons text-sm">download</span>
+                        تحميل التصميم
+                    </a>
+                    <a id="reviewTaskLinkMobile" href="#"
+                       class="sm:hidden inline-flex items-center gap-1 px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700">
+                        <span class="material-icons text-sm">open_in_new</span>
+                        صفحة التاسك
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
-    <div id="carouselLightboxTrack" class="carousel-lightbox-track" dir="ltr"></div>
 </div>
+
+<script type="application/json" id="galleryReviewData">{!! json_encode($reviewData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!}</script>
 @endsection
 
 @push('scripts')
 <script>
 (function () {
-    const lightbox = document.getElementById('carouselLightbox');
-    const track = document.getElementById('carouselLightboxTrack');
-    const titleEl = document.getElementById('carouselLightboxTitle');
-    const metaEl = document.getElementById('carouselLightboxMeta');
-    const closeBtn = document.getElementById('carouselLightboxClose');
-    if (!lightbox || !track) return;
+    const modal = document.getElementById('reviewModal');
+    const dataEl = document.getElementById('galleryReviewData');
+    if (!modal || !dataEl) return;
 
-    function closeLightbox() {
-        lightbox.classList.remove('is-open');
-        lightbox.setAttribute('aria-hidden', 'true');
+    let reviewData = {};
+    try { reviewData = JSON.parse(dataEl.textContent || '{}'); } catch (e) { reviewData = {}; }
+
+    const titleEl = document.getElementById('reviewTitle');
+    const metaEl = document.getElementById('reviewMeta');
+    const track = document.getElementById('reviewMediaTrack');
+    const captionEl = document.getElementById('reviewCaption');
+    const tovBox = document.getElementById('reviewTovBox');
+    const tovEl = document.getElementById('reviewTov');
+    const ideaBox = document.getElementById('reviewIdeaBox');
+    const ideaEl = document.getElementById('reviewIdea');
+    const metaBox = document.getElementById('reviewMetaBox');
+    const platformsEl = document.getElementById('reviewPlatforms');
+    const publishDateEl = document.getElementById('reviewPublishDate');
+    const taskLink = document.getElementById('reviewTaskLink');
+    const taskLinkMobile = document.getElementById('reviewTaskLinkMobile');
+    const downloadLink = document.getElementById('reviewDownload');
+    const closeBtn = document.getElementById('reviewClose');
+
+    function setTextOrPlaceholder(el, value, emptyText) {
+        const text = (value || '').trim();
+        el.textContent = text || emptyText;
+        el.classList.toggle('text-slate-400', !text);
+        el.classList.toggle('font-semibold', !!text);
+        return !!text;
+    }
+
+    function closeReview() {
+        modal.classList.remove('is-open');
+        modal.setAttribute('aria-hidden', 'true');
         track.innerHTML = '';
         document.body.style.overflow = '';
     }
 
-    function openLightbox(slides, title) {
+    function openReview(key) {
+        const item = reviewData[String(key)];
+        if (!item || !item.slides || !item.slides.length) return;
+
+        titleEl.textContent = item.title || 'مراجعة التصميم';
+        const bits = [];
+        if (item.typeLabel) bits.push(item.typeLabel);
+        if (item.isCarousel) bits.push(item.slides.length + ' شرائح');
+        bits.push('مراجعة قبل النشر');
+        metaEl.textContent = bits.join(' · ');
+
         track.innerHTML = '';
-        titleEl.textContent = title || 'كروسيل';
-        metaEl.textContent = (slides.length || 0) + ' شرائح · اسحب يمين/شمال';
-
-        slides.forEach(function (slide, index) {
+        const single = item.slides.length === 1;
+        item.slides.forEach(function (slide, index) {
             const wrap = document.createElement('div');
-            wrap.className = 'carousel-lightbox-slide';
-
+            wrap.className = 'review-slide' + (single ? ' is-single' : '');
             if (slide.kind === 'video') {
                 const video = document.createElement('video');
                 video.src = slide.url;
@@ -281,38 +422,64 @@
                 img.alt = slide.name || ('slide-' + (index + 1));
                 wrap.appendChild(img);
             }
-
             track.appendChild(wrap);
         });
-
-        lightbox.classList.add('is-open');
-        lightbox.setAttribute('aria-hidden', 'false');
-        document.body.style.overflow = 'hidden';
         track.scrollLeft = 0;
+
+        setTextOrPlaceholder(captionEl, item.caption, 'مفيش كابشن مكتوب لسه');
+
+        if (setTextOrPlaceholder(tovEl, item.tov, '')) {
+            tovBox.classList.remove('hidden');
+        } else {
+            tovBox.classList.add('hidden');
+        }
+
+        if (setTextOrPlaceholder(ideaEl, item.idea, '')) {
+            ideaBox.classList.remove('hidden');
+        } else {
+            ideaBox.classList.add('hidden');
+        }
+
+        platformsEl.innerHTML = '';
+        const platforms = item.platforms || [];
+        platforms.forEach(function (p) {
+            const chip = document.createElement('span');
+            chip.className = 'text-[11px] font-semibold px-2 py-1 rounded-lg bg-teal-50 text-teal-800';
+            chip.textContent = p;
+            platformsEl.appendChild(chip);
+        });
+        publishDateEl.textContent = item.publishDate ? ('موعد النشر: ' + item.publishDate) : '';
+        if (platforms.length || item.publishDate) {
+            metaBox.classList.remove('hidden');
+        } else {
+            metaBox.classList.add('hidden');
+        }
+
+        taskLink.href = item.taskUrl || '#';
+        taskLinkMobile.href = item.taskUrl || '#';
+        downloadLink.href = item.slides[0].download || item.slides[0].url;
+        downloadLink.textContent = '';
+        downloadLink.innerHTML = '<span class="material-icons text-sm">download</span> ' +
+            (item.isCarousel ? 'تحميل أول شريحة' : 'تحميل التصميم');
+
+        modal.classList.add('is-open');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
     }
 
-    document.querySelectorAll('[data-carousel-open]').forEach(function (btn) {
+    document.querySelectorAll('[data-review-open]').forEach(function (btn) {
         btn.addEventListener('click', function (e) {
             e.preventDefault();
-            let slides = [];
-            try {
-                slides = JSON.parse(btn.getAttribute('data-carousel-slides') || '[]');
-            } catch (err) {
-                slides = [];
-            }
-            if (!slides.length) return;
-            openLightbox(slides, btn.getAttribute('data-carousel-title') || '');
+            openReview(btn.getAttribute('data-review-open'));
         });
     });
 
-    closeBtn && closeBtn.addEventListener('click', closeLightbox);
-    lightbox.addEventListener('click', function (e) {
-        if (e.target === lightbox) closeLightbox();
+    closeBtn && closeBtn.addEventListener('click', closeReview);
+    modal.addEventListener('click', function (e) {
+        if (e.target === modal) closeReview();
     });
     document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape' && lightbox.classList.contains('is-open')) {
-            closeLightbox();
-        }
+        if (e.key === 'Escape' && modal.classList.contains('is-open')) closeReview();
     });
 })();
 </script>
