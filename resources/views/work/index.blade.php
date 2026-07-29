@@ -56,23 +56,41 @@
 
     {{-- شريط الأدوات --}}
     <div class="card rounded-2xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
-        <form method="GET" class="flex flex-wrap items-center gap-2">
-            <select name="type" onchange="this.form.submit()" class="px-3 py-2 rounded-xl border-2 border-gray-200 text-sm focus:border-primary focus:outline-none">
-                <option value="">كل الأنواع</option>
-                @foreach($types as $key => $label)
-                    <option value="{{ $key }}" @selected($filterType === $key)>{{ $label }}</option>
-                @endforeach
-            </select>
-            <select name="status" onchange="this.form.submit()" class="px-3 py-2 rounded-xl border-2 border-gray-200 text-sm focus:border-primary focus:outline-none">
-                <option value="">كل الحالات</option>
-                @foreach($statuses as $key => $label)
-                    <option value="{{ $key }}" @selected($filterStatus === $key)>{{ $label }}</option>
-                @endforeach
-            </select>
-            @if($filterType || $filterStatus)
-                <a href="{{ work_route('index') }}" class="text-sm text-gray-500 hover:text-gray-700 px-2">مسح</a>
-            @endif
-        </form>
+        <div class="flex flex-col sm:flex-row sm:items-center gap-3 flex-wrap">
+            <div class="inline-flex rounded-xl border-2 border-gray-200 p-1 bg-gray-50">
+                <a href="{{ work_route('index', array_filter(['type' => $filterType, 'status' => $filterStatus, 'view' => 'title'])) }}"
+                   class="px-3 py-1.5 rounded-lg text-sm font-semibold inline-flex items-center gap-1 transition-colors {{ ($viewMode ?? 'title') === 'title' ? 'bg-white text-primary shadow-sm' : 'text-gray-600 hover:text-gray-800' }}">
+                    <span class="material-icons text-base">title</span>
+                    حسب العنوان
+                </a>
+                <a href="{{ work_route('index', array_filter(['type' => $filterType, 'status' => $filterStatus, 'view' => 'month'])) }}"
+                   class="px-3 py-1.5 rounded-lg text-sm font-semibold inline-flex items-center gap-1 transition-colors {{ ($viewMode ?? 'title') === 'month' ? 'bg-white text-primary shadow-sm' : 'text-gray-600 hover:text-gray-800' }}">
+                    <span class="material-icons text-base">calendar_month</span>
+                    حسب الشهر
+                </a>
+            </div>
+
+            <form method="GET" class="flex flex-wrap items-center gap-2">
+                @if(($viewMode ?? 'title') === 'month')
+                    <input type="hidden" name="view" value="month">
+                @endif
+                <select name="type" onchange="this.form.submit()" class="px-3 py-2 rounded-xl border-2 border-gray-200 text-sm focus:border-primary focus:outline-none">
+                    <option value="">كل الأنواع</option>
+                    @foreach($types as $key => $label)
+                        <option value="{{ $key }}" @selected($filterType === $key)>{{ $label }}</option>
+                    @endforeach
+                </select>
+                <select name="status" onchange="this.form.submit()" class="px-3 py-2 rounded-xl border-2 border-gray-200 text-sm focus:border-primary focus:outline-none">
+                    <option value="">كل الحالات</option>
+                    @foreach($statuses as $key => $label)
+                        <option value="{{ $key }}" @selected($filterStatus === $key)>{{ $label }}</option>
+                    @endforeach
+                </select>
+                @if($filterType || $filterStatus)
+                    <a href="{{ work_route('index', ($viewMode ?? 'title') === 'month' ? ['view' => 'month'] : []) }}" class="text-sm text-gray-500 hover:text-gray-700 px-2">مسح</a>
+                @endif
+            </form>
+        </div>
 
         <button onclick="document.getElementById('newActivityModal').classList.remove('hidden')"
                 class="btn-primary text-white px-5 py-2.5 rounded-xl font-medium flex items-center justify-center gap-2">
@@ -88,48 +106,38 @@
             <h3 class="text-lg font-bold text-gray-700 mt-4">لا توجد أنشطة بعد</h3>
             <p class="text-gray-500 text-sm mt-1">ابدأ بإضافة أول نشاط للأكاديمية (محاضرة لايف، راوند، محتوى...)</p>
         </div>
+    @elseif(($viewMode ?? 'title') === 'month')
+        <div class="space-y-6">
+            @foreach($activitiesByMonth as $monthGroup)
+                <section class="card rounded-2xl overflow-hidden">
+                    <div class="px-5 py-4 bg-gradient-to-l from-teal-50 to-white border-b border-teal-100 flex items-center justify-between gap-3">
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            <div class="w-10 h-10 rounded-xl bg-teal-600 text-white flex items-center justify-center shrink-0">
+                                <span class="material-icons">folder</span>
+                            </div>
+                            <div class="min-w-0">
+                                <h3 class="font-bold text-gray-800 text-lg leading-tight">{{ $monthGroup['label'] }}</h3>
+                                <p class="text-xs text-gray-500 mt-0.5">فولدرات المحتوى والتصميم لهذا الشهر</p>
+                            </div>
+                        </div>
+                        <span class="shrink-0 text-xs font-bold text-teal-800 bg-teal-100 px-2.5 py-1 rounded-lg">
+                            {{ $monthGroup['activities']->count() }} نشاط
+                        </span>
+                    </div>
+                    <div class="p-5">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                            @foreach($monthGroup['activities'] as $activity)
+                                @include('work.partials.activity-card', ['activity' => $activity])
+                            @endforeach
+                        </div>
+                    </div>
+                </section>
+            @endforeach
+        </div>
     @else
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             @foreach($activities as $activity)
-                <a href="{{ work_route('show', $activity) }}" class="card rounded-2xl p-5 block hover:no-underline">
-                    <div class="flex items-start justify-between mb-3">
-                        <div class="flex items-center gap-3 min-w-0">
-                            <div class="w-11 h-11 rounded-xl bg-indigo-50 text-primary flex items-center justify-center shrink-0">
-                                <span class="material-icons">{{ $activity->type_icon }}</span>
-                            </div>
-                            <div class="min-w-0">
-                                <h3 class="font-bold text-gray-800 leading-tight truncate">{{ $activity->title }}</h3>
-                                <span class="text-xs text-gray-500">{{ $activity->type_label }}</span>
-                            </div>
-                        </div>
-                        <div class="flex flex-col items-end gap-1.5 shrink-0">
-                            <span class="role-badge role-{{ $activity->status_color }}">{{ $activity->status_label }}</span>
-                            @if($activity->month_label)
-                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-teal-50 text-teal-800 text-[11px] font-bold border border-teal-100">
-                                    <span class="material-icons text-sm">calendar_month</span>
-                                    {{ $activity->month_label }}
-                                </span>
-                            @endif
-                        </div>
-                    </div>
-
-                    @if($activity->event_date)
-                        <p class="text-xs text-gray-500 flex items-center gap-1 mb-3">
-                            <span class="material-icons text-sm">event</span>
-                            {{ $activity->event_date->format('Y/m/d') }}
-                        </p>
-                    @endif
-
-                    <div class="mt-2">
-                        <div class="flex items-center justify-between text-xs text-gray-500 mb-1">
-                            <span>{{ $activity->done_tasks_count }} / {{ $activity->tasks_count }} مهمة</span>
-                            <span>{{ $activity->progress }}%</span>
-                        </div>
-                        <div class="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                            <div class="h-full bg-gradient-to-l from-primary to-secondary rounded-full" style="width: {{ $activity->progress }}%"></div>
-                        </div>
-                    </div>
-                </a>
+                @include('work.partials.activity-card', ['activity' => $activity])
             @endforeach
         </div>
     @endif

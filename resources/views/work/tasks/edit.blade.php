@@ -243,10 +243,17 @@
                           class="w-full px-3 py-2.5 rounded-xl border-2 border-gray-200 text-sm focus:border-primary focus:outline-none">{{ old('notes', $task->notes) }}</textarea>
             </div>
 
-            <div class="flex flex-col sm:flex-row gap-3 pt-2">
+            <div class="flex flex-col sm:flex-row flex-wrap gap-3 pt-2">
                 <button type="submit" class="btn-primary text-white px-5 py-2.5 rounded-xl font-medium flex-1">حفظ والرجوع للنشاط</button>
                 <button type="submit" name="return_to_detail" value="1"
                         class="px-5 py-2.5 rounded-xl font-medium bg-indigo-50 text-indigo-700 hover:bg-indigo-100">حفظ وعرض التفاصيل</button>
+                @if(!empty($canMoveDesignFolders))
+                    <button type="submit" name="move_design_folder" value="1"
+                            onclick="return confirm('هتعمل إعادة رفع/تنظيم لملفات التصميم حسب العنوان الجديد على NAS (لو متفعل). المتابعة قد تستغرق دقيقة.');"
+                            class="px-5 py-2.5 rounded-xl font-medium bg-amber-50 text-amber-700 hover:bg-amber-100">
+                        حفظ وانقل ملفات التصميم للفولدر الجديد
+                    </button>
+                @endif
                 <a href="{{ work_route('show', $activity) }}"
                    class="px-5 py-2.5 rounded-xl font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 text-center">إلغاء</a>
             </div>

@@ -341,6 +341,83 @@ class AcademyNasStorage
     }
 
     /**
+     * أرشفة ملف على NAS لمسار قديم بدون تعديل DB.
+     * نستخدمها أثناء إعادة رفع ملف جديد لنفس التاسك بتسمية مختلفة.
+     */
+    public function archiveNasPathQuietly(?string $nasPath): bool
+    {
+        if (! $this->isEnabled() || ! filled($nasPath)) {
+            return false;
+        }
+
+        $nasPath = ltrim((string) $nasPath, '/');
+
+        if (str_starts_with($nasPath, 'deleted/')) {
+            return true;
+        }
+
+        try {
+            $base = rtrim((string) config('academy_nas.base_path'), '/');
+            $sourcePath = $base.'/'.$nasPath;
+            $destRelative = 'deleted/'.$nasPath;
+            $destPath = $base.'/'.$destRelative;
+            $destDir = dirname($destPath);
+
+            $sftp = $this->connect();
+
+            try {
+                if (! $sftp->file_exists($sourcePath)) {
+                    return false;
+                }
+
+                if (! $sftp->is_dir($destDir) && ! $sftp->mkdir($destDir, -1, true)) {
+                    throw new RuntimeException('تعذر إنشاء مجلد deleted على NAS: '.$destDir);
+                }
+
+                $finalDest = $destPath;
+                if ($sftp->file_exists($finalDest)) {
+                    $dir = dirname($destPath);
+                    $baseName = pathinfo($destPath, PATHINFO_FILENAME);
+                    $ext = pathinfo($destPath, PATHINFO_EXTENSION);
+                    $finalDest = $dir.'/'.$baseName.'-'.now()->format('YmdHis').($ext ? '.'.$ext : '');
+                }
+
+                // rename إن أمكن، وإلا copy عبر ملف مؤقت ثم احذف المصدر
+                $moved = $sftp->rename($sourcePath, $finalDest);
+                if (! $moved) {
+                    $tmp = tempnam(sys_get_temp_dir(), 'nas_');
+                    if (! $tmp || ! $sftp->get($sourcePath, $tmp)) {
+                        if ($tmp) {
+                            @unlink($tmp);
+                        }
+                        throw new RuntimeException('فشل نسخ الملف للأرشفة من NAS');
+                    }
+
+                    $ok = $sftp->put($finalDest, $tmp, SFTP::SOURCE_LOCAL_FILE);
+                    @unlink($tmp);
+
+                    if (! $ok) {
+                        throw new RuntimeException('فشل رفع الملف إلى فولدر deleted على NAS');
+                    }
+
+                    $sftp->delete($sourcePath);
+                }
+
+                return true;
+            } finally {
+                $sftp->disconnect();
+            }
+        } catch (Throwable $e) {
+            Log::warning('Academy NAS archive path failed', [
+                'nas_path' => $nasPath,
+                'message' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
+    }
+
+    /**
      * يحذف الملف من NAS إن وُجد مسار nas_path، ويمسح الفولدر لو فاضي.
      * @deprecated استخدم archiveQuietly بدل الحذف النهائي
      */

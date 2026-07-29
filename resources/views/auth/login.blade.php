@@ -291,17 +291,6 @@
                 </button>
             </form>
 
-            <!-- Register Link -->
-            <div class="mt-6 text-center pt-6 border-t border-gray-200">
-                <p class="text-sm text-gray-600 mb-3">
-                    ليس لديك حساب؟
-                </p>
-                <a href="{{ route('register') }}" class="inline-flex items-center justify-center w-full py-3 px-4 rounded-xl text-sm font-medium text-purple-600 bg-purple-50 hover:bg-purple-100 transition-colors">
-                    <span class="material-icons text-sm ml-2">person_add</span>
-                    إنشاء حساب جديد
-                </a>
-            </div>
-
         </div>
 
         <!-- Footer -->

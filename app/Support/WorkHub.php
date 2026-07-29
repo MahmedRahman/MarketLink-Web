@@ -11,6 +11,14 @@ class WorkHub
 {
     public static function actor(Request $request): User|Employee|null
     {
+        // على مسارات الموظف فضّل employee guard.
+        // مهم مع "الدخول كموظف" لأن web + employee بيكونوا مسجّلين معًا،
+        // ولو خدنا web الأول ممكن organization_id يطلع لشركة تانية → 403.
+        if ($request->routeIs('employee.*')) {
+            return Auth::guard('employee')->user()
+                ?? Auth::guard('web')->user();
+        }
+
         return Auth::guard('web')->user()
             ?? Auth::guard('employee')->user();
     }

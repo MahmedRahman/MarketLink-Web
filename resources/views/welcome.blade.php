@@ -105,7 +105,6 @@
                     <a href="#pricing" class="text-white hover:text-gray-200 px-4 py-2 transition-colors">الأسعار</a>
                     <a href="#how-it-works" class="text-white hover:text-gray-200 px-4 py-2 transition-colors">كيف يعمل</a>
                     <a href="{{ route('login') }}" class="text-white hover:text-gray-200 px-4 py-2 transition-colors">تسجيل الدخول</a>
-                    <a href="{{ route('register') }}" class="btn-primary text-white px-6 py-2 rounded-xl">ابدأ مجاناً</a>
                 </div>
                 <div class="md:hidden">
                     <button id="mobile-menu-btn" class="text-white">
@@ -122,7 +121,6 @@
                 <a href="#pricing" class="block text-gray-800 hover:text-purple-600 px-4 py-2 rounded-lg transition-colors">الأسعار</a>
                 <a href="#how-it-works" class="block text-gray-800 hover:text-purple-600 px-4 py-2 rounded-lg transition-colors">كيف يعمل</a>
                 <a href="{{ route('login') }}" class="block text-gray-800 hover:text-purple-600 px-4 py-2 rounded-lg transition-colors">تسجيل الدخول</a>
-                <a href="{{ route('register') }}" class="block btn-primary text-white px-4 py-2 rounded-lg text-center">ابدأ مجاناً</a>
             </div>
         </div>
     </nav>

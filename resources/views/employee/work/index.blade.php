@@ -7,6 +7,19 @@
 @section('content')
 <div class="max-w-7xl mx-auto space-y-6">
 
+    @if(session('success'))
+        <div class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-xl flex items-center">
+            <span class="material-icons ml-2">check_circle</span>
+            {{ session('success') }}
+        </div>
+    @endif
+    @if(session('error'))
+        <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-xl flex items-center">
+            <span class="material-icons ml-2">error</span>
+            {{ session('error') }}
+        </div>
+    @endif
+
     {{-- شريط المتابعة --}}
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div class="card rounded-2xl p-4 flex items-center gap-3">

@@ -56,6 +56,10 @@ class WorkTaskController extends Controller
         $this->authorizeActivity($request, $work);
         $this->authorizeTask($work, $task);
 
+        $actor = WorkHub::actor($request);
+        $canMoveDesignFolders = ! WorkHub::isEmployeeHub($request)
+            || ($actor instanceof Employee && $actor->isWorkHubAdmin());
+
         $employees = Employee::where('organization_id', WorkHub::organizationId($request))
             ->where('status', 'active')
             ->orderBy('name')
@@ -69,6 +73,7 @@ class WorkTaskController extends Controller
             'taskStatuses' => WorkTask::statuses(),
             'contentTypes' => WorkTask::contentTypes(),
             'platforms' => WorkTask::platforms(),
+            'canMoveDesignFolders' => $canMoveDesignFolders,
         ]);
     }
 
@@ -494,6 +499,40 @@ class WorkTaskController extends Controller
         $before = $task->only(['status', 'pipeline_stage', 'assigned_to', 'content_writer_id', 'designer_id', 'title']);
         $task->update($validated);
         $this->logTaskFieldChanges($task, $before, $task->fresh()->only(array_keys($before)));
+
+        if ($request->boolean('move_design_folder')) {
+            $actor = WorkHub::actor($request);
+            $allowed = ! WorkHub::isEmployeeHub($request)
+                || ($actor instanceof Employee && $actor->isWorkHubAdmin());
+            abort_unless($allowed, 403);
+
+            $moved = app(\App\Services\DesignFileTitleFolderMover::class)
+                ->moveDesignFilesToCurrentTitle($task->fresh());
+
+            $task->logEvent(
+                'design_folder_moved',
+                'تم نقل ملفات التصميم للفولدر الجديد حسب العنوان',
+                null,
+                null,
+                null,
+                [
+                    'files' => $moved['files'] ?? null,
+                    'nas_synced' => $moved['nas_synced'] ?? null,
+                    'nas_archived' => $moved['nas_archived'] ?? null,
+                    'local_moved' => $moved['local_moved'] ?? null,
+                ]
+            );
+
+            if ($request->boolean('return_to_edit')) {
+                return redirect()
+                    ->route(WorkHub::routeName('tasks.edit'), [$work, $task])
+                    ->with('success', 'تم حفظ التعديلات ونقل ملفات التصميم للفولدر الجديد.');
+            }
+
+            return redirect()
+                ->route(WorkHub::routeName('tasks.show'), [$work, $task])
+                ->with('success', 'تم حفظ التعديلات ونقل ملفات التصميم للفولدر الجديد.');
+        }
 
         if ($request->boolean('return_to_detail')) {
             return redirect()->route(WorkHub::routeName('tasks.show'), [$work, $task])->with('success', 'تم تحديث المهمة');

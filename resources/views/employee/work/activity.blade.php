@@ -51,6 +51,11 @@
         <div>
             <h3 class="font-bold text-gray-800">مهامك في النشاط ({{ $contentCounts['total'] }})</h3>
             <p class="text-xs text-gray-500 mt-1">اسحب الكارت لترتيب داخل المرحلة، أو أفلت على مرحلة تانية للنقل</p>
+            @if($contentCounts['total'] === 0)
+                <div class="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                    مفيش مهام مطلوبة منك في المرحلة الحالية — ممكن تكون اتنقّلت لمرحلة تانية أو لزميل تاني.
+                </div>
+            @endif
             <div class="flex flex-wrap items-center gap-2 mt-2">
                 <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 text-blue-700 text-xs font-semibold border border-blue-100">
                     <span class="material-icons text-sm">article</span>

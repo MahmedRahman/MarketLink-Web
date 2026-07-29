@@ -24,9 +24,31 @@ class EmployeeWorkTaskController extends Controller
             return redirect()->route('employee.hub.index');
         }
 
-        $myTasks = WorkTask::forEmployeeCurrentStage($employee->id)
-            ->with('activity')
-            ->get();
+        $isDesigner = in_array($employee->role, ['designer', 'video_editor'], true);
+
+        if ($isDesigner) {
+            // المصمم يشوف: التصميم + جاهز للنشر (ready_to_publish) حسب designer_id
+            $myTasks = WorkTask::query()
+                ->whereIn('pipeline_stage', ['design', 'ready_to_publish'])
+                ->where(function ($q) use ($employee) {
+                    $q->where(function ($q2) use ($employee) {
+                        $q2->where('pipeline_stage', 'design')
+                            ->where(function ($q3) use ($employee) {
+                                $q3->where('designer_id', $employee->id)
+                                    ->orWhere('assigned_to', $employee->id);
+                            });
+                    })->orWhere(function ($q2) use ($employee) {
+                        $q2->where('pipeline_stage', 'ready_to_publish')
+                            ->where('designer_id', $employee->id);
+                    });
+                })
+                ->with('activity')
+                ->get();
+        } else {
+            $myTasks = WorkTask::forEmployeeCurrentStage($employee->id)
+                ->with('activity')
+                ->get();
+        }
 
         $activityIds = $myTasks->pluck('work_activity_id')->unique()->filter()->values();
 
@@ -93,18 +115,55 @@ class EmployeeWorkTaskController extends Controller
             return redirect()->route('employee.hub.show', $work);
         }
 
-        abort_unless((int) $work->organization_id === (int) $employee->organization_id, 403);
+        // نفس المنظمة فقط — بدون 403 لو مفيش مهام حالية
+        if ((int) $work->organization_id !== (int) $employee->organization_id) {
+            return redirect()
+                ->route('employee.tasks.index')
+                ->with('error', 'النشاط ده مش تابع لمؤسستك');
+        }
 
         $work->ensureShareToken();
 
-        $myTasks = WorkTask::forEmployeeCurrentStage($employee->id)
-            ->where('work_activity_id', $work->id)
-            ->with(['assignedEmployee', 'contentWriter', 'designer'])
-            ->orderBy('order')
-            ->orderBy('id')
-            ->get();
+        $isDesigner = in_array($employee->role, ['designer', 'video_editor'], true);
 
-        abort_unless($myTasks->isNotEmpty(), 403);
+        if ($isDesigner) {
+            $myTasks = WorkTask::query()
+                ->where('work_activity_id', $work->id)
+                ->whereIn('pipeline_stage', ['design', 'ready_to_publish'])
+                ->where(function ($q) use ($employee) {
+                    $q->where(function ($q2) use ($employee) {
+                        $q2->where('pipeline_stage', 'design')
+                            ->where(function ($q3) use ($employee) {
+                                $q3->where('designer_id', $employee->id)
+                                    ->orWhere('assigned_to', $employee->id);
+                            });
+                    })->orWhere(function ($q2) use ($employee) {
+                        $q2->where('pipeline_stage', 'ready_to_publish')
+                            ->where('designer_id', $employee->id);
+                    });
+                })
+                ->with(['assignedEmployee', 'contentWriter', 'designer'])
+                ->orderBy('order')
+                ->orderBy('id')
+                ->get();
+        } else {
+            $myTasks = WorkTask::forEmployeeCurrentStage($employee->id)
+                ->where('work_activity_id', $work->id)
+                ->with(['assignedEmployee', 'contentWriter', 'designer'])
+                ->orderBy('order')
+                ->orderBy('id')
+                ->get();
+
+            // لو مفيش مهام في المرحلة الحالية، ورّي أي مهام مرتبطة بالموظف داخل النشاط
+            if ($myTasks->isEmpty()) {
+                $myTasks = WorkTask::forEmployee($employee->id)
+                    ->where('work_activity_id', $work->id)
+                    ->with(['assignedEmployee', 'contentWriter', 'designer'])
+                    ->orderBy('order')
+                    ->orderBy('id')
+                    ->get();
+            }
+        }
 
         $pipelineStages = [];
         foreach (WorkTask::pipelineStages() as $key => $label) {

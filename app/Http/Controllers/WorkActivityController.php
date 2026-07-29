@@ -35,6 +35,38 @@ class WorkActivityController extends Controller
             ->latest()
             ->get();
 
+        // خيار "حسب الشهر" مطلوب للإدمن فقط.
+        // صفحة الموظف تعتمد على `resources/views/employee/work/index.blade.php`
+        // ولسنا محتاجين نجمع الأنشطة هناك.
+        $viewMode = 'title';
+        if (! WorkHub::isEmployeeHub($request)) {
+            $viewMode = $request->input('view', 'title');
+            if (! in_array($viewMode, ['title', 'month'], true)) {
+                $viewMode = 'title';
+            }
+        }
+
+        $activitiesByMonth = collect();
+        if ($viewMode === 'month') {
+            $activitiesByMonth = $activities
+                ->groupBy(function (WorkActivity $activity) {
+                    $date = $activity->event_date ?? $activity->created_at;
+
+                    return $date ? $date->format('Y-m') : '0000-00';
+                })
+                ->sortKeysDesc()
+                ->map(function ($monthActivities, string $monthKey) {
+                    $first = $monthActivities->first();
+
+                    return [
+                        'key' => $monthKey,
+                        'label' => $monthKey === '0000-00' ? 'بدون تاريخ' : ($first?->month_label ?? $monthKey),
+                        'activities' => $monthActivities->values(),
+                    ];
+                })
+                ->values();
+        }
+
         // متابعة عامة عبر كل الأنشطة
         $allTasks = WorkTask::whereHas('activity', fn ($q) => $q->where('organization_id', $organizationId))
             ->with(['activity', 'assignedEmployee'])
@@ -49,6 +81,8 @@ class WorkActivityController extends Controller
 
         return view('work.index', [
             'activities' => $activities,
+            'activitiesByMonth' => $activitiesByMonth,
+            'viewMode' => $viewMode,
             'follow' => $follow,
             'types' => WorkActivity::types(),
             'statuses' => WorkActivity::statuses(),

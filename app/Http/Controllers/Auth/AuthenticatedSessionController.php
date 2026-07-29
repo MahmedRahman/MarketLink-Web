@@ -33,12 +33,8 @@ class AuthenticatedSessionController extends Controller
             return redirect()->intended(route('employee.dashboard', absolute: false));
         }
 
-        // إذا كان المستخدم admin، إعادة التوجيه إلى لوحة تحكم المدير
-        if (Auth::guard('web')->user()->is_admin) {
-            return redirect()->intended(route('admin.dashboard', absolute: false));
-        }
-
-        return redirect()->intended(route('dashboard', absolute: false));
+        // أدمن / مستخدم ويب → دائمًا /dashboard (من غير intended عشان مايرجعش لصفحة قديمة)
+        return redirect()->route('dashboard');
     }
 
     /**

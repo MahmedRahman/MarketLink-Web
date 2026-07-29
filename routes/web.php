@@ -24,9 +24,23 @@ use App\Http\Controllers\Api\TasksController;
 use App\Http\Controllers\MeetingController;
 use App\Http\Controllers\ContractController;
 use App\Http\Controllers\ContentCreationController;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
+    if (Auth::guard('web')->check()) {
+        return redirect()->route('dashboard');
+    }
+
+    if (Auth::guard('employee')->check()) {
+        $employee = Auth::guard('employee')->user();
+        if ($employee && method_exists($employee, 'isWorkHubAdmin') && $employee->isWorkHubAdmin()) {
+            return redirect()->route('employee.hub.index');
+        }
+
+        return redirect()->route('employee.dashboard');
+    }
+
     $plans = \App\Models\Plan::with('features')
         ->active()
         ->ordered()

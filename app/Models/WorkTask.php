@@ -174,7 +174,13 @@ class WorkTask extends Model
 
     public function isVisibleToEmployee(int $employeeId): bool
     {
-        return (int) $this->stageOwnerId() === (int) $employeeId;
+        if ((int) $this->stageOwnerId() === (int) $employeeId) {
+            return true;
+        }
+
+        // السماح للمصمم إنه يشوف مهام "جاهز للنشر" حتى لو الـ assigned_to اتغير للمسؤول (publish).
+        return $this->pipeline_stage === 'ready_to_publish'
+            && (int) $this->designer_id === (int) $employeeId;
     }
 
     public function getKindLabelAttribute(): string
