@@ -6,6 +6,7 @@ use App\Models\Employee;
 use App\Models\User;
 use App\Models\WorkActivity;
 use App\Models\WorkTask;
+use App\Models\WorkIdea;
 use App\Support\WorkHub;
 use Illuminate\Http\Request;
 
@@ -101,10 +102,14 @@ class WorkActivityController extends Controller
             'type' => 'required|in:live_lecture,live_lecture_paid,paid_round,educational,other',
             'description' => 'nullable|string',
             'with_template' => 'nullable|boolean',
+            'idea_id' => 'nullable|exists:work_ideas,id',
         ]);
 
         $withTemplate = (bool) ($validated['with_template'] ?? false);
         unset($validated['with_template']);
+
+        $ideaId = $validated['idea_id'] ?? null;
+        unset($validated['idea_id']);
 
         $actor = WorkHub::actor($request);
         $validated['organization_id'] = $organizationId;
@@ -119,6 +124,14 @@ class WorkActivityController extends Controller
         $tasksCreated = 0;
         if ($withTemplate && $activity->is_lecture) {
             $tasksCreated = $this->createLectureTemplateTasks($activity);
+        }
+
+        // لو النشاط اتعمل من تحويل فكرة: امسح الفكرة بعد حفظ النشاط
+        if ($ideaId) {
+            WorkIdea::query()
+                ->where('id', (int) $ideaId)
+                ->where('organization_id', (int) $organizationId)
+                ->delete();
         }
 
         $message = $tasksCreated > 0

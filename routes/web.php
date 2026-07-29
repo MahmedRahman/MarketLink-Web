@@ -24,6 +24,7 @@ use App\Http\Controllers\Api\TasksController;
 use App\Http\Controllers\MeetingController;
 use App\Http\Controllers\ContractController;
 use App\Http\Controllers\ContentCreationController;
+use App\Http\Controllers\WorkIdeaController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -57,6 +58,15 @@ Route::get('/share/w/{token}', [\App\Http\Controllers\PublicWorkShareController:
 Route::get('/share/w/{token}/t/{task}', [\App\Http\Controllers\PublicWorkShareController::class, 'showTask'])->name('public.work.task');
 Route::get('/share/w/{token}/t/{task}/files/{file}', [\App\Http\Controllers\PublicWorkShareController::class, 'showFile'])->name('public.work.file');
 Route::get('/share/w/{token}/t/{task}/download-all', [\App\Http\Controllers\PublicWorkShareController::class, 'downloadAllFiles'])->name('public.work.files.download-all');
+
+// الأفكار المقترحة (Inbox منفصل عن مساحة العمل)
+Route::get('/ideas', [WorkIdeaController::class, 'index'])->name('ideas.index');
+Route::post('/ideas', [WorkIdeaController::class, 'store'])->name('ideas.store');
+Route::get('/ideas/{idea}/edit', [WorkIdeaController::class, 'edit'])->name('ideas.edit');
+Route::put('/ideas/{idea}', [WorkIdeaController::class, 'update'])->name('ideas.update');
+Route::delete('/ideas/{idea}', [WorkIdeaController::class, 'destroy'])->name('ideas.destroy');
+Route::post('/ideas/{idea}/archive', [WorkIdeaController::class, 'archive'])->name('ideas.archive');
+Route::post('/ideas/{idea}/convert', [WorkIdeaController::class, 'convertToWork'])->name('ideas.convert');
 
 Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 

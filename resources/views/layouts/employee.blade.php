@@ -118,6 +118,11 @@
                 $isWorkHubAdmin = $employee->isWorkHubAdmin();
             @endphp
 
+            <a href="{{ route('ideas.index') }}" class="flex items-center px-4 py-3 text-gray-700 rounded-xl hover:bg-gray-100 {{ request()->routeIs('ideas.*') ? 'bg-purple-50 text-purple-700' : '' }}">
+                <span class="material-icons text-lg ml-3">lightbulb</span>
+                <span class="font-medium">الأفكار المقترحة</span>
+            </a>
+
             @if($isWorkHubAdmin)
                 <a href="{{ route('employee.hub.index') }}" class="flex items-center px-4 py-3 text-gray-700 rounded-xl hover:bg-gray-100 {{ request()->routeIs('employee.hub.*') ? 'bg-purple-50 text-purple-700' : '' }}">
                     <span class="material-icons text-lg ml-3">dashboard_customize</span>

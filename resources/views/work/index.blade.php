@@ -152,8 +152,20 @@
                 <span class="material-icons">close</span>
             </button>
         </div>
+
+        @if($errors->any())
+            <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-xl mb-4">
+                <ul class="list-disc list-inside text-sm space-y-1">
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         <form method="POST" action="{{ work_route('store') }}" class="space-y-4">
             @csrf
+            <input type="hidden" name="idea_id" id="ideaIdField" value="">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">العنوان</label>
                 <input type="text" name="title" required placeholder="مثال: حملة محتوى سوشيال — مارس"
@@ -217,9 +229,17 @@
 <script>
     function toggleTemplateOption() {
         const selected = document.querySelector('input[name="type"]:checked');
-        const type = selected ? selected.value : 'other';
         const box = document.getElementById('templateOption');
         const checkbox = document.getElementById('withTemplateCheckbox');
+
+        // لو مفيش Type مختار (حالة الفكرة بدون type)، نخلي الفورم يطلب اختيار يدويًا
+        if (!selected) {
+            box.classList.add('hidden');
+            if (checkbox) checkbox.checked = false;
+            return;
+        }
+
+        const type = selected.value;
         const isLecture = type === 'live_lecture' || type === 'live_lecture_paid';
         box.classList.toggle('hidden', !isLecture);
         if (!isLecture && checkbox) checkbox.checked = false;
@@ -235,6 +255,46 @@
             }
         });
     }
-    document.addEventListener('DOMContentLoaded', toggleTemplateOption);
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const params = new URLSearchParams(window.location.search);
+        const openNew = params.get('open_new_activity');
+        const ideaId = params.get('idea_id');
+
+        if (openNew === '1' && ideaId) {
+            const modal = document.getElementById('newActivityModal');
+            if (modal) modal.classList.remove('hidden');
+
+            const title = params.get('prefill_title') ?? '';
+            const desc = params.get('prefill_description') ?? '';
+            const prefillType = params.get('prefill_type') ?? '';
+            const forceSelectType = params.get('prefill_force_select_type') === '1';
+
+            const ideaIdField = document.getElementById('ideaIdField');
+            if (ideaIdField) ideaIdField.value = ideaId;
+
+            const titleInput = modal ? modal.querySelector('input[name="title"]') : null;
+            const descInput = modal ? modal.querySelector('textarea[name="description"]') : null;
+            if (titleInput) titleInput.value = title;
+            if (descInput) descInput.value = desc;
+
+            // Type handling
+            const typeRadios = modal ? modal.querySelectorAll('#newActivityTypeCards input[name="type"]') : [];
+            typeRadios.forEach(function (r) { r.checked = false; });
+
+            if (prefillType && !forceSelectType) {
+                const match = modal ? modal.querySelector('#newActivityTypeCards input[name="type"][value="' + prefillType + '"]') : null;
+                if (match) match.checked = true;
+            }
+            // لو prefill_force_select_type=1 سيبقى كله unchecked (الأدمن يختار)
+
+            // with_template
+            const withTemplate = params.get('with_template') === '1';
+            const checkbox = modal ? modal.querySelector('#withTemplateCheckbox') : null;
+            if (checkbox) checkbox.checked = withTemplate;
+        }
+
+        toggleTemplateOption();
+    });
 </script>
 @endsection
