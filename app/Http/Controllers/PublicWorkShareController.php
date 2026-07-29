@@ -53,6 +53,40 @@ class PublicWorkShareController extends Controller
         ]);
     }
 
+    /**
+     * معرض كل ملفات التصميم (صور/فيديو) عبر الحملة كلها.
+     */
+    public function showGallery(string $token): View
+    {
+        $activity = $this->findSharedActivity($token);
+        $activity->load(['tasks.files']);
+
+        $items = collect();
+        foreach ($activity->tasks->sortBy('order') as $task) {
+            foreach ($task->files as $file) {
+                if (! $file->isImage() && ! $file->isVideo()) {
+                    continue;
+                }
+                if (! Storage::disk('public')->exists($file->file_path)) {
+                    continue;
+                }
+                $items->push([
+                    'file' => $file,
+                    'task' => $task,
+                ]);
+            }
+        }
+
+        return view('public.work.gallery', [
+            'activity' => $activity,
+            'items' => $items,
+            'shareToken' => $token,
+            'galleryUrl' => route('public.work.gallery', $token),
+            'imageCount' => $items->filter(fn ($i) => $i['file']->isImage())->count(),
+            'videoCount' => $items->filter(fn ($i) => $i['file']->isVideo())->count(),
+        ]);
+    }
+
     public function showTask(string $token, WorkTask $task): View
     {
         $activity = $this->findSharedActivity($token);

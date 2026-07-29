@@ -319,6 +319,12 @@ class WorkActivityController extends Controller
         $this->authorizeActivity($request, $work);
         $work->ensureShareToken();
 
+        if ($request->boolean('redirect_to_gallery')) {
+            return redirect()
+                ->route('public.work.gallery', $work->share_token)
+                ->with('success', 'تم تفعيل الرابط العام وفتح معرض التصميم');
+        }
+
         return back()->with('success', 'تم تفعيل الرابط العام — انسخه وشاركه');
     }
 

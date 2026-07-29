@@ -81,6 +81,15 @@ class WorkActivity extends Model
         return route('public.work.show', $this->share_token);
     }
 
+    public function getPublicGalleryUrlAttribute(): ?string
+    {
+        if (! $this->share_token) {
+            return null;
+        }
+
+        return route('public.work.gallery', $this->share_token);
+    }
+
     public function publicTaskUrl(WorkTask|int $task): ?string
     {
         if (! $this->share_token) {

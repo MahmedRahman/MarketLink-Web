@@ -25,6 +25,11 @@
                 <span class="px-2.5 py-1 rounded-lg bg-white/10 text-xs font-semibold">بوست {{ $contentCounts['post'] }}</span>
                 <span class="px-2.5 py-1 rounded-lg bg-white/10 text-xs font-semibold">ريلز {{ $contentCounts['reels'] }}</span>
                 <span class="px-2.5 py-1 rounded-lg bg-white/10 text-xs font-semibold">كروسيل {{ $contentCounts['carousel'] }}</span>
+                <a href="{{ route('public.work.gallery', $shareToken) }}"
+                   class="px-2.5 py-1 rounded-lg bg-teal-400/25 text-teal-50 text-xs font-semibold inline-flex items-center gap-1 hover:bg-teal-400/40">
+                    <span class="material-icons text-sm">photo_library</span>
+                    معرض التصميم
+                </a>
             </div>
         </div>
         @if($activity->description)

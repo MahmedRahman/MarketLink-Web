@@ -66,6 +66,24 @@
                     <span class="material-icons text-lg">share</span>
                     رابط عام
                 </button>
+                @if($activity->share_token)
+                    <a href="{{ $activity->public_gallery_url }}" target="_blank"
+                       class="px-3 py-2 rounded-xl bg-teal-50 text-teal-700 hover:bg-teal-100 text-sm inline-flex items-center gap-1" title="معرض كل صور التصميم">
+                        <span class="material-icons text-lg">photo_library</span>
+                        معرض التصميم
+                    </a>
+                @else
+                    <form method="POST" action="{{ work_route('share.enable', $activity) }}">
+                        @csrf
+                        <input type="hidden" name="redirect_to_gallery" value="1">
+                        <button type="submit"
+                                class="px-3 py-2 rounded-xl bg-teal-50 text-teal-700 hover:bg-teal-100 text-sm inline-flex items-center gap-1"
+                                title="تفعيل الرابط وفتح معرض التصميم">
+                            <span class="material-icons text-lg">photo_library</span>
+                            معرض التصميم
+                        </button>
+                    </form>
+                @endif
                 {{-- تغيير الحالة سريعًا --}}
                 <form method="POST" action="{{ work_route('update', $activity) }}" class="flex items-center gap-2">
                     @csrf @method('PUT')
@@ -399,7 +417,7 @@
 
         @if($activity->share_token)
             <label class="block text-xs font-medium text-gray-600 mb-1">الرابط</label>
-            <div class="flex gap-2 mb-4">
+            <div class="flex gap-2 mb-3">
                 <input type="text" id="publicShareUrl" readonly
                        value="{{ $activity->public_share_url }}"
                        class="flex-1 px-3 py-2.5 rounded-xl border-2 border-indigo-100 bg-indigo-50/40 text-sm focus:outline-none" dir="ltr">
@@ -408,12 +426,28 @@
                     نسخ
                 </button>
             </div>
+
+            <label class="block text-xs font-medium text-gray-600 mb-1">رابط معرض التصميم (كل الصور)</label>
+            <div class="flex gap-2 mb-4">
+                <input type="text" id="publicGalleryUrl" readonly
+                       value="{{ $activity->public_gallery_url }}"
+                       class="flex-1 px-3 py-2.5 rounded-xl border-2 border-teal-100 bg-teal-50/40 text-sm focus:outline-none" dir="ltr">
+                <button type="button" onclick="copyGalleryUrl()"
+                        class="px-4 py-2.5 rounded-xl bg-teal-600 text-white text-sm font-medium hover:bg-teal-700 shrink-0">
+                    نسخ
+                </button>
+            </div>
             <p id="copyShareHint" class="text-xs text-teal-600 mb-4 hidden">تم نسخ الرابط</p>
             <div class="flex flex-wrap gap-2">
                 <a href="{{ $activity->public_share_url }}" target="_blank"
                    class="px-4 py-2 rounded-xl bg-gray-100 text-gray-700 text-sm hover:bg-gray-200 inline-flex items-center gap-1">
                     <span class="material-icons text-base">open_in_new</span>
-                    فتح
+                    فتح المحتوى
+                </a>
+                <a href="{{ $activity->public_gallery_url }}" target="_blank"
+                   class="px-4 py-2 rounded-xl bg-teal-50 text-teal-700 text-sm hover:bg-teal-100 inline-flex items-center gap-1">
+                    <span class="material-icons text-base">photo_library</span>
+                    فتح المعرض
                 </a>
                 <form method="POST" action="{{ work_route('share.regenerate', $activity) }}" onsubmit="return confirm('تجديد الرابط؟ الرابط القديم هيتوقف.')">
                     @csrf
@@ -699,6 +733,25 @@
             if (hint) {
                 hint.classList.remove('hidden');
                 setTimeout(function () { hint.classList.add('hidden'); }, 2000);
+            }
+        }).catch(function () {
+            input.select();
+            document.execCommand('copy');
+        });
+    }
+
+    function copyGalleryUrl() {
+        const input = document.getElementById('publicGalleryUrl');
+        if (!input) return;
+        navigator.clipboard.writeText(input.value).then(function () {
+            const hint = document.getElementById('copyShareHint');
+            if (hint) {
+                hint.textContent = 'تم نسخ رابط المعرض';
+                hint.classList.remove('hidden');
+                setTimeout(function () {
+                    hint.classList.add('hidden');
+                    hint.textContent = 'تم نسخ الرابط';
+                }, 2000);
             }
         }).catch(function () {
             input.select();
