@@ -77,6 +77,43 @@
             </div>
         </div>
 
+        <div class="inline-flex items-center rounded-xl border border-gray-200 bg-gray-50 p-1 mb-2">
+            <a href="{{ route('employee.work.activity', [$activity, 'board' => 'pipeline']) }}"
+               class="px-3 py-1.5 rounded-lg text-xs font-bold inline-flex items-center gap-1 {{ ($boardView ?? 'pipeline') === 'pipeline' ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-600' }}">
+                <span class="material-icons text-sm">view_kanban</span>
+                البايبلاين
+            </a>
+            <a href="{{ route('employee.work.activity', [$activity, 'board' => 'archive']) }}"
+               class="px-3 py-1.5 rounded-lg text-xs font-bold inline-flex items-center gap-1 {{ ($boardView ?? 'pipeline') === 'archive' ? 'bg-white text-slate-800 shadow-sm' : 'text-gray-600' }}">
+                <span class="material-icons text-sm">inventory_2</span>
+                الأرشيف
+                <span class="px-1.5 py-0.5 rounded-md bg-slate-200 text-slate-700">{{ $contentCounts['archived'] ?? 0 }}</span>
+            </a>
+        </div>
+
+        @if(($boardView ?? 'pipeline') === 'archive')
+            <div class="space-y-3">
+                @forelse(($archivedTasks ?? collect()) as $task)
+                    <a href="{{ route('employee.work.show', $task) }}"
+                       class="card rounded-2xl p-4 block hover:border-slate-300 border border-slate-200">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <span class="inline-block px-2 py-0.5 text-[10px] rounded-md bg-slate-100 text-slate-700 mb-1.5">أرشيف</span>
+                                <h5 class="font-bold text-gray-900">{{ $task->title }}</h5>
+                                @if($task->content_type_label)
+                                    <p class="text-xs text-gray-500 mt-1">{{ $task->content_type_label }}</p>
+                                @endif
+                            </div>
+                            <span class="material-icons text-slate-400">chevron_left</span>
+                        </div>
+                    </a>
+                @empty
+                    <div class="card rounded-2xl p-10 text-center text-sm text-slate-500">
+                        مفيش مهام مؤرشفة لك هنا
+                    </div>
+                @endforelse
+            </div>
+        @else
         <div class="space-y-4" id="pipelineBoard">
             @foreach($pipelineStages as $stage)
                 <section class="card rounded-2xl overflow-hidden pipeline-stage" data-stage="{{ $stage['key'] }}">
@@ -193,6 +230,7 @@
                 </section>
             @endforeach
         </div>
+        @endif
     </div>
 </div>
 @endsection

@@ -219,7 +219,7 @@ class WorkActivityController extends Controller
         $this->authorizeActivity($request, $work);
 
         $work->ensureShareToken();
-        $work->load(['tasks.assignedEmployee', 'tasks.contentWriter', 'tasks.designer']);
+        $work->load(['tasks.assignedEmployee', 'tasks.contentWriter', 'tasks.designer', 'tasks.files']);
 
         $employees = Employee::where('organization_id', WorkHub::organizationId($request))
             ->where('status', 'active')
@@ -232,10 +232,11 @@ class WorkActivityController extends Controller
             'reels' => $work->tasks->where('content_type', 'reels')->count(),
             'carousel' => $work->tasks->where('content_type', 'carousel')->count(),
             'other' => $work->tasks->filter(fn ($t) => ! in_array($t->content_type, ['post', 'reels', 'carousel'], true))->count(),
+            'archived' => $work->tasks->where('pipeline_stage', 'archived')->count(),
         ];
 
         $pipelineStages = [];
-        foreach (WorkTask::pipelineStages() as $key => $label) {
+        foreach (WorkTask::activePipelineStages() as $key => $label) {
             $stageTasks = $work->tasks
                 ->where('pipeline_stage', $key)
                 ->values();
@@ -262,6 +263,15 @@ class WorkActivityController extends Controller
             ];
         }
 
+        $archivedTasks = $work->tasks
+            ->where('pipeline_stage', 'archived')
+            ->values();
+
+        $boardView = $request->input('board', 'pipeline');
+        if (! in_array($boardView, ['pipeline', 'archive'], true)) {
+            $boardView = 'pipeline';
+        }
+
         $designers = $employees->whereIn('role', ['designer', 'video_editor'])->values();
         $contentWriters = $employees->where('role', 'content_writer')->values();
         $publishers = $employees->whereIn('role', ['account_manager', 'page_manager'])->values();
@@ -276,6 +286,8 @@ class WorkActivityController extends Controller
             'contentWriters' => $contentWriters,
             'publishers' => $publishers,
             'pipelineStages' => $pipelineStages,
+            'archivedTasks' => $archivedTasks,
+            'boardView' => $boardView,
             'contentCounts' => $contentCounts,
             'kinds' => WorkTask::kinds(),
             'taskStatuses' => WorkTask::statuses(),

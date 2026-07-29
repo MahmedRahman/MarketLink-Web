@@ -21,7 +21,7 @@ class PublicWorkShareController extends Controller
         $activity->load(['tasks.contentWriter', 'tasks.designer']);
 
         $pipelineStages = [];
-        foreach (WorkTask::pipelineStages() as $key => $label) {
+        foreach (WorkTask::activePipelineStages() as $key => $label) {
             $stageTasks = $activity->tasks->where('pipeline_stage', $key)->values();
             $pipelineStages[] = [
                 'key' => $key,

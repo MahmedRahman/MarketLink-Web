@@ -70,9 +70,9 @@ class TeamTasksMonitorController extends Controller
         // فلتر الحالة بعد التحميل (متأخرة تعتمد على accessor)
         $tasks = $tasks->filter(function (WorkTask $task) use ($filters) {
             return match ($filters['state']) {
-                'active' => $task->status !== 'done' && $task->pipeline_stage !== 'published',
+                'active' => $task->status !== 'done' && ! in_array($task->pipeline_stage, ['published', 'archived'], true),
                 'overdue' => $task->is_overdue,
-                'done' => $task->status === 'done' || $task->pipeline_stage === 'published',
+                'done' => $task->status === 'done' || in_array($task->pipeline_stage, ['published', 'archived'], true),
                 default => true,
             };
         })->values();
@@ -109,7 +109,7 @@ class TeamTasksMonitorController extends Controller
                 /** @var Employee|null $employee */
                 $employee = $employeeRows->first()['employee'] ?? null;
                 $taskRows = $employeeRows->values();
-                $activeCount = $taskRows->filter(fn ($r) => $r['task']->status !== 'done' && $r['task']->pipeline_stage !== 'published')->count();
+                $activeCount = $taskRows->filter(fn ($r) => $r['task']->status !== 'done' && ! in_array($r['task']->pipeline_stage, ['published', 'archived'], true))->count();
                 $overdueCount = $taskRows->filter(fn ($r) => $r['task']->is_overdue)->count();
 
                 return [
@@ -179,7 +179,7 @@ class TeamTasksMonitorController extends Controller
         }
 
         if ($task->assigned_to && $task->assignedEmployee) {
-            $isPublisher = in_array($task->pipeline_stage, ['ready_to_publish', 'published'], true);
+            $isPublisher = in_array($task->pipeline_stage, ['ready_to_publish', 'published', 'archived'], true);
             $already = collect($slots)->contains(fn ($s) => $s['employee_id'] === (int) $task->assigned_to);
 
             // لو المسؤول الحالي مش ظاهر أصلاً ككاتب/مصمم، أظهره؛ أو لو مرحلة نشر أظهره كناشر حتى لو مكرر الدور

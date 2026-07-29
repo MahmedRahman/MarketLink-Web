@@ -158,7 +158,7 @@ class WorkTask extends Model
                             });
                     });
             })->orWhere(function (Builder $publish) use ($employeeId) {
-                $publish->whereIn('pipeline_stage', ['ready_to_publish', 'published'])
+                $publish->whereIn('pipeline_stage', ['ready_to_publish', 'published', 'archived'])
                     ->where('assigned_to', $employeeId);
             });
         });
@@ -171,7 +171,7 @@ class WorkTask extends Model
         return match ($stage) {
             'planning' => $this->assigned_to,
             'design' => $this->designer_id ?? $this->assigned_to,
-            'ready_to_publish', 'published' => $this->assigned_to,
+            'ready_to_publish', 'published', 'archived' => $this->assigned_to,
             default => $this->content_writer_id ?? $this->assigned_to,
         };
     }
@@ -271,6 +271,7 @@ class WorkTask extends Model
             'design' => 'purple',
             'ready_to_publish' => 'teal',
             'published' => 'green',
+            'archived' => 'gray',
             default => 'blue',
         };
     }
@@ -282,6 +283,7 @@ class WorkTask extends Model
             'design' => 'palette',
             'ready_to_publish' => 'schedule_send',
             'published' => 'check_circle',
+            'archived' => 'inventory_2',
             default => 'edit_note',
         };
     }
@@ -291,7 +293,7 @@ class WorkTask extends Model
         return match ($this->pipeline_stage) {
             'planning' => $this->assignedEmployee,
             'design' => $this->designer ?? $this->assignedEmployee,
-            'ready_to_publish', 'published' => $this->assignedEmployee,
+            'ready_to_publish', 'published', 'archived' => $this->assignedEmployee,
             default => $this->contentWriter ?? $this->assignedEmployee,
         };
     }
@@ -321,7 +323,18 @@ class WorkTask extends Model
             'design' => 'التصميم',
             'ready_to_publish' => 'جاهز للنشر',
             'published' => 'تم النشر',
+            'archived' => 'أرشيف',
         ];
+    }
+
+    /** مراحل البايبلاين النشطة (بدون الأرشيف) */
+    public static function activePipelineStages(): array
+    {
+        return array_filter(
+            self::pipelineStages(),
+            fn ($label, $key) => $key !== 'archived',
+            ARRAY_FILTER_USE_BOTH
+        );
     }
 
     public static function defaultPipelineStage(): string
@@ -342,6 +355,7 @@ class WorkTask extends Model
             'writing' => 'design',
             'design' => 'ready_to_publish',
             'ready_to_publish' => 'published',
+            'published' => 'archived',
             default => null,
         };
     }
@@ -353,6 +367,7 @@ class WorkTask extends Model
             'design' => 'writing',
             'ready_to_publish' => 'design',
             'published' => 'ready_to_publish',
+            'archived' => 'published',
             default => null,
         };
     }

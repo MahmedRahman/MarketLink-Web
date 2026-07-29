@@ -166,7 +166,7 @@ class EmployeeWorkTaskController extends Controller
         }
 
         $pipelineStages = [];
-        foreach (WorkTask::pipelineStages() as $key => $label) {
+        foreach (WorkTask::activePipelineStages() as $key => $label) {
             $stageTasks = $myTasks->where('pipeline_stage', $key)->values();
 
             $pipelineStages[] = [
@@ -184,6 +184,12 @@ class EmployeeWorkTaskController extends Controller
             ];
         }
 
+        $archivedTasks = $myTasks->where('pipeline_stage', 'archived')->values();
+        $boardView = request()->input('board', 'pipeline');
+        if (! in_array($boardView, ['pipeline', 'archive'], true)) {
+            $boardView = 'pipeline';
+        }
+
         $done = $myTasks->where('status', 'done')->count();
         $total = $myTasks->count();
         $progress = $total > 0 ? (int) round(($done / $total) * 100) : 0;
@@ -194,11 +200,14 @@ class EmployeeWorkTaskController extends Controller
             'reels' => $myTasks->where('content_type', 'reels')->count(),
             'carousel' => $myTasks->where('content_type', 'carousel')->count(),
             'other' => $myTasks->filter(fn ($t) => ! in_array($t->content_type, ['post', 'reels', 'carousel'], true))->count(),
+            'archived' => $archivedTasks->count(),
         ];
 
         return view('employee.work.activity', [
             'activity' => $work,
             'pipelineStages' => $pipelineStages,
+            'archivedTasks' => $archivedTasks,
+            'boardView' => $boardView,
             'contentCounts' => $contentCounts,
             'progress' => $progress,
             'doneCount' => $done,
@@ -359,9 +368,13 @@ class EmployeeWorkTaskController extends Controller
             $updates['assigned_to'] = WorkTask::suggestAssigneeId($orgId, 'publish')
                 ?? $task->assigned_to;
             $updates['status'] = $task->status === 'done' ? 'review' : ($task->status ?: 'review');
-        } else {
+        } elseif ($stage === 'published') {
             $updates['assigned_to'] = WorkTask::suggestAssigneeId($orgId, 'publish')
                 ?? $task->assigned_to;
+            $updates['status'] = 'done';
+        } else { // archived
+            $updates['assigned_to'] = $task->assigned_to
+                ?? WorkTask::suggestAssigneeId($orgId, 'publish');
             $updates['status'] = 'done';
         }
 

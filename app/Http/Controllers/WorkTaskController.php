@@ -325,9 +325,13 @@ class WorkTaskController extends Controller
             $updates['assigned_to'] = WorkTask::suggestAssigneeId($orgId, 'publish')
                 ?? $task->assigned_to;
             $updates['status'] = $task->status === 'done' ? 'review' : ($task->status ?: 'review');
-        } else { // published
+        } elseif ($stage === 'published') {
             $updates['assigned_to'] = WorkTask::suggestAssigneeId($orgId, 'publish')
                 ?? $task->assigned_to;
+            $updates['status'] = 'done';
+        } else { // archived
+            $updates['assigned_to'] = $task->assigned_to
+                ?? WorkTask::suggestAssigneeId($orgId, 'publish');
             $updates['status'] = 'done';
         }
 

@@ -1,0 +1,48 @@
+---
+description: Project context and conventions for MEA Tasks Site (MarketLink)
+globs: 
+alwaysApply: true
+---
+
+# MEA Tasks Site — MarketLink
+
+## Stack
+- **Framework**: Laravel 12, PHP 8.2+
+- **Frontend**: Blade templates, Tailwind CSS, Alpine.js
+- **Database**: MySQL
+- **Runtime**: Docker Compose
+- **File Storage**: Local disk + NAS (AcademyNasStorage service)
+
+## Project Structure
+- `app/Http/Controllers/` — Web admin controllers
+- `app/Http/Controllers/Employee/` — Employee-facing controllers
+- `app/Models/` — Eloquent models
+- `app/Services/` — Business logic services (NAS storage, file movers, etc.)
+- `app/Support/WorkHub.php` — Helper for detecting current actor (User or Employee)
+- `resources/views/` — Blade views
+- `resources/views/layouts/` — Layout files: `dashboard.blade.php` (admin), `employee.blade.php`, `admin.blade.php`
+- `routes/web.php` — All routes
+
+## Auth & Guards
+- **web** guard → `User` model (admins)
+- **employee** guard → `Employee` model
+- `WorkHub::actor($request)` returns the current actor (User or Employee) based on route/guard
+
+## Key Models
+- `WorkActivity` — A work project/activity containing tasks
+- `WorkTask` — Individual tasks within an activity (has pipeline stages)
+- `WorkTaskFile` — Files attached to tasks
+- `WorkIdea` — Suggested ideas (inbox separate from workspace)
+- `Employee` — Employee users with roles (designer, video_editor, etc.)
+
+## Conventions
+- UI language is **Arabic (RTL)**
+- Use `work_route()` helper for generating work routes
+- Views use `@extends` with dynamic layout variable (e.g. `$ideasLayout`)
+- NAS operations go through `AcademyNasStorage` service
+- Employee routes are prefixed with `employee/` and use `employee.*` route names
+
+## Deployment
+- See `.cursor/vps-deployment.md` for full deployment instructions
+- Quick deploy: `ssh test@192.168.68.223 "cd /home/test/marketlink-web && bash deploy.sh"`
+- After deploy, fix permissions if 500 error: `chown -R www-data:www-data storage bootstrap/cache`

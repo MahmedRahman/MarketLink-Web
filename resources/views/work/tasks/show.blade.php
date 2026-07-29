@@ -329,6 +329,8 @@
                 <span class="px-2.5 py-1 rounded-lg bg-teal-100 text-teal-800 text-[11px] font-semibold">جاهز للنشر — أضف الروابط ثم انقل لـ تم النشر</span>
             @elseif($task->pipeline_stage === 'published')
                 <span class="px-2.5 py-1 rounded-lg bg-green-100 text-green-800 text-[11px] font-semibold">تم النشر · الحالة اكتمال</span>
+            @elseif($task->pipeline_stage === 'archived')
+                <span class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-[11px] font-semibold">أرشيف</span>
             @endif
         </div>
 

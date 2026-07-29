@@ -212,6 +212,19 @@
                 </div>
             </div>
             <div class="flex items-center gap-2 flex-wrap">
+                <div class="inline-flex items-center rounded-xl border border-gray-200 bg-gray-50 p-1">
+                    <a href="{{ work_route('show', [$activity, 'board' => 'pipeline']) }}"
+                       class="px-3 py-1.5 rounded-lg text-xs font-bold inline-flex items-center gap-1 {{ ($boardView ?? 'pipeline') === 'pipeline' ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-600 hover:text-gray-800' }}">
+                        <span class="material-icons text-sm">view_kanban</span>
+                        البايبلاين
+                    </a>
+                    <a href="{{ work_route('show', [$activity, 'board' => 'archive']) }}"
+                       class="px-3 py-1.5 rounded-lg text-xs font-bold inline-flex items-center gap-1 {{ ($boardView ?? 'pipeline') === 'archive' ? 'bg-white text-slate-800 shadow-sm' : 'text-gray-600 hover:text-gray-800' }}">
+                        <span class="material-icons text-sm">inventory_2</span>
+                        الأرشيف
+                        <span class="px-1.5 py-0.5 rounded-md bg-slate-200 text-slate-700">{{ $contentCounts['archived'] ?? ($archivedTasks ?? collect())->count() }}</span>
+                    </a>
+                </div>
                 <button type="button"
                         onclick="openParseBulkModal()"
                         class="px-4 py-2 rounded-xl font-medium text-sm inline-flex items-center gap-1.5 bg-indigo-50 text-indigo-700 border border-indigo-100 hover:bg-indigo-100">
@@ -227,8 +240,126 @@
             </div>
         </div>
 
+        @if(($boardView ?? 'pipeline') === 'archive')
+            <div class="space-y-4" id="archiveBoard">
+                <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 flex items-start gap-2">
+                    <span class="material-icons text-slate-500 shrink-0">info</span>
+                    <p>الأرشيف لوحده عشان البايبلاين يفضل خفيف. من هنا تقدر تشوف التفاصيل وتحمّل الملفات أو ترجع التاسك لـ «تم النشر».</p>
+                </div>
+
+                @forelse(($archivedTasks ?? collect()) as $task)
+                    <article class="card rounded-2xl overflow-hidden border border-slate-200">
+                        <div class="px-5 py-4 bg-gradient-to-l from-slate-100 to-white border-b border-slate-200 flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <div class="flex flex-wrap items-center gap-2 mb-1.5">
+                                    <span class="role-badge role-gray">أرشيف</span>
+                                    @if($task->content_type_label)
+                                        <span class="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 text-[11px] font-semibold">{{ $task->content_type_label }}</span>
+                                    @endif
+                                    @foreach($task->platform_labels ?? [] as $plat)
+                                        <span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[11px]">{{ $plat }}</span>
+                                    @endforeach
+                                </div>
+                                <h4 class="text-lg font-extrabold text-gray-900 leading-snug">{{ $task->title }}</h4>
+                                @if($task->publish_date)
+                                    <p class="text-xs text-slate-500 mt-1 inline-flex items-center gap-1">
+                                        <span class="material-icons text-sm">event</span>
+                                        نُشر {{ $task->publish_date->format('Y/m/d') }}
+                                    </p>
+                                @endif
+                            </div>
+                            <div class="flex items-center gap-2 flex-wrap shrink-0">
+                                <form method="POST" action="{{ work_route('tasks.move-stage', [$activity, $task]) }}">
+                                    @csrf
+                                    <input type="hidden" name="pipeline_stage" value="published">
+                                    <button type="submit" class="px-3 py-2 rounded-xl bg-green-50 text-green-800 text-xs font-bold border border-green-100 hover:bg-green-100">
+                                        إرجاع لتم النشر
+                                    </button>
+                                </form>
+                                <a href="{{ work_route('tasks.show', [$activity, $task]) }}"
+                                   class="px-3 py-2 rounded-xl bg-indigo-50 text-indigo-700 text-xs font-bold hover:bg-indigo-100">التفاصيل</a>
+                                <a href="{{ work_route('tasks.edit', [$activity, $task]) }}"
+                                   class="px-3 py-2 rounded-xl bg-gray-100 text-gray-700 text-xs font-bold hover:bg-gray-200">تعديل</a>
+                            </div>
+                        </div>
+
+                        <div class="p-5 grid grid-cols-1 lg:grid-cols-2 gap-4">
+                            <div class="space-y-3">
+                                <div class="rounded-xl border border-slate-200 bg-white p-3.5">
+                                    <p class="text-[11px] font-bold uppercase tracking-wide text-slate-400 mb-1">Caption</p>
+                                    @if($task->caption)
+                                        <p class="text-sm text-slate-800 whitespace-pre-line leading-7">{{ $task->caption }}</p>
+                                    @else
+                                        <p class="text-sm text-slate-400">مفيش كابشن</p>
+                                    @endif
+                                </div>
+                                @if(!empty($task->platforms))
+                                    <div class="rounded-xl border border-slate-200 bg-white p-3.5 space-y-2">
+                                        <p class="text-[11px] font-bold uppercase tracking-wide text-slate-400">روابط النشر</p>
+                                        @foreach($task->platforms as $plat)
+                                            @php
+                                                $platLabel = \App\Models\WorkTask::platforms()[$plat] ?? $plat;
+                                                $link = $task->publishLinkFor($plat);
+                                            @endphp
+                                            <div class="flex items-center justify-between gap-2 text-sm">
+                                                <span class="font-semibold text-slate-700">{{ $platLabel }}</span>
+                                                @if($link)
+                                                    <a href="{{ $link }}" target="_blank" rel="noopener" class="text-teal-700 hover:underline truncate max-w-[65%]" dir="ltr">{{ $link }}</a>
+                                                @else
+                                                    <span class="text-xs text-slate-400">—</span>
+                                                @endif
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @endif
+                            </div>
+
+                            <div class="rounded-xl border border-slate-200 bg-white p-3.5">
+                                <div class="flex items-center justify-between gap-2 mb-3">
+                                    <p class="text-[11px] font-bold uppercase tracking-wide text-slate-400">ملفات التصميم</p>
+                                    @if($task->files->isNotEmpty())
+                                        <span class="text-[11px] text-slate-500">{{ $task->files->count() }} ملف</span>
+                                    @endif
+                                </div>
+                                @forelse($task->files as $file)
+                                    @php
+                                        $fileUrl = work_route('tasks.files.download', [$activity, $task, $file]);
+                                    @endphp
+                                    <div class="flex items-center gap-3 py-2 border-b border-slate-100 last:border-0">
+                                        <div class="w-10 h-10 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center shrink-0">
+                                            <span class="material-icons text-base">{{ $file->file_icon }}</span>
+                                        </div>
+                                        <div class="min-w-0 flex-1">
+                                            <p class="text-sm font-semibold text-slate-800 truncate">{{ $file->file_name }}</p>
+                                            <p class="text-[11px] text-slate-500">{{ $file->asset_kind_label }} · {{ $file->formatted_file_size }}</p>
+                                        </div>
+                                        <a href="{{ $fileUrl }}"
+                                           class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-900 text-white text-[11px] font-bold hover:bg-slate-800">
+                                            <span class="material-icons text-sm">download</span>
+                                            تحميل
+                                        </a>
+                                    </div>
+                                @empty
+                                    <p class="text-sm text-slate-400 text-center py-6">مفيش ملفات مرفوعة</p>
+                                @endforelse
+                            </div>
+                        </div>
+                    </article>
+                @empty
+                    <div class="card rounded-2xl p-12 text-center">
+                        <span class="material-icons text-5xl text-slate-300">inventory_2</span>
+                        <h3 class="text-lg font-bold text-slate-700 mt-3">الأرشيف فاضي</h3>
+                        <p class="text-sm text-slate-500 mt-1">بعد «تم النشر» اسحب التاسك لمنطقة الأرشيف في البايبلاين</p>
+                        <a href="{{ work_route('show', [$activity, 'board' => 'pipeline']) }}"
+                           class="inline-flex mt-4 px-4 py-2 rounded-xl bg-indigo-50 text-indigo-700 text-sm font-bold hover:bg-indigo-100">
+                            رجوع للبايبلاين
+                        </a>
+                    </div>
+                @endforelse
+            </div>
+        @else
         <div class="space-y-4" id="pipelineBoard">
-            <p class="text-xs text-gray-500">اسحب الكارت لترتيب داخل المرحلة، أو أفلت على مرحلة تانية للنقل.</p>
+            <p class="text-xs text-gray-500">اسحب الكارت لترتيب داخل المرحلة، أو أفلت على مرحلة تانية للنقل. بعد النشر انقله للأرشيف عشان البايبلاين يفضل مرتب.</p>
             @foreach($pipelineStages as $stage)
                 <section class="card rounded-2xl overflow-hidden pipeline-stage"
                          data-stage="{{ $stage['key'] }}">
@@ -261,7 +392,7 @@
                                     @elseif($stage['key'] === 'ready_to_publish')
                                         جاهز للنشر — أضف روابط النشر من التفاصيل
                                     @else
-                                        تم النشر — الحالة تتحول لاكتمال
+                                        تم النشر — انقل للأرشيف بعد الانتهاء عشان العرض يفضل خفيف
                                     @endif
                                     · <span class="stage-count">{{ $stage['count'] }}</span> عنصر
                                 </p>
@@ -395,7 +526,37 @@
                     </div>
                 </section>
             @endforeach
+
+            {{-- منطقة إسقاط للأرشيف (مش معروضة كمرحلة كاملة عشان متزدحم البايبلاين) --}}
+            <section class="card rounded-2xl overflow-hidden pipeline-stage border border-dashed border-slate-300"
+                     data-stage="archived">
+                <div class="px-4 py-3 border-b border-slate-200 bg-slate-50 flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-slate-200 text-slate-700 flex items-center justify-center">
+                            <span class="material-icons">inventory_2</span>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-gray-800">أرشفة سريعة</h4>
+                            <p class="text-xs text-gray-500">
+                                اسحب تاسك منشور هنا، أو افتح تبويب الأرشيف للتفاصيل والتحميل
+                                · <span class="stage-count">{{ ($archivedTasks ?? collect())->count() }}</span> في الأرشيف
+                            </p>
+                        </div>
+                    </div>
+                    <a href="{{ work_route('show', [$activity, 'board' => 'archive']) }}"
+                       class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-white hover:bg-slate-900">
+                        فتح الأرشيف
+                    </a>
+                </div>
+                <div class="p-4 stage-dropzone min-h-[88px] transition-colors bg-slate-50/50" data-stage="archived">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 stage-cards hidden"></div>
+                    <div class="stage-empty text-center py-6 text-sm text-slate-400">
+                        أفلت كارت منشور هنا للأرشفة
+                    </div>
+                </div>
+            </section>
         </div>
+        @endif
     </div>
 </div>
 
@@ -1071,6 +1232,15 @@
                     await postForm(moveUrlTpl.replace('TASK_ID', taskId), {
                         pipeline_stage: toStage,
                     });
+                }
+                if (toStage === 'archived') {
+                    card.remove();
+                    refreshStageCounts();
+                    const archiveCount = board.querySelector('.pipeline-stage[data-stage="archived"] .stage-count');
+                    if (archiveCount) {
+                        archiveCount.textContent = String((parseInt(archiveCount.textContent, 10) || 0) + 1);
+                    }
+                    return;
                 }
                 await postForm(reorderUrl, {
                     pipeline_stage: toStage,
