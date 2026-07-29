@@ -76,6 +76,11 @@
                         مساحة العمل
                     </a>
 
+                    <a href="{{ route('team-tasks.index') }}" class="flex items-center px-4 py-3 rounded-lg hover:bg-gray-800 transition-colors {{ request()->routeIs('team-tasks.*') ? 'bg-gray-800' : '' }}">
+                        <span class="material-icons ml-3">supervisor_account</span>
+                        متابعة المهام
+                    </a>
+
                     <a href="{{ route('ideas.index') }}" class="flex items-center px-4 py-3 rounded-lg hover:bg-gray-800 transition-colors {{ request()->routeIs('ideas.*') ? 'bg-gray-800' : '' }}">
                         <span class="material-icons ml-3">lightbulb</span>
                         الأفكار المقترحة

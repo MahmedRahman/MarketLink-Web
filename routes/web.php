@@ -148,6 +148,9 @@ Route::middleware(['auth', \App\Http\Middleware\CheckTrialStatus::class])->group
            Route::get('monthly-plans/{monthlyPlan}/tasks/{task}/files/{file}/download', [\App\Http\Controllers\PlanTaskController::class, 'downloadFile'])->name('monthly-plans.tasks.files.download');
            Route::delete('monthly-plans/{monthlyPlan}/tasks/{task}/files/{file}', [\App\Http\Controllers\PlanTaskController::class, 'deleteFile'])->name('monthly-plans.tasks.files.delete');
            
+           // متابعة مهام الفريق (أدمن فقط)
+           Route::get('team-tasks', [\App\Http\Controllers\TeamTasksMonitorController::class, 'index'])->name('team-tasks.index');
+
            // Academy Work Hub (مساحة العمل)
            Route::get('work', [\App\Http\Controllers\WorkActivityController::class, 'index'])->name('work.index');
            Route::post('work', [\App\Http\Controllers\WorkActivityController::class, 'store'])->name('work.store');

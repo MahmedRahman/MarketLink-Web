@@ -1028,6 +1028,13 @@
                         <span class="font-medium">مساحة العمل</span>
                     </a>
 
+                    @if(Auth::check() && Auth::user()->is_admin)
+                        <a href="{{ route('team-tasks.index') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('team-tasks.*') ? 'active' : '' }}">
+                            <span class="material-icons text-lg ml-3">supervisor_account</span>
+                            <span class="font-medium">متابعة المهام</span>
+                        </a>
+                    @endif
+
                     <a href="{{ route('employees.index') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('employees.*') ? 'active' : '' }}">
                         <span class="material-icons text-lg ml-3">groups</span>
                         <span class="font-medium">الموظفين</span>
