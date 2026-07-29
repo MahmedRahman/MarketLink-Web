@@ -144,7 +144,7 @@
                 <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
                     <a href="{{ route('register') }}" class="btn-primary text-white px-8 py-4 rounded-xl text-lg font-semibold inline-flex items-center">
                         <span class="material-icons ml-2">rocket_launch</span>
-                        ابدأ تجربتك المجانية
+                        ابدأ الآن
                     </a>
                     <a href="{{ route('login') }}" class="btn-outline text-white px-8 py-4 rounded-xl text-lg font-semibold inline-flex items-center">
                         <span class="material-icons ml-2">login</span>
@@ -260,7 +260,7 @@
                     </div>
                     <h3 class="text-xl font-bold text-gray-800 mb-3">سجل مجاناً</h3>
                     <p class="text-gray-600">
-                        أنشئ حسابك في دقائق. لا حاجة لبطاقة ائتمان. ابدأ تجربتك المجانية 14 يوم
+                        أنشئ حسابك في دقائق. لا حاجة لبطاقة ائتمان. تجربة مجانية 14 يوم
                     </p>
                 </div>
                 
@@ -361,7 +361,7 @@
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
                 <a href="{{ route('register') }}" class="bg-white text-purple-600 px-8 py-4 rounded-xl text-lg font-semibold inline-flex items-center justify-center hover:bg-gray-100 transition-colors">
                     <span class="material-icons ml-2">rocket_launch</span>
-                    ابدأ تجربتك المجانية
+                    ابدأ الآن
                 </a>
                 <a href="{{ route('login') }}" class="btn-outline text-white px-8 py-4 rounded-xl text-lg font-semibold inline-flex items-center justify-center">
                     <span class="material-icons ml-2">login</span>
