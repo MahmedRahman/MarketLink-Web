@@ -55,6 +55,7 @@ class PublicWorkShareController extends Controller
 
     /**
      * معرض كل ملفات التصميم (صور/فيديو) عبر الحملة كلها.
+     * صور الكروسيل تتجمّع مع بعض في عنصر واحد.
      */
     public function showGallery(string $token): View
     {
@@ -62,17 +63,44 @@ class PublicWorkShareController extends Controller
         $activity->load(['tasks.files']);
 
         $items = collect();
+        $imageCount = 0;
+        $videoCount = 0;
+
         foreach ($activity->tasks->sortBy('order') as $task) {
-            foreach ($task->files as $file) {
-                if (! $file->isImage() && ! $file->isVideo()) {
-                    continue;
-                }
-                if (! Storage::disk('public')->exists($file->file_path)) {
-                    continue;
-                }
+            $media = $task->files
+                ->filter(function (WorkTaskFile $file) {
+                    if (! $file->isImage() && ! $file->isVideo()) {
+                        return false;
+                    }
+
+                    return Storage::disk('public')->exists($file->file_path);
+                })
+                ->values();
+
+            if ($media->isEmpty()) {
+                continue;
+            }
+
+            $imageCount += $media->filter(fn (WorkTaskFile $f) => $f->isImage())->count();
+            $videoCount += $media->filter(fn (WorkTaskFile $f) => $f->isVideo())->count();
+
+            $isCarousel = $task->content_type === 'carousel' && $media->count() > 1;
+
+            if ($isCarousel) {
                 $items->push([
-                    'file' => $file,
+                    'type' => 'carousel',
                     'task' => $task,
+                    'files' => $media,
+                ]);
+
+                continue;
+            }
+
+            foreach ($media as $file) {
+                $items->push([
+                    'type' => 'single',
+                    'task' => $task,
+                    'file' => $file,
                 ]);
             }
         }
@@ -82,8 +110,8 @@ class PublicWorkShareController extends Controller
             'items' => $items,
             'shareToken' => $token,
             'galleryUrl' => route('public.work.gallery', $token),
-            'imageCount' => $items->filter(fn ($i) => $i['file']->isImage())->count(),
-            'videoCount' => $items->filter(fn ($i) => $i['file']->isVideo())->count(),
+            'imageCount' => $imageCount,
+            'videoCount' => $videoCount,
         ]);
     }
 
