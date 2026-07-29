@@ -86,6 +86,7 @@ class WebhookController extends Controller
         // Run Laravel optimizations
         $this->runCommand('php artisan config:cache');
         $this->runCommand('php artisan route:cache');
+        $this->runCommand('php artisan view:clear');
         $this->runCommand('php artisan view:cache');
         
         // Run database migrations (if any)
