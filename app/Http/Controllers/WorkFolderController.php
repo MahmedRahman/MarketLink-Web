@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\WorkActivity;
 use App\Models\WorkFolder;
 use App\Support\WorkHub;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -71,22 +72,36 @@ class WorkFolderController extends Controller
             ->with('success', 'تم حذف الفولدر — الأنشطة رجعت بدون فولدر');
     }
 
-    public function moveActivity(Request $request, WorkActivity $work): RedirectResponse
+    public function moveActivity(Request $request, WorkActivity $work): RedirectResponse|JsonResponse
     {
         abort_unless(WorkHub::canManageFolders($request), 403);
         WorkHub::authorizeOrganization($request, (int) $work->organization_id);
 
+        $request->merge([
+            'folder_id' => $request->filled('folder_id') ? $request->input('folder_id') : null,
+        ]);
+
         $validated = $request->validate([
-            'folder_id' => 'nullable|exists:work_folders,id',
+            'folder_id' => 'nullable|integer|exists:work_folders,id',
         ]);
 
         $folderId = $validated['folder_id'] ?? null;
-        if ($folderId) {
+        if ($folderId !== null) {
             $folder = WorkFolder::query()->findOrFail($folderId);
             abort_unless((int) $folder->organization_id === (int) $work->organization_id, 403);
         }
 
         $work->update(['folder_id' => $folderId]);
+
+        $message = $folderId ? 'تم نقل النشاط للفولدر' : 'تم إزالة النشاط من الفولدر';
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'ok' => true,
+                'folder_id' => $folderId,
+                'message' => $message,
+            ]);
+        }
 
         $view = $request->input('return_view', 'folder');
         if (! in_array($view, ['title', 'month', 'folder'], true)) {
@@ -99,6 +114,6 @@ class WorkFolderController extends Controller
                 'type' => $request->input('type'),
                 'status' => $request->input('status'),
             ]))
-            ->with('success', $folderId ? 'تم نقل النشاط للفولدر' : 'تم إزالة النشاط من الفولدر');
+            ->with('success', $message);
     }
 }

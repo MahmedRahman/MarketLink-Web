@@ -86,12 +86,11 @@ class WorkActivityController extends Controller
             })->values();
 
             $unfiled = ($grouped->get(0) ?? collect())->values();
-            if ($unfiled->isNotEmpty()) {
-                $activitiesByFolder->push([
-                    'folder' => null,
-                    'activities' => $unfiled,
-                ]);
-            }
+            // دائماً نظهر «بدون فولدر» كمنطقة إسقاط حتى لو فاضية
+            $activitiesByFolder->push([
+                'folder' => null,
+                'activities' => $unfiled,
+            ]);
         }
 
         // متابعة عامة عبر كل الأنشطة

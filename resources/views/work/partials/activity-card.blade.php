@@ -2,10 +2,24 @@
     $canManageFolders = $canManageFolders ?? false;
     $folders = $folders ?? collect();
     $viewMode = $viewMode ?? 'title';
+    $dndEnabled = $canManageFolders && ($viewMode === 'folder');
 @endphp
-<div class="space-y-2">
-    <a href="{{ work_route('show', $activity) }}" class="card rounded-2xl p-5 block hover:no-underline">
-        <div class="flex items-start justify-between mb-3">
+<div class="space-y-2 {{ $dndEnabled ? 'folder-dnd-item' : '' }}"
+     @if($dndEnabled)
+         draggable="true"
+         data-activity-id="{{ $activity->id }}"
+         data-move-url="{{ work_route('move-folder', $activity) }}"
+         data-folder-id="{{ $activity->folder_id ?: '' }}"
+     @endif>
+    <a href="{{ work_route('show', $activity) }}" class="card rounded-2xl p-5 block hover:no-underline relative">
+        @if($dndEnabled)
+            <span class="absolute top-3 start-3 w-8 h-8 rounded-lg bg-slate-100 text-slate-500 inline-flex items-center justify-center cursor-grab active:cursor-grabbing"
+                  title="اسحب لنقل الفولدر"
+                  aria-hidden="true">
+                <span class="material-icons text-base">drag_indicator</span>
+            </span>
+        @endif
+        <div class="flex items-start justify-between mb-3 {{ $dndEnabled ? 'ps-9' : '' }}">
             <div class="flex items-center gap-3 min-w-0">
                 <div class="w-11 h-11 rounded-xl bg-indigo-50 text-primary flex items-center justify-center shrink-0">
                     <span class="material-icons">{{ $activity->type_icon }}</span>
@@ -45,7 +59,7 @@
     </a>
 
     @if($canManageFolders)
-        <form method="POST" action="{{ work_route('move-folder', $activity) }}" class="px-1" onclick="event.stopPropagation()">
+        <form method="POST" action="{{ work_route('move-folder', $activity) }}" class="px-1 folder-move-form" onclick="event.stopPropagation()">
             @csrf
             <input type="hidden" name="return_view" value="{{ $viewMode }}">
             @if(!empty($filterType))
@@ -56,7 +70,7 @@
             @endif
             <label class="sr-only">نقل لفولدر</label>
             <select name="folder_id" onchange="this.form.submit()"
-                    class="w-full px-3 py-1.5 rounded-xl border border-gray-200 text-xs text-gray-700 bg-white focus:border-primary focus:outline-none">
+                    class="folder-move-select w-full px-3 py-1.5 rounded-xl border border-gray-200 text-xs text-gray-700 bg-white focus:border-primary focus:outline-none">
                 <option value="">بدون فولدر</option>
                 @foreach($folders as $folderOption)
                     <option value="{{ $folderOption->id }}" @selected((int) $activity->folder_id === (int) $folderOption->id)>

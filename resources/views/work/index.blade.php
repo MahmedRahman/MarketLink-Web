@@ -123,13 +123,20 @@
             <p class="text-gray-500 text-sm mt-1">ابدأ بإضافة أول نشاط للأكاديمية (محاضرة لايف، راوند، محتوى...)</p>
         </div>
     @elseif(($viewMode ?? 'title') === 'folder')
-        <div class="space-y-6">
+        @if($canManageFolders ?? false)
+            <div class="rounded-2xl border border-dashed border-amber-300 bg-amber-50/60 px-4 py-3 text-sm text-amber-900 flex items-center gap-2">
+                <span class="material-icons text-amber-700">swipe</span>
+                اسحب الكارت من أيقونة السحب وأفلته داخل فولدر تاني عشان تنقله
+            </div>
+        @endif
+        <div class="space-y-6" id="folderBoard" @if($canManageFolders ?? false) data-folder-dnd="1" @endif>
             @forelse($activitiesByFolder as $folderGroup)
                 @php
                     $folder = $folderGroup['folder'];
                     $folderActivities = $folderGroup['activities'];
+                    $folderKey = $folder ? (string) $folder->id : '';
                 @endphp
-                <section class="card rounded-2xl overflow-hidden" @if($folder) id="folder-{{ $folder->id }}" @endif>
+                <section class="card rounded-2xl overflow-hidden folder-section" @if($folder) id="folder-{{ $folder->id }}" @endif data-folder-id="{{ $folderKey }}">
                     <div class="px-5 py-4 bg-gradient-to-l {{ $folder ? 'from-amber-50 to-white border-b border-amber-100' : 'from-slate-50 to-white border-b border-gray-100' }} flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div class="flex items-center gap-2.5 min-w-0">
                             <div class="w-10 h-10 rounded-xl {{ $folder ? 'bg-amber-600' : 'bg-slate-500' }} text-white flex items-center justify-center shrink-0">
@@ -141,13 +148,14 @@
                                     @if($folder?->description)
                                         {{ $folder->description }}
                                     @else
-                                        {{ $folder ? 'مجموعة أنشطة' : 'أنشطة غير مضافة لأي فولدر' }}
+                                        {{ $folder ? 'مجموعة أنشطة' : 'أنشطة غير مضافة لأي فولدر — اسحب هنا للإزالة من فولدر' }}
                                     @endif
                                 </p>
                             </div>
                         </div>
                         <div class="flex items-center gap-2 flex-wrap">
-                            <span class="shrink-0 text-xs font-bold {{ $folder ? 'text-amber-800 bg-amber-100' : 'text-slate-700 bg-slate-100' }} px-2.5 py-1 rounded-lg">
+                            <span class="folder-count shrink-0 text-xs font-bold {{ $folder ? 'text-amber-800 bg-amber-100' : 'text-slate-700 bg-slate-100' }} px-2.5 py-1 rounded-lg"
+                                  data-count="{{ $folderActivities->count() }}">
                                 {{ $folderActivities->count() }} نشاط
                             </span>
                             @if($folder && ($canManageFolders ?? false))
@@ -167,16 +175,16 @@
                             @endif
                         </div>
                     </div>
-                    <div class="p-5">
-                        @if($folderActivities->isEmpty())
-                            <p class="text-sm text-gray-400 text-center py-6">لا توجد أنشطة في هذا الفولدر</p>
-                        @else
-                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                                @foreach($folderActivities as $activity)
-                                    @include('work.partials.activity-card', ['activity' => $activity])
-                                @endforeach
-                            </div>
-                        @endif
+                    <div class="p-5 folder-drop-zone min-h-[140px] transition-colors rounded-b-2xl"
+                         data-folder-id="{{ $folderKey }}">
+                        <div class="folder-drop-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 {{ $folderActivities->isEmpty() ? 'hidden' : '' }}">
+                            @foreach($folderActivities as $activity)
+                                @include('work.partials.activity-card', ['activity' => $activity])
+                            @endforeach
+                        </div>
+                        <p class="folder-drop-empty text-sm text-gray-400 text-center py-8 border-2 border-dashed border-gray-200 rounded-2xl {{ $folderActivities->isEmpty() ? '' : 'hidden' }}">
+                            {{ ($canManageFolders ?? false) ? 'اسحب نشاط هنا' : 'لا توجد أنشطة في هذا الفولدر' }}
+                        </p>
                     </div>
                 </section>
             @empty
@@ -423,6 +431,128 @@
         });
     }
 
+    function initFolderDragAndDrop() {
+        const board = document.getElementById('folderBoard');
+        if (!board || board.getAttribute('data-folder-dnd') !== '1') return;
+
+        let dragged = null;
+        let busy = false;
+
+        function csrfToken() {
+            return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+        }
+
+        function refreshZone(zone) {
+            if (!zone) return;
+            const grid = zone.querySelector('.folder-drop-grid');
+            const empty = zone.querySelector('.folder-drop-empty');
+            const section = zone.closest('.folder-section');
+            const countEl = section ? section.querySelector('.folder-count') : null;
+            const count = grid ? grid.querySelectorAll('.folder-dnd-item').length : 0;
+
+            if (grid) grid.classList.toggle('hidden', count === 0);
+            if (empty) empty.classList.toggle('hidden', count > 0);
+            if (countEl) {
+                countEl.dataset.count = String(count);
+                countEl.textContent = count + ' نشاط';
+            }
+        }
+
+        function clearDropStyles() {
+            board.querySelectorAll('.folder-drop-zone').forEach(function (zone) {
+                zone.classList.remove('bg-amber-50', 'ring-2', 'ring-amber-400', 'ring-inset');
+            });
+        }
+
+        board.querySelectorAll('.folder-dnd-item').forEach(function (item) {
+            item.addEventListener('dragstart', function (e) {
+                if (busy) {
+                    e.preventDefault();
+                    return;
+                }
+                dragged = item;
+                item.classList.add('opacity-50');
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', item.dataset.activityId || '');
+            });
+
+            item.addEventListener('dragend', function () {
+                item.classList.remove('opacity-50');
+                clearDropStyles();
+                dragged = null;
+            });
+        });
+
+        board.querySelectorAll('.folder-drop-zone').forEach(function (zone) {
+            zone.addEventListener('dragover', function (e) {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                clearDropStyles();
+                zone.classList.add('bg-amber-50', 'ring-2', 'ring-amber-400', 'ring-inset');
+            });
+
+            zone.addEventListener('dragleave', function (e) {
+                if (!zone.contains(e.relatedTarget)) {
+                    zone.classList.remove('bg-amber-50', 'ring-2', 'ring-amber-400', 'ring-inset');
+                }
+            });
+
+            zone.addEventListener('drop', async function (e) {
+                e.preventDefault();
+                clearDropStyles();
+                if (!dragged || busy) return;
+
+                const targetFolderId = zone.getAttribute('data-folder-id') || '';
+                const currentFolderId = dragged.getAttribute('data-folder-id') || '';
+                if (targetFolderId === currentFolderId) return;
+
+                const moveUrl = dragged.getAttribute('data-move-url');
+                if (!moveUrl) return;
+
+                const sourceZone = dragged.closest('.folder-drop-zone');
+                const targetGrid = zone.querySelector('.folder-drop-grid');
+                if (!targetGrid) return;
+
+                busy = true;
+                dragged.classList.add('pointer-events-none');
+
+                try {
+                    const body = new FormData();
+                    body.append('_token', csrfToken());
+                    body.append('folder_id', targetFolderId);
+                    body.append('return_view', 'folder');
+
+                    const res = await fetch(moveUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                        body: body,
+                        credentials: 'same-origin',
+                    });
+
+                    if (!res.ok) {
+                        throw new Error('move failed');
+                    }
+
+                    targetGrid.appendChild(dragged);
+                    dragged.setAttribute('data-folder-id', targetFolderId);
+                    const select = dragged.querySelector('.folder-move-select');
+                    if (select) select.value = targetFolderId;
+
+                    refreshZone(sourceZone);
+                    refreshZone(zone);
+                } catch (err) {
+                    alert('تعذر نقل النشاط. حاول مرة أخرى.');
+                } finally {
+                    dragged.classList.remove('pointer-events-none');
+                    busy = false;
+                }
+            });
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
         const params = new URLSearchParams(window.location.search);
         const openNew = params.get('open_new_activity');
@@ -462,6 +592,7 @@
         }
 
         toggleTemplateOption();
+        initFolderDragAndDrop();
     });
 </script>
 @endsection
