@@ -81,14 +81,16 @@
             @foreach($pipelineStages as $stage)
                 <section class="card rounded-2xl overflow-hidden pipeline-stage" data-stage="{{ $stage['key'] }}">
                     <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between gap-3
-                        @if($stage['key'] === 'writing') bg-blue-50
+                        @if($stage['key'] === 'planning') bg-amber-50
+                        @elseif($stage['key'] === 'writing') bg-blue-50
                         @elseif($stage['key'] === 'design') bg-purple-50
                         @elseif($stage['key'] === 'ready_to_publish') bg-teal-50
                         @else bg-green-50
                         @endif">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 rounded-xl flex items-center justify-center
-                                @if($stage['key'] === 'writing') bg-blue-100 text-blue-700
+                                @if($stage['key'] === 'planning') bg-amber-100 text-amber-700
+                                @elseif($stage['key'] === 'writing') bg-blue-100 text-blue-700
                                 @elseif($stage['key'] === 'design') bg-purple-100 text-purple-700
                                 @elseif($stage['key'] === 'ready_to_publish') bg-teal-100 text-teal-700
                                 @else bg-green-100 text-green-700
@@ -98,7 +100,8 @@
                             <div>
                                 <h4 class="font-bold text-gray-800">{{ $stage['label'] }}</h4>
                                 <p class="text-xs text-gray-500">
-                                    @if($stage['key'] === 'writing') عند كاتب المحتوى
+                                    @if($stage['key'] === 'planning') تخطيط المحتوى قبل الكتابة
+                                    @elseif($stage['key'] === 'writing') عند كاتب المحتوى
                                     @elseif($stage['key'] === 'design') عند فريق التصميم
                                     @elseif($stage['key'] === 'ready_to_publish') جاهز للنشر — اسحب البوست هنا بعد التصميم
                                     @else تم النشر
@@ -108,7 +111,8 @@
                             </div>
                         </div>
                         <span class="stage-count-badge px-2.5 py-1 rounded-lg text-xs font-bold
-                            @if($stage['key'] === 'writing') bg-blue-100 text-blue-700
+                            @if($stage['key'] === 'planning') bg-amber-100 text-amber-700
+                            @elseif($stage['key'] === 'writing') bg-blue-100 text-blue-700
                             @elseif($stage['key'] === 'design') bg-purple-100 text-purple-700
                             @elseif($stage['key'] === 'ready_to_publish') bg-teal-100 text-teal-700
                             @else bg-green-100 text-green-700
@@ -122,6 +126,7 @@
                             @if($stage['key'] === 'ready_to_publish') border-teal-200 bg-teal-50/40
                             @elseif($stage['key'] === 'design') border-purple-200 bg-purple-50/40
                             @elseif($stage['key'] === 'published') border-green-200 bg-green-50/40
+                            @elseif($stage['key'] === 'planning') border-amber-200 bg-amber-50/40
                             @else border-blue-200 bg-blue-50/40
                             @endif
                             {{ $stage['count'] > 0 ? 'hidden' : '' }}">
@@ -129,6 +134,7 @@
                                 @if($stage['key'] === 'ready_to_publish') text-teal-400
                                 @elseif($stage['key'] === 'design') text-purple-400
                                 @elseif($stage['key'] === 'published') text-green-400
+                                @elseif($stage['key'] === 'planning') text-amber-400
                                 @else text-blue-400
                                 @endif">{{ $stage['icon'] }}</span>
                             <p class="text-sm font-medium text-gray-700">مفيش مهام هنا حاليًا</p>

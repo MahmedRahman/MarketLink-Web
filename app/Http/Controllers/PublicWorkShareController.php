@@ -27,6 +27,7 @@ class PublicWorkShareController extends Controller
                 'key' => $key,
                 'label' => $label,
                 'icon' => match ($key) {
+                    'planning' => 'pending_actions',
                     'design' => 'palette',
                     'ready_to_publish' => 'schedule_send',
                     'published' => 'check_circle',

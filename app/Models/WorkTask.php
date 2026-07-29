@@ -136,7 +136,10 @@ class WorkTask extends Model
     public function scopeForEmployeeCurrentStage(Builder $query, int $employeeId): Builder
     {
         return $query->where(function (Builder $q) use ($employeeId) {
-            $q->where(function (Builder $writing) use ($employeeId) {
+            $q->where(function (Builder $planning) use ($employeeId) {
+                $planning->where('pipeline_stage', 'planning')
+                    ->where('assigned_to', $employeeId);
+            })->orWhere(function (Builder $writing) use ($employeeId) {
                 $writing->where('pipeline_stage', 'writing')
                     ->where(function (Builder $owner) use ($employeeId) {
                         $owner->where('content_writer_id', $employeeId)
@@ -166,6 +169,7 @@ class WorkTask extends Model
         $stage ??= $this->pipeline_stage;
 
         return match ($stage) {
+            'planning' => $this->assigned_to,
             'design' => $this->designer_id ?? $this->assigned_to,
             'ready_to_publish', 'published' => $this->assigned_to,
             default => $this->content_writer_id ?? $this->assigned_to,
@@ -257,12 +261,13 @@ class WorkTask extends Model
 
     public function getPipelineStageLabelAttribute(): string
     {
-        return self::pipelineStages()[$this->pipeline_stage] ?? 'كتابة المحتوى';
+        return self::pipelineStages()[$this->pipeline_stage] ?? 'قيد التخطيط';
     }
 
     public function getPipelineStageColorAttribute(): string
     {
         return match ($this->pipeline_stage) {
+            'planning' => 'yellow',
             'design' => 'purple',
             'ready_to_publish' => 'teal',
             'published' => 'green',
@@ -273,6 +278,7 @@ class WorkTask extends Model
     public function getPipelineStageIconAttribute(): string
     {
         return match ($this->pipeline_stage) {
+            'planning' => 'pending_actions',
             'design' => 'palette',
             'ready_to_publish' => 'schedule_send',
             'published' => 'check_circle',
@@ -283,6 +289,7 @@ class WorkTask extends Model
     public function getOwnerForCurrentStageAttribute(): ?Employee
     {
         return match ($this->pipeline_stage) {
+            'planning' => $this->assignedEmployee,
             'design' => $this->designer ?? $this->assignedEmployee,
             'ready_to_publish', 'published' => $this->assignedEmployee,
             default => $this->contentWriter ?? $this->assignedEmployee,
@@ -309,6 +316,7 @@ class WorkTask extends Model
     public static function pipelineStages(): array
     {
         return [
+            'planning' => 'قيد التخطيط',
             'writing' => 'كتابة المحتوى',
             'design' => 'التصميم',
             'ready_to_publish' => 'جاهز للنشر',
@@ -316,9 +324,21 @@ class WorkTask extends Model
         ];
     }
 
+    public static function defaultPipelineStage(): string
+    {
+        return 'planning';
+    }
+
+    /** @return list<string> */
+    public static function pipelineStageKeys(): array
+    {
+        return array_keys(self::pipelineStages());
+    }
+
     public static function nextPipelineStage(?string $stage): ?string
     {
         return match ($stage) {
+            'planning' => 'writing',
             'writing' => 'design',
             'design' => 'ready_to_publish',
             'ready_to_publish' => 'published',
@@ -329,6 +349,7 @@ class WorkTask extends Model
     public static function previousPipelineStage(?string $stage): ?string
     {
         return match ($stage) {
+            'writing' => 'planning',
             'design' => 'writing',
             'ready_to_publish' => 'design',
             'published' => 'ready_to_publish',

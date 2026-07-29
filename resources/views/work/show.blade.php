@@ -215,14 +215,16 @@
                 <section class="card rounded-2xl overflow-hidden pipeline-stage"
                          data-stage="{{ $stage['key'] }}">
                     <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between gap-3
-                        @if($stage['key'] === 'writing') bg-blue-50
+                        @if($stage['key'] === 'planning') bg-amber-50
+                        @elseif($stage['key'] === 'writing') bg-blue-50
                         @elseif($stage['key'] === 'design') bg-purple-50
                         @elseif($stage['key'] === 'ready_to_publish') bg-teal-50
                         @else bg-green-50
                         @endif">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 rounded-xl flex items-center justify-center
-                                @if($stage['key'] === 'writing') bg-blue-100 text-blue-700
+                                @if($stage['key'] === 'planning') bg-amber-100 text-amber-700
+                                @elseif($stage['key'] === 'writing') bg-blue-100 text-blue-700
                                 @elseif($stage['key'] === 'design') bg-purple-100 text-purple-700
                                 @elseif($stage['key'] === 'ready_to_publish') bg-teal-100 text-teal-700
                                 @else bg-green-100 text-green-700
@@ -232,7 +234,9 @@
                             <div>
                                 <h4 class="font-bold text-gray-800">{{ $stage['label'] }}</h4>
                                 <p class="text-xs text-gray-500">
-                                    @if($stage['key'] === 'writing')
+                                    @if($stage['key'] === 'planning')
+                                        تخطيط المحتوى قبل الكتابة
+                                    @elseif($stage['key'] === 'writing')
                                         عند كاتب المحتوى
                                     @elseif($stage['key'] === 'design')
                                         عند فريق التصميم — ارفع صورة / فيديو / PDF من صفحة التفاصيل
@@ -246,7 +250,8 @@
                             </div>
                         </div>
                         <span class="stage-count-badge px-2.5 py-1 rounded-lg text-xs font-bold
-                            @if($stage['key'] === 'writing') bg-blue-100 text-blue-700
+                            @if($stage['key'] === 'planning') bg-amber-100 text-amber-700
+                            @elseif($stage['key'] === 'writing') bg-blue-100 text-blue-700
                             @elseif($stage['key'] === 'design') bg-purple-100 text-purple-700
                             @elseif($stage['key'] === 'ready_to_publish') bg-teal-100 text-teal-700
                             @else bg-green-100 text-green-700
@@ -261,6 +266,7 @@
                             @foreach($stage['tasks'] as $task)
                                 @php
                                     $stageOwnerId = match($stage['key']) {
+                                        'planning' => $task->assigned_to,
                                         'design' => $task->designer_id ?? $task->assigned_to,
                                         'ready_to_publish', 'published' => $task->assigned_to,
                                         default => $task->content_writer_id ?? $task->assigned_to,
@@ -268,7 +274,7 @@
                                     $assigneePool = match($stage['key']) {
                                         'design' => ($designers->isNotEmpty() ? $designers : $employees),
                                         'writing' => (($contentWriters ?? collect())->isNotEmpty() ? $contentWriters : $employees),
-                                        'ready_to_publish', 'published' => (($publishers ?? collect())->isNotEmpty() ? $publishers : $employees),
+                                        'planning', 'ready_to_publish', 'published' => (($publishers ?? collect())->isNotEmpty() ? $publishers : $employees),
                                         default => $employees,
                                     };
                                     // لو المسؤول الحالي مش في القائمة المختصرة، أضفه
@@ -279,12 +285,14 @@
                                         }
                                     }
                                     $chipActive = match($stage['key']) {
+                                        'planning' => 'bg-amber-600 text-white border-amber-600 shadow-sm',
                                         'design' => 'bg-purple-600 text-white border-purple-600 shadow-sm',
                                         'ready_to_publish' => 'bg-teal-600 text-white border-teal-600 shadow-sm',
                                         'published' => 'bg-green-600 text-white border-green-600 shadow-sm',
                                         default => 'bg-blue-600 text-white border-blue-600 shadow-sm',
                                     };
                                     $chipIdle = match($stage['key']) {
+                                        'planning' => 'bg-amber-50 text-amber-800 border-amber-200 hover:border-amber-400',
                                         'design' => 'bg-purple-50 text-purple-800 border-purple-200 hover:border-purple-400',
                                         'ready_to_publish' => 'bg-teal-50 text-teal-800 border-teal-200 hover:border-teal-400',
                                         'published' => 'bg-green-50 text-green-800 border-green-200 hover:border-green-400',
@@ -309,6 +317,7 @@
                                         <label class="block text-[10px] text-gray-400 mb-0.5">
                                             @if($stage['key'] === 'design') اختَر المصمم
                                             @elseif($stage['key'] === 'writing') اختَر كاتب المحتوى
+                                            @elseif($stage['key'] === 'planning') اختَر مسؤول التخطيط
                                             @elseif($stage['key'] === 'ready_to_publish') اختَر مسؤول النشر
                                             @else اختَر الناشر
                                             @endif

@@ -173,6 +173,7 @@ class EmployeeWorkTaskController extends Controller
                 'key' => $key,
                 'label' => $label,
                 'icon' => match ($key) {
+                    'planning' => 'pending_actions',
                     'design' => 'palette',
                     'ready_to_publish' => 'schedule_send',
                     'published' => 'check_circle',
@@ -332,14 +333,18 @@ class EmployeeWorkTaskController extends Controller
         abort_unless($task->isVisibleToEmployee($employee->id), 403);
 
         $validated = $request->validate([
-            'pipeline_stage' => 'required|in:writing,design,ready_to_publish,published',
+            'pipeline_stage' => 'required|in:'.implode(',', WorkTask::pipelineStageKeys()),
         ]);
 
         $stage = $validated['pipeline_stage'];
         $orgId = (int) $employee->organization_id;
         $updates = ['pipeline_stage' => $stage];
 
-        if ($stage === 'writing') {
+        if ($stage === 'planning') {
+            $updates['assigned_to'] = WorkTask::suggestAssigneeId($orgId, 'publish')
+                ?? $task->assigned_to;
+            $updates['status'] = $task->status === 'done' ? 'todo' : ($task->status ?: 'todo');
+        } elseif ($stage === 'writing') {
             $updates['assigned_to'] = $task->content_writer_id
                 ?? WorkTask::suggestAssigneeId($orgId, 'content')
                 ?? $task->assigned_to;
@@ -421,7 +426,7 @@ class EmployeeWorkTaskController extends Controller
         abort_unless((int) $work->organization_id === (int) $employee->organization_id, 403);
 
         $validated = $request->validate([
-            'pipeline_stage' => 'required|in:writing,design,ready_to_publish,published',
+            'pipeline_stage' => 'required|in:'.implode(',', WorkTask::pipelineStageKeys()),
             'task_ids' => 'required|array|min:1',
             'task_ids.*' => 'integer',
         ]);

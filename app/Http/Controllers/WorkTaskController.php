@@ -107,18 +107,26 @@ class WorkTaskController extends Controller
 
         $validated['work_activity_id'] = $work->id;
         $validated['status'] = 'todo';
-        $validated['pipeline_stage'] = $validated['pipeline_stage'] ?? 'writing';
+        $validated['pipeline_stage'] = $validated['pipeline_stage'] ?? WorkTask::defaultPipelineStage();
         $validated['order'] = ($work->tasks()->max('order') ?? 0) + 1;
 
         // في مرحلة الكتابة: المعيّن الحالي = كاتب المحتوى
-        if (($validated['pipeline_stage'] ?? 'writing') === 'writing' && ! empty($validated['content_writer_id'])) {
+        if (($validated['pipeline_stage'] ?? WorkTask::defaultPipelineStage()) === 'writing' && ! empty($validated['content_writer_id'])) {
             $validated['assigned_to'] = $validated['content_writer_id'];
+        }
+
+        // في مرحلة التخطيط: المعيّن الحالي = أكونت منجر إن لم يُحدَّد
+        if (($validated['pipeline_stage'] ?? '') === 'planning' && empty($validated['assigned_to'])) {
+            $validated['assigned_to'] = WorkTask::suggestAssigneeId(
+                WorkHub::organizationId($request),
+                'publish'
+            );
         }
 
         $task = WorkTask::create($validated);
         $task->logEvent(
             'created',
-            'تم إنشاء المحتوى في مرحلة «'.(WorkTask::pipelineStages()[$task->pipeline_stage] ?? 'كتابة المحتوى').'»',
+            'تم إنشاء المحتوى في مرحلة «'.(WorkTask::pipelineStages()[$task->pipeline_stage] ?? 'قيد التخطيط').'»',
             'pipeline_stage',
             null,
             $task->pipeline_stage,
@@ -194,8 +202,8 @@ class WorkTaskController extends Controller
                 'platforms' => $platforms,
                 'kind' => 'content',
                 'status' => 'todo',
-                'pipeline_stage' => 'writing',
-                'assigned_to' => $writerId,
+                'pipeline_stage' => WorkTask::defaultPipelineStage(),
+                'assigned_to' => WorkTask::suggestAssigneeId($orgId, 'publish') ?? $writerId,
                 'content_writer_id' => $writerId,
                 'designer_id' => $designerId,
                 'publish_date' => $this->nullableDate($item['publish_date'] ?? null),
@@ -207,7 +215,7 @@ class WorkTaskController extends Controller
                 'تم إنشاء المحتوى من لصق جماعي',
                 'pipeline_stage',
                 null,
-                'writing',
+                WorkTask::defaultPipelineStage(),
                 ['source' => 'parse_bulk']
             );
             $created++;
@@ -273,7 +281,7 @@ class WorkTaskController extends Controller
         $this->authorizeTask($work, $task);
 
         $validated = $request->validate([
-            'pipeline_stage' => 'required|in:writing,design,ready_to_publish,published',
+            'pipeline_stage' => 'required|in:'.implode(',', WorkTask::pipelineStageKeys()),
             'designer_id' => 'nullable|exists:employees,id',
         ]);
 
@@ -281,7 +289,11 @@ class WorkTaskController extends Controller
         $orgId = WorkHub::organizationId($request);
         $updates = ['pipeline_stage' => $stage];
 
-        if ($stage === 'writing') {
+        if ($stage === 'planning') {
+            $updates['assigned_to'] = WorkTask::suggestAssigneeId($orgId, 'publish')
+                ?? $task->assigned_to;
+            $updates['status'] = $task->status === 'done' ? 'todo' : ($task->status ?: 'todo');
+        } elseif ($stage === 'writing') {
             $updates['assigned_to'] = $task->content_writer_id
                 ?? WorkTask::suggestAssigneeId($orgId, 'content');
             $updates['status'] = $task->status === 'done' ? 'in_progress' : $task->status;
@@ -360,7 +372,7 @@ class WorkTaskController extends Controller
         $this->authorizeActivity($request, $work);
 
         $validated = $request->validate([
-            'pipeline_stage' => 'required|in:writing,design,ready_to_publish,published',
+            'pipeline_stage' => 'required|in:'.implode(',', WorkTask::pipelineStageKeys()),
             'task_ids' => 'required|array|min:1',
             'task_ids.*' => 'integer',
         ]);
@@ -553,7 +565,7 @@ class WorkTaskController extends Controller
         $validated = $request->validate([
             'assigned_to' => 'nullable|exists:employees,id',
             'employee_id' => 'nullable|exists:employees,id',
-            'pipeline_stage' => 'nullable|in:writing,design,ready_to_publish,published',
+            'pipeline_stage' => 'nullable|in:'.implode(',', WorkTask::pipelineStageKeys()),
         ]);
 
         $employeeId = $validated['employee_id'] ?? $validated['assigned_to'] ?? null;
@@ -588,6 +600,7 @@ class WorkTaskController extends Controller
             $roleLabel = match ($stage) {
                 'design' => 'المصمم',
                 'writing' => 'كاتب المحتوى',
+                'planning' => 'مسؤول التخطيط',
                 default => 'المسؤول',
             };
             $task->logEvent(

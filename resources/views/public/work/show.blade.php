@@ -35,7 +35,7 @@
     @foreach($pipelineStages as $stage)
         <section class="share-panel rounded-3xl overflow-hidden">
             <div class="px-4 py-3.5 border-b border-slate-100 flex items-center justify-between gap-3
-                {{ $stage['key'] === 'writing' ? 'bg-sky-50' : ($stage['key'] === 'design' ? 'bg-violet-50' : ($stage['key'] === 'ready_to_publish' ? 'bg-teal-50' : 'bg-emerald-50')) }}">
+                {{ $stage['key'] === 'planning' ? 'bg-amber-50' : ($stage['key'] === 'writing' ? 'bg-sky-50' : ($stage['key'] === 'design' ? 'bg-violet-50' : ($stage['key'] === 'ready_to_publish' ? 'bg-teal-50' : 'bg-emerald-50'))) }}">
                 <div class="flex items-center gap-2.5">
                     <span class="material-icons text-slate-600">{{ $stage['icon'] }}</span>
                     <h2 class="font-extrabold text-slate-900">{{ $stage['label'] }}</h2>
