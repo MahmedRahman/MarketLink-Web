@@ -383,11 +383,12 @@
 </div>
 
 <script>
+    @php($folderStoreBaseUrl = rtrim(work_route('folders.store', [], false), '/'))
     function openEditFolderModal(id, title, description) {
         const modal = document.getElementById('editFolderModal');
         const form = document.getElementById('editFolderForm');
         if (!modal || !form) return;
-        form.action = @json(rtrim(work_route('folders.store', [], false), '/')) + '/' + id;
+        form.action = @json($folderStoreBaseUrl) + '/' + id;
         document.getElementById('editFolderTitle').value = title || '';
         document.getElementById('editFolderDescription').value = description || '';
         modal.classList.remove('hidden');
