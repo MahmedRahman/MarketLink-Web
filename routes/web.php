@@ -171,6 +171,7 @@ Route::middleware(['auth', \App\Http\Middleware\CheckTrialStatus::class])->group
            Route::get('work/{work}/tasks/{task}', [\App\Http\Controllers\WorkTaskController::class, 'show'])->name('work.tasks.show');
            Route::get('work/{work}/tasks/{task}/edit', [\App\Http\Controllers\WorkTaskController::class, 'edit'])->name('work.tasks.edit');
            Route::put('work/{work}/tasks/{task}', [\App\Http\Controllers\WorkTaskController::class, 'update'])->name('work.tasks.update');
+           Route::post('work/{work}/tasks/{task}/move-activity', [\App\Http\Controllers\WorkTaskController::class, 'moveToActivity'])->name('work.tasks.move-activity');
            Route::post('work/{work}/tasks/{task}/assign', [\App\Http\Controllers\WorkTaskController::class, 'assign'])->name('work.tasks.assign');
            Route::post('work/{work}/tasks/{task}/publish-links', [\App\Http\Controllers\WorkTaskController::class, 'updatePublishLinks'])->name('work.tasks.publish-links');
            Route::post('work/{work}/tasks/{task}/move-stage', [\App\Http\Controllers\WorkTaskController::class, 'moveStage'])->name('work.tasks.move-stage');
@@ -309,6 +310,7 @@ Route::middleware('auth:employee')->prefix('employee')->name('employee.')->group
         Route::get('/{work}/tasks/{task}', [\App\Http\Controllers\WorkTaskController::class, 'show'])->name('tasks.show');
         Route::get('/{work}/tasks/{task}/edit', [\App\Http\Controllers\WorkTaskController::class, 'edit'])->name('tasks.edit');
         Route::put('/{work}/tasks/{task}', [\App\Http\Controllers\WorkTaskController::class, 'update'])->name('tasks.update');
+        Route::post('/{work}/tasks/{task}/move-activity', [\App\Http\Controllers\WorkTaskController::class, 'moveToActivity'])->name('tasks.move-activity');
         Route::post('/{work}/tasks/{task}/assign', [\App\Http\Controllers\WorkTaskController::class, 'assign'])->name('tasks.assign');
         Route::post('/{work}/tasks/{task}/publish-links', [\App\Http\Controllers\WorkTaskController::class, 'updatePublishLinks'])->name('tasks.publish-links');
         Route::post('/{work}/tasks/{task}/move-stage', [\App\Http\Controllers\WorkTaskController::class, 'moveStage'])->name('tasks.move-stage');

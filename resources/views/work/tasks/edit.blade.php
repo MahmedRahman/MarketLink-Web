@@ -259,6 +259,43 @@
             </div>
         </form>
     </div>
+
+    @if(!empty($canMoveToActivity) && ($activities ?? collect())->isNotEmpty())
+        <div class="card rounded-2xl p-6 border border-amber-100 bg-amber-50/40">
+            <h3 class="text-base font-bold text-amber-950 flex items-center gap-2 mb-1">
+                <span class="material-icons text-amber-700">drive_file_move</span>
+                نقل التاسك لنشاط تاني
+            </h3>
+            <p class="text-xs text-amber-800/80 mb-4">اختار النشاط (فولدر الحملة) اللي عايز تنقل التاسك له. الملفات والتعليقات هتفضل معاه.</p>
+            <form method="POST" action="{{ work_route('tasks.move-activity', [$activity, $task]) }}" class="space-y-3"
+                  onsubmit="return confirm('نقل التاسك للنشاط المختار؟');">
+                @csrf
+                <div>
+                    <label class="block text-xs font-medium text-amber-900 mb-1">النشاط الهدف</label>
+                    <select name="target_activity_id" required
+                            class="w-full px-3 py-2.5 rounded-xl border-2 border-amber-200 bg-white text-sm focus:border-amber-500 focus:outline-none">
+                        <option value="">— اختر نشاط —</option>
+                        @foreach($activities as $targetActivity)
+                            @if((int) $targetActivity->id === (int) $activity->id)
+                                @continue
+                            @endif
+                            <option value="{{ $targetActivity->id }}">
+                                @if($targetActivity->folder)
+                                    {{ $targetActivity->folder->title }} —
+                                @endif
+                                {{ $targetActivity->title }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <button type="submit"
+                        class="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl font-medium bg-amber-600 text-white hover:bg-amber-700">
+                    <span class="material-icons text-sm">swap_horiz</span>
+                    نقل التاسك
+                </button>
+            </form>
+        </div>
+    @endif
 </div>
 @endsection
 

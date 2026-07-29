@@ -60,10 +60,23 @@ class WorkTaskController extends Controller
         $canMoveDesignFolders = ! WorkHub::isEmployeeHub($request)
             || ($actor instanceof Employee && $actor->isWorkHubAdmin());
 
+        $canMoveToActivity = $canMoveDesignFolders || WorkHub::canManageFolders($request);
+
         $employees = Employee::where('organization_id', WorkHub::organizationId($request))
             ->where('status', 'active')
             ->orderBy('name')
             ->get();
+
+        $activities = collect();
+        if ($canMoveToActivity) {
+            $activities = WorkActivity::query()
+                ->where('organization_id', WorkHub::organizationId($request))
+                ->with('folder:id,title')
+                ->orderByRaw("CASE WHEN status = 'done' THEN 1 ELSE 0 END")
+                ->orderBy('event_date')
+                ->latest()
+                ->get(['id', 'title', 'type', 'status', 'folder_id', 'event_date']);
+        }
 
         return view('work.tasks.edit', [
             'activity' => $work,
@@ -74,6 +87,8 @@ class WorkTaskController extends Controller
             'contentTypes' => WorkTask::contentTypes(),
             'platforms' => WorkTask::platforms(),
             'canMoveDesignFolders' => $canMoveDesignFolders,
+            'canMoveToActivity' => $canMoveToActivity,
+            'activities' => $activities,
         ]);
     }
 
@@ -555,6 +570,55 @@ class WorkTaskController extends Controller
         }
 
         return redirect()->route(WorkHub::routeName('show'), $work)->with('success', 'تم تحديث المهمة');
+    }
+
+    /**
+     * نقل التاسك لنشاط (فولدر حملة) آخر داخل نفس المنظمة.
+     */
+    public function moveToActivity(Request $request, WorkActivity $work, WorkTask $task)
+    {
+        $this->authorizeActivity($request, $work);
+        $this->authorizeTask($work, $task);
+
+        $actor = WorkHub::actor($request);
+        $allowed = ! WorkHub::isEmployeeHub($request)
+            || WorkHub::canManageFolders($request)
+            || ($actor instanceof Employee && $actor->isWorkHubAdmin());
+        abort_unless($allowed, 403);
+
+        $validated = $request->validate([
+            'target_activity_id' => 'required|exists:work_activities,id',
+        ]);
+
+        $target = WorkActivity::query()->findOrFail($validated['target_activity_id']);
+        WorkHub::authorizeOrganization($request, (int) $target->organization_id);
+        abort_unless((int) $target->organization_id === (int) $work->organization_id, 403);
+
+        if ((int) $target->id === (int) $work->id) {
+            return redirect()
+                ->route(WorkHub::routeName('tasks.edit'), [$work, $task])
+                ->with('success', 'التاسك بالفعل في نفس النشاط');
+        }
+
+        $fromId = $work->id;
+        $fromTitle = $work->title;
+
+        $task->update([
+            'work_activity_id' => $target->id,
+            'order' => ((int) ($target->tasks()->max('order') ?? 0)) + 1,
+        ]);
+
+        $task->logEvent(
+            'moved_activity',
+            'تم نقل المحتوى من «'.$fromTitle.'» إلى «'.$target->title.'»',
+            'work_activity_id',
+            $fromId,
+            $target->id
+        );
+
+        return redirect()
+            ->route(WorkHub::routeName('tasks.edit'), [$target, $task])
+            ->with('success', 'تم نقل التاسك إلى «'.$target->title.'»');
     }
 
     public function assign(Request $request, WorkActivity $work, WorkTask $task)
