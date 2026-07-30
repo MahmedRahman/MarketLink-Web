@@ -248,7 +248,7 @@ class EmployeeWorkTaskController extends Controller
         abort_unless($task->isVisibleToEmployee($employee->id), 403);
 
         $validated = $request->validate([
-            'status' => 'required|in:todo,in_progress,review,done',
+            'status' => 'required|in:todo,in_progress,executed,review,done',
             'notes' => 'nullable|string',
         ]);
 

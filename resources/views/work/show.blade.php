@@ -482,12 +482,14 @@
                                     };
                                     $statusBadge = match($task->status) {
                                         'in_progress' => 'bg-blue-100 text-blue-800 border-blue-200',
+                                        'executed' => 'bg-indigo-100 text-indigo-800 border-indigo-200',
                                         'review' => 'bg-amber-100 text-amber-900 border-amber-200',
                                         'done' => 'bg-emerald-100 text-emerald-800 border-emerald-200',
                                         default => 'bg-slate-100 text-slate-700 border-slate-200',
                                     };
                                     $statusCard = match($task->status) {
                                         'in_progress' => 'border-blue-300 bg-blue-50/40 ring-1 ring-blue-100',
+                                        'executed' => 'border-indigo-300 bg-indigo-50/45 ring-1 ring-indigo-100',
                                         'review' => 'border-amber-300 bg-amber-50/50 ring-1 ring-amber-100',
                                         'done' => 'border-emerald-300 bg-emerald-50/40 ring-1 ring-emerald-100',
                                         default => 'border-slate-200 bg-slate-50/60 ring-1 ring-slate-100',
@@ -509,6 +511,7 @@
                                                 <span class="card-status-badge inline-flex items-center gap-0.5 px-2 py-0.5 text-[10px] font-bold rounded-md border {{ $statusBadge }}">
                                                     <span class="material-icons text-[12px] leading-none">
                                                         @if($task->status === 'in_progress') play_circle
+                                                        @elseif($task->status === 'executed') task_alt
                                                         @elseif($task->status === 'review') rate_review
                                                         @elseif($task->status === 'done') check_circle
                                                         @else radio_button_unchecked
@@ -526,6 +529,7 @@
                                                 @foreach([
                                                     'todo' => 'لم تبدأ',
                                                     'in_progress' => 'تنفيذ',
+                                                    'executed' => 'تم التنفيذ',
                                                     'review' => 'مراجعة',
                                                     'done' => 'اكتمال',
                                                 ] as $stKey => $stLabel)
@@ -534,6 +538,9 @@
                                                             'in_progress' => $task->status === $stKey
                                                                 ? 'bg-blue-600 text-white border-blue-600'
                                                                 : 'bg-blue-50 text-blue-800 border-blue-200 hover:bg-blue-100',
+                                                            'executed' => $task->status === $stKey
+                                                                ? 'bg-indigo-600 text-white border-indigo-600'
+                                                                : 'bg-indigo-50 text-indigo-800 border-indigo-200 hover:bg-indigo-100',
                                                             'review' => $task->status === $stKey
                                                                 ? 'bg-amber-600 text-white border-amber-600'
                                                                 : 'bg-amber-50 text-amber-900 border-amber-200 hover:bg-amber-100',
@@ -1201,6 +1208,7 @@
         function clearDesignStatusLook(card) {
             [
                 'border-blue-300', 'bg-blue-50/40', 'ring-blue-100',
+                'border-indigo-300', 'bg-indigo-50/45', 'ring-indigo-100',
                 'border-amber-300', 'bg-amber-50/50', 'ring-amber-100',
                 'border-emerald-300', 'bg-emerald-50/40', 'ring-emerald-100',
                 'border-slate-200', 'bg-slate-50/60', 'ring-slate-100',
@@ -1225,6 +1233,12 @@
                     badge: 'bg-blue-100 text-blue-800 border-blue-200',
                     icon: 'play_circle',
                     label: 'قيد التنفيذ',
+                },
+                executed: {
+                    card: 'border-indigo-300 bg-indigo-50/45 ring-1 ring-indigo-100',
+                    badge: 'bg-indigo-100 text-indigo-800 border-indigo-200',
+                    icon: 'task_alt',
+                    label: 'تم التنفيذ',
                 },
                 review: {
                     card: 'border-amber-300 bg-amber-50/50 ring-1 ring-amber-100',
@@ -1268,12 +1282,14 @@
             const btnIdle = {
                 todo: 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100',
                 in_progress: 'bg-blue-50 text-blue-800 border-blue-200 hover:bg-blue-100',
+                executed: 'bg-indigo-50 text-indigo-800 border-indigo-200 hover:bg-indigo-100',
                 review: 'bg-amber-50 text-amber-900 border-amber-200 hover:bg-amber-100',
                 done: 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100',
             };
             const btnActive = {
                 todo: 'bg-slate-600 text-white border-slate-600',
                 in_progress: 'bg-blue-600 text-white border-blue-600',
+                executed: 'bg-indigo-600 text-white border-indigo-600',
                 review: 'bg-amber-600 text-white border-amber-600',
                 done: 'bg-emerald-600 text-white border-emerald-600',
             };

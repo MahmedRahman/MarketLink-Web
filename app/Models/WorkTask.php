@@ -215,6 +215,7 @@ class WorkTask extends Model
         return match ($this->status) {
             'todo' => 'لم تبدأ',
             'in_progress' => 'قيد التنفيذ',
+            'executed' => 'تم التنفيذ',
             'review' => 'قيد المراجعة',
             'done' => 'اكتمال',
             default => 'غير محدد',
@@ -226,6 +227,7 @@ class WorkTask extends Model
         return match ($this->status) {
             'todo' => 'gray',
             'in_progress' => 'blue',
+            'executed' => 'indigo',
             'review' => 'yellow',
             'done' => 'green',
             default => 'gray',
@@ -504,6 +506,7 @@ class WorkTask extends Model
         return [
             'todo' => 'لم تبدأ',
             'in_progress' => 'قيد التنفيذ',
+            'executed' => 'تم التنفيذ',
             'review' => 'قيد المراجعة',
             'done' => 'اكتمال',
         ];

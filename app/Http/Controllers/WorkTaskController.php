@@ -753,7 +753,7 @@ class WorkTaskController extends Controller
         $this->authorizeTask($work, $task);
 
         $validated = $request->validate([
-            'status' => 'required|in:todo,in_progress,review,done',
+            'status' => 'required|in:todo,in_progress,executed,review,done',
         ]);
 
         $fromStatus = $task->status;
@@ -1199,7 +1199,7 @@ PROMPT;
         ];
 
         if ($forUpdate) {
-            $rules['status'] = 'required|in:todo,in_progress,review,done';
+            $rules['status'] = 'required|in:todo,in_progress,executed,review,done';
         }
 
         return $request->validate($rules);
