@@ -480,17 +480,44 @@
                                         'published' => 'bg-green-50 text-green-800 border-green-200 hover:border-green-400',
                                         default => 'bg-blue-50 text-blue-800 border-blue-200 hover:border-blue-400',
                                     };
+                                    $statusBadge = match($task->status) {
+                                        'in_progress' => 'bg-blue-100 text-blue-800 border-blue-200',
+                                        'review' => 'bg-amber-100 text-amber-900 border-amber-200',
+                                        'done' => 'bg-emerald-100 text-emerald-800 border-emerald-200',
+                                        default => 'bg-slate-100 text-slate-700 border-slate-200',
+                                    };
+                                    $statusCard = match($task->status) {
+                                        'in_progress' => 'border-blue-300 bg-blue-50/40 ring-1 ring-blue-100',
+                                        'review' => 'border-amber-300 bg-amber-50/50 ring-1 ring-amber-100',
+                                        'done' => 'border-emerald-300 bg-emerald-50/40 ring-1 ring-emerald-100',
+                                        default => 'border-slate-200 bg-slate-50/60 ring-1 ring-slate-100',
+                                    };
                                 @endphp
                                 <div role="link" tabindex="0"
                                    draggable="true"
                                    data-task-id="{{ $task->id }}"
                                    data-stage="{{ $stage['key'] }}"
+                                   data-status="{{ $task->status }}"
                                    data-href="{{ work_route('tasks.show', [$activity, $task], false) }}"
-                                   class="pipeline-card group rounded-2xl border border-gray-200 bg-white p-4 min-h-[110px] flex flex-col justify-between hover:border-primary/50 hover:shadow-md transition-all cursor-grab active:cursor-grabbing {{ $task->is_overdue ? 'border-r-4 border-r-red-400' : '' }} {{ $stage['key'] === 'design' ? 'ring-1 ring-purple-100' : '' }}">
+                                   class="pipeline-card group rounded-2xl border p-4 min-h-[110px] flex flex-col justify-between hover:shadow-md transition-all cursor-grab active:cursor-grabbing {{ $task->is_overdue ? 'border-r-4 border-r-red-400' : '' }} {{ $stage['key'] === 'design' ? $statusCard : 'border-gray-200 bg-white hover:border-primary/50' }}">
                                     <div>
-                                        @if($task->content_type_label)
-                                            <span class="inline-block px-2 py-0.5 text-[10px] rounded-md bg-indigo-50 text-indigo-700 mb-2">{{ $task->content_type_label }}</span>
-                                        @endif
+                                        <div class="card-status-row flex flex-wrap items-center gap-1.5 mb-2">
+                                            @if($task->content_type_label)
+                                                <span class="inline-block px-2 py-0.5 text-[10px] rounded-md bg-indigo-50 text-indigo-700">{{ $task->content_type_label }}</span>
+                                            @endif
+                                            @if($stage['key'] === 'design')
+                                                <span class="card-status-badge inline-flex items-center gap-0.5 px-2 py-0.5 text-[10px] font-bold rounded-md border {{ $statusBadge }}">
+                                                    <span class="material-icons text-[12px] leading-none">
+                                                        @if($task->status === 'in_progress') play_circle
+                                                        @elseif($task->status === 'review') rate_review
+                                                        @elseif($task->status === 'done') check_circle
+                                                        @else radio_button_unchecked
+                                                        @endif
+                                                    </span>
+                                                    {{ $task->status_label }}
+                                                </span>
+                                            @endif
+                                        </div>
                                         <h5 class="text-base font-bold text-gray-900 leading-snug line-clamp-3 group-hover:text-primary">
                                             {{ $task->title }}
                                         </h5>
@@ -1136,24 +1163,92 @@
             return list;
         }
 
+        function clearDesignStatusLook(card) {
+            [
+                'border-blue-300', 'bg-blue-50/40', 'ring-blue-100',
+                'border-amber-300', 'bg-amber-50/50', 'ring-amber-100',
+                'border-emerald-300', 'bg-emerald-50/40', 'ring-emerald-100',
+                'border-slate-200', 'bg-slate-50/60', 'ring-slate-100',
+                'ring-1', 'ring-purple-100', 'ring-amber-100',
+                'border-gray-200', 'bg-white',
+            ].forEach(function (c) { card.classList.remove(c); });
+            const badge = card.querySelector('.card-status-badge');
+            if (badge) badge.remove();
+        }
+
+        function applyDesignStatusLook(card, status) {
+            clearDesignStatusLook(card);
+            const map = {
+                todo: {
+                    card: 'border-slate-200 bg-slate-50/60 ring-1 ring-slate-100',
+                    badge: 'bg-slate-100 text-slate-700 border-slate-200',
+                    icon: 'radio_button_unchecked',
+                    label: 'لم تبدأ',
+                },
+                in_progress: {
+                    card: 'border-blue-300 bg-blue-50/40 ring-1 ring-blue-100',
+                    badge: 'bg-blue-100 text-blue-800 border-blue-200',
+                    icon: 'play_circle',
+                    label: 'قيد التنفيذ',
+                },
+                review: {
+                    card: 'border-amber-300 bg-amber-50/50 ring-1 ring-amber-100',
+                    badge: 'bg-amber-100 text-amber-900 border-amber-200',
+                    icon: 'rate_review',
+                    label: 'قيد المراجعة',
+                },
+                done: {
+                    card: 'border-emerald-300 bg-emerald-50/40 ring-1 ring-emerald-100',
+                    badge: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+                    icon: 'check_circle',
+                    label: 'اكتمال',
+                },
+            };
+            const look = map[status] || map.todo;
+            look.card.split(/\s+/).forEach(function (c) { card.classList.add(c); });
+            card.dataset.status = status;
+
+            let wrap = card.querySelector('.card-status-row');
+            if (!wrap) {
+                wrap = document.createElement('div');
+                wrap.className = 'card-status-row flex flex-wrap items-center gap-1.5 mb-2';
+                const title = card.querySelector('h5');
+                if (title && title.parentElement) {
+                    title.parentElement.insertBefore(wrap, title);
+                    const type = wrap.previousElementSibling;
+                    // لو في content type badge فوق العنوان، انقله جوه الصف
+                }
+                const typeBadge = card.querySelector('span.bg-indigo-50');
+                if (typeBadge && typeBadge.parentElement !== wrap) {
+                    wrap.appendChild(typeBadge);
+                }
+            }
+            const badge = document.createElement('span');
+            badge.className = 'card-status-badge inline-flex items-center gap-0.5 px-2 py-0.5 text-[10px] font-bold rounded-md border ' + look.badge;
+            badge.innerHTML = '<span class="material-icons text-[12px] leading-none">' + look.icon + '</span> ' + look.label;
+            wrap.appendChild(badge);
+        }
+
         function adaptCard(card, toStage, stageOwnerId) {
             if (!card) return;
             const cfg = stages[toStage] || stages.writing;
+            const fromStage = card.dataset.stage;
             card.dataset.stage = toStage;
 
-            // حلقة التصميم
-            card.classList.remove('ring-1', 'ring-purple-100', 'ring-amber-100');
-            if (cfg.ring) {
-                cfg.ring.split(/\s+/).forEach(function (c) { card.classList.add(c); });
+            clearDesignStatusLook(card);
+            if (toStage === 'design') {
+                // النقل للتصميم عادة بيخلي الحالة قيد المراجعة
+                applyDesignStatusLook(card, 'review');
+            } else {
+                card.classList.add('border-gray-200', 'bg-white');
+                if (cfg.ring) {
+                    cfg.ring.split(/\s+/).forEach(function (c) { card.classList.add(c); });
+                }
             }
 
             // أزرار الإرسال السريع من التخطيط فقط
             const actions = card.querySelector('.planning-stage-actions');
-            if (toStage === 'planning') {
-                if (!actions) {
-                    // مش هنعمل إعادة إنشاء للأزرار هنا — نادر الرجوع للتخطيط بالسحب
-                }
-            } else if (actions) {
+            if (toStage !== 'planning' && actions) {
                 actions.remove();
             }
 
