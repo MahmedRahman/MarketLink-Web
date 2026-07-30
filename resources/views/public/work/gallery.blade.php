@@ -218,8 +218,12 @@
                                 </button>
                                 <div class="flex items-center justify-between gap-2">
                                     <span class="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-orange-50 text-orange-700 inline-flex items-center gap-1">
-                                        <span class="material-icons text-xs">view_carousel</span>
-                                        كروسيل · {{ $files->count() }} شرائح
+                                        <span class="material-icons text-xs">{{ ($item['is_carousel_type'] ?? ($task->content_type === 'carousel')) ? 'view_carousel' : 'collections' }}</span>
+                                        @if($item['is_carousel_type'] ?? ($task->content_type === 'carousel'))
+                                            كروسيل · {{ $files->count() }} شرائح
+                                        @else
+                                            {{ $files->count() }} ملفات
+                                        @endif
                                     </span>
                                     <button type="button"
                                             class="inline-flex items-center gap-0.5 text-[11px] font-semibold text-teal-700 hover:text-teal-900"

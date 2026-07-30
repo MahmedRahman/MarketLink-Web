@@ -66,7 +66,11 @@ class PublicWorkShareController extends Controller
         $imageCount = 0;
         $videoCount = 0;
 
-        foreach ($activity->tasks->sortBy('order') as $task) {
+        $tasks = $activity->tasks
+            ->sortBy(fn (WorkTask $task) => $task->gallerySortKey())
+            ->values();
+
+        foreach ($tasks as $task) {
             $media = $task->files
                 ->filter(function (WorkTaskFile $file) {
                     if (! $file->isImage() && ! $file->isVideo()) {
@@ -75,6 +79,7 @@ class PublicWorkShareController extends Controller
 
                     return Storage::disk('public')->exists($file->file_path);
                 })
+                ->sortBy(fn (WorkTaskFile $file) => mb_strtolower((string) $file->file_name), SORT_NATURAL)
                 ->values();
 
             if ($media->isEmpty()) {
@@ -84,25 +89,23 @@ class PublicWorkShareController extends Controller
             $imageCount += $media->filter(fn (WorkTaskFile $f) => $f->isImage())->count();
             $videoCount += $media->filter(fn (WorkTaskFile $f) => $f->isVideo())->count();
 
-            $isCarousel = $task->content_type === 'carousel' && $media->count() > 1;
-
-            if ($isCarousel) {
+            // كارت واحد لكل تاسك: كروسيل أو صور متعددة لنفس البوست
+            if ($media->count() > 1) {
                 $items->push([
                     'type' => 'carousel',
                     'task' => $task,
                     'files' => $media,
+                    'is_carousel_type' => $task->content_type === 'carousel',
                 ]);
 
                 continue;
             }
 
-            foreach ($media as $file) {
-                $items->push([
-                    'type' => 'single',
-                    'task' => $task,
-                    'file' => $file,
-                ]);
-            }
+            $items->push([
+                'type' => 'single',
+                'task' => $task,
+                'file' => $media->first(),
+            ]);
         }
 
         return view('public.work.gallery', [

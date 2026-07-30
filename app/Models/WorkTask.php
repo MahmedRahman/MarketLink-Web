@@ -288,6 +288,59 @@ class WorkTask extends Model
         };
     }
 
+    /**
+     * يستخرج رقم ترتيب البوست من العنوان (الأول/الثاني… أو أرقام).
+     */
+    public static function extractPostSequence(?string $title): ?int
+    {
+        if (! $title) {
+            return null;
+        }
+
+        $normalized = preg_replace('/\s+/u', ' ', trim($title)) ?? '';
+
+        $ordinals = [
+            'العاشر' => 10,
+            'التاسع' => 9,
+            'الثامن' => 8,
+            'السابع' => 7,
+            'السادس' => 6,
+            'الخامس' => 5,
+            'الرابع' => 4,
+            'الثالث' => 3,
+            'الثاني' => 2,
+            'الأول' => 1,
+            'الاول' => 1,
+        ];
+
+        foreach ($ordinals as $word => $num) {
+            if (mb_stripos($normalized, $word) !== false) {
+                return $num;
+            }
+        }
+
+        if (preg_match('/(?:بوست|منشور|post)\s*#?\s*(\d{1,3})/iu', $normalized, $m)) {
+            return (int) $m[1];
+        }
+
+        if (preg_match('/#\s*(\d{1,3})\b/u', $normalized, $m)) {
+            return (int) $m[1];
+        }
+
+        return null;
+    }
+
+    /** مفتاح ترتيب للمعرض العام: رقم البوست ثم تاريخ النشر ثم order */
+    public function gallerySortKey(): string
+    {
+        $seq = self::extractPostSequence($this->title) ?? 9999;
+        $date = $this->publish_date?->format('Ymd') ?? '99999999';
+        $order = (int) ($this->order ?? 0);
+        $id = (int) $this->id;
+
+        return sprintf('%04d-%s-%06d-%08d', $seq, $date, $order, $id);
+    }
+
     public function getOwnerForCurrentStageAttribute(): ?Employee
     {
         return match ($this->pipeline_stage) {
