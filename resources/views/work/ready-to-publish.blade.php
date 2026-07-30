@@ -4,6 +4,37 @@
 @section('page-title', 'جاهز للنشر')
 @section('page-description', $activity->title)
 
+@section('styles')
+<style>
+    .design-frame {
+        position: relative;
+        aspect-ratio: 4 / 5;
+        background:
+            radial-gradient(ellipse at 30% 20%, rgba(13,148,136,.12), transparent 55%),
+            linear-gradient(160deg, #0f172a 0%, #1e293b 55%, #0f172a 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+        overflow: hidden;
+    }
+    @media (min-width: 768px) {
+        .design-frame { aspect-ratio: 1 / 1; padding: 1.25rem; }
+    }
+    .design-frame img,
+    .design-frame video {
+        max-width: 100%;
+        max-height: 100%;
+        width: auto;
+        height: auto;
+        object-fit: contain;
+        border-radius: 0.85rem;
+        box-shadow: 0 18px 40px rgba(0,0,0,.45);
+        background: #fff;
+    }
+</style>
+@endsection
+
 @section('content')
 @php
     $today = now()->toDateString();
@@ -102,20 +133,21 @@
                     <button type="button"
                             class="text-start w-full"
                             data-open-review="{{ $task->id }}">
-                        <div class="aspect-[16/10] bg-slate-100 relative">
+                        <div class="design-frame">
                             @if($cover && $cover->isImage())
-                                <img src="{{ $coverUrl }}" alt="" class="w-full h-full object-cover" loading="lazy">
+                                <img src="{{ $coverUrl }}" alt="{{ $task->title }}" loading="lazy" decoding="async">
                             @elseif($cover && $cover->isVideo())
-                                <video src="{{ $coverUrl }}" class="w-full h-full object-cover" muted playsinline preload="metadata"></video>
-                                <span class="absolute inset-0 flex items-center justify-center bg-black/20">
-                                    <span class="material-icons text-white text-4xl">play_circle</span>
+                                <video src="{{ $coverUrl }}" muted playsinline preload="metadata"></video>
+                                <span class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                    <span class="material-icons text-white text-5xl drop-shadow">play_circle</span>
                                 </span>
                             @else
-                                <div class="w-full h-full flex items-center justify-center text-slate-300">
+                                <div class="text-slate-400 flex flex-col items-center gap-1">
                                     <span class="material-icons text-5xl">image</span>
+                                    <span class="text-xs">مفيش تصميم</span>
                                 </div>
                             @endif
-                            <span class="absolute top-3 start-3 text-[11px] font-bold px-2 py-1 rounded-lg bg-white/90 text-teal-800">
+                            <span class="absolute top-3 start-3 text-[11px] font-bold px-2 py-1 rounded-lg bg-white/95 text-teal-800 shadow-sm">
                                 {{ $task->content_type_label ?: 'محتوى' }}
                             </span>
                         </div>

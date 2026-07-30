@@ -40,7 +40,8 @@
                 $full = route('public.work.file', [$shareToken, $task, $file]);
 
                 return [
-                    'url' => $isImage ? route('public.work.file', [$shareToken, $task, $file, 'w' => 1100]) : $full,
+                    'url' => $isImage ? route('public.work.file', [$shareToken, $task, $file, 'w' => 1400, 'q' => 88]) : $full,
+                    'thumb' => $isImage ? route('public.work.file', [$shareToken, $task, $file, 'w' => 240, 'q' => 70]) : $full,
                     'name' => $file->file_name,
                     'kind' => $file->isVideo() ? 'video' : 'image',
                 ];
@@ -58,8 +59,55 @@
         animation: sk 1.1s ease-in-out infinite;
     }
     @keyframes sk { 0%{background-position:100% 0} 100%{background-position:-100% 0} }
-    .gallery-img { opacity: 0; transition: opacity .25s ease; }
+    .gallery-img { opacity: 0; transition: opacity .28s ease; }
     .gallery-img.is-loaded { opacity: 1; }
+    .design-frame {
+        position: relative;
+        aspect-ratio: 4 / 5;
+        background:
+            radial-gradient(ellipse at 30% 20%, rgba(13,148,136,.12), transparent 55%),
+            linear-gradient(160deg, #0f172a 0%, #1e293b 55%, #0f172a 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+        overflow: hidden;
+    }
+    @media (min-width: 768px) {
+        .design-frame { aspect-ratio: 1 / 1; padding: 1.25rem; }
+    }
+    .design-frame img,
+    .design-frame video {
+        max-width: 100%;
+        max-height: 100%;
+        width: auto;
+        height: auto;
+        object-fit: contain;
+        border-radius: 0.85rem;
+        box-shadow: 0 18px 40px rgba(0,0,0,.45);
+        background: #fff;
+    }
+    .design-strip {
+        display: flex;
+        gap: 0.5rem;
+        overflow-x: auto;
+        padding: 0.75rem 1rem 0;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+    }
+    .design-strip::-webkit-scrollbar { height: 5px; }
+    .design-strip::-webkit-scrollbar-thumb { background: rgba(15,23,42,.2); border-radius: 99px; }
+    .design-strip-item {
+        flex: 0 0 auto;
+        width: 4.5rem;
+        height: 4.5rem;
+        border-radius: 0.75rem;
+        overflow: hidden;
+        border: 2px solid #e2e8f0;
+        scroll-snap-align: start;
+        background: #f1f5f9;
+    }
+    .design-strip-item img { width: 100%; height: 100%; object-fit: cover; }
     .review-modal {
         position: fixed; inset: 0; z-index: 80;
         background: rgba(15,23,42,.88); display: none;
@@ -78,12 +126,14 @@
     }
     .review-media-track {
         display: flex; gap: .75rem; overflow-x: auto; padding: 1rem;
-        min-height: 260px; align-items: center;
+        min-height: 320px; align-items: center; justify-content: center;
         background: linear-gradient(180deg, #0f172a, #1e293b);
     }
     .review-slide img, .review-slide video {
-        max-height: min(62vh, 640px); max-width: min(88vw, 420px);
+        max-height: min(70vh, 720px); max-width: min(92vw, 520px);
         border-radius: 1rem; object-fit: contain;
+        box-shadow: 0 20px 50px rgba(0,0,0,.4);
+        background: #fff;
     }
 </style>
 <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -122,34 +172,65 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             @foreach($tasks as $task)
                 @php
-                    $cover = $task->files
+                    $mediaFiles = $task->files
                         ->filter(fn ($f) => $f->isImage() || $f->isVideo())
                         ->sortBy(fn ($f) => mb_strtolower((string) $f->file_name), SORT_NATURAL)
-                        ->first();
+                        ->values();
+                    $cover = $mediaFiles->first();
                     $coverUrl = $cover
                         ? ($cover->isImage()
-                            ? route('public.work.file', [$shareToken, $task, $cover, 'w' => 480])
+                            ? route('public.work.file', [$shareToken, $task, $cover, 'w' => 900, 'q' => 86])
                             : route('public.work.file', [$shareToken, $task, $cover]))
                         : null;
                 @endphp
                 <article class="share-panel rounded-2xl overflow-hidden flex flex-col border border-teal-100"
                          data-task-card="{{ $task->id }}">
                     <button type="button" class="text-start w-full" data-open-review="{{ $task->id }}">
-                        <div class="aspect-[16/10] bg-slate-100 relative gallery-skel">
+                        <div class="design-frame gallery-skel">
                             @if($cover && $cover->isImage())
-                                <img src="{{ $coverUrl }}" alt=""
-                                     class="gallery-img w-full h-full object-cover"
+                                <img src="{{ $coverUrl }}" alt="{{ $task->title }}"
+                                     class="gallery-img"
                                      loading="lazy" decoding="async"
                                      onload="this.classList.add('is-loaded'); this.parentElement.classList.remove('gallery-skel')">
                             @elseif($cover && $cover->isVideo())
-                                <video src="{{ $coverUrl }}" class="w-full h-full object-cover" muted playsinline preload="metadata"></video>
+                                <video src="{{ $coverUrl }}" muted playsinline preload="metadata"></video>
+                                <span class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                    <span class="material-icons text-white text-5xl drop-shadow">play_circle</span>
+                                </span>
                             @else
-                                <div class="w-full h-full flex items-center justify-center text-slate-300">
+                                <div class="text-slate-400 flex flex-col items-center gap-1">
                                     <span class="material-icons text-5xl">image</span>
+                                    <span class="text-xs">مفيش تصميم</span>
                                 </div>
                             @endif
+                            @if($task->content_type_label)
+                                <span class="absolute top-3 start-3 text-[11px] font-bold px-2 py-1 rounded-lg bg-white/95 text-teal-800 shadow-sm">
+                                    {{ $task->content_type_label }}
+                                </span>
+                            @endif
                         </div>
-                        <div class="px-4 pt-3">
+                    </button>
+                        @if($mediaFiles->count() > 1)
+                            <div class="design-strip" dir="ltr">
+                                @foreach($mediaFiles->take(8) as $mf)
+                                    @php
+                                        $mini = $mf->isImage()
+                                            ? route('public.work.file', [$shareToken, $task, $mf, 'w' => 180, 'q' => 70])
+                                            : route('public.work.file', [$shareToken, $task, $mf]);
+                                    @endphp
+                                    <button type="button" class="design-strip-item" data-open-review="{{ $task->id }}">
+                                        @if($mf->isImage())
+                                            <img src="{{ $mini }}" alt="" loading="lazy" decoding="async">
+                                        @else
+                                            <div class="w-full h-full flex items-center justify-center bg-slate-800 text-white">
+                                                <span class="material-icons text-base">movie</span>
+                                            </div>
+                                        @endif
+                                    </button>
+                                @endforeach
+                            </div>
+                        @endif
+                        <button type="button" class="text-start w-full px-4 pt-3" data-open-review="{{ $task->id }}">
                             <h3 class="font-bold text-slate-900 leading-snug line-clamp-2">{{ $task->title }}</h3>
                             @if($task->designer?->name)
                                 <p class="mt-1 text-[11px] text-slate-500">تصميم: <span class="font-semibold text-slate-700">{{ $task->designer->name }}</span></p>
@@ -157,8 +238,7 @@
                             <p class="mt-1 text-xs text-teal-700 font-semibold schedule-label min-h-[1.25rem]">
                                 {{ $task->publish_schedule_label ?: 'لم يُحدد موعد بعد' }}
                             </p>
-                        </div>
-                    </button>
+                        </button>
 
                     <div class="px-4 pb-4 pt-3 space-y-3 border-t border-slate-100 mt-3" data-schedule-box="{{ $task->id }}">
                         <div class="flex flex-wrap gap-1.5">

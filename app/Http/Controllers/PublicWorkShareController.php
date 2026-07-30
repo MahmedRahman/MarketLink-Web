@@ -229,7 +229,8 @@ class PublicWorkShareController extends Controller
         // معاينة سريعة للمعرض (مصغّرة + كاش طويل)
         if (! $forceDownload && $file->isImage() && ($request->filled('w') || $request->boolean('thumb'))) {
             $maxEdge = (int) ($request->input('w') ?: 480);
-            $thumb = app(\App\Services\WorkImageThumbnail::class)->respond($file, $maxEdge);
+            $quality = (int) ($request->input('q') ?: ($maxEdge >= 700 ? 84 : 74));
+            $thumb = app(\App\Services\WorkImageThumbnail::class)->respond($file, $maxEdge, $quality);
             if ($thumb) {
                 return $thumb;
             }
