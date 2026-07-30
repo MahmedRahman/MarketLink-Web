@@ -68,6 +68,21 @@
         transition: opacity .25s ease;
     }
     .gallery-img.is-loaded { opacity: 1; }
+    .gallery-filter-btn {
+        background: #fff;
+        color: #475569;
+        border-color: #e2e8f0;
+    }
+    .gallery-filter-btn:hover {
+        border-color: #c4b5fd;
+        color: #6d28d9;
+        background: #f5f3ff;
+    }
+    .gallery-filter-btn.is-active {
+        background: #7c3aed;
+        color: #fff;
+        border-color: #7c3aed;
+    }
     .carousel-strip {
         display: flex;
         gap: 0.5rem;
@@ -202,17 +217,70 @@
             <p class="text-sm text-slate-500 mt-1">لما المصمم يرفع الصور هتظهر هنا تلقائيًا</p>
         </section>
     @else
+        @php
+            $designerFilters = $items
+                ->map(function ($item) {
+                    $designer = $item['task']->designer;
+
+                    return $designer
+                        ? ['id' => (string) $designer->id, 'name' => $designer->name]
+                        : null;
+                })
+                ->filter()
+                ->unique('id')
+                ->sortBy('name', SORT_NATURAL)
+                ->values();
+            $unassignedCount = $items->filter(fn ($item) => ! $item['task']->designer_id)->count();
+        @endphp
+
+        @if($designerFilters->isNotEmpty() || $unassignedCount > 0)
+            <section class="share-panel rounded-2xl p-3 md:p-4">
+                <div class="flex items-center gap-2 mb-2.5">
+                    <span class="material-icons text-base text-purple-600">palette</span>
+                    <p class="text-xs font-bold text-slate-600">تصفية حسب المصمم</p>
+                    <span id="galleryFilterCount" class="text-[11px] text-slate-400 ms-auto"></span>
+                </div>
+                <div id="galleryDesignerFilters" class="flex flex-wrap gap-1.5">
+                    <button type="button"
+                            class="gallery-filter-btn is-active px-3 py-1.5 rounded-xl text-[11px] font-bold border transition-colors"
+                            data-designer="all">
+                        الكل
+                    </button>
+                    @foreach($designerFilters as $designer)
+                        <button type="button"
+                                class="gallery-filter-btn px-3 py-1.5 rounded-xl text-[11px] font-bold border transition-colors"
+                                data-designer="{{ $designer['id'] }}">
+                            {{ $designer['name'] }}
+                        </button>
+                    @endforeach
+                    @if($unassignedCount > 0)
+                        <button type="button"
+                                class="gallery-filter-btn px-3 py-1.5 rounded-xl text-[11px] font-bold border transition-colors"
+                                data-designer="none">
+                            بدون مصمم
+                        </button>
+                    @endif
+                </div>
+            </section>
+        @endif
+
         <section class="share-panel rounded-3xl p-4 md:p-6">
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
+            <div id="galleryEmptyFilter" class="hidden text-center py-10">
+                <span class="material-icons text-4xl text-slate-300">filter_alt_off</span>
+                <p class="text-sm font-bold text-slate-600 mt-2">مفيش تصاميم للمصمم ده</p>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4" id="galleryGrid">
                 @foreach($items as $itemIndex => $item)
                     @php
                         $task = $item['task'];
                         $taskUrl = route('public.work.task', [$shareToken, $task]);
+                        $designerId = $task->designer_id ? (string) $task->designer_id : 'none';
                     @endphp
 
                     @if(($item['type'] ?? 'single') === 'carousel')
                         @php $files = $item['files']; @endphp
-                        <article class="file-tile col-span-2 md:col-span-3 rounded-2xl overflow-hidden border border-slate-200 bg-white flex flex-col">
+                        <article class="file-tile gallery-item col-span-2 md:col-span-3 rounded-2xl overflow-hidden border border-slate-200 bg-white flex flex-col"
+                                 data-designer="{{ $designerId }}">
                             <button type="button"
                                     class="text-start w-full p-3 pb-2"
                                     data-review-open="{{ $itemIndex }}">
@@ -284,7 +352,8 @@
                                 : $fileUrl;
                             $downloadUrl = route('public.work.file', [$shareToken, $task, $file, 'download' => 1]);
                         @endphp
-                        <article class="file-tile rounded-2xl overflow-hidden border border-slate-200 bg-white flex flex-col">
+                        <article class="file-tile gallery-item rounded-2xl overflow-hidden border border-slate-200 bg-white flex flex-col"
+                                 data-designer="{{ $designerId }}">
                             <button type="button" data-review-open="{{ $itemIndex }}"
                                     class="block aspect-square bg-slate-100 relative group text-start w-full gallery-skel">
                                 @if($file->isImage())
@@ -412,6 +481,43 @@
 
 @push('scripts')
 <script>
+(function () {
+    const filterWrap = document.getElementById('galleryDesignerFilters');
+    if (filterWrap) {
+        const items = Array.from(document.querySelectorAll('.gallery-item'));
+        const emptyEl = document.getElementById('galleryEmptyFilter');
+        const countEl = document.getElementById('galleryFilterCount');
+        const grid = document.getElementById('galleryGrid');
+
+        function applyFilter(designerId) {
+            let visible = 0;
+            items.forEach(function (el) {
+                const match = designerId === 'all' || el.dataset.designer === designerId;
+                el.classList.toggle('hidden', !match);
+                if (match) visible++;
+            });
+            if (emptyEl) emptyEl.classList.toggle('hidden', visible > 0);
+            if (grid) grid.classList.toggle('hidden', visible === 0);
+            if (countEl) {
+                countEl.textContent = designerId === 'all'
+                    ? (visible + ' عنصر')
+                    : (visible + ' من ' + items.length);
+            }
+        }
+
+        filterWrap.addEventListener('click', function (e) {
+            const btn = e.target.closest('.gallery-filter-btn');
+            if (!btn) return;
+            filterWrap.querySelectorAll('.gallery-filter-btn').forEach(function (b) {
+                b.classList.toggle('is-active', b === btn);
+            });
+            applyFilter(btn.dataset.designer || 'all');
+        });
+
+        applyFilter('all');
+    }
+})();
+
 (function () {
     const modal = document.getElementById('reviewModal');
     const dataEl = document.getElementById('galleryReviewData');
