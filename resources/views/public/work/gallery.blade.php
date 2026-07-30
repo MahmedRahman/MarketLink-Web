@@ -31,8 +31,16 @@
             'publishDate' => $task->publish_date?->format('Y/m/d'),
             'taskUrl' => route('public.work.task', [$shareToken, $task]),
             'slides' => $files->map(function ($file) use ($shareToken, $task) {
+                $fullUrl = route('public.work.file', [$shareToken, $task, $file]);
+                $isImage = $file->isImage();
+
                 return [
-                    'url' => route('public.work.file', [$shareToken, $task, $file]),
+                    'url' => $isImage
+                        ? route('public.work.file', [$shareToken, $task, $file, 'w' => 1100])
+                        : $fullUrl,
+                    'thumb' => $isImage
+                        ? route('public.work.file', [$shareToken, $task, $file, 'w' => 420])
+                        : $fullUrl,
                     'download' => route('public.work.file', [$shareToken, $task, $file, 'download' => 1]),
                     'name' => $file->file_name,
                     'kind' => $file->isVideo() ? 'video' : 'image',
@@ -44,6 +52,21 @@
 
 @push('head')
 <style>
+    .gallery-skel {
+        background:
+            linear-gradient(90deg, #e2e8f0 0%, #f1f5f9 45%, #e2e8f0 90%);
+        background-size: 200% 100%;
+        animation: galleryShimmer 1.1s ease-in-out infinite;
+    }
+    @keyframes galleryShimmer {
+        0% { background-position: 100% 0; }
+        100% { background-position: -100% 0; }
+    }
+    .gallery-img {
+        opacity: 0;
+        transition: opacity .25s ease;
+    }
+    .gallery-img.is-loaded { opacity: 1; }
     .carousel-strip {
         display: flex;
         gap: 0.5rem;
@@ -194,10 +217,21 @@
                                     data-review-open="{{ $itemIndex }}">
                                 <div class="carousel-strip" dir="ltr">
                                     @foreach($files as $file)
-                                        @php $fileUrl = route('public.work.file', [$shareToken, $task, $file]); @endphp
-                                        <div class="carousel-strip-item aspect-square rounded-xl overflow-hidden bg-slate-100 relative border border-slate-200/80">
+                                        @php
+                                            $fileUrl = route('public.work.file', [$shareToken, $task, $file]);
+                                            $thumbUrl = $file->isImage()
+                                                ? route('public.work.file', [$shareToken, $task, $file, 'w' => 360])
+                                                : $fileUrl;
+                                        @endphp
+                                        <div class="carousel-strip-item aspect-square rounded-xl overflow-hidden bg-slate-100 relative border border-slate-200/80 gallery-skel">
                                             @if($file->isImage())
-                                                <img src="{{ $fileUrl }}" alt="{{ $file->file_name }}" class="w-full h-full object-cover" loading="lazy">
+                                                <img src="{{ $thumbUrl }}"
+                                                     alt="{{ $file->file_name }}"
+                                                     class="gallery-img w-full h-full object-cover"
+                                                     loading="{{ $loop->iteration <= 2 ? 'eager' : 'lazy' }}"
+                                                     decoding="async"
+                                                     width="360" height="360"
+                                                     onload="this.classList.add('is-loaded'); this.parentElement.classList.remove('gallery-skel')">
                                             @else
                                                 <video src="{{ $fileUrl }}" class="w-full h-full object-cover" muted playsinline preload="metadata"></video>
                                                 <span class="absolute inset-0 flex items-center justify-center bg-black/25">
@@ -238,15 +272,22 @@
                         @php
                             $file = $item['file'];
                             $fileUrl = route('public.work.file', [$shareToken, $task, $file]);
+                            $thumbUrl = $file->isImage()
+                                ? route('public.work.file', [$shareToken, $task, $file, 'w' => 480])
+                                : $fileUrl;
                             $downloadUrl = route('public.work.file', [$shareToken, $task, $file, 'download' => 1]);
                         @endphp
                         <article class="file-tile rounded-2xl overflow-hidden border border-slate-200 bg-white flex flex-col">
                             <button type="button" data-review-open="{{ $itemIndex }}"
-                                    class="block aspect-square bg-slate-100 relative group text-start w-full">
+                                    class="block aspect-square bg-slate-100 relative group text-start w-full gallery-skel">
                                 @if($file->isImage())
-                                    <img src="{{ $fileUrl }}" alt="{{ $file->file_name }}"
-                                         class="w-full h-full object-cover"
-                                         loading="lazy">
+                                    <img src="{{ $thumbUrl }}" alt="{{ $file->file_name }}"
+                                         class="gallery-img w-full h-full object-cover"
+                                         loading="{{ $itemIndex < 4 ? 'eager' : 'lazy' }}"
+                                         decoding="async"
+                                         fetchpriority="{{ $itemIndex < 2 ? 'high' : 'auto' }}"
+                                         width="480" height="480"
+                                         onload="this.classList.add('is-loaded'); this.parentElement.classList.remove('gallery-skel')">
                                     <span class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
                                         <span class="opacity-0 group-hover:opacity-100 material-icons text-white text-3xl drop-shadow">rate_review</span>
                                     </span>
@@ -422,8 +463,10 @@
                 wrap.appendChild(video);
             } else {
                 const img = document.createElement('img');
-                img.src = slide.url;
+                img.src = slide.url || slide.thumb;
                 img.alt = slide.name || ('slide-' + (index + 1));
+                img.decoding = 'async';
+                img.loading = index === 0 ? 'eager' : 'lazy';
                 wrap.appendChild(img);
             }
             track.appendChild(wrap);

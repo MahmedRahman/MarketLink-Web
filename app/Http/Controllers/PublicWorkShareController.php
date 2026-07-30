@@ -133,7 +133,7 @@ class PublicWorkShareController extends Controller
         ]);
     }
 
-    public function showFile(Request $request, string $token, WorkTask $task, WorkTaskFile $file): StreamedResponse
+    public function showFile(Request $request, string $token, WorkTask $task, WorkTaskFile $file): StreamedResponse|BinaryFileResponse
     {
         $activity = $this->findSharedActivity($token);
         abort_unless($task->work_activity_id === $activity->id, 404);
@@ -141,14 +141,29 @@ class PublicWorkShareController extends Controller
         abort_unless(Storage::disk('public')->exists($file->file_path), 404);
 
         $forceDownload = $request->boolean('download');
+
+        // معاينة سريعة للمعرض (مصغّرة + كاش طويل)
+        if (! $forceDownload && $file->isImage() && ($request->filled('w') || $request->boolean('thumb'))) {
+            $maxEdge = (int) ($request->input('w') ?: 480);
+            $thumb = app(\App\Services\WorkImageThumbnail::class)->respond($file, $maxEdge);
+            if ($thumb) {
+                return $thumb;
+            }
+        }
+
         $disposition = $forceDownload
             ? 'attachment'
             : (($file->isImage() || $file->isPdf()) ? 'inline' : 'attachment');
 
+        $headers = [];
+        if (! $forceDownload && ($file->isImage() || $file->isVideo())) {
+            $headers['Cache-Control'] = 'public, max-age=86400';
+        }
+
         return Storage::disk('public')->response(
             $file->file_path,
             $file->file_name,
-            [],
+            $headers,
             $disposition
         );
     }
