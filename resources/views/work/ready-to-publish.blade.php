@@ -187,12 +187,16 @@
 @endsection
 
 @section('scripts')
+@php
+    $scheduleUrlTpl = work_route('tasks.publish-schedule', [$activity, 'TASK_ID'], false);
+@endphp
 <script type="application/json" id="readyReviewData">{!! json_encode($reviewPayload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!}</script>
 <script>
 (function () {
     const payload = JSON.parse(document.getElementById('readyReviewData')?.textContent || '{}');
-    const scheduleUrlTpl = @json(work_route('tasks.publish-schedule', [$activity, 'TASK_ID'], false));
+    const scheduleUrlTpl = @json($scheduleUrlTpl);
     const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    const todayDate = @json($today);
 
     function saveSchedule(taskId, box) {
         const dateInput = box.querySelector('.schedule-date');
@@ -263,7 +267,7 @@
                 const dateInput = box.querySelector('.schedule-date');
                 if (!input) return;
                 input.value = btn.dataset.time || '';
-                if (!dateInput.value) dateInput.value = @json($today);
+                if (!dateInput.value) dateInput.value = todayDate;
                 queueSave();
             });
         });
