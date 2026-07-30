@@ -768,6 +768,69 @@ class WorkTaskController extends Controller
             ->with('success', 'تم حفظ روابط النشر');
     }
 
+    /**
+     * تحديث يوم/وقت النشر من صفحة جاهز للنشر (AJAX).
+     */
+    public function updatePublishSchedule(Request $request, WorkActivity $work, WorkTask $task)
+    {
+        $this->authorizeActivity($request, $work);
+        $this->authorizeTask($work, $task);
+
+        $validated = $request->validate([
+            'publish_date' => 'nullable|date',
+            'publish_time' => ['nullable', 'regex:/^\d{2}:\d{2}(:\d{2})?$/'],
+        ]);
+
+        $date = $validated['publish_date'] ?? null;
+        $time = $validated['publish_time'] ?? null;
+        if ($time) {
+            $time = strlen($time) === 5 ? $time.':00' : $time;
+        }
+
+        // لو مفيش تاريخ، امسح الوقت كمان
+        if (! $date) {
+            $time = null;
+        }
+
+        $beforeDate = $task->publish_date?->format('Y-m-d');
+        $beforeTime = $task->publish_time_short;
+        $task->update([
+            'publish_date' => $date,
+            'publish_time' => $time,
+        ]);
+        $task->refresh();
+
+        if ($beforeDate !== $task->publish_date?->format('Y-m-d') || $beforeTime !== $task->publish_time_short) {
+            $toLabel = $task->publish_schedule_label ?? 'بدون موعد';
+            $fromLabel = $beforeDate
+                ? ($beforeDate.($beforeTime ? ' · '.$beforeTime : ''))
+                : 'بدون موعد';
+            $task->logEvent(
+                'publish_schedule_updated',
+                'تم تحديث موعد النشر من «'.$fromLabel.'» إلى «'.$toLabel.'»',
+                'publish_date',
+                $fromLabel,
+                $toLabel
+            );
+        }
+
+        $message = $task->publish_date
+            ? 'تم حفظ موعد النشر: '.$task->publish_schedule_label
+            : 'تم مسح موعد النشر';
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'publish_date' => $task->publish_date?->format('Y-m-d'),
+                'publish_time' => $task->publish_time_short,
+                'label' => $task->publish_schedule_label,
+            ]);
+        }
+
+        return back()->with('success', $message);
+    }
+
     public function destroy(Request $request, WorkActivity $work, WorkTask $task)
     {
         $this->authorizeActivity($request, $work);

@@ -398,6 +398,35 @@ class WorkActivityController extends Controller
         return back()->with('success', 'تم إيقاف الرابط العام');
     }
 
+    /**
+     * صفحة مستقلة لكل البوستات الجاهزة للنشر + جدولة اليوم/الوقت.
+     */
+    public function readyToPublish(Request $request, WorkActivity $work)
+    {
+        $this->authorizeActivity($request, $work);
+
+        $work->load(['tasks.files', 'tasks.assignedEmployee', 'tasks.designer', 'tasks.contentWriter']);
+
+        $tasks = $work->tasks
+            ->where('pipeline_stage', 'ready_to_publish')
+            ->sortBy(function (WorkTask $task) {
+                // المجدول أولًا حسب الموعد، وبعدين غير المجدول حسب رقم البوست
+                if ($task->publish_date) {
+                    $time = $task->publish_time_short ?: '99:99';
+
+                    return '0-'.$task->publish_date->format('Ymd').'-'.$time.'-'.$task->gallerySortKey();
+                }
+
+                return '1-'.$task->gallerySortKey();
+            })
+            ->values();
+
+        return view('work.ready-to-publish', [
+            'activity' => $work,
+            'tasks' => $tasks,
+        ]);
+    }
+
     private function authorizeActivity(Request $request, WorkActivity $work): void
     {
         WorkHub::authorizeOrganization($request, (int) $work->organization_id);

@@ -29,6 +29,7 @@ class WorkTask extends Model
         'pipeline_stage',
         'due_date',
         'publish_date',
+        'publish_time',
         'order',
     ];
 
@@ -339,6 +340,31 @@ class WorkTask extends Model
         $id = (int) $this->id;
 
         return sprintf('%04d-%s-%06d-%08d', $seq, $date, $order, $id);
+    }
+
+    /** وقت النشر بصيغة HH:MM للعرض/الإدخال */
+    public function getPublishTimeShortAttribute(): ?string
+    {
+        if (! $this->publish_time) {
+            return null;
+        }
+
+        return substr((string) $this->publish_time, 0, 5);
+    }
+
+    /** تسمية سهلة لموعد النشر */
+    public function getPublishScheduleLabelAttribute(): ?string
+    {
+        if (! $this->publish_date) {
+            return null;
+        }
+
+        $label = $this->publish_date->translatedFormat('D j M Y');
+        if ($this->publish_time_short) {
+            $label .= ' · '.$this->publish_time_short;
+        }
+
+        return $label;
     }
 
     public function getOwnerForCurrentStageAttribute(): ?Employee

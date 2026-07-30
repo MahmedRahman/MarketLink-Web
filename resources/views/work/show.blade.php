@@ -397,7 +397,7 @@
                                     @elseif($stage['key'] === 'design')
                                         عند فريق التصميم — ارفع صورة / فيديو / PDF من صفحة التفاصيل
                                     @elseif($stage['key'] === 'ready_to_publish')
-                                        جاهز للنشر — أضف روابط النشر من التفاصيل
+                                        جاهز للنشر — راجع وجدوِل من الصفحة المستقلة
                                     @else
                                         تم النشر — انقل للأرشيف بعد الانتهاء عشان العرض يفضل خفيف
                                     @endif
@@ -405,7 +405,15 @@
                                 </p>
                             </div>
                         </div>
-                        <span class="stage-count-badge px-2.5 py-1 rounded-lg text-xs font-bold
+                        <div class="flex items-center gap-2">
+                            @if($stage['key'] === 'ready_to_publish')
+                                <a href="{{ work_route('ready-to-publish', $activity) }}"
+                                   class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold bg-teal-600 text-white hover:bg-teal-700">
+                                    <span class="material-icons text-sm">calendar_month</span>
+                                    عرض وجدولة
+                                </a>
+                            @endif
+                            <span class="stage-count-badge px-2.5 py-1 rounded-lg text-xs font-bold
                             @if($stage['key'] === 'planning') bg-amber-100 text-amber-700
                             @elseif($stage['key'] === 'writing') bg-blue-100 text-blue-700
                             @elseif($stage['key'] === 'design') bg-purple-100 text-purple-700
@@ -414,6 +422,7 @@
                             @endif">
                             {{ $stage['count'] }}
                         </span>
+                        </div>
                     </div>
 
                     <div class="p-4 stage-dropzone min-h-[120px] transition-colors"

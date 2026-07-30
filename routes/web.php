@@ -160,6 +160,7 @@ Route::middleware(['auth', \App\Http\Middleware\CheckTrialStatus::class])->group
            Route::delete('work/folders/{folder}', [\App\Http\Controllers\WorkFolderController::class, 'destroy'])->name('work.folders.destroy');
            Route::post('work/{work}/move-folder', [\App\Http\Controllers\WorkFolderController::class, 'moveActivity'])->name('work.move-folder');
            Route::get('work/{work}', [\App\Http\Controllers\WorkActivityController::class, 'show'])->name('work.show');
+           Route::get('work/{work}/ready-to-publish', [\App\Http\Controllers\WorkActivityController::class, 'readyToPublish'])->name('work.ready-to-publish');
            Route::put('work/{work}', [\App\Http\Controllers\WorkActivityController::class, 'update'])->name('work.update');
            Route::delete('work/{work}', [\App\Http\Controllers\WorkActivityController::class, 'destroy'])->name('work.destroy');
            Route::post('work/{work}/share/enable', [\App\Http\Controllers\WorkActivityController::class, 'enableShare'])->name('work.share.enable');
@@ -174,6 +175,7 @@ Route::middleware(['auth', \App\Http\Middleware\CheckTrialStatus::class])->group
            Route::post('work/{work}/tasks/{task}/move-activity', [\App\Http\Controllers\WorkTaskController::class, 'moveToActivity'])->name('work.tasks.move-activity');
            Route::post('work/{work}/tasks/{task}/assign', [\App\Http\Controllers\WorkTaskController::class, 'assign'])->name('work.tasks.assign');
            Route::post('work/{work}/tasks/{task}/publish-links', [\App\Http\Controllers\WorkTaskController::class, 'updatePublishLinks'])->name('work.tasks.publish-links');
+           Route::post('work/{work}/tasks/{task}/publish-schedule', [\App\Http\Controllers\WorkTaskController::class, 'updatePublishSchedule'])->name('work.tasks.publish-schedule');
            Route::post('work/{work}/tasks/{task}/move-stage', [\App\Http\Controllers\WorkTaskController::class, 'moveStage'])->name('work.tasks.move-stage');
            Route::post('work/{work}/tasks/{task}/files', [\App\Http\Controllers\WorkTaskController::class, 'uploadFile'])->name('work.tasks.files.upload');
            Route::get('work/{work}/tasks/{task}/files/{file}/download', [\App\Http\Controllers\WorkTaskController::class, 'downloadFile'])->name('work.tasks.files.download');
@@ -299,6 +301,7 @@ Route::middleware('auth:employee')->prefix('employee')->name('employee.')->group
         Route::delete('/folders/{folder}', [\App\Http\Controllers\WorkFolderController::class, 'destroy'])->name('folders.destroy');
         Route::post('/{work}/move-folder', [\App\Http\Controllers\WorkFolderController::class, 'moveActivity'])->name('move-folder');
         Route::get('/{work}', [\App\Http\Controllers\WorkActivityController::class, 'show'])->name('show');
+        Route::get('/{work}/ready-to-publish', [\App\Http\Controllers\WorkActivityController::class, 'readyToPublish'])->name('ready-to-publish');
         Route::put('/{work}', [\App\Http\Controllers\WorkActivityController::class, 'update'])->name('update');
         Route::delete('/{work}', [\App\Http\Controllers\WorkActivityController::class, 'destroy'])->name('destroy');
         Route::post('/{work}/share/enable', [\App\Http\Controllers\WorkActivityController::class, 'enableShare'])->name('share.enable');
@@ -313,6 +316,7 @@ Route::middleware('auth:employee')->prefix('employee')->name('employee.')->group
         Route::post('/{work}/tasks/{task}/move-activity', [\App\Http\Controllers\WorkTaskController::class, 'moveToActivity'])->name('tasks.move-activity');
         Route::post('/{work}/tasks/{task}/assign', [\App\Http\Controllers\WorkTaskController::class, 'assign'])->name('tasks.assign');
         Route::post('/{work}/tasks/{task}/publish-links', [\App\Http\Controllers\WorkTaskController::class, 'updatePublishLinks'])->name('tasks.publish-links');
+        Route::post('/{work}/tasks/{task}/publish-schedule', [\App\Http\Controllers\WorkTaskController::class, 'updatePublishSchedule'])->name('tasks.publish-schedule');
         Route::post('/{work}/tasks/{task}/move-stage', [\App\Http\Controllers\WorkTaskController::class, 'moveStage'])->name('tasks.move-stage');
         Route::post('/{work}/tasks/{task}/files', [\App\Http\Controllers\WorkTaskController::class, 'uploadFile'])->name('tasks.files.upload');
         Route::get('/{work}/tasks/{task}/files/{file}/download', [\App\Http\Controllers\WorkTaskController::class, 'downloadFile'])->name('tasks.files.download');
