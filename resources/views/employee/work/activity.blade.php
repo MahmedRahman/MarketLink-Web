@@ -183,6 +183,7 @@
                                     $stColors = [
                                         'todo' => 'bg-gray-100 text-gray-700',
                                         'in_progress' => 'bg-blue-100 text-blue-700',
+                                        'executed' => 'bg-indigo-100 text-indigo-800',
                                         'review' => 'bg-yellow-100 text-yellow-700',
                                         'done' => 'bg-green-100 text-green-700',
                                     ];
