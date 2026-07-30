@@ -454,7 +454,7 @@
                                         default => $task->content_writer_id ?? $task->assigned_to,
                                     };
                                     $assigneePool = match($stage['key']) {
-                                        'design' => ($designers->isNotEmpty() ? $designers : $employees),
+                                        'design' => $employees,
                                         'writing' => (($contentWriters ?? collect())->isNotEmpty() ? $contentWriters : $employees),
                                         'planning', 'ready_to_publish', 'published' => (($publishers ?? collect())->isNotEmpty() ? $publishers : $employees),
                                         default => $employees,
@@ -587,7 +587,7 @@
                                     </div>
                                     <div class="mt-3 space-y-2 card-controls" data-no-nav>
                                         <label class="block text-[10px] text-gray-400 mb-0.5">
-                                            @if($stage['key'] === 'design') اختَر المصمم
+                                            @if($stage['key'] === 'design') اختَر من الفريق
                                             @elseif($stage['key'] === 'writing') اختَر كاتب المحتوى
                                             @elseif($stage['key'] === 'planning') اختَر مسؤول التخطيط
                                             @elseif($stage['key'] === 'ready_to_publish') اختَر مسؤول النشر
@@ -1150,9 +1150,9 @@
                 ring: null,
             },
             design: {
-                label: 'اختَر المصمم',
+                label: 'اختَر من الفريق',
                 role: 'designer',
-                pool: 'designers',
+                pool: 'all',
                 active: 'bg-purple-600 text-white border-purple-600 shadow-sm',
                 idle: 'bg-purple-50 text-purple-800 border-purple-200 hover:border-purple-400',
                 ring: 'ring-1 ring-purple-100',
