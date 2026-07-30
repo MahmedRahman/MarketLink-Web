@@ -23,6 +23,7 @@
         $reviewData[(string) $itemIndex] = [
             'title' => $task->title,
             'typeLabel' => $task->content_type_label,
+            'designerName' => $task->designer?->name,
             'isCarousel' => ($item['type'] ?? 'single') === 'carousel',
             'caption' => $task->caption,
             'tov' => $task->tov,
@@ -250,6 +251,12 @@
                                         class="block w-full text-start text-sm font-bold text-slate-800 leading-snug line-clamp-2 hover:text-teal-700">
                                     {{ $task->title }}
                                 </button>
+                                @if($task->designer?->name)
+                                    <p class="text-[11px] text-slate-500 inline-flex items-center gap-1">
+                                        <span class="material-icons text-sm text-purple-500">palette</span>
+                                        تصميم: <span class="font-semibold text-slate-700">{{ $task->designer->name }}</span>
+                                    </p>
+                                @endif
                                 <div class="flex items-center justify-between gap-2">
                                     <span class="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-orange-50 text-orange-700 inline-flex items-center gap-1">
                                         <span class="material-icons text-xs">{{ ($item['is_carousel_type'] ?? ($task->content_type === 'carousel')) ? 'view_carousel' : 'collections' }}</span>
@@ -303,6 +310,12 @@
                                         class="block w-full text-start text-sm font-bold text-slate-800 leading-snug line-clamp-2 hover:text-teal-700">
                                     {{ $task->title }}
                                 </button>
+                                @if($task->designer?->name)
+                                    <p class="text-[11px] text-slate-500 inline-flex items-center gap-1">
+                                        <span class="material-icons text-sm text-purple-500">palette</span>
+                                        تصميم: <span class="font-semibold text-slate-700">{{ $task->designer->name }}</span>
+                                    </p>
+                                @endif
                                 <div class="flex items-center justify-between gap-2">
                                     @if($task->content_type_label)
                                         <span class="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-teal-50 text-teal-700">{{ $task->content_type_label }}</span>
@@ -445,6 +458,7 @@
         titleEl.textContent = item.title || 'مراجعة التصميم';
         const bits = [];
         if (item.typeLabel) bits.push(item.typeLabel);
+        if (item.designerName) bits.push('تصميم: ' + item.designerName);
         if (item.isCarousel) bits.push(item.slides.length + ' شرائح');
         bits.push('مراجعة قبل النشر');
         metaEl.textContent = bits.join(' · ');

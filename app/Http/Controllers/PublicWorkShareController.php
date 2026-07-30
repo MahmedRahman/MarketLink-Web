@@ -60,7 +60,7 @@ class PublicWorkShareController extends Controller
     public function showGallery(string $token): View
     {
         $activity = $this->findSharedActivity($token);
-        $activity->load(['tasks.files']);
+        $activity->load(['tasks.files', 'tasks.designer']);
 
         $items = collect();
         $imageCount = 0;
