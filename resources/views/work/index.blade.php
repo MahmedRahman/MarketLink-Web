@@ -316,12 +316,12 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ work_route('store') }}" class="space-y-4">
+        <form method="POST" action="{{ work_route('store') }}" class="space-y-4 max-h-[80vh] overflow-y-auto pe-1">
             @csrf
             <input type="hidden" name="idea_id" id="ideaIdField" value="">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">العنوان</label>
-                <input type="text" name="title" required placeholder="مثال: حملة محتوى سوشيال — مارس"
+                <input type="text" name="title" required placeholder="مثال: محاضرة لايف — أسرار كتابة المحتوى"
                        class="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 focus:border-primary focus:outline-none">
             </div>
             <div>
@@ -351,11 +351,43 @@
                     @endforeach
                 </div>
             </div>
+
+            {{-- بيانات المحاضرة المجانية --}}
+            <div id="freeLectureFields" class="hidden space-y-3 rounded-2xl border border-teal-200 bg-teal-50/50 p-4">
+                <p class="text-sm font-bold text-teal-900 flex items-center gap-1.5">
+                    <span class="material-icons text-base">live_tv</span>
+                    بيانات المحاضرة المجانية
+                </p>
+                <div>
+                    <label class="block text-xs font-medium text-teal-900 mb-1">اسم المحاضر <span class="text-red-500">*</span></label>
+                    <input type="text" name="lecturer_name" id="lecturerNameField" placeholder="مثال: مها الخضري"
+                           class="w-full px-3 py-2.5 rounded-xl border-2 border-teal-100 bg-white text-sm focus:border-teal-500 focus:outline-none">
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-teal-900 mb-1">تاريخ المحاضرة <span class="text-red-500">*</span></label>
+                        <input type="date" name="event_date" id="lectureDateField"
+                               class="w-full px-3 py-2.5 rounded-xl border-2 border-teal-100 bg-white text-sm focus:border-teal-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-teal-900 mb-1">الساعة (اختياري)</label>
+                        <input type="text" name="lecture_time" id="lectureTimeField" placeholder="مثال: 8:00 مساءً"
+                               class="w-full px-3 py-2.5 rounded-xl border-2 border-teal-100 bg-white text-sm focus:border-teal-500 focus:outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-teal-900 mb-1">أهداف المحاضرة <span class="text-red-500">*</span></label>
+                    <textarea name="lecture_goals" id="lectureGoalsField" rows="3"
+                              placeholder="مثال: يفهم الحضور أساسيات كتابة كابشن احترافي ويقدروا يطبقوا 3 صيغ جاهزة بعد اللقاء"
+                              class="w-full px-3 py-2.5 rounded-xl border-2 border-teal-100 bg-white text-sm focus:border-teal-500 focus:outline-none"></textarea>
+                    <p class="text-[11px] text-teal-800/70 mt-1">الأهداف دي هتدخل في كابي الإعلان والتذكير والتاسكات تلقائيًا.</p>
+                </div>
+            </div>
+
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">وصف مختصر</label>
-                <textarea name="description" rows="3" placeholder="تفاصيل النشاط والأفكار العامة..."
+                <textarea name="description" rows="2" placeholder="ملاحظات إضافية عن النشاط..."
                           class="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 focus:border-primary focus:outline-none"></textarea>
-                <p class="text-[11px] text-gray-400 mt-1.5">تاريخ النشاط بيتسجّل تلقائيًا بتاريخ الإنشاء</p>
             </div>
             @if(($folders ?? collect())->isNotEmpty())
                 <div>
@@ -376,12 +408,12 @@
                     <span class="text-sm text-gray-700">
                         <span class="font-semibold">إنشاء تاسكات المحاضرة القياسية تلقائيًا</span>
                         <span class="block text-xs text-gray-500 mt-0.5">
-                            11 مهمة موزّعة على الفريق حسب الدور: إعلان، تذكير، تيزر، مونتاج، كفر يوتيوب، رفع، مقاطع، ريلز، آراء، جدولة — بمواعيد نسبية لتاريخ المحاضرة.
+                            12 مهمة في «قيد التخطيط»: إعلان، تذكير، تيزر، مونتاج، كفر يوتيوب، رفع يوتيوب، رفع على الموقع، مقاطع، ريلز، آراء، جدولة — بكابي احترافي من بيانات المحاضرة.
                         </span>
                     </span>
                 </label>
             </div>
-            <div class="flex gap-3 pt-2">
+            <div class="flex gap-3 pt-2 sticky bottom-0 bg-white pb-1">
                 <button type="submit" class="btn-primary text-white px-5 py-2.5 rounded-xl font-medium flex-1">إنشاء</button>
                 <button type="button" onclick="document.getElementById('newActivityModal').classList.add('hidden')"
                         class="px-5 py-2.5 rounded-xl font-medium bg-gray-100 text-gray-700 hover:bg-gray-200">إلغاء</button>
@@ -406,19 +438,36 @@
         const selected = document.querySelector('input[name="type"]:checked');
         const box = document.getElementById('templateOption');
         const checkbox = document.getElementById('withTemplateCheckbox');
+        const lectureFields = document.getElementById('freeLectureFields');
+        const lecturer = document.getElementById('lecturerNameField');
+        const lectureDate = document.getElementById('lectureDateField');
+        const lectureGoals = document.getElementById('lectureGoalsField');
 
         // لو مفيش Type مختار (حالة الفكرة بدون type)، نخلي الفورم يطلب اختيار يدويًا
         if (!selected) {
             box.classList.add('hidden');
             if (checkbox) checkbox.checked = false;
+            if (lectureFields) lectureFields.classList.add('hidden');
+            [lecturer, lectureDate, lectureGoals].forEach(function (el) {
+                if (el) el.required = false;
+            });
             return;
         }
 
         const type = selected.value;
-        const isLecture = type === 'live_lecture' || type === 'live_lecture_paid';
+        const isFreeLecture = type === 'live_lecture';
+        const isLecture = isFreeLecture || type === 'live_lecture_paid';
         box.classList.toggle('hidden', !isLecture);
         if (!isLecture && checkbox) checkbox.checked = false;
         if (isLecture && checkbox) checkbox.checked = true;
+
+        if (lectureFields) {
+            lectureFields.classList.toggle('hidden', !isFreeLecture);
+        }
+        [lecturer, lectureDate, lectureGoals].forEach(function (el) {
+            if (!el) return;
+            el.required = isFreeLecture && !!(checkbox && checkbox.checked);
+        });
 
         document.querySelectorAll('#newActivityTypeCards label').forEach(function (label) {
             const input = label.querySelector('input');
@@ -593,6 +642,16 @@
 
         toggleTemplateOption();
         initFolderDragAndDrop();
+
+        const templateCb = document.getElementById('withTemplateCheckbox');
+        if (templateCb) {
+            templateCb.addEventListener('change', toggleTemplateOption);
+        }
+
+        @if($errors->any())
+            document.getElementById('newActivityModal')?.classList.remove('hidden');
+            toggleTemplateOption();
+        @endif
     });
 </script>
 @endsection

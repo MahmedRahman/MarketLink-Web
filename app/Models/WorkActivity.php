@@ -16,7 +16,10 @@ class WorkActivity extends Model
         'title',
         'type',
         'description',
+        'lecturer_name',
+        'lecture_goals',
         'event_date',
+        'lecture_time',
         'status',
         'share_token',
     ];
@@ -206,15 +209,85 @@ class WorkActivity extends Model
      * «دليل تنظيم ملفات المحاضرة» (Maha Elkhadry Academy).
      *
      * offset = عدد الأيام بالنسبة لتاريخ المحاضرة (سالب = قبلها).
+     * يحقن الكابي (caption/tov/idea) من بيانات المحاضرة إن وُجدت.
+     *
+     * @param  array{title?:string,lecturer_name?:string,event_date?:string,lecture_time?:string,lecture_goals?:string,description?:string}  $context
      */
-    public static function lectureTaskTemplate(): array
+    public static function lectureTaskTemplate(array $context = []): array
     {
+        $title = trim((string) ($context['title'] ?? 'المحاضرة'));
+        $lecturer = trim((string) ($context['lecturer_name'] ?? ''));
+        $goals = trim((string) ($context['lecture_goals'] ?? ''));
+        $time = trim((string) ($context['lecture_time'] ?? ''));
+        $dateLabel = ! empty($context['event_date'])
+            ? (string) $context['event_date']
+            : 'قريبًا';
+        $when = $time !== '' ? ($dateLabel.' — '.$time) : $dateLabel;
+        $withLecturer = $lecturer !== '' ? 'مع '.$lecturer : '';
+        $goalsLine = $goals !== '' ? $goals : 'اكتساب معرفة عملية قابلة للتطبيق مباشرة بعد الحضور.';
+
+        $tov = "نبرة أكاديمية دافئة، واضحة، ومحفّزة.\nخاطب الجمهور بصيغة «أنت»، وركّز على الفائدة العملية.\nبدون مبالغة إعلانية — ثقة + قيمة + دعوة واضحة للحضور.";
+
+        $announcementCaption = implode("\n", array_filter([
+            "محاضرة لايف مجانية {$withLecturer}".($withLecturer ? '' : ''),
+            "📌 {$title}",
+            '',
+            'هتتكلم عن:',
+            $goalsLine,
+            '',
+            "🗓 الموعد: {$when}",
+            '',
+            'الحضور مجاني — احجز مكانك الآن وكن جاهزًا بأسئلتك.',
+            '',
+            '#محاضرة_مجانية #تطوير #لايف',
+        ]));
+
+        $reminderCaption = implode("\n", array_filter([
+            'تذكير أخير ⏰',
+            "محاضرتنا المجانية «{$title}» هتبدأ خلال ساعة.",
+            $lecturer !== '' ? "المحاضر: {$lecturer}" : null,
+            "الموعد: {$when}",
+            '',
+            'ادخل دلوقتي عشان متفوّتش البداية — وهتقدر تسأل مباشرة.',
+            '',
+            '#تذكير #لايف_مجاني',
+        ]));
+
+        $clipsCaption = implode("\n", array_filter([
+            "مقطع من محاضرة «{$title}»",
+            $lecturer !== '' ? "مع {$lecturer}" : null,
+            '',
+            'لو حابب تشوف المحاضرة كاملة — اللينك في البايو / الكومنتس.',
+            '',
+            '#مقاطع #تعليم #ريلز',
+        ]));
+
+        $testimonialCaption = implode("\n", array_filter([
+            "انطباعات الحضور بعد محاضرة «{$title}»",
+            $lecturer !== '' ? "مع {$lecturer}" : null,
+            '',
+            'شكرًا لكل اللي حضر وشارك — رأيكم بيحفّزنا نقدّم محتوى أقوى كل مرة.',
+            '',
+            'لو فاتك اللقاء، تقدر تتابعه من رفع المحاضرة على الموقع ويوتيوب.',
+            '',
+            '#آراء_الحضور #محاضرة_مجانية',
+        ]));
+
+        $brief = implode("\n", array_filter([
+            "عنوان المحاضرة: {$title}",
+            $lecturer !== '' ? "المحاضر: {$lecturer}" : null,
+            "الموعد: {$when}",
+            "الأهداف:\n{$goalsLine}",
+        ]));
+
         return [
             [
                 'title' => 'تصميم بوست إعلان المحاضرة',
                 'kind' => 'content',
                 'offset' => -3,
-                'idea' => "ينشر قبل المحاضرة بأيام لإعلان الموعد والموضوع.\nالمسار: Marketing_Graphics/Announcement/Announcement_Post.png",
+                'idea' => $brief."\n\nينشر قبل المحاضرة بأيام لإعلان الموعد والموضوع.\nالمسار: Marketing_Graphics/Announcement/Announcement_Post.png",
+                'tov' => $tov,
+                'caption' => $announcementCaption,
                 'content_type' => 'post',
                 'platforms' => ['facebook', 'instagram'],
             ],
@@ -222,13 +295,17 @@ class WorkActivity extends Model
                 'title' => 'فيديو تشويقي قبل المحاضرة (Teaser_Before)',
                 'kind' => 'video',
                 'offset' => -2,
-                'idea' => "فيديو قصير يشجع الناس تحضر اللايف.\nالمسار: Marketing_Clips/Teasers/Teaser_Before.mp4",
+                'idea' => $brief."\n\nفيديو قصير (15–30 ثانية) يشجع الحضور: عنوان قوي + وعد بالقيمة + الموعد.\nالمسار: Marketing_Clips/Teasers/Teaser_Before.mp4",
+                'tov' => $tov,
+                'caption' => "تشويقة سريعة لمحاضرة «{$title}» — الموعد {$when}. احجز مكانك مجانًا.",
             ],
             [
                 'title' => 'تصميم بوست التذكير (قبل المحاضرة بساعة)',
                 'kind' => 'content',
                 'offset' => 0,
-                'idea' => "ينشر قبل المحاضرة بساعة للتذكير بالموعد.\nالمسار: Marketing_Graphics/Reminder_1Hour/Reminder_Post.png",
+                'idea' => $brief."\n\nينشر قبل المحاضرة بساعة للتذكير بالموعد.\nالمسار: Marketing_Graphics/Reminder_1Hour/Reminder_Post.png",
+                'tov' => $tov,
+                'caption' => $reminderCaption,
                 'content_type' => 'post',
                 'platforms' => ['facebook', 'instagram'],
             ],
@@ -236,25 +313,42 @@ class WorkActivity extends Model
                 'title' => 'مونتاج النسخة النهائية للمحاضرة',
                 'kind' => 'video',
                 'offset' => 2,
-                'idea' => "التسجيل الخام في 05_Live_Recordings — النسخة النهائية بعد المونتاج.\nالمسار: Final_Lecture/Final_YouTube.mp4",
+                'idea' => $brief."\n\nالتسجيل الخام في 05_Live_Recordings — النسخة النهائية بعد المونتاج.\nالمسار: Final_Lecture/Final_YouTube.mp4",
             ],
             [
                 'title' => 'تصميم كفر يوتيوب (Thumbnail)',
                 'kind' => 'design',
                 'offset' => 2,
-                'idea' => "الصورة المصغرة للفيديو على يوتيوب.\nالمسار: Final_Lecture/Youtube_Cover.png",
+                'idea' => $brief."\n\nالصورة المصغرة للفيديو على يوتيوب — عنوان واضح + اسم المحاضر إن وجد.\nالمسار: Final_Lecture/Youtube_Cover.png",
             ],
             [
                 'title' => 'رفع المحاضرة على يوتيوب وحفظ الرابط',
                 'kind' => 'publish',
                 'offset' => 3,
-                'idea' => "بعد الرفع: احفظ رابط الفيديو في ملف نصي.\nالمسار: Final_Lecture/youtube_link.txt",
+                'idea' => $brief."\n\nبعد الرفع: احفظ رابط الفيديو في ملف نصي.\nالمسار: Final_Lecture/youtube_link.txt",
+            ],
+            [
+                'title' => 'رفع المحاضرة المجانية على الموقع',
+                'kind' => 'publish',
+                'offset' => 3,
+                'idea' => $brief."\n\nارفع تسجيل المحاضرة المجانية على موقع الأكاديمية مع العنوان والوصف والأهداف، واربط فيديو يوتيوب إن وجد.\nتأكد إن الصفحة ظاهرة للزوار وأن رابط المشاركة جاهز للنشر على السوشيال.",
+                'tov' => $tov,
+                'caption' => implode("\n", array_filter([
+                    "المحاضرة المجانية «{$title}» بقت متاحة على الموقع 🎓",
+                    $lecturer !== '' ? "مع {$lecturer}" : null,
+                    '',
+                    'تقدر تشوفها في أي وقت من لينك الموقع.',
+                    '',
+                    '#محاضرة_مجانية #على_الموقع',
+                ])),
             ],
             [
                 'title' => 'قص مقاطع من المحاضرة (Lecture_Clips)',
                 'kind' => 'content',
                 'offset' => 4,
-                'idea' => "مقاطع قصيرة من محتوى المحاضرة تنشر كريلز/شورتس.\nالمسار: Marketing_Clips/Lecture_Clips/",
+                'idea' => $brief."\n\nمقاطع قصيرة من محتوى المحاضرة تنشر كريلز/شورتس.\nالمسار: Marketing_Clips/Lecture_Clips/",
+                'tov' => $tov,
+                'caption' => $clipsCaption,
                 'content_type' => 'reels',
                 'platforms' => ['instagram', 'tiktok', 'facebook'],
             ],
@@ -262,25 +356,28 @@ class WorkActivity extends Model
                 'title' => 'فيديو تشويقي بعد النشر (Teaser_After)',
                 'kind' => 'video',
                 'offset' => 4,
-                'idea' => "لمحة عن المحاضرة توجّه لمشاهدتها كاملة على يوتيوب.\nالمسار: Marketing_Clips/Teasers/Teaser_After.mp4",
+                'idea' => $brief."\n\nلمحة عن المحاضرة توجّه لمشاهدتها كاملة على يوتيوب/الموقع.\nالمسار: Marketing_Clips/Teasers/Teaser_After.mp4",
+                'caption' => "لمحة من «{$title}» — شاهد المحاضرة كاملة من اللينك.",
             ],
             [
                 'title' => 'تصميم كفرات الريلز',
                 'kind' => 'design',
                 'offset' => 4,
-                'idea' => "كفرات وعناصر بصرية لفيديوهات الريلز.\nالمسار: Marketing_Graphics/Reels_Design/",
+                'idea' => $brief."\n\nكفرات وعناصر بصرية لفيديوهات الريلز.\nالمسار: Marketing_Graphics/Reels_Design/",
             ],
             [
                 'title' => 'جدولة ونشر المحتوى على السوشيال',
                 'kind' => 'publish',
                 'offset' => 5,
-                'idea' => "انسخ المقاطع المطلوبة إلى 03_Social_Content/الشهر الحالي للجدولة — النسخة هناك مؤقتة، المكان الدائم فولدر المحاضرة.",
+                'idea' => $brief."\n\nانسخ المقاطع المطلوبة إلى 03_Social_Content/الشهر الحالي للجدولة — النسخة هناك مؤقتة، المكان الدائم فولدر المحاضرة.",
             ],
             [
                 'title' => 'بوست آراء الحضور (Testimonials)',
                 'kind' => 'content',
                 'offset' => 6,
-                'idea' => "ينشر بعد المحاضرة لو فيه ردود فعل من الحضور — يعزز الثقة للمرة الجاية.\nالمسار: Marketing_Graphics/Testimonials/Testimonial_Post.png",
+                'idea' => $brief."\n\nينشر بعد المحاضرة لو فيه ردود فعل من الحضور — يعزز الثقة للمرة الجاية.\nالمسار: Marketing_Graphics/Testimonials/Testimonial_Post.png",
+                'tov' => $tov,
+                'caption' => $testimonialCaption,
                 'content_type' => 'post',
                 'platforms' => ['facebook', 'instagram'],
             ],

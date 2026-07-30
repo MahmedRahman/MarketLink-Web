@@ -134,10 +134,32 @@ class WorkActivityController extends Controller
             'with_template' => 'nullable|boolean',
             'idea_id' => 'nullable|exists:work_ideas,id',
             'folder_id' => 'nullable|exists:work_folders,id',
+            'lecturer_name' => 'nullable|string|max:255',
+            'lecture_goals' => 'nullable|string',
+            'event_date' => 'nullable|date',
+            'lecture_time' => 'nullable|string|max:100',
         ]);
 
         $withTemplate = (bool) ($validated['with_template'] ?? false);
         unset($validated['with_template']);
+
+        // للمحاضرة المجانية: لو هيتولد قالب، البيانات دي مطلوبة
+        if ($validated['type'] === 'live_lecture' && $withTemplate) {
+            $request->validate([
+                'lecturer_name' => 'required|string|max:255',
+                'event_date' => 'required|date',
+                'lecture_goals' => 'required|string|min:10',
+            ], [
+                'lecturer_name.required' => 'اكتب اسم المحاضر',
+                'event_date.required' => 'حدد معاد المحاضرة',
+                'lecture_goals.required' => 'اكتب أهداف المحاضرة',
+                'lecture_goals.min' => 'اكتب أهداف أوضح شوية للمحاضرة',
+            ]);
+            $validated['lecturer_name'] = $request->input('lecturer_name');
+            $validated['event_date'] = $request->input('event_date');
+            $validated['lecture_goals'] = $request->input('lecture_goals');
+            $validated['lecture_time'] = $request->input('lecture_time');
+        }
 
         $ideaId = $validated['idea_id'] ?? null;
         unset($validated['idea_id']);
@@ -154,8 +176,18 @@ class WorkActivityController extends Controller
         $validated['organization_id'] = $organizationId;
         $validated['created_by'] = $actor instanceof User ? $actor->id : null;
         $validated['status'] = 'planning';
-        // تاريخ النشاط = تاريخ إنشاء السجل تلقائيًا
-        $validated['event_date'] = now()->toDateString();
+
+        // تاريخ النشاط: معاد المحاضرة لو محدد، وإلا تاريخ الإنشاء
+        if (empty($validated['event_date'])) {
+            $validated['event_date'] = now()->toDateString();
+        }
+
+        // نظّف حقول المحاضرة لو النوع مش محاضرة مجانية
+        if (($validated['type'] ?? '') !== 'live_lecture') {
+            $validated['lecturer_name'] = null;
+            $validated['lecture_goals'] = null;
+            $validated['lecture_time'] = null;
+        }
 
         $activity = WorkActivity::create($validated);
 
@@ -182,12 +214,21 @@ class WorkActivityController extends Controller
 
     /**
      * ينشئ التاسكات القياسية للمحاضرة المجانية ويعيّنها حسب الدور،
-     * بمواعيد نسبية لتاريخ المحاضرة.
+     * بمواعيد نسبية لتاريخ المحاضرة — كلها تبدأ في «قيد التخطيط».
      */
     private function createLectureTemplateTasks(WorkActivity $activity): int
     {
+        $context = [
+            'title' => $activity->title,
+            'lecturer_name' => $activity->lecturer_name,
+            'lecture_goals' => $activity->lecture_goals,
+            'lecture_time' => $activity->lecture_time,
+            'event_date' => optional($activity->event_date)->format('Y/m/d'),
+            'description' => $activity->description,
+        ];
+
         $order = 0;
-        foreach (WorkActivity::lectureTaskTemplate() as $template) {
+        foreach (WorkActivity::lectureTaskTemplate($context) as $template) {
             $dueDate = $activity->event_date
                 ? $activity->event_date->copy()->addDays($template['offset'])->toDateString()
                 : null;
@@ -195,7 +236,9 @@ class WorkActivityController extends Controller
             WorkTask::create([
                 'work_activity_id' => $activity->id,
                 'title' => $template['title'],
-                'idea' => $template['idea'],
+                'idea' => $template['idea'] ?? null,
+                'tov' => $template['tov'] ?? null,
+                'caption' => $template['caption'] ?? null,
                 'kind' => $template['kind'],
                 'content_type' => $template['content_type'] ?? null,
                 'platforms' => $template['platforms'] ?? null,
@@ -204,7 +247,7 @@ class WorkActivityController extends Controller
                 'content_writer_id' => WorkTask::suggestAssigneeId($activity->organization_id, 'content'),
                 'designer_id' => WorkTask::suggestAssigneeId($activity->organization_id, 'design'),
                 'status' => 'todo',
-                'pipeline_stage' => WorkTask::defaultPipelineStage(),
+                'pipeline_stage' => 'planning',
                 'due_date' => $dueDate,
                 'publish_date' => ! empty($template['content_type']) ? $dueDate : null,
                 'order' => ++$order,
