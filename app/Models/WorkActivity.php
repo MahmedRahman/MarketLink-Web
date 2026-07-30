@@ -375,13 +375,6 @@ class WorkActivity extends Model
                 'platforms' => ['instagram', 'tiktok', 'facebook'],
             ],
             [
-                'title' => 'فيديو تشويقي بعد النشر (Teaser_After)',
-                'kind' => 'video',
-                'offset' => 4,
-                'idea' => $brief."\n\nلمحة عن المحاضرة توجّه لمشاهدتها كاملة على يوتيوب/الموقع.\nالمسار: Marketing_Clips/Teasers/Teaser_After.mp4",
-                'caption' => "لمحة من «{$title}» — شاهد المحاضرة كاملة من اللينك.",
-            ],
-            [
                 'title' => 'جدولة ونشر المحتوى على السوشيال',
                 'kind' => 'publish',
                 'offset' => 5,
