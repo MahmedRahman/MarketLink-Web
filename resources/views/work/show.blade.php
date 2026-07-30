@@ -391,7 +391,7 @@
                                 <h4 class="font-bold text-gray-800">{{ $stage['label'] }}</h4>
                                 <p class="text-xs text-gray-500">
                                     @if($stage['key'] === 'planning')
-                                        تخطيط المحتوى قبل الكتابة
+                                        تخطيط المحتوى — ابعت التاسك لمرحلة تانية من الأزرار على الكارت
                                     @elseif($stage['key'] === 'writing')
                                         عند كاتب المحتوى
                                     @elseif($stage['key'] === 'design')
@@ -468,6 +468,34 @@
                                         <h5 class="text-base font-bold text-gray-900 leading-snug line-clamp-3 group-hover:text-primary">
                                             {{ $task->title }}
                                         </h5>
+                                        @if($stage['key'] === 'planning')
+                                            <div class="planning-stage-actions mt-2.5 flex flex-wrap gap-1.5">
+                                                <button type="button"
+                                                        class="card-stage-btn inline-flex items-center gap-0.5 px-2 py-1 rounded-lg bg-blue-50 text-blue-800 border border-blue-200 text-[10px] font-bold hover:bg-blue-100"
+                                                        data-target-stage="writing"
+                                                        draggable="false"
+                                                        title="إرسال لكتابة المحتوى">
+                                                    <span class="material-icons text-sm">edit_note</span>
+                                                    كتابة
+                                                </button>
+                                                <button type="button"
+                                                        class="card-stage-btn inline-flex items-center gap-0.5 px-2 py-1 rounded-lg bg-purple-50 text-purple-800 border border-purple-200 text-[10px] font-bold hover:bg-purple-100"
+                                                        data-target-stage="design"
+                                                        draggable="false"
+                                                        title="إرسال للتصميم">
+                                                    <span class="material-icons text-sm">palette</span>
+                                                    تصميم
+                                                </button>
+                                                <button type="button"
+                                                        class="card-stage-btn inline-flex items-center gap-0.5 px-2 py-1 rounded-lg bg-teal-50 text-teal-800 border border-teal-200 text-[10px] font-bold hover:bg-teal-100"
+                                                        data-target-stage="ready_to_publish"
+                                                        draggable="false"
+                                                        title="إرسال لجاهز للنشر">
+                                                    <span class="material-icons text-sm">schedule_send</span>
+                                                    جاهز للنشر
+                                                </button>
+                                            </div>
+                                        @endif
                                     </div>
                                     <div class="mt-3 space-y-2 card-controls" data-no-nav>
                                         <label class="block text-[10px] text-gray-400 mb-0.5">
@@ -1033,6 +1061,111 @@
         });
     })();
 
+    // —— إرسال سريع من قيد التخطيط لمرحلة تانية (AJAX بدون ريفرش) ——
+    (function initPlanningStageSend() {
+        const board = document.getElementById('pipelineBoard');
+        if (!board) return;
+        const moveUrlTpl = "{{ work_route('tasks.move-stage', [$activity, 'TASK_ID'], false) }}";
+
+        function csrfToken() {
+            return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+        }
+
+        function refreshStageCounts() {
+            board.querySelectorAll('.pipeline-stage').forEach(function (section) {
+                const zone = section.querySelector('.stage-dropzone');
+                if (!zone) return;
+                const count = zone.querySelectorAll('.pipeline-card').length;
+                section.querySelectorAll('.stage-count').forEach(function (el) { el.textContent = count; });
+                section.querySelectorAll('.stage-count-badge').forEach(function (el) { el.textContent = count; });
+                const empty = zone.querySelector('.stage-empty');
+                if (empty) empty.classList.toggle('hidden', count > 0);
+            });
+        }
+
+        function moveCardDom(card, toStage) {
+            const targetZone = board.querySelector('.stage-dropzone[data-stage="' + toStage + '"]');
+            if (!targetZone) return false;
+            const targetWrap = targetZone.querySelector('.stage-cards');
+            if (!targetWrap) return false;
+
+            targetWrap.appendChild(card);
+            card.dataset.stage = toStage;
+            card.classList.remove('ring-1', 'ring-amber-100');
+            if (toStage === 'design') card.classList.add('ring-1', 'ring-purple-100');
+
+            const actions = card.querySelector('.planning-stage-actions');
+            if (actions) actions.remove();
+
+            const group = card.querySelector('.card-assignee-group');
+            if (group) {
+                group.dataset.stage = toStage;
+                group.dataset.role = toStage === 'design' ? 'designer' : (toStage === 'writing' ? 'content_writer' : 'assignee');
+            }
+
+            const label = card.querySelector('.card-controls > label');
+            if (label) {
+                label.textContent = toStage === 'design' ? 'اختَر المصمم'
+                    : (toStage === 'writing' ? 'اختَر كاتب المحتوى'
+                    : (toStage === 'ready_to_publish' ? 'اختَر مسؤول النشر' : 'اختَر الناشر'));
+            }
+
+            refreshStageCounts();
+            return true;
+        }
+
+        board.addEventListener('click', async function (e) {
+            const btn = e.target.closest('.card-stage-btn');
+            if (!btn) return;
+            e.preventDefault();
+            e.stopPropagation();
+
+            const card = btn.closest('.pipeline-card');
+            if (!card) return;
+            const taskId = card.dataset.taskId;
+            const toStage = btn.dataset.targetStage;
+            if (!taskId || !toStage) return;
+
+            const fromStage = card.dataset.stage || 'planning';
+            const allBtns = card.querySelectorAll('.card-stage-btn');
+            allBtns.forEach(function (b) { b.disabled = true; });
+            btn.classList.add('opacity-60');
+
+            try {
+                const body = new URLSearchParams();
+                body.set('pipeline_stage', toStage);
+                body.set('_token', csrfToken());
+                const res = await fetch(moveUrlTpl.replace('TASK_ID', taskId), {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken(),
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    credentials: 'same-origin',
+                    body: body.toString(),
+                });
+                const data = await res.json().catch(function () { return {}; });
+                if (!res.ok || !data.success) {
+                    throw new Error(data.message || data.error || 'فشل نقل التاسك');
+                }
+                if (!moveCardDom(card, toStage)) {
+                    // لو ملقيناش المرحلة، سيب الكارت مكانه ونورّي رسالة
+                    throw new Error('تم الحفظ لكن تعذر تحديث العرض');
+                }
+            } catch (err) {
+                allBtns.forEach(function (b) { b.disabled = false; });
+                btn.classList.remove('opacity-60');
+                alert(err.message || 'حدث خطأ');
+                // لو النقل نجح في السيرفر وفشل العرض، ريفرش كحل أخير
+                if (String(err.message || '').indexOf('تعذر تحديث العرض') !== -1) {
+                    window.location.reload();
+                }
+            }
+        });
+    })();
+
     // —— Drag & drop: ترتيب داخل المرحلة + نقل بين المراحل ——
     (function initPipelineDragDrop() {
         const board = document.getElementById('pipelineBoard');
@@ -1276,7 +1409,7 @@
         });
 
         board.addEventListener('click', function (e) {
-            if (e.target.closest('.card-controls, .card-assignee-group, .card-assignee-chip, .card-edit-btn, .card-detail-btn, .card-share-btn, select, a, button')) {
+            if (e.target.closest('.card-controls, .card-assignee-group, .card-assignee-chip, .card-stage-btn, .planning-stage-actions, .card-edit-btn, .card-detail-btn, .card-share-btn, select, a, button')) {
                 return;
             }
             const card = e.target.closest('.pipeline-card');
