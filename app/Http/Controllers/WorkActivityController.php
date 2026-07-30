@@ -242,10 +242,9 @@ class WorkActivityController extends Controller
                 'kind' => $template['kind'],
                 'content_type' => $template['content_type'] ?? null,
                 'platforms' => $template['platforms'] ?? null,
-                'assigned_to' => WorkTask::suggestAssigneeId($activity->organization_id, 'publish')
-                    ?? WorkTask::suggestAssigneeId($activity->organization_id, $template['kind']),
-                'content_writer_id' => WorkTask::suggestAssigneeId($activity->organization_id, 'content'),
-                'designer_id' => WorkTask::suggestAssigneeId($activity->organization_id, 'design'),
+                'assigned_to' => null,
+                'content_writer_id' => null,
+                'designer_id' => null,
                 'status' => 'todo',
                 'pipeline_stage' => 'planning',
                 'due_date' => $dueDate,

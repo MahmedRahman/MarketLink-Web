@@ -305,8 +305,7 @@ class WorkTaskController extends Controller
         $updates = ['pipeline_stage' => $stage];
 
         if ($stage === 'planning') {
-            $updates['assigned_to'] = WorkTask::suggestAssigneeId($orgId, 'publish')
-                ?? $task->assigned_to;
+            $updates['assigned_to'] = null;
             $updates['status'] = $task->status === 'done' ? 'todo' : ($task->status ?: 'todo');
         } elseif ($stage === 'writing') {
             $updates['assigned_to'] = $task->content_writer_id
@@ -634,6 +633,7 @@ class WorkTaskController extends Controller
             'assigned_to' => 'nullable|exists:employees,id',
             'employee_id' => 'nullable|exists:employees,id',
             'pipeline_stage' => 'nullable|in:'.implode(',', WorkTask::pipelineStageKeys()),
+            'role' => 'nullable|in:assignee,content_writer,designer',
         ]);
 
         $employeeId = $validated['employee_id'] ?? $validated['assigned_to'] ?? null;
@@ -642,12 +642,31 @@ class WorkTaskController extends Controller
         }
 
         $stage = $validated['pipeline_stage'] ?? $task->pipeline_stage;
-        $updates = ['assigned_to' => $employeeId];
+        $role = $validated['role'] ?? match ($stage) {
+            'writing' => 'content_writer',
+            'design' => 'designer',
+            default => 'assignee',
+        };
 
-        if ($stage === 'writing') {
+        $updates = [];
+        if ($role === 'content_writer') {
             $updates['content_writer_id'] = $employeeId;
-        } elseif ($stage === 'design') {
+            // في التخطيط: متعيّنش مسؤول عام — بس وزّع الفريق
+            if ($stage !== 'planning') {
+                $updates['assigned_to'] = $employeeId;
+            }
+        } elseif ($role === 'designer') {
             $updates['designer_id'] = $employeeId;
+            if ($stage !== 'planning') {
+                $updates['assigned_to'] = $employeeId;
+            }
+        } else {
+            $updates['assigned_to'] = $employeeId;
+            if ($stage === 'writing') {
+                $updates['content_writer_id'] = $employeeId;
+            } elseif ($stage === 'design') {
+                $updates['designer_id'] = $employeeId;
+            }
         }
 
         $fromAssignee = $task->assigned_to;
@@ -657,27 +676,42 @@ class WorkTaskController extends Controller
         $task->update($updates);
         $task->load(['contentWriter', 'designer', 'assignedEmployee']);
 
-        $owner = $task->owner_for_current_stage;
+        $owner = match ($role) {
+            'content_writer' => $task->contentWriter,
+            'designer' => $task->designer,
+            default => $task->assignedEmployee,
+        };
         $message = 'تم تحديث الموظف المسؤول';
 
-        $fromName = $fromAssignee ? (Employee::find($fromAssignee)?->name ?? '#'.$fromAssignee) : 'غير معيّن';
+        $fromId = match ($role) {
+            'content_writer' => $fromWriter,
+            'designer' => $fromDesigner,
+            default => $fromAssignee,
+        };
+        $toId = match ($role) {
+            'content_writer' => $task->content_writer_id,
+            'designer' => $task->designer_id,
+            default => $task->assigned_to,
+        };
+        $fromName = $fromId ? (Employee::find($fromId)?->name ?? '#'.$fromId) : 'غير معيّن';
         $toName = $owner?->name ?? ($employeeId ? '#'.$employeeId : 'غير معيّن');
-        if ((int) $fromAssignee !== (int) $task->assigned_to
-            || (int) $fromWriter !== (int) $task->content_writer_id
-            || (int) $fromDesigner !== (int) $task->designer_id) {
-            $roleLabel = match ($stage) {
-                'design' => 'المصمم',
-                'writing' => 'كاتب المحتوى',
-                'planning' => 'مسؤول التخطيط',
-                default => 'المسؤول',
+        if ((int) $fromId !== (int) $toId) {
+            $roleLabel = match ($role) {
+                'designer' => 'المصمم',
+                'content_writer' => 'كاتب المحتوى',
+                default => ($stage === 'planning' ? 'مسؤول التخطيط' : 'المسؤول'),
             };
             $task->logEvent(
                 'assignee_changed',
                 'تم تعيين '.$roleLabel.' «'.$toName.'»'.($fromName !== $toName ? ' (كان: '.$fromName.')' : ''),
-                $stage === 'design' ? 'designer_id' : ($stage === 'writing' ? 'content_writer_id' : 'assigned_to'),
-                $stage === 'design' ? $fromDesigner : ($stage === 'writing' ? $fromWriter : $fromAssignee),
-                $stage === 'design' ? $task->designer_id : ($stage === 'writing' ? $task->content_writer_id : $task->assigned_to),
-                ['pipeline_stage' => $stage]
+                match ($role) {
+                    'designer' => 'designer_id',
+                    'content_writer' => 'content_writer_id',
+                    default => 'assigned_to',
+                },
+                $fromId,
+                $toId,
+                ['pipeline_stage' => $stage, 'role' => $role]
             );
         }
 
@@ -688,6 +722,7 @@ class WorkTaskController extends Controller
                 'employee_id' => $employeeId,
                 'employee_name' => $owner?->name,
                 'pipeline_stage' => $stage,
+                'role' => $role,
             ]);
         }
 
