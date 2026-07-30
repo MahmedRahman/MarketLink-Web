@@ -243,12 +243,12 @@ class WorkActivity extends Model
         ]));
 
         $reminderCaption = implode("\n", array_filter([
-            'تذكير أخير ⏰',
-            "محاضرتنا المجانية «{$title}» هتبدأ خلال ساعة.",
+            'تذكير ⏰',
+            "محاضرتنا المجانية «{$title}» بكرة في نفس الموعد.",
             $lecturer !== '' ? "المحاضر: {$lecturer}" : null,
             "الموعد: {$when}",
             '',
-            'ادخل دلوقتي عشان متفوّتش البداية — وهتقدر تسأل مباشرة.',
+            'احجز وقتك من دلوقتي وكن جاهزًا بأسئلتك — باقي 24 ساعة.',
             '',
             '#تذكير #لايف_مجاني',
         ]));
@@ -313,10 +313,10 @@ class WorkActivity extends Model
                 'platforms' => ['facebook', 'instagram'],
             ],
             [
-                'title' => 'تصميم بوست التذكير (قبل المحاضرة بساعة)',
+                'title' => 'تصميم بوست التذكير (قبل المحاضرة بـ 24 ساعة)',
                 'kind' => 'content',
-                'offset' => 0,
-                'idea' => $brief."\n\nينشر قبل المحاضرة بساعة للتذكير بالموعد.\nالمسار: Marketing_Graphics/Reminder_1Hour/Reminder_Post.png",
+                'offset' => -1,
+                'idea' => $brief."\n\nينشر قبل المحاضرة بـ 24 ساعة للتذكير بالموعد.\nالمسار: Marketing_Graphics/Reminder_24Hour/Reminder_Post.png",
                 'tov' => $tov,
                 'caption' => $reminderCaption,
                 'content_type' => 'post',

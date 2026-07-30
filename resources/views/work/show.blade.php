@@ -178,7 +178,7 @@
                     </p>
                     <ul class="text-xs text-gray-600 space-y-1" dir="ltr">
                         <li><code>Announcement/</code></li>
-                        <li><code>Reminder_1Hour/</code></li>
+                        <li><code>Reminder_24Hour/</code></li>
                         <li><code>Testimonials/</code></li>
                         <li><code>Reels_Design/</code></li>
                     </ul>
