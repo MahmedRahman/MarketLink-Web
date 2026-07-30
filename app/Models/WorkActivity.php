@@ -254,12 +254,12 @@ class WorkActivity extends Model
         ]));
 
         $clipsCaption = implode("\n", array_filter([
-            "مقطع من محاضرة «{$title}»",
+            "مقطع عرضي من محاضرة «{$title}»",
             $lecturer !== '' ? "مع {$lecturer}" : null,
             '',
             'لو حابب تشوف المحاضرة كاملة — اللينك في البايو / الكومنتس.',
             '',
-            '#مقاطع #تعليم #ريلز',
+            '#مقاطع #تعليم #محاضرة',
         ]));
 
         $testimonialCaption = implode("\n", array_filter([
@@ -349,14 +349,13 @@ class WorkActivity extends Model
                 'idea' => $brief."\n\nبعد الرفع: احفظ رابط الفيديو في ملف نصي.\nالمسار: Final_Lecture/youtube_link.txt",
             ],
             [
-                'title' => 'قص مقاطع من المحاضرة (Lecture_Clips)',
-                'kind' => 'content',
+                'title' => 'قص مقاطع من المحاضرة بشكل عرضي (Lecture_Clips)',
+                'kind' => 'video',
                 'offset' => 4,
-                'idea' => $brief."\n\nمقاطع قصيرة من محتوى المحاضرة تنشر كريلز/شورتس.\nالمسار: Marketing_Clips/Lecture_Clips/",
+                'idea' => $brief."\n\nقص مقاطع قصيرة من المحاضرة بصيغة عرضية (Landscape / 16:9) — مش ريلز عمودي.\nمناسب ليوتيوب/فيسبوك أو أي منصة تدعم العرض الأفقي.\nالمسار: Marketing_Clips/Lecture_Clips/",
                 'tov' => $tov,
                 'caption' => $clipsCaption,
-                'content_type' => 'reels',
-                'platforms' => ['instagram', 'tiktok', 'facebook'],
+                'platforms' => ['facebook', 'youtube'],
             ],
             [
                 'title' => 'فيديو تشويقي بعد النشر (Teaser_After)',
