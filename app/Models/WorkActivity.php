@@ -355,7 +355,7 @@ class WorkActivity extends Model
                 'idea' => $brief."\n\nقص مقاطع قصيرة من المحاضرة بصيغة عرضية (Landscape / 16:9) — مش ريلز عمودي.\nمناسب ليوتيوب/فيسبوك أو أي منصة تدعم العرض الأفقي.\nالمسار: Marketing_Clips/Lecture_Clips/",
                 'tov' => $tov,
                 'caption' => $clipsCaption,
-                'platforms' => ['facebook', 'youtube'],
+                'platforms' => ['facebook'],
             ],
             [
                 'title' => 'فيديو تشويقي بعد النشر (Teaser_After)',
