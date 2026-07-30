@@ -391,7 +391,7 @@
                                 <h4 class="font-bold text-gray-800">{{ $stage['label'] }}</h4>
                                 <p class="text-xs text-gray-500">
                                     @if($stage['key'] === 'planning')
-                                        تخطيط المحتوى — بدون مسؤول؛ وزّع الكاتب والمصمم من الكارت
+                                        تخطيط المحتوى قبل الكتابة
                                     @elseif($stage['key'] === 'writing')
                                         عند كاتب المحتوى
                                     @elseif($stage['key'] === 'design')
@@ -422,7 +422,7 @@
                             @foreach($stage['tasks'] as $task)
                                 @php
                                     $stageOwnerId = match($stage['key']) {
-                                        'planning' => null,
+                                        'planning' => $task->assigned_to,
                                         'design' => $task->designer_id ?? $task->assigned_to,
                                         'ready_to_publish', 'published' => $task->assigned_to,
                                         default => $task->content_writer_id ?? $task->assigned_to,
@@ -430,7 +430,7 @@
                                     $assigneePool = match($stage['key']) {
                                         'design' => ($designers->isNotEmpty() ? $designers : $employees),
                                         'writing' => (($contentWriters ?? collect())->isNotEmpty() ? $contentWriters : $employees),
-                                        'ready_to_publish', 'published' => (($publishers ?? collect())->isNotEmpty() ? $publishers : $employees),
+                                        'planning', 'ready_to_publish', 'published' => (($publishers ?? collect())->isNotEmpty() ? $publishers : $employees),
                                         default => $employees,
                                     };
                                     // لو المسؤول الحالي مش في القائمة المختصرة، أضفه
@@ -454,15 +454,13 @@
                                         'published' => 'bg-green-50 text-green-800 border-green-200 hover:border-green-400',
                                         default => 'bg-blue-50 text-blue-800 border-blue-200 hover:border-blue-400',
                                     };
-                                    $writerPool = (($contentWriters ?? collect())->isNotEmpty() ? $contentWriters : $employees);
-                                    $designerPool = ($designers->isNotEmpty() ? $designers : $employees);
                                 @endphp
                                 <div role="link" tabindex="0"
                                    draggable="true"
                                    data-task-id="{{ $task->id }}"
                                    data-stage="{{ $stage['key'] }}"
                                    data-href="{{ work_route('tasks.show', [$activity, $task], false) }}"
-                                   class="pipeline-card group rounded-2xl border border-gray-200 bg-white p-4 min-h-[110px] flex flex-col justify-between hover:border-primary/50 hover:shadow-md transition-all cursor-grab active:cursor-grabbing {{ $task->is_overdue ? 'border-r-4 border-r-red-400' : '' }} {{ $stage['key'] === 'design' ? 'ring-1 ring-purple-100' : '' }} {{ $stage['key'] === 'planning' ? 'ring-1 ring-amber-100' : '' }}">
+                                   class="pipeline-card group rounded-2xl border border-gray-200 bg-white p-4 min-h-[110px] flex flex-col justify-between hover:border-primary/50 hover:shadow-md transition-all cursor-grab active:cursor-grabbing {{ $task->is_overdue ? 'border-r-4 border-r-red-400' : '' }} {{ $stage['key'] === 'design' ? 'ring-1 ring-purple-100' : '' }}">
                                     <div>
                                         @if($task->content_type_label)
                                             <span class="inline-block px-2 py-0.5 text-[10px] rounded-md bg-indigo-50 text-indigo-700 mb-2">{{ $task->content_type_label }}</span>
@@ -470,122 +468,36 @@
                                         <h5 class="text-base font-bold text-gray-900 leading-snug line-clamp-3 group-hover:text-primary">
                                             {{ $task->title }}
                                         </h5>
-                                        @if($stage['key'] === 'planning')
-                                            <p class="text-[11px] text-amber-700 mt-1.5 font-medium">وزّع الفريق من تحت: كاتب · مصمم · مسؤول نشر</p>
-                                        @endif
                                     </div>
                                     <div class="mt-3 space-y-2 card-controls" data-no-nav>
-                                        @if($stage['key'] === 'planning')
-                                            <div class="rounded-xl border border-amber-100 bg-amber-50/50 p-2.5 space-y-2.5">
-                                                <p class="text-[10px] font-bold text-amber-800 uppercase tracking-wide">الفريق</p>
-                                                <div>
-                                                    <label class="block text-[10px] text-gray-500 mb-1">كاتب المحتوى</label>
-                                                    <div class="card-assignee-group flex flex-wrap gap-1.5"
-                                                         data-task-id="{{ $task->id }}"
-                                                         data-stage="planning"
-                                                         data-role="content_writer"
-                                                         data-active-class="bg-blue-600 text-white border-blue-600 shadow-sm"
-                                                         data-idle-class="bg-white text-blue-800 border-blue-200 hover:border-blue-400">
-                                                        @forelse($writerPool as $emp)
-                                                            @php $isSelected = (int) $task->content_writer_id === (int) $emp->id; @endphp
-                                                            <button type="button"
-                                                                    class="card-assignee-chip px-2.5 py-1 rounded-lg border text-[11px] font-semibold transition-all {{ $isSelected ? 'bg-blue-600 text-white border-blue-600 shadow-sm' : 'bg-white text-blue-800 border-blue-200 hover:border-blue-400' }}"
-                                                                    data-employee-id="{{ $emp->id }}"
-                                                                    data-selected="{{ $isSelected ? '1' : '0' }}"
-                                                                    draggable="false"
-                                                                    title="{{ $emp->role_badge }}">
-                                                                {{ $emp->name }}
-                                                            </button>
-                                                        @empty
-                                                            <span class="text-[11px] text-gray-400">لا يوجد كتّاب</span>
-                                                        @endforelse
-                                                    </div>
-                                                </div>
-                                                <div>
-                                                    <label class="block text-[10px] text-gray-500 mb-1">المصمم</label>
-                                                    <div class="card-assignee-group flex flex-wrap gap-1.5"
-                                                         data-task-id="{{ $task->id }}"
-                                                         data-stage="planning"
-                                                         data-role="designer"
-                                                         data-active-class="bg-purple-600 text-white border-purple-600 shadow-sm"
-                                                         data-idle-class="bg-white text-purple-800 border-purple-200 hover:border-purple-400">
-                                                        @forelse($designerPool as $emp)
-                                                            @php $isSelected = (int) $task->designer_id === (int) $emp->id; @endphp
-                                                            <button type="button"
-                                                                    class="card-assignee-chip px-2.5 py-1 rounded-lg border text-[11px] font-semibold transition-all {{ $isSelected ? 'bg-purple-600 text-white border-purple-600 shadow-sm' : 'bg-white text-purple-800 border-purple-200 hover:border-purple-400' }}"
-                                                                    data-employee-id="{{ $emp->id }}"
-                                                                    data-selected="{{ $isSelected ? '1' : '0' }}"
-                                                                    draggable="false"
-                                                                    title="{{ $emp->role_badge }}">
-                                                                {{ $emp->name }}
-                                                            </button>
-                                                        @empty
-                                                            <span class="text-[11px] text-gray-400">لا يوجد مصممين</span>
-                                                        @endforelse
-                                                    </div>
-                                                </div>
-                                                <div>
-                                                    <label class="block text-[10px] text-gray-500 mb-1">مسؤول النشر</label>
-                                                    <div class="card-assignee-group flex flex-wrap gap-1.5"
-                                                         data-task-id="{{ $task->id }}"
-                                                         data-stage="planning"
-                                                         data-role="publisher"
-                                                         data-active-class="bg-teal-600 text-white border-teal-600 shadow-sm"
-                                                         data-idle-class="bg-white text-teal-800 border-teal-200 hover:border-teal-400">
-                                                        @php
-                                                            $publisherPool = (($publishers ?? collect())->isNotEmpty() ? $publishers : $employees);
-                                                            if ($task->assigned_to && ! $publisherPool->contains('id', $task->assigned_to)) {
-                                                                $currentPub = $employees->firstWhere('id', $task->assigned_to);
-                                                                if ($currentPub) {
-                                                                    $publisherPool = $publisherPool->push($currentPub)->unique('id')->values();
-                                                                }
-                                                            }
-                                                        @endphp
-                                                        @forelse($publisherPool as $emp)
-                                                            @php $isSelected = (int) $task->assigned_to === (int) $emp->id; @endphp
-                                                            <button type="button"
-                                                                    class="card-assignee-chip px-2.5 py-1 rounded-lg border text-[11px] font-semibold transition-all {{ $isSelected ? 'bg-teal-600 text-white border-teal-600 shadow-sm' : 'bg-white text-teal-800 border-teal-200 hover:border-teal-400' }}"
-                                                                    data-employee-id="{{ $emp->id }}"
-                                                                    data-selected="{{ $isSelected ? '1' : '0' }}"
-                                                                    draggable="false"
-                                                                    title="{{ $emp->role_badge }}">
-                                                                {{ $emp->name }}
-                                                            </button>
-                                                        @empty
-                                                            <span class="text-[11px] text-gray-400">لا يوجد مسؤولي نشر</span>
-                                                        @endforelse
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        @else
-                                            <label class="block text-[10px] text-gray-400 mb-0.5">
-                                                @if($stage['key'] === 'design') اختَر المصمم
-                                                @elseif($stage['key'] === 'writing') اختَر كاتب المحتوى
-                                                @elseif($stage['key'] === 'ready_to_publish') اختَر مسؤول النشر
-                                                @else اختَر الناشر
-                                                @endif
-                                            </label>
-                                            <div class="card-assignee-group flex flex-wrap gap-1.5"
-                                                 data-task-id="{{ $task->id }}"
-                                                 data-stage="{{ $stage['key'] }}"
-                                                 data-role="{{ $stage['key'] === 'design' ? 'designer' : ($stage['key'] === 'writing' ? 'content_writer' : 'assignee') }}"
-                                                 data-active-class="{{ $chipActive }}"
-                                                 data-idle-class="{{ $chipIdle }}">
-                                                @forelse($assigneePool as $emp)
-                                                    @php $isSelected = (int) $stageOwnerId === (int) $emp->id; @endphp
-                                                    <button type="button"
-                                                            class="card-assignee-chip px-2.5 py-1 rounded-lg border text-[11px] font-semibold transition-all {{ $isSelected ? $chipActive : $chipIdle }}"
-                                                            data-employee-id="{{ $emp->id }}"
-                                                            data-selected="{{ $isSelected ? '1' : '0' }}"
-                                                            draggable="false"
-                                                            title="{{ $emp->role_badge }}">
-                                                        {{ $emp->name }}
-                                                    </button>
-                                                @empty
-                                                    <span class="text-[11px] text-gray-400">لا يوجد موظفون لهذا الدور</span>
-                                                @endforelse
-                                            </div>
-                                        @endif
+                                        <label class="block text-[10px] text-gray-400 mb-0.5">
+                                            @if($stage['key'] === 'design') اختَر المصمم
+                                            @elseif($stage['key'] === 'writing') اختَر كاتب المحتوى
+                                            @elseif($stage['key'] === 'planning') اختَر مسؤول التخطيط
+                                            @elseif($stage['key'] === 'ready_to_publish') اختَر مسؤول النشر
+                                            @else اختَر الناشر
+                                            @endif
+                                        </label>
+                                        <div class="card-assignee-group flex flex-wrap gap-1.5"
+                                             data-task-id="{{ $task->id }}"
+                                             data-stage="{{ $stage['key'] }}"
+                                             data-role="{{ $stage['key'] === 'design' ? 'designer' : ($stage['key'] === 'writing' ? 'content_writer' : 'assignee') }}"
+                                             data-active-class="{{ $chipActive }}"
+                                             data-idle-class="{{ $chipIdle }}">
+                                            @forelse($assigneePool as $emp)
+                                                @php $isSelected = (int) $stageOwnerId === (int) $emp->id; @endphp
+                                                <button type="button"
+                                                        class="card-assignee-chip px-2.5 py-1 rounded-lg border text-[11px] font-semibold transition-all {{ $isSelected ? $chipActive : $chipIdle }}"
+                                                        data-employee-id="{{ $emp->id }}"
+                                                        data-selected="{{ $isSelected ? '1' : '0' }}"
+                                                        draggable="false"
+                                                        title="{{ $emp->role_badge }}">
+                                                    {{ $emp->name }}
+                                                </button>
+                                            @empty
+                                                <span class="text-[11px] text-gray-400">لا يوجد موظفون لهذا الدور</span>
+                                            @endforelse
+                                        </div>
                                         <div class="flex items-center gap-1.5">
                                             <button type="button"
                                                     class="card-share-btn inline-flex items-center justify-center px-2 py-1.5 rounded-lg bg-teal-50 text-teal-700 text-xs font-medium hover:bg-teal-100"
