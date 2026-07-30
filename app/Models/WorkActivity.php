@@ -329,12 +329,6 @@ class WorkActivity extends Model
                 'idea' => $brief."\n\nالصورة المصغرة للفيديو على يوتيوب — عنوان واضح + اسم المحاضر إن وجد.\nالمسار: Final_Lecture/Youtube_Cover.png",
             ],
             [
-                'title' => 'تصميم كفرات الريلز',
-                'kind' => 'design',
-                'offset' => 4,
-                'idea' => $brief."\n\nكفرات وعناصر بصرية لفيديوهات الريلز.\nالمسار: Marketing_Graphics/Reels_Design/",
-            ],
-            [
                 'title' => 'فيديو تشويقي قبل المحاضرة (Teaser_Before)',
                 'kind' => 'video',
                 'offset' => -2,
