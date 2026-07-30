@@ -471,7 +471,7 @@
                                             {{ $task->title }}
                                         </h5>
                                         @if($stage['key'] === 'planning')
-                                            <p class="text-[11px] text-amber-700 mt-1.5 font-medium">بدون مسؤول بعد — وزّع الفريق من تحت</p>
+                                            <p class="text-[11px] text-amber-700 mt-1.5 font-medium">وزّع الفريق من تحت: كاتب · مصمم · مسؤول نشر</p>
                                         @endif
                                     </div>
                                     <div class="mt-3 space-y-2 card-controls" data-no-nav>
@@ -521,6 +521,38 @@
                                                             </button>
                                                         @empty
                                                             <span class="text-[11px] text-gray-400">لا يوجد مصممين</span>
+                                                        @endforelse
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label class="block text-[10px] text-gray-500 mb-1">مسؤول النشر</label>
+                                                    <div class="card-assignee-group flex flex-wrap gap-1.5"
+                                                         data-task-id="{{ $task->id }}"
+                                                         data-stage="planning"
+                                                         data-role="publisher"
+                                                         data-active-class="bg-teal-600 text-white border-teal-600 shadow-sm"
+                                                         data-idle-class="bg-white text-teal-800 border-teal-200 hover:border-teal-400">
+                                                        @php
+                                                            $publisherPool = (($publishers ?? collect())->isNotEmpty() ? $publishers : $employees);
+                                                            if ($task->assigned_to && ! $publisherPool->contains('id', $task->assigned_to)) {
+                                                                $currentPub = $employees->firstWhere('id', $task->assigned_to);
+                                                                if ($currentPub) {
+                                                                    $publisherPool = $publisherPool->push($currentPub)->unique('id')->values();
+                                                                }
+                                                            }
+                                                        @endphp
+                                                        @forelse($publisherPool as $emp)
+                                                            @php $isSelected = (int) $task->assigned_to === (int) $emp->id; @endphp
+                                                            <button type="button"
+                                                                    class="card-assignee-chip px-2.5 py-1 rounded-lg border text-[11px] font-semibold transition-all {{ $isSelected ? 'bg-teal-600 text-white border-teal-600 shadow-sm' : 'bg-white text-teal-800 border-teal-200 hover:border-teal-400' }}"
+                                                                    data-employee-id="{{ $emp->id }}"
+                                                                    data-selected="{{ $isSelected ? '1' : '0' }}"
+                                                                    draggable="false"
+                                                                    title="{{ $emp->role_badge }}">
+                                                                {{ $emp->name }}
+                                                            </button>
+                                                        @empty
+                                                            <span class="text-[11px] text-gray-400">لا يوجد مسؤولي نشر</span>
                                                         @endforelse
                                                     </div>
                                                 </div>

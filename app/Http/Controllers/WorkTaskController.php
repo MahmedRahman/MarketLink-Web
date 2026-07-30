@@ -633,7 +633,7 @@ class WorkTaskController extends Controller
             'assigned_to' => 'nullable|exists:employees,id',
             'employee_id' => 'nullable|exists:employees,id',
             'pipeline_stage' => 'nullable|in:'.implode(',', WorkTask::pipelineStageKeys()),
-            'role' => 'nullable|in:assignee,content_writer,designer',
+            'role' => 'nullable|in:assignee,content_writer,designer,publisher',
         ]);
 
         $employeeId = $validated['employee_id'] ?? $validated['assigned_to'] ?? null;
@@ -660,6 +660,9 @@ class WorkTaskController extends Controller
             if ($stage !== 'planning') {
                 $updates['assigned_to'] = $employeeId;
             }
+        } elseif ($role === 'publisher') {
+            // مسؤول النشر يتخزّن في assigned_to (هيستخدم لما المرحلة توصل جاهز للنشر)
+            $updates['assigned_to'] = $employeeId;
         } else {
             $updates['assigned_to'] = $employeeId;
             if ($stage === 'writing') {
@@ -679,6 +682,7 @@ class WorkTaskController extends Controller
         $owner = match ($role) {
             'content_writer' => $task->contentWriter,
             'designer' => $task->designer,
+            'publisher', 'assignee' => $task->assignedEmployee,
             default => $task->assignedEmployee,
         };
         $message = 'تم تحديث الموظف المسؤول';
@@ -699,6 +703,7 @@ class WorkTaskController extends Controller
             $roleLabel = match ($role) {
                 'designer' => 'المصمم',
                 'content_writer' => 'كاتب المحتوى',
+                'publisher' => 'مسؤول النشر',
                 default => ($stage === 'planning' ? 'مسؤول التخطيط' : 'المسؤول'),
             };
             $task->logEvent(
