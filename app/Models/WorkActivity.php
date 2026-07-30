@@ -375,12 +375,6 @@ class WorkActivity extends Model
                 'platforms' => ['instagram', 'tiktok', 'facebook'],
             ],
             [
-                'title' => 'جدولة ونشر المحتوى على السوشيال',
-                'kind' => 'publish',
-                'offset' => 5,
-                'idea' => $brief."\n\nانسخ المقاطع المطلوبة إلى 03_Social_Content/الشهر الحالي للجدولة — النسخة هناك مؤقتة، المكان الدائم فولدر المحاضرة.",
-            ],
-            [
                 'title' => 'بوست آراء الحضور (Testimonials)',
                 'kind' => 'content',
                 'offset' => 6,
