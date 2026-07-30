@@ -521,6 +521,41 @@
                                         <h5 class="text-base font-bold text-gray-900 leading-snug line-clamp-3 group-hover:text-primary">
                                             {{ $task->title }}
                                         </h5>
+                                        @if($stage['key'] === 'design')
+                                            <div class="design-status-actions mt-2.5 flex flex-wrap gap-1" data-no-nav>
+                                                @foreach([
+                                                    'todo' => 'لم تبدأ',
+                                                    'in_progress' => 'تنفيذ',
+                                                    'review' => 'مراجعة',
+                                                    'done' => 'اكتمال',
+                                                ] as $stKey => $stLabel)
+                                                    @php
+                                                        $stBtn = match($stKey) {
+                                                            'in_progress' => $task->status === $stKey
+                                                                ? 'bg-blue-600 text-white border-blue-600'
+                                                                : 'bg-blue-50 text-blue-800 border-blue-200 hover:bg-blue-100',
+                                                            'review' => $task->status === $stKey
+                                                                ? 'bg-amber-600 text-white border-amber-600'
+                                                                : 'bg-amber-50 text-amber-900 border-amber-200 hover:bg-amber-100',
+                                                            'done' => $task->status === $stKey
+                                                                ? 'bg-emerald-600 text-white border-emerald-600'
+                                                                : 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100',
+                                                            default => $task->status === $stKey
+                                                                ? 'bg-slate-600 text-white border-slate-600'
+                                                                : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100',
+                                                        };
+                                                    @endphp
+                                                    <button type="button"
+                                                            class="card-status-btn px-2 py-1 rounded-lg border text-[10px] font-bold transition-all {{ $stBtn }}"
+                                                            data-status="{{ $stKey }}"
+                                                            data-selected="{{ $task->status === $stKey ? '1' : '0' }}"
+                                                            draggable="false"
+                                                            title="{{ $stKey === 'done' ? 'اكتمال التصميم والنقل لجاهز للنشر' : 'تغيير الحالة' }}">
+                                                        {{ $stLabel }}
+                                                    </button>
+                                                @endforeach
+                                            </div>
+                                        @endif
                                         @if($stage['key'] === 'planning')
                                             <div class="planning-stage-actions mt-2.5 flex flex-wrap gap-1.5">
                                                 <button type="button"
@@ -1208,6 +1243,9 @@
             look.card.split(/\s+/).forEach(function (c) { card.classList.add(c); });
             card.dataset.status = status;
 
+            const oldBadge = card.querySelector('.card-status-badge');
+            if (oldBadge) oldBadge.remove();
+
             let wrap = card.querySelector('.card-status-row');
             if (!wrap) {
                 wrap = document.createElement('div');
@@ -1215,8 +1253,6 @@
                 const title = card.querySelector('h5');
                 if (title && title.parentElement) {
                     title.parentElement.insertBefore(wrap, title);
-                    const type = wrap.previousElementSibling;
-                    // لو في content type badge فوق العنوان، انقله جوه الصف
                 }
                 const typeBadge = card.querySelector('span.bg-indigo-50');
                 if (typeBadge && typeBadge.parentElement !== wrap) {
@@ -1227,18 +1263,40 @@
             badge.className = 'card-status-badge inline-flex items-center gap-0.5 px-2 py-0.5 text-[10px] font-bold rounded-md border ' + look.badge;
             badge.innerHTML = '<span class="material-icons text-[12px] leading-none">' + look.icon + '</span> ' + look.label;
             wrap.appendChild(badge);
+
+            // تحديث أزرار الحالة
+            const btnIdle = {
+                todo: 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100',
+                in_progress: 'bg-blue-50 text-blue-800 border-blue-200 hover:bg-blue-100',
+                review: 'bg-amber-50 text-amber-900 border-amber-200 hover:bg-amber-100',
+                done: 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100',
+            };
+            const btnActive = {
+                todo: 'bg-slate-600 text-white border-slate-600',
+                in_progress: 'bg-blue-600 text-white border-blue-600',
+                review: 'bg-amber-600 text-white border-amber-600',
+                done: 'bg-emerald-600 text-white border-emerald-600',
+            };
+            card.querySelectorAll('.card-status-btn').forEach(function (btn) {
+                const key = btn.dataset.status;
+                const on = key === status;
+                btn.className = 'card-status-btn px-2 py-1 rounded-lg border text-[10px] font-bold transition-all ' + (on ? (btnActive[key] || btnActive.todo) : (btnIdle[key] || btnIdle.todo));
+                btn.dataset.selected = on ? '1' : '0';
+            });
         }
 
         function adaptCard(card, toStage, stageOwnerId) {
             if (!card) return;
             const cfg = stages[toStage] || stages.writing;
-            const fromStage = card.dataset.stage;
             card.dataset.stage = toStage;
 
             clearDesignStatusLook(card);
+            const statusActions = card.querySelector('.design-status-actions');
+            if (toStage !== 'design' && statusActions) statusActions.remove();
+
             if (toStage === 'design') {
                 // النقل للتصميم عادة بيخلي الحالة قيد المراجعة
-                applyDesignStatusLook(card, 'review');
+                applyDesignStatusLook(card, card.dataset.status || 'review');
             } else {
                 card.classList.add('border-gray-200', 'bg-white');
                 if (cfg.ring) {
@@ -1289,7 +1347,83 @@
             });
         }
 
-        return { adaptCard: adaptCard, stages: stages };
+        return { adaptCard: adaptCard, applyDesignStatusLook: applyDesignStatusLook, stages: stages };
+    })();
+
+    // —— تغيير حالة كارت التصميم ——
+    (function initDesignStatus() {
+        const board = document.getElementById('pipelineBoard');
+        if (!board) return;
+        const statusUrlTpl = "{{ work_route('tasks.status', [$activity, 'TASK_ID'], false) }}";
+
+        function csrfToken() {
+            return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+        }
+
+        function refreshStageCounts() {
+            board.querySelectorAll('.pipeline-stage').forEach(function (section) {
+                const zone = section.querySelector('.stage-dropzone');
+                if (!zone) return;
+                const count = zone.querySelectorAll('.pipeline-card').length;
+                section.querySelectorAll('.stage-count').forEach(function (el) { el.textContent = count; });
+                section.querySelectorAll('.stage-count-badge').forEach(function (el) { el.textContent = count; });
+                const empty = zone.querySelector('.stage-empty');
+                if (empty) empty.classList.toggle('hidden', count > 0);
+            });
+        }
+
+        board.addEventListener('click', async function (e) {
+            const btn = e.target.closest('.card-status-btn');
+            if (!btn) return;
+            e.preventDefault();
+            e.stopPropagation();
+
+            const card = btn.closest('.pipeline-card');
+            if (!card) return;
+            const taskId = card.dataset.taskId;
+            const status = btn.dataset.status;
+            if (!taskId || !status || btn.dataset.selected === '1') return;
+
+            const allBtns = card.querySelectorAll('.card-status-btn');
+            allBtns.forEach(function (b) { b.disabled = true; });
+
+            try {
+                const body = new URLSearchParams();
+                body.set('status', status);
+                body.set('_token', csrfToken());
+                const res = await fetch(statusUrlTpl.replace('TASK_ID', taskId), {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken(),
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    credentials: 'same-origin',
+                    body: body.toString(),
+                });
+                const data = await res.json().catch(function () { return {}; });
+                if (!res.ok || !data.success) {
+                    throw new Error(data.message || 'فشل تحديث الحالة');
+                }
+
+                if (data.moved_to_ready && data.pipeline_stage === 'ready_to_publish') {
+                    if (window.pipelineCardUi) {
+                        window.pipelineCardUi.adaptCard(card, 'ready_to_publish', data.stage_owner_id);
+                    }
+                    const targetZone = board.querySelector('.stage-dropzone[data-stage="ready_to_publish"]');
+                    const wrap = targetZone?.querySelector('.stage-cards');
+                    if (wrap) wrap.appendChild(card);
+                    refreshStageCounts();
+                } else if (window.pipelineCardUi) {
+                    window.pipelineCardUi.applyDesignStatusLook(card, data.status || status);
+                }
+            } catch (err) {
+                alert(err.message || 'حدث خطأ');
+            } finally {
+                allBtns.forEach(function (b) { b.disabled = false; });
+            }
+        });
     })();
 
     // —— تغيير المسؤول من على الكارت (أسماء جنب بعض) ——
@@ -1697,7 +1831,7 @@
         });
 
         board.addEventListener('click', function (e) {
-            if (e.target.closest('.card-controls, .card-assignee-group, .card-assignee-chip, .card-stage-btn, .planning-stage-actions, .card-edit-btn, .card-detail-btn, .card-share-btn, select, a, button')) {
+            if (e.target.closest('.card-controls, .card-assignee-group, .card-assignee-chip, .card-stage-btn, .card-status-btn, .design-status-actions, .planning-stage-actions, .card-edit-btn, .card-detail-btn, .card-share-btn, select, a, button')) {
                 return;
             }
             const card = e.target.closest('.pipeline-card');

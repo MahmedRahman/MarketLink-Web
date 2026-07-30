@@ -744,6 +744,83 @@ class WorkTaskController extends Controller
         return back()->with('success', $message);
     }
 
+    /**
+     * تحديث حالة التاسك من كارت البايبلاين (AJAX).
+     */
+    public function updateStatus(Request $request, WorkActivity $work, WorkTask $task)
+    {
+        $this->authorizeActivity($request, $work);
+        $this->authorizeTask($work, $task);
+
+        $validated = $request->validate([
+            'status' => 'required|in:todo,in_progress,review,done',
+        ]);
+
+        $fromStatus = $task->status;
+        $fromStage = $task->pipeline_stage;
+        $status = $validated['status'];
+        $updates = ['status' => $status];
+        $movedToReady = false;
+
+        // اكتمال التصميم → جاهز للنشر
+        if ($status === 'done' && $fromStage === 'design' && $fromStatus !== 'done') {
+            $orgId = WorkHub::organizationId($request);
+            $updates['pipeline_stage'] = 'ready_to_publish';
+            $updates['assigned_to'] = WorkTask::suggestAssigneeId($orgId, 'publish')
+                ?? $task->assigned_to;
+            $updates['status'] = 'review';
+            $movedToReady = true;
+        }
+
+        $task->update($updates);
+        $task->refresh();
+
+        if ($fromStatus !== $task->status) {
+            $task->logEvent(
+                'status_changed',
+                'تغيّرت الحالة من «'.(WorkTask::statuses()[$fromStatus] ?? $fromStatus).'» إلى «'.(WorkTask::statuses()[$task->status] ?? $task->status).'»',
+                'status',
+                $fromStatus,
+                $task->status
+            );
+        }
+
+        if ($fromStage !== $task->pipeline_stage) {
+            $task->logEvent(
+                'stage_changed',
+                'نُقل من «'.(WorkTask::pipelineStages()[$fromStage] ?? $fromStage).'» إلى «'.(WorkTask::pipelineStages()[$task->pipeline_stage] ?? $task->pipeline_stage).'» بعد اكتمال التصميم',
+                'pipeline_stage',
+                $fromStage,
+                $task->pipeline_stage
+            );
+        }
+
+        $message = $movedToReady
+            ? 'تم اكتمال التصميم ونقل المحتوى لـ «جاهز للنشر»'
+            : 'تم تحديث الحالة إلى «'.(WorkTask::statuses()[$task->status] ?? $task->status).'»';
+
+        if ($request->expectsJson() || $request->ajax()) {
+            $stageOwnerId = match ($task->pipeline_stage) {
+                'design' => $task->designer_id ?? $task->assigned_to,
+                'writing' => $task->content_writer_id ?? $task->assigned_to,
+                default => $task->assigned_to,
+            };
+
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'status' => $task->status,
+                'status_label' => $task->status_label,
+                'pipeline_stage' => $task->pipeline_stage,
+                'moved_to_ready' => $movedToReady,
+                'stage_owner_id' => $stageOwnerId,
+                'task_id' => $task->id,
+            ]);
+        }
+
+        return back()->with('success', $message);
+    }
+
     public function updatePublishLinks(Request $request, WorkActivity $work, WorkTask $task)
     {
         $this->authorizeActivity($request, $work);
