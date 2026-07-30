@@ -282,6 +282,27 @@ class WorkActivity extends Model
 
         return [
             [
+                'title' => 'تصميم بنر الموقع للمحاضرة',
+                'kind' => 'design',
+                'offset' => -5,
+                'idea' => $brief."\n\nصمّم بنر صفحة المحاضرة على موقع الأكاديمية: عنوان واضح، اسم المحاضر، الموعد، ودعوة للحضور/المشاهدة.\nالأبعاد حسب مقاس بنر الموقع المعتمد.",
+            ],
+            [
+                'title' => 'رفع المحاضرة المجانية على الموقع',
+                'kind' => 'publish',
+                'offset' => 3,
+                'idea' => $brief."\n\nارفع المحاضرة المجانية على موقع الأكاديمية مع العنوان والوصف والأهداف والبنر، واربط فيديو يوتيوب إن وجد.\nتأكد إن الصفحة ظاهرة للزوار وأن رابط المشاركة جاهز للنشر على السوشيال.",
+                'tov' => $tov,
+                'caption' => implode("\n", array_filter([
+                    "المحاضرة المجانية «{$title}» بقت متاحة على الموقع 🎓",
+                    $lecturer !== '' ? "مع {$lecturer}" : null,
+                    '',
+                    'تقدر تشوفها في أي وقت من لينك الموقع.',
+                    '',
+                    '#محاضرة_مجانية #على_الموقع',
+                ])),
+            ],
+            [
                 'title' => 'تصميم بوست إعلان المحاضرة',
                 'kind' => 'content',
                 'offset' => -3,
@@ -290,14 +311,6 @@ class WorkActivity extends Model
                 'caption' => $announcementCaption,
                 'content_type' => 'post',
                 'platforms' => ['facebook', 'instagram'],
-            ],
-            [
-                'title' => 'فيديو تشويقي قبل المحاضرة (Teaser_Before)',
-                'kind' => 'video',
-                'offset' => -2,
-                'idea' => $brief."\n\nفيديو قصير (15–30 ثانية) يشجع الحضور: عنوان قوي + وعد بالقيمة + الموعد.\nالمسار: Marketing_Clips/Teasers/Teaser_Before.mp4",
-                'tov' => $tov,
-                'caption' => "تشويقة سريعة لمحاضرة «{$title}» — الموعد {$when}. احجز مكانك مجانًا.",
             ],
             [
                 'title' => 'تصميم بوست التذكير (قبل المحاضرة بساعة)',
@@ -310,37 +323,36 @@ class WorkActivity extends Model
                 'platforms' => ['facebook', 'instagram'],
             ],
             [
-                'title' => 'مونتاج النسخة النهائية للمحاضرة',
-                'kind' => 'video',
-                'offset' => 2,
-                'idea' => $brief."\n\nالتسجيل الخام في 05_Live_Recordings — النسخة النهائية بعد المونتاج.\nالمسار: Final_Lecture/Final_YouTube.mp4",
-            ],
-            [
                 'title' => 'تصميم كفر يوتيوب (Thumbnail)',
                 'kind' => 'design',
                 'offset' => 2,
                 'idea' => $brief."\n\nالصورة المصغرة للفيديو على يوتيوب — عنوان واضح + اسم المحاضر إن وجد.\nالمسار: Final_Lecture/Youtube_Cover.png",
             ],
             [
+                'title' => 'تصميم كفرات الريلز',
+                'kind' => 'design',
+                'offset' => 4,
+                'idea' => $brief."\n\nكفرات وعناصر بصرية لفيديوهات الريلز.\nالمسار: Marketing_Graphics/Reels_Design/",
+            ],
+            [
+                'title' => 'فيديو تشويقي قبل المحاضرة (Teaser_Before)',
+                'kind' => 'video',
+                'offset' => -2,
+                'idea' => $brief."\n\nفيديو قصير (15–30 ثانية) يشجع الحضور: عنوان قوي + وعد بالقيمة + الموعد.\nالمسار: Marketing_Clips/Teasers/Teaser_Before.mp4",
+                'tov' => $tov,
+                'caption' => "تشويقة سريعة لمحاضرة «{$title}» — الموعد {$when}. احجز مكانك مجانًا.",
+            ],
+            [
+                'title' => 'مونتاج النسخة النهائية للمحاضرة',
+                'kind' => 'video',
+                'offset' => 2,
+                'idea' => $brief."\n\nالتسجيل الخام في 05_Live_Recordings — النسخة النهائية بعد المونتاج.\nالمسار: Final_Lecture/Final_YouTube.mp4",
+            ],
+            [
                 'title' => 'رفع المحاضرة على يوتيوب وحفظ الرابط',
                 'kind' => 'publish',
                 'offset' => 3,
                 'idea' => $brief."\n\nبعد الرفع: احفظ رابط الفيديو في ملف نصي.\nالمسار: Final_Lecture/youtube_link.txt",
-            ],
-            [
-                'title' => 'رفع المحاضرة المجانية على الموقع',
-                'kind' => 'publish',
-                'offset' => 3,
-                'idea' => $brief."\n\nارفع تسجيل المحاضرة المجانية على موقع الأكاديمية مع العنوان والوصف والأهداف، واربط فيديو يوتيوب إن وجد.\nتأكد إن الصفحة ظاهرة للزوار وأن رابط المشاركة جاهز للنشر على السوشيال.",
-                'tov' => $tov,
-                'caption' => implode("\n", array_filter([
-                    "المحاضرة المجانية «{$title}» بقت متاحة على الموقع 🎓",
-                    $lecturer !== '' ? "مع {$lecturer}" : null,
-                    '',
-                    'تقدر تشوفها في أي وقت من لينك الموقع.',
-                    '',
-                    '#محاضرة_مجانية #على_الموقع',
-                ])),
             ],
             [
                 'title' => 'قص مقاطع من المحاضرة (Lecture_Clips)',
@@ -358,12 +370,6 @@ class WorkActivity extends Model
                 'offset' => 4,
                 'idea' => $brief."\n\nلمحة عن المحاضرة توجّه لمشاهدتها كاملة على يوتيوب/الموقع.\nالمسار: Marketing_Clips/Teasers/Teaser_After.mp4",
                 'caption' => "لمحة من «{$title}» — شاهد المحاضرة كاملة من اللينك.",
-            ],
-            [
-                'title' => 'تصميم كفرات الريلز',
-                'kind' => 'design',
-                'offset' => 4,
-                'idea' => $brief."\n\nكفرات وعناصر بصرية لفيديوهات الريلز.\nالمسار: Marketing_Graphics/Reels_Design/",
             ],
             [
                 'title' => 'جدولة ونشر المحتوى على السوشيال',
