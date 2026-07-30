@@ -56,6 +56,8 @@ Route::post('/content-creation/upload-reference-image', [ContentCreationControll
 // رابط عام لمساحة العمل — بدون تسجيل دخول
 Route::get('/share/w/{token}', [\App\Http\Controllers\PublicWorkShareController::class, 'show'])->name('public.work.show');
 Route::get('/share/w/{token}/gallery', [\App\Http\Controllers\PublicWorkShareController::class, 'showGallery'])->name('public.work.gallery');
+Route::get('/share/w/{token}/ready-to-publish', [\App\Http\Controllers\PublicWorkShareController::class, 'showReadyToPublish'])->name('public.work.ready-to-publish');
+Route::post('/share/w/{token}/t/{task}/publish-schedule', [\App\Http\Controllers\PublicWorkShareController::class, 'updatePublishSchedule'])->name('public.work.publish-schedule');
 Route::get('/share/w/{token}/t/{task}', [\App\Http\Controllers\PublicWorkShareController::class, 'showTask'])->name('public.work.task');
 Route::get('/share/w/{token}/t/{task}/files/{file}', [\App\Http\Controllers\PublicWorkShareController::class, 'showFile'])->name('public.work.file');
 Route::get('/share/w/{token}/t/{task}/download-all', [\App\Http\Controllers\PublicWorkShareController::class, 'downloadAllFiles'])->name('public.work.files.download-all');

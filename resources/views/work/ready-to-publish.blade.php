@@ -45,9 +45,29 @@
             <span class="material-icons text-lg">arrow_forward</span>
             رجوع للبايبلاين
         </a>
-        <span class="text-xs font-bold px-2.5 py-1 rounded-lg bg-teal-50 text-teal-800">
-            {{ $tasks->count() }} بوست جاهز للنشر
-        </span>
+        <div class="flex items-center gap-2 flex-wrap">
+            @php
+                $activity->ensureShareToken();
+                $publicReadyUrl = $activity->public_ready_to_publish_url;
+            @endphp
+            @if($publicReadyUrl)
+                <a href="{{ $publicReadyUrl }}" target="_blank" rel="noopener"
+                   class="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-teal-600 text-white text-xs font-bold hover:bg-teal-700">
+                    <span class="material-icons text-sm">open_in_new</span>
+                    فتح الرابط العام
+                </a>
+                <button type="button"
+                        data-share-url="{{ $publicReadyUrl }}"
+                        onclick="navigator.clipboard.writeText(this.dataset.shareUrl).then(() => { this.querySelector('span.label').textContent='تم النسخ'; setTimeout(() => this.querySelector('span.label').textContent='نسخ الرابط', 1500); })"
+                        class="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-teal-50 text-teal-800 text-xs font-bold hover:bg-teal-100">
+                    <span class="material-icons text-sm">content_copy</span>
+                    <span class="label">نسخ الرابط</span>
+                </button>
+            @endif
+            <span class="text-xs font-bold px-2.5 py-1 rounded-lg bg-teal-50 text-teal-800">
+                {{ $tasks->count() }} بوست جاهز للنشر
+            </span>
+        </div>
     </div>
 
     <section class="card rounded-2xl overflow-hidden">

@@ -407,10 +407,27 @@
                         </div>
                         <div class="flex items-center gap-2">
                             @if($stage['key'] === 'ready_to_publish')
+                                @if($activity->share_token)
+                                    <a href="{{ $activity->public_ready_to_publish_url }}" target="_blank" rel="noopener"
+                                       class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold bg-teal-600 text-white hover:bg-teal-700">
+                                        <span class="material-icons text-sm">open_in_new</span>
+                                        عرض وجدولة
+                                    </a>
+                                @else
+                                    <form method="POST" action="{{ work_route('share.enable', $activity) }}" class="inline">
+                                        @csrf
+                                        <input type="hidden" name="redirect_to_ready_to_publish" value="1">
+                                        <button type="submit"
+                                                class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold bg-teal-600 text-white hover:bg-teal-700">
+                                            <span class="material-icons text-sm">open_in_new</span>
+                                            عرض وجدولة
+                                        </button>
+                                    </form>
+                                @endif
                                 <a href="{{ work_route('ready-to-publish', $activity) }}"
-                                   class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold bg-teal-600 text-white hover:bg-teal-700">
-                                    <span class="material-icons text-sm">calendar_month</span>
-                                    عرض وجدولة
+                                   class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-teal-50 text-teal-800 hover:bg-teal-100"
+                                   title="نسخة داخل لوحة التحكم">
+                                    <span class="material-icons text-sm">dashboard</span>
                                 </a>
                             @endif
                             <span class="stage-count-badge px-2.5 py-1 rounded-lg text-xs font-bold
@@ -634,12 +651,23 @@
             </div>
 
             <label class="block text-xs font-medium text-gray-600 mb-1">رابط معرض التصميم (كل الصور)</label>
-            <div class="flex gap-2 mb-4">
+            <div class="flex gap-2 mb-3">
                 <input type="text" id="publicGalleryUrl" readonly
                        value="{{ $activity->public_gallery_url }}"
                        class="flex-1 px-3 py-2.5 rounded-xl border-2 border-teal-100 bg-teal-50/40 text-sm focus:outline-none" dir="ltr">
                 <button type="button" onclick="copyGalleryUrl()"
                         class="px-4 py-2.5 rounded-xl bg-teal-600 text-white text-sm font-medium hover:bg-teal-700 shrink-0">
+                    نسخ
+                </button>
+            </div>
+
+            <label class="block text-xs font-medium text-gray-600 mb-1">رابط جاهز للنشر (جدولة)</label>
+            <div class="flex gap-2 mb-4">
+                <input type="text" id="publicReadyUrl" readonly
+                       value="{{ $activity->public_ready_to_publish_url }}"
+                       class="flex-1 px-3 py-2.5 rounded-xl border-2 border-cyan-100 bg-cyan-50/40 text-sm focus:outline-none" dir="ltr">
+                <button type="button" onclick="copyReadyUrl()"
+                        class="px-4 py-2.5 rounded-xl bg-cyan-600 text-white text-sm font-medium hover:bg-cyan-700 shrink-0">
                     نسخ
                 </button>
             </div>
@@ -654,6 +682,11 @@
                    class="px-4 py-2 rounded-xl bg-teal-50 text-teal-700 text-sm hover:bg-teal-100 inline-flex items-center gap-1">
                     <span class="material-icons text-base">photo_library</span>
                     فتح المعرض
+                </a>
+                <a href="{{ $activity->public_ready_to_publish_url }}" target="_blank"
+                   class="px-4 py-2 rounded-xl bg-cyan-50 text-cyan-700 text-sm hover:bg-cyan-100 inline-flex items-center gap-1">
+                    <span class="material-icons text-base">schedule_send</span>
+                    فتح الجدولة
                 </a>
                 <form method="POST" action="{{ work_route('share.regenerate', $activity) }}" onsubmit="return confirm('تجديد الرابط؟ الرابط القديم هيتوقف.')">
                     @csrf
@@ -953,6 +986,25 @@
             const hint = document.getElementById('copyShareHint');
             if (hint) {
                 hint.textContent = 'تم نسخ رابط المعرض';
+                hint.classList.remove('hidden');
+                setTimeout(function () {
+                    hint.classList.add('hidden');
+                    hint.textContent = 'تم نسخ الرابط';
+                }, 2000);
+            }
+        }).catch(function () {
+            input.select();
+            document.execCommand('copy');
+        });
+    }
+
+    function copyReadyUrl() {
+        const input = document.getElementById('publicReadyUrl');
+        if (!input) return;
+        navigator.clipboard.writeText(input.value).then(function () {
+            const hint = document.getElementById('copyShareHint');
+            if (hint) {
+                hint.textContent = 'تم نسخ رابط الجدولة';
                 hint.classList.remove('hidden');
                 setTimeout(function () {
                     hint.classList.add('hidden');

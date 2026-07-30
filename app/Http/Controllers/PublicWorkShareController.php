@@ -118,6 +118,90 @@ class PublicWorkShareController extends Controller
         ]);
     }
 
+    /**
+     * صفحة عامة لجدولة البوستات الجاهزة للنشر (بدون تسجيل).
+     */
+    public function showReadyToPublish(string $token): View
+    {
+        $activity = $this->findSharedActivity($token);
+        $activity->load(['tasks.files', 'tasks.designer']);
+
+        $tasks = $activity->tasks
+            ->where('pipeline_stage', 'ready_to_publish')
+            ->sortBy(function (WorkTask $task) {
+                if ($task->publish_date) {
+                    $time = $task->publish_time_short ?: '99:99';
+
+                    return '0-'.$task->publish_date->format('Ymd').'-'.$time.'-'.$task->gallerySortKey();
+                }
+
+                return '1-'.$task->gallerySortKey();
+            })
+            ->values();
+
+        return view('public.work.ready-to-publish', [
+            'activity' => $activity,
+            'tasks' => $tasks,
+            'shareToken' => $token,
+            'pageUrl' => route('public.work.ready-to-publish', $token),
+        ]);
+    }
+
+    public function updatePublishSchedule(Request $request, string $token, WorkTask $task)
+    {
+        $activity = $this->findSharedActivity($token);
+        abort_unless((int) $task->work_activity_id === (int) $activity->id, 404);
+        abort_unless($task->pipeline_stage === 'ready_to_publish', 422, 'التاسك مش في مرحلة جاهز للنشر');
+
+        $validated = $request->validate([
+            'publish_date' => 'nullable|date',
+            'publish_time' => ['nullable', 'regex:/^\d{2}:\d{2}(:\d{2})?$/'],
+        ]);
+
+        $date = $validated['publish_date'] ?? null;
+        $time = $validated['publish_time'] ?? null;
+        if ($time) {
+            $time = strlen($time) === 5 ? $time.':00' : $time;
+        }
+        if (! $date) {
+            $time = null;
+        }
+
+        $beforeDate = $task->publish_date?->format('Y-m-d');
+        $beforeTime = $task->publish_time_short;
+        $task->update([
+            'publish_date' => $date,
+            'publish_time' => $time,
+        ]);
+        $task->refresh();
+
+        if ($beforeDate !== $task->publish_date?->format('Y-m-d') || $beforeTime !== $task->publish_time_short) {
+            $toLabel = $task->publish_schedule_label ?? 'بدون موعد';
+            $fromLabel = $beforeDate
+                ? ($beforeDate.($beforeTime ? ' · '.$beforeTime : ''))
+                : 'بدون موعد';
+            $task->logEvent(
+                'publish_schedule_updated',
+                'تم تحديث موعد النشر من الرابط العام من «'.$fromLabel.'» إلى «'.$toLabel.'»',
+                'publish_date',
+                $fromLabel,
+                $toLabel
+            );
+        }
+
+        $message = $task->publish_date
+            ? 'تم حفظ موعد النشر: '.$task->publish_schedule_label
+            : 'تم مسح موعد النشر';
+
+        return response()->json([
+            'success' => true,
+            'message' => $message,
+            'publish_date' => $task->publish_date?->format('Y-m-d'),
+            'publish_time' => $task->publish_time_short,
+            'label' => $task->publish_schedule_label,
+        ]);
+    }
+
     public function showTask(string $token, WorkTask $task): View
     {
         $activity = $this->findSharedActivity($token);

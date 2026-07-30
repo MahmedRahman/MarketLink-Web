@@ -379,6 +379,11 @@ class WorkActivityController extends Controller
                 ->with('success', 'تم تفعيل الرابط العام وفتح معرض التصميم');
         }
 
+        if ($request->boolean('redirect_to_ready_to_publish')) {
+            return redirect()
+                ->away(route('public.work.ready-to-publish', $work->share_token));
+        }
+
         return back()->with('success', 'تم تفعيل الرابط العام — انسخه وشاركه');
     }
 
