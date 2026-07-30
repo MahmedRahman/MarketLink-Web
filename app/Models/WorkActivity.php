@@ -288,6 +288,14 @@ class WorkActivity extends Model
                 'idea' => $brief."\n\nصمّم بنر صفحة المحاضرة على موقع الأكاديمية: عنوان واضح، اسم المحاضر، الموعد، ودعوة للحضور/المشاهدة.\nالأبعاد حسب مقاس بنر الموقع المعتمد.",
             ],
             [
+                'title' => 'فيديو تشويقي قبل المحاضرة (Teaser_Before)',
+                'kind' => 'video',
+                'offset' => -2,
+                'idea' => $brief."\n\nفيديو قصير (15–30 ثانية) يشجع الحضور: عنوان قوي + وعد بالقيمة + الموعد.\nالمسار: Marketing_Clips/Teasers/Teaser_Before.mp4",
+                'tov' => $tov,
+                'caption' => "تشويقة سريعة لمحاضرة «{$title}» — الموعد {$when}. احجز مكانك مجانًا.",
+            ],
+            [
                 'title' => 'رفع المحاضرة المجانية على الموقع',
                 'kind' => 'publish',
                 'offset' => 3,
@@ -327,14 +335,6 @@ class WorkActivity extends Model
                 'kind' => 'design',
                 'offset' => 2,
                 'idea' => $brief."\n\nالصورة المصغرة للفيديو على يوتيوب — عنوان واضح + اسم المحاضر إن وجد.\nالمسار: Final_Lecture/Youtube_Cover.png",
-            ],
-            [
-                'title' => 'فيديو تشويقي قبل المحاضرة (Teaser_Before)',
-                'kind' => 'video',
-                'offset' => -2,
-                'idea' => $brief."\n\nفيديو قصير (15–30 ثانية) يشجع الحضور: عنوان قوي + وعد بالقيمة + الموعد.\nالمسار: Marketing_Clips/Teasers/Teaser_Before.mp4",
-                'tov' => $tov,
-                'caption' => "تشويقة سريعة لمحاضرة «{$title}» — الموعد {$when}. احجز مكانك مجانًا.",
             ],
             [
                 'title' => 'مونتاج النسخة النهائية للمحاضرة',
