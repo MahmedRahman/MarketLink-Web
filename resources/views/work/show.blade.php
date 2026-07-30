@@ -50,13 +50,20 @@
                 </div>
                 <div>
                     <h2 class="text-xl font-bold text-gray-800">{{ $activity->title }}</h2>
-                    <div class="flex items-center gap-2 mt-1 text-sm text-gray-500">
+                    <div class="flex items-center gap-2 mt-1 text-sm text-gray-500 flex-wrap">
                         <span>{{ $activity->type_label }}</span>
                         @if($activity->event_date)
                             <span>·</span>
-                            <span class="flex items-center gap-1"><span class="material-icons text-sm">event</span>{{ $activity->event_date->format('Y/m/d') }}</span>
+                            <span class="flex items-center gap-1"><span class="material-icons text-sm">event</span>{{ $activity->event_date->format('Y/m/d') }}@if($activity->lecture_time) — {{ $activity->lecture_time }}@endif</span>
+                        @endif
+                        @if($activity->lecturer_name)
+                            <span>·</span>
+                            <span class="flex items-center gap-1"><span class="material-icons text-sm">person</span>{{ $activity->lecturer_name }}</span>
                         @endif
                     </div>
+                    @if($activity->lecture_goals)
+                        <p class="text-sm text-teal-800 mt-2 bg-teal-50 border border-teal-100 rounded-xl px-3 py-2 whitespace-pre-line">{{ $activity->lecture_goals }}</p>
+                    @endif
                 </div>
             </div>
 
