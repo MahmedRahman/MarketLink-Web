@@ -374,11 +374,21 @@ class WorkTaskController extends Controller
         $message = 'تم نقل المحتوى إلى مرحلة «'.(WorkTask::pipelineStages()[$stage] ?? $stage).'»';
 
         if ($request->expectsJson() || $request->ajax()) {
+            $stageOwnerId = match ($stage) {
+                'design' => $task->designer_id ?? $task->assigned_to,
+                'writing' => $task->content_writer_id ?? $task->assigned_to,
+                default => $task->assigned_to,
+            };
+
             return response()->json([
                 'success' => true,
                 'message' => $message,
                 'pipeline_stage' => $stage,
                 'task_id' => $task->id,
+                'assigned_to' => $task->assigned_to,
+                'designer_id' => $task->designer_id,
+                'content_writer_id' => $task->content_writer_id,
+                'stage_owner_id' => $stageOwnerId,
             ]);
         }
 

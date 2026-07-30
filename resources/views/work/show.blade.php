@@ -990,6 +990,152 @@
         label.textContent = 'جاري التحليل والتقسيم...';
     });
 
+    // —— إعدادات شكل الكارد حسب المرحلة (للنقل بدون ريفرش) ——
+    window.pipelineCardUi = (function () {
+        @php
+            $poolMap = function ($collection) {
+                return ($collection ?? collect())->map(fn ($e) => [
+                    'id' => $e->id,
+                    'name' => $e->name,
+                    'role_badge' => $e->role_badge,
+                ])->values();
+            };
+        @endphp
+        const employees = @json($poolMap($employees));
+        const pools = {
+            designers: @json($poolMap($designers->isNotEmpty() ? $designers : $employees)),
+            writers: @json($poolMap(($contentWriters ?? collect())->isNotEmpty() ? $contentWriters : $employees)),
+            publishers: @json($poolMap(($publishers ?? collect())->isNotEmpty() ? $publishers : $employees)),
+            all: employees,
+        };
+
+        const stages = {
+            planning: {
+                label: 'اختَر مسؤول التخطيط',
+                role: 'assignee',
+                pool: 'publishers',
+                active: 'bg-amber-600 text-white border-amber-600 shadow-sm',
+                idle: 'bg-amber-50 text-amber-800 border-amber-200 hover:border-amber-400',
+                ring: null,
+            },
+            writing: {
+                label: 'اختَر كاتب المحتوى',
+                role: 'content_writer',
+                pool: 'writers',
+                active: 'bg-blue-600 text-white border-blue-600 shadow-sm',
+                idle: 'bg-blue-50 text-blue-800 border-blue-200 hover:border-blue-400',
+                ring: null,
+            },
+            design: {
+                label: 'اختَر المصمم',
+                role: 'designer',
+                pool: 'designers',
+                active: 'bg-purple-600 text-white border-purple-600 shadow-sm',
+                idle: 'bg-purple-50 text-purple-800 border-purple-200 hover:border-purple-400',
+                ring: 'ring-1 ring-purple-100',
+            },
+            ready_to_publish: {
+                label: 'اختَر مسؤول النشر',
+                role: 'assignee',
+                pool: 'publishers',
+                active: 'bg-teal-600 text-white border-teal-600 shadow-sm',
+                idle: 'bg-teal-50 text-teal-800 border-teal-200 hover:border-teal-400',
+                ring: null,
+            },
+            published: {
+                label: 'اختَر الناشر',
+                role: 'assignee',
+                pool: 'publishers',
+                active: 'bg-green-600 text-white border-green-600 shadow-sm',
+                idle: 'bg-green-50 text-green-800 border-green-200 hover:border-green-400',
+                ring: null,
+            },
+            archived: {
+                label: 'اختَر الناشر',
+                role: 'assignee',
+                pool: 'publishers',
+                active: 'bg-slate-600 text-white border-slate-600 shadow-sm',
+                idle: 'bg-slate-50 text-slate-700 border-slate-200 hover:border-slate-400',
+                ring: null,
+            },
+        };
+
+        function poolFor(stageKey) {
+            const cfg = stages[stageKey] || stages.writing;
+            let list = (pools[cfg.pool] || pools.all || []).slice();
+            return list;
+        }
+
+        function ensureOwnerInPool(list, ownerId) {
+            if (!ownerId) return list;
+            const id = String(ownerId);
+            if (list.some(function (e) { return String(e.id) === id; })) return list;
+            const found = (pools.all || []).find(function (e) { return String(e.id) === id; });
+            if (found) return list.concat([found]);
+            return list;
+        }
+
+        function adaptCard(card, toStage, stageOwnerId) {
+            if (!card) return;
+            const cfg = stages[toStage] || stages.writing;
+            card.dataset.stage = toStage;
+
+            // حلقة التصميم
+            card.classList.remove('ring-1', 'ring-purple-100', 'ring-amber-100');
+            if (cfg.ring) {
+                cfg.ring.split(/\s+/).forEach(function (c) { card.classList.add(c); });
+            }
+
+            // أزرار الإرسال السريع من التخطيط فقط
+            const actions = card.querySelector('.planning-stage-actions');
+            if (toStage === 'planning') {
+                if (!actions) {
+                    // مش هنعمل إعادة إنشاء للأزرار هنا — نادر الرجوع للتخطيط بالسحب
+                }
+            } else if (actions) {
+                actions.remove();
+            }
+
+            const label = card.querySelector('.card-controls > label');
+            if (label) label.textContent = cfg.label;
+
+            const group = card.querySelector('.card-assignee-group');
+            if (!group) return;
+
+            group.dataset.stage = toStage;
+            group.dataset.role = cfg.role;
+            group.dataset.activeClass = cfg.active;
+            group.dataset.idleClass = cfg.idle;
+
+            const ownerId = stageOwnerId != null && stageOwnerId !== '' ? String(stageOwnerId) : '';
+            const list = ensureOwnerInPool(poolFor(toStage), ownerId);
+
+            group.innerHTML = '';
+            if (!list.length) {
+                const empty = document.createElement('span');
+                empty.className = 'text-[11px] text-gray-400';
+                empty.textContent = 'لا يوجد موظفون لهذا الدور';
+                group.appendChild(empty);
+                return;
+            }
+
+            list.forEach(function (emp) {
+                const on = ownerId !== '' && String(emp.id) === ownerId;
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'card-assignee-chip px-2.5 py-1 rounded-lg border text-[11px] font-semibold transition-all ' + (on ? cfg.active : cfg.idle);
+                btn.dataset.employeeId = String(emp.id);
+                btn.dataset.selected = on ? '1' : '0';
+                btn.draggable = false;
+                btn.title = emp.role_badge || '';
+                btn.textContent = emp.name;
+                group.appendChild(btn);
+            });
+        }
+
+        return { adaptCard: adaptCard, stages: stages };
+    })();
+
     // —— تغيير المسؤول من على الكارت (أسماء جنب بعض) ——
     (function initCardAssignee() {
         const board = document.getElementById('pipelineBoard');
@@ -1083,31 +1229,17 @@
             });
         }
 
-        function moveCardDom(card, toStage) {
+        function moveCardDom(card, toStage, stageOwnerId) {
             const targetZone = board.querySelector('.stage-dropzone[data-stage="' + toStage + '"]');
             if (!targetZone) return false;
             const targetWrap = targetZone.querySelector('.stage-cards');
             if (!targetWrap) return false;
 
             targetWrap.appendChild(card);
-            card.dataset.stage = toStage;
-            card.classList.remove('ring-1', 'ring-amber-100');
-            if (toStage === 'design') card.classList.add('ring-1', 'ring-purple-100');
-
-            const actions = card.querySelector('.planning-stage-actions');
-            if (actions) actions.remove();
-
-            const group = card.querySelector('.card-assignee-group');
-            if (group) {
-                group.dataset.stage = toStage;
-                group.dataset.role = toStage === 'design' ? 'designer' : (toStage === 'writing' ? 'content_writer' : 'assignee');
-            }
-
-            const label = card.querySelector('.card-controls > label');
-            if (label) {
-                label.textContent = toStage === 'design' ? 'اختَر المصمم'
-                    : (toStage === 'writing' ? 'اختَر كاتب المحتوى'
-                    : (toStage === 'ready_to_publish' ? 'اختَر مسؤول النشر' : 'اختَر الناشر'));
+            if (window.pipelineCardUi) {
+                window.pipelineCardUi.adaptCard(card, toStage, stageOwnerId);
+            } else {
+                card.dataset.stage = toStage;
             }
 
             refreshStageCounts();
@@ -1126,7 +1258,6 @@
             const toStage = btn.dataset.targetStage;
             if (!taskId || !toStage) return;
 
-            const fromStage = card.dataset.stage || 'planning';
             const allBtns = card.querySelectorAll('.card-stage-btn');
             allBtns.forEach(function (b) { b.disabled = true; });
             btn.classList.add('opacity-60');
@@ -1150,15 +1281,13 @@
                 if (!res.ok || !data.success) {
                     throw new Error(data.message || data.error || 'فشل نقل التاسك');
                 }
-                if (!moveCardDom(card, toStage)) {
-                    // لو ملقيناش المرحلة، سيب الكارت مكانه ونورّي رسالة
+                if (!moveCardDom(card, toStage, data.stage_owner_id)) {
                     throw new Error('تم الحفظ لكن تعذر تحديث العرض');
                 }
             } catch (err) {
                 allBtns.forEach(function (b) { b.disabled = false; });
                 btn.classList.remove('opacity-60');
                 alert(err.message || 'حدث خطأ');
-                // لو النقل نجح في السيرفر وفشل العرض، ريفرش كحل أخير
                 if (String(err.message || '').indexOf('تعذر تحديث العرض') !== -1) {
                     window.location.reload();
                 }
@@ -1372,9 +1501,12 @@
 
             try {
                 if (!sameStage) {
-                    await postForm(moveUrlTpl.replace('TASK_ID', taskId), {
+                    const moved = await postForm(moveUrlTpl.replace('TASK_ID', taskId), {
                         pipeline_stage: toStage,
                     });
+                    if (window.pipelineCardUi) {
+                        window.pipelineCardUi.adaptCard(card, toStage, moved.stage_owner_id);
+                    }
                 }
                 if (toStage === 'archived') {
                     card.remove();
