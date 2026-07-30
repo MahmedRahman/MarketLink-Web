@@ -629,6 +629,18 @@
                                                     title="نسخ رابط شير الكارت">
                                                 <span class="material-icons text-sm">share</span>
                                             </button>
+                                            <form method="POST"
+                                                  action="{{ work_route('tasks.duplicate', [$activity, $task]) }}"
+                                                  class="inline"
+                                                  onsubmit="return confirm('نسخ الكارت ده؟');">
+                                                @csrf
+                                                <button type="submit"
+                                                        class="card-copy-btn inline-flex items-center justify-center px-2 py-1.5 rounded-lg bg-violet-50 text-violet-700 text-xs font-medium hover:bg-violet-100"
+                                                        draggable="false"
+                                                        title="نسخ الكارت">
+                                                    <span class="material-icons text-sm">content_copy</span>
+                                                </button>
+                                            </form>
                                             <a href="{{ work_route('tasks.edit', [$activity, $task]) }}"
                                                class="card-edit-btn flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-gray-100 text-gray-700 text-xs font-medium hover:bg-gray-200"
                                                draggable="false">

@@ -177,6 +177,7 @@ Route::middleware(['auth', \App\Http\Middleware\CheckTrialStatus::class])->group
            Route::post('work/{work}/tasks/{task}/move-activity', [\App\Http\Controllers\WorkTaskController::class, 'moveToActivity'])->name('work.tasks.move-activity');
            Route::post('work/{work}/tasks/{task}/assign', [\App\Http\Controllers\WorkTaskController::class, 'assign'])->name('work.tasks.assign');
            Route::post('work/{work}/tasks/{task}/status', [\App\Http\Controllers\WorkTaskController::class, 'updateStatus'])->name('work.tasks.status');
+           Route::post('work/{work}/tasks/{task}/duplicate', [\App\Http\Controllers\WorkTaskController::class, 'duplicate'])->name('work.tasks.duplicate');
            Route::post('work/{work}/tasks/{task}/publish-links', [\App\Http\Controllers\WorkTaskController::class, 'updatePublishLinks'])->name('work.tasks.publish-links');
            Route::post('work/{work}/tasks/{task}/publish-schedule', [\App\Http\Controllers\WorkTaskController::class, 'updatePublishSchedule'])->name('work.tasks.publish-schedule');
            Route::post('work/{work}/tasks/{task}/move-stage', [\App\Http\Controllers\WorkTaskController::class, 'moveStage'])->name('work.tasks.move-stage');
@@ -319,6 +320,7 @@ Route::middleware('auth:employee')->prefix('employee')->name('employee.')->group
         Route::post('/{work}/tasks/{task}/move-activity', [\App\Http\Controllers\WorkTaskController::class, 'moveToActivity'])->name('tasks.move-activity');
         Route::post('/{work}/tasks/{task}/assign', [\App\Http\Controllers\WorkTaskController::class, 'assign'])->name('tasks.assign');
         Route::post('/{work}/tasks/{task}/status', [\App\Http\Controllers\WorkTaskController::class, 'updateStatus'])->name('tasks.status');
+        Route::post('/{work}/tasks/{task}/duplicate', [\App\Http\Controllers\WorkTaskController::class, 'duplicate'])->name('tasks.duplicate');
         Route::post('/{work}/tasks/{task}/publish-links', [\App\Http\Controllers\WorkTaskController::class, 'updatePublishLinks'])->name('tasks.publish-links');
         Route::post('/{work}/tasks/{task}/publish-schedule', [\App\Http\Controllers\WorkTaskController::class, 'updatePublishSchedule'])->name('tasks.publish-schedule');
         Route::post('/{work}/tasks/{task}/move-stage', [\App\Http\Controllers\WorkTaskController::class, 'moveStage'])->name('tasks.move-stage');

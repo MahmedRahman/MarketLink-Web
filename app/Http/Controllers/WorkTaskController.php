@@ -821,6 +821,63 @@ class WorkTaskController extends Controller
         return back()->with('success', $message);
     }
 
+    /**
+     * نسخ كارت تاسك داخل نفس النشاط.
+     */
+    public function duplicate(Request $request, WorkActivity $work, WorkTask $task)
+    {
+        $this->authorizeActivity($request, $work);
+        $this->authorizeTask($work, $task);
+
+        $maxOrder = (int) ($work->tasks()
+            ->where('pipeline_stage', $task->pipeline_stage)
+            ->max('order') ?? 0);
+
+        $copy = $task->replicate([
+            'id',
+            'created_at',
+            'updated_at',
+        ]);
+        $copy->title = trim($task->title).' (نسخة)';
+        $copy->status = 'todo';
+        $copy->publish_date = null;
+        $copy->publish_time = null;
+        $copy->publish_links = null;
+        $copy->order = $maxOrder + 1;
+        $copy->save();
+
+        $copy->logEvent(
+            'created',
+            'تم نسخ الكارت من «'.$task->title.'» (#'.$task->id.')',
+            null,
+            null,
+            null,
+            ['source_task_id' => $task->id]
+        );
+
+        $task->logEvent(
+            'duplicated',
+            'تم إنشاء نسخة من الكارت: «'.$copy->title.'» (#'.$copy->id.')',
+            null,
+            null,
+            null,
+            ['copy_task_id' => $copy->id]
+        );
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'تم نسخ الكارت',
+                'task_id' => $copy->id,
+                'redirect' => route(WorkHub::routeName('show'), $work),
+            ]);
+        }
+
+        return redirect()
+            ->route(WorkHub::routeName('show'), $work)
+            ->with('success', 'تم نسخ الكارت «'.$copy->title.'»');
+    }
+
     public function updatePublishLinks(Request $request, WorkActivity $work, WorkTask $task)
     {
         $this->authorizeActivity($request, $work);
