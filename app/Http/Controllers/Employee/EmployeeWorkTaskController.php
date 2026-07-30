@@ -166,7 +166,16 @@ class EmployeeWorkTaskController extends Controller
         }
 
         $pipelineStages = [];
-        foreach (WorkTask::activePipelineStages() as $key => $label) {
+        $visibleStages = WorkTask::activePipelineStages();
+        // خانة «تم النشر» مش ظاهرة في لوحة الموظف — النشر بيتم من الأدمن/الناشر
+        unset($visibleStages['published']);
+
+        // المصمم يشوف بس التصميم + جاهز للنشر
+        if ($isDesigner) {
+            $visibleStages = array_intersect_key($visibleStages, array_flip(['design', 'ready_to_publish']));
+        }
+
+        foreach ($visibleStages as $key => $label) {
             $stageTasks = $myTasks->where('pipeline_stage', $key)->values();
 
             $pipelineStages[] = [
@@ -176,7 +185,6 @@ class EmployeeWorkTaskController extends Controller
                     'planning' => 'pending_actions',
                     'design' => 'palette',
                     'ready_to_publish' => 'schedule_send',
-                    'published' => 'check_circle',
                     default => 'edit_note',
                 },
                 'tasks' => $stageTasks,
@@ -255,9 +263,20 @@ class EmployeeWorkTaskController extends Controller
 
         // اكتمال المرحلة الحالية → نقل للمرحلة التالية
         if ($validated['status'] === 'done' && $fromStatus !== 'done') {
-            $nextStage = WorkTask::nextPipelineStage($fromStage);
+            $isDesigner = in_array($employee->role, ['designer', 'video_editor'], true);
+            $orgId = (int) $employee->organization_id;
+
+            // المصمم: اكتمال التصميم → جاهز للنشر (مش تم النشر)
+            if ($isDesigner && $fromStage === 'design') {
+                $nextStage = 'ready_to_publish';
+            } elseif ($isDesigner && in_array($fromStage, ['ready_to_publish', 'published'], true)) {
+                // المصمم مينفعش ينقل لـ «تم النشر»
+                $nextStage = null;
+            } else {
+                $nextStage = WorkTask::nextPipelineStage($fromStage);
+            }
+
             if ($nextStage) {
-                $orgId = (int) $employee->organization_id;
                 $updates['pipeline_stage'] = $nextStage;
 
                 if ($nextStage === 'design') {
@@ -270,7 +289,7 @@ class EmployeeWorkTaskController extends Controller
                     $updates['assigned_to'] = WorkTask::suggestAssigneeId($orgId, 'publish')
                         ?? $task->assigned_to;
                     $updates['status'] = 'review';
-                } else { // published
+                } elseif ($nextStage === 'published') {
                     $updates['assigned_to'] = WorkTask::suggestAssigneeId($orgId, 'publish')
                         ?? $task->assigned_to;
                     $updates['status'] = 'done';
@@ -346,6 +365,18 @@ class EmployeeWorkTaskController extends Controller
         ]);
 
         $stage = $validated['pipeline_stage'];
+        $isDesigner = in_array($employee->role, ['designer', 'video_editor'], true);
+
+        // المصمم ينقل بس بين التصميم وجاهز للنشر — مش لـ تم النشر
+        if ($isDesigner && ! in_array($stage, ['design', 'ready_to_publish'], true)) {
+            $message = 'المصمم يقدر ينقل لمرحلة «جاهز للنشر» فقط';
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => $message], 422);
+            }
+
+            return back()->with('error', $message);
+        }
+
         $orgId = (int) $employee->organization_id;
         $updates = ['pipeline_stage' => $stage];
 

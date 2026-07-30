@@ -393,7 +393,7 @@
                     @if(in_array($task->pipeline_stage, ['writing', 'design'], true))
                         — اختيار <strong>اكتمال</strong> بينقل البوست لمرحلة «{{ \App\Models\WorkTask::pipelineStages()[\App\Models\WorkTask::nextPipelineStage($task->pipeline_stage)] ?? 'التالية' }}»
                     @elseif($task->pipeline_stage === 'ready_to_publish')
-                        — اختيار <strong>اكتمال</strong> بينقل البوست لـ «تم النشر»
+                        — اختيار <strong>اكتمال</strong> بيخلّي البوست جاهز عند مسؤول النشر
                     @endif
                 </p>
             </div>
