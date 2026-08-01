@@ -3,13 +3,21 @@
 @section('title', 'معرض التصميم — '.$activity->title)
 
 @section('header-actions')
-<button type="button"
-        data-share-url="{{ $galleryUrl }}"
-        onclick="window.copyShareText && window.copyShareText(this.dataset.shareUrl, this)"
-        class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition-colors">
-    <span class="material-icons text-sm">content_copy</span>
-    نسخ الرابط
-</button>
+<div class="flex items-center gap-2">
+    <a href="{{ route('public.work.gallery.pdf', $shareToken) }}"
+       class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-teal-600 text-white text-xs font-bold hover:bg-teal-700 transition-colors"
+       title="تحميل الحملة PDF للمراجعة قبل النشر">
+        <span class="material-icons text-sm">picture_as_pdf</span>
+        تحميل PDF
+    </a>
+    <button type="button"
+            data-share-url="{{ $galleryUrl }}"
+            onclick="window.copyShareText && window.copyShareText(this.dataset.shareUrl, this)"
+            class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition-colors">
+        <span class="material-icons text-sm">content_copy</span>
+        نسخ الرابط
+    </button>
+</div>
 @endsection
 
 @php
@@ -321,6 +329,11 @@
                         {{ $carouselCount }} كروسيل
                     </span>
                 @endif
+                <a href="{{ route('public.work.gallery.pdf', $shareToken) }}"
+                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white text-teal-800 text-xs font-extrabold hover:bg-teal-50 transition-colors">
+                    <span class="material-icons text-sm">picture_as_pdf</span>
+                    تحميل الحملة PDF للمراجعة
+                </a>
             </div>
         </div>
     </section>

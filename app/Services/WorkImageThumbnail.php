@@ -9,10 +9,9 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 class WorkImageThumbnail
 {
     /**
-     * يرجّع صورة مصغّرة (JPEG) مع كاش على القرص.
-     * لو GD مش متاح أو الملف مش صورة قابلة للمعالجة، يرجع null.
+     * يرجّع مسار JPEG مصغّر على القرص (للاستخدام في PDF وغيره).
      */
-    public function respond(WorkTaskFile $file, int $maxEdge = 480, int $quality = 72): ?BinaryFileResponse
+    public function jpegPath(WorkTaskFile $file, int $maxEdge = 900, int $quality = 78): ?string
     {
         if (! $file->isImage() || ! extension_loaded('gd')) {
             return null;
@@ -34,6 +33,20 @@ class WorkImageThumbnail
             if (! $this->createJpegThumb($srcPath, $thumbPath, $maxEdge, $quality)) {
                 return null;
             }
+        }
+
+        return $thumbPath;
+    }
+
+    /**
+     * يرجّع صورة مصغّرة (JPEG) مع كاش على القرص.
+     * لو GD مش متاح أو الملف مش صورة قابلة للمعالجة، يرجع null.
+     */
+    public function respond(WorkTaskFile $file, int $maxEdge = 480, int $quality = 72): ?BinaryFileResponse
+    {
+        $thumbPath = $this->jpegPath($file, $maxEdge, $quality);
+        if (! $thumbPath) {
+            return null;
         }
 
         return response()->file($thumbPath, [

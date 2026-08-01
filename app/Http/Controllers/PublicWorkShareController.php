@@ -141,6 +141,123 @@ class PublicWorkShareController extends Controller
     }
 
     /**
+     * تحميل الحملة كـ PDF للمراجعة السريعة (صور + كابشن) قبل النشر.
+     */
+    public function downloadGalleryPdf(string $token)
+    {
+        @ini_set('memory_limit', '512M');
+        @set_time_limit(180);
+
+        $activity = $this->findSharedActivity($token);
+        $activity->load(['tasks.files', 'tasks.designer']);
+
+        $thumbs = app(\App\Services\WorkImageThumbnail::class);
+        $posts = collect();
+
+        $tasks = $activity->tasks
+            ->sortBy(fn (WorkTask $task) => $task->gallerySortKey())
+            ->values();
+
+        foreach ($tasks as $task) {
+            $media = $task->files
+                ->filter(function (WorkTaskFile $file) {
+                    if (! $file->isImage() && ! $file->isVideo()) {
+                        return false;
+                    }
+
+                    return Storage::disk('public')->exists($file->file_path);
+                })
+                ->sortBy(fn (WorkTaskFile $file) => mb_strtolower((string) $file->file_name), SORT_NATURAL)
+                ->values();
+
+            if ($media->isEmpty()) {
+                continue;
+            }
+
+            $images = [];
+            foreach ($media as $file) {
+                if ($file->isVideo()) {
+                    $images[] = [
+                        'kind' => 'video',
+                        'name' => $file->file_name,
+                        'data_uri' => null,
+                    ];
+
+                    continue;
+                }
+
+                $path = $thumbs->jpegPath($file, 920, 80);
+                if (! $path || ! is_file($path)) {
+                    continue;
+                }
+
+                $images[] = [
+                    'kind' => 'image',
+                    'name' => $file->file_name,
+                    'data_uri' => 'data:image/jpeg;base64,'.base64_encode((string) file_get_contents($path)),
+                ];
+            }
+
+            if ($images === []) {
+                continue;
+            }
+
+            $posts->push([
+                'title' => $task->title,
+                'post_number' => WorkTask::extractPostSequence($task->title),
+                'type_label' => $task->content_type_label,
+                'designer' => $task->designer?->name,
+                'stage_label' => $task->pipeline_stage_label,
+                'publish_label' => $task->publish_schedule_label,
+                'platforms' => $task->platform_labels ?? [],
+                'caption' => $task->caption,
+                'tov' => $task->tov,
+                'idea' => $task->idea,
+                'images' => $images,
+                'is_carousel' => $task->content_type === 'carousel' || $media->count() > 1,
+            ]);
+        }
+
+        abort_if($posts->isEmpty(), 404, 'مفيش تصميمات للتصدير');
+
+        $html = view('public.work.gallery-pdf', [
+            'activity' => $activity,
+            'posts' => $posts,
+            'generatedAt' => now()->timezone(config('app.timezone', 'Africa/Cairo'))->format('Y/m/d H:i'),
+        ])->render();
+
+        $tempDir = storage_path('app/mpdf-tmp');
+        if (! is_dir($tempDir)) {
+            mkdir($tempDir, 0755, true);
+        }
+
+        $mpdf = new \Mpdf\Mpdf([
+            'mode' => 'utf-8',
+            'format' => 'A4',
+            'margin_left' => 10,
+            'margin_right' => 10,
+            'margin_top' => 12,
+            'margin_bottom' => 12,
+            'default_font' => 'dejavusans',
+            'tempDir' => $tempDir,
+        ]);
+        $mpdf->SetDirectionality('rtl');
+        $mpdf->autoScriptToLang = true;
+        $mpdf->autoLangToFont = true;
+        $mpdf->SetTitle('مراجعة حملة — '.$activity->title);
+        $mpdf->WriteHTML($html);
+
+        $safeName = Str::slug($activity->title) ?: 'campaign';
+        $filename = 'review-'.$safeName.'-'.now()->format('Ymd').'.pdf';
+
+        return response($mpdf->Output($filename, \Mpdf\Output\Destination::STRING_RETURN), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+            'Cache-Control' => 'no-store, no-cache, must-revalidate',
+        ]);
+    }
+
+    /**
      * صفحة عامة لجدولة البوستات الجاهزة للنشر (بدون تسجيل).
      */
     public function showReadyToPublish(string $token): View
