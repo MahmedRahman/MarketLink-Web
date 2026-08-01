@@ -18,7 +18,7 @@
 ssh test@192.168.68.223 "cd /home/test/marketlink-web && bash deploy.sh"
 ```
 
-`deploy.sh` handles: git pull → docker build (if needed) → migrate → cache clear/rebuild → health check.
+`deploy.sh` handles: git pull → docker build (if needed) → migrate → cache clear/rebuild → health check → Docker cleanup (dangling images + build cache) + disk warning if ≥85%.
 
 ---
 

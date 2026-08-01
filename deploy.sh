@@ -80,6 +80,19 @@ else
   exit 1
 fi
 
+# Keep VPS disk usable: drop dangling images + build cache left after rebuilds.
+# Safe: does not remove tagged images still in use (e.g. n8n) or volumes.
+echo "--> docker cleanup (dangling images + build cache)"
+docker image prune -f >/dev/null || true
+docker builder prune -f >/dev/null || true
+
+DISK_LINE="$(df -h / | awk 'NR==2 {print $5" used, "$4" free"}')"
+echo "Disk: $DISK_LINE"
+DISK_PCT="$(df -P / | awk 'NR==2 {gsub(/%/,"",$5); print $5}')"
+if [ "${DISK_PCT:-0}" -ge 85 ]; then
+  echo "WARN disk usage ${DISK_PCT}% — consider pruning unused images or expanding the VPS disk"
+fi
+
 echo ""
 echo "Deploy finished."
 echo "====================================="
