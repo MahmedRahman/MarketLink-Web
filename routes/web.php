@@ -286,6 +286,7 @@ Route::middleware('auth:employee')->prefix('employee')->name('employee.')->group
     Route::get('/monthly-plans/{monthlyPlan}', [EmployeeMonthlyPlanController::class, 'show'])->name('monthly-plans.show');
 
     // Academy Work Hub Tasks (مساحة العمل - مهامي)
+    Route::get('/mine', [\App\Http\Controllers\Employee\EmployeeWorkTaskController::class, 'mine'])->name('mine');
     Route::get('/my-tasks', [\App\Http\Controllers\Employee\EmployeeWorkTaskController::class, 'index'])->name('tasks.index');
     Route::get('/activities/{work}', [\App\Http\Controllers\Employee\EmployeeWorkTaskController::class, 'showActivity'])->name('work.activity');
     Route::post('/activities/{work}/tasks/reorder', [\App\Http\Controllers\Employee\EmployeeWorkTaskController::class, 'reorder'])->name('work.reorder');

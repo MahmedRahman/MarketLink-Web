@@ -165,6 +165,39 @@ class WorkTask extends Model
         });
     }
 
+    /**
+     * مهام الموظف في لوحته: مسؤول المرحلة الحالية +
+     * للمصممين مهام جاهز للنشر اللي صمّموها.
+     */
+    public function scopeForEmployeeBoard(Builder $query, int $employeeId, ?string $role = null): Builder
+    {
+        $isDesigner = in_array($role, ['designer', 'video_editor'], true);
+
+        if (! $isDesigner) {
+            return $query->forEmployeeCurrentStage($employeeId);
+        }
+
+        return $query->where(function (Builder $q) use ($employeeId) {
+            $q->where(function (Builder $design) use ($employeeId) {
+                $design->where('pipeline_stage', 'design')
+                    ->where(function (Builder $owner) use ($employeeId) {
+                        $owner->where('designer_id', $employeeId)
+                            ->orWhere('assigned_to', $employeeId);
+                    });
+            })->orWhere(function (Builder $ready) use ($employeeId) {
+                $ready->where('pipeline_stage', 'ready_to_publish')
+                    ->where('designer_id', $employeeId);
+            })->orWhere(function (Builder $other) use ($employeeId) {
+                $other->whereIn('pipeline_stage', ['planning', 'writing'])
+                    ->where(function (Builder $owner) use ($employeeId) {
+                        $owner->where('assigned_to', $employeeId)
+                            ->orWhere('content_writer_id', $employeeId)
+                            ->orWhere('designer_id', $employeeId);
+                    });
+            });
+        });
+    }
+
     public function stageOwnerId(?string $stage = null): ?int
     {
         $stage ??= $this->pipeline_stage;

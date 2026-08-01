@@ -14,6 +14,62 @@ use Illuminate\Support\Facades\Storage;
 class EmployeeWorkTaskController extends Controller
 {
     /**
+     * قائمة المهام الحالية للموظف (لكل الأدوار، بما فيهم أدمن مساحة العمل).
+     */
+    public function mine(Request $request)
+    {
+        $employee = Auth::guard('employee')->user();
+
+        $state = $request->has('state')
+            ? ($request->string('state')->toString() ?: null)
+            : 'active';
+        $stage = $request->string('stage')->toString() ?: null;
+
+        $tasksQuery = WorkTask::query()
+            ->forEmployeeBoard($employee->id, $employee->role)
+            ->whereHas('activity', fn ($q) => $q->where('organization_id', $employee->organization_id))
+            ->with('activity');
+
+        if ($stage && array_key_exists($stage, WorkTask::pipelineStages())) {
+            $tasksQuery->where('pipeline_stage', $stage);
+        }
+
+        $tasks = $tasksQuery
+            ->orderByRaw("CASE WHEN status = 'done' THEN 1 ELSE 0 END")
+            ->orderBy('due_date')
+            ->orderBy('id')
+            ->get()
+            ->filter(function (WorkTask $task) use ($state) {
+                return match ($state) {
+                    'active' => $task->status !== 'done' && ! in_array($task->pipeline_stage, ['published', 'archived'], true),
+                    'overdue' => $task->is_overdue,
+                    'done' => $task->status === 'done' || in_array($task->pipeline_stage, ['published', 'archived'], true),
+                    default => true,
+                };
+            })
+            ->values();
+
+        $stats = [
+            'total' => $tasks->count(),
+            'overdue' => $tasks->filter(fn ($t) => $t->is_overdue)->count(),
+            'in_progress' => $tasks->where('status', 'in_progress')->count(),
+            'todo' => $tasks->where('status', 'todo')->count(),
+            'review' => $tasks->where('status', 'review')->count(),
+        ];
+
+        return view('employee.work.mine', [
+            'employee' => $employee,
+            'tasks' => $tasks,
+            'stats' => $stats,
+            'stages' => WorkTask::pipelineStages(),
+            'filters' => [
+                'state' => $state,
+                'stage' => $stage,
+            ],
+        ]);
+    }
+
+    /**
      * مساحة العمل للموظف: فولدرات الأنشطة اللي فيها مهام مطلوبة منه.
      */
     public function index(Request $request)
@@ -24,31 +80,10 @@ class EmployeeWorkTaskController extends Controller
             return redirect()->route('employee.hub.index');
         }
 
-        $isDesigner = in_array($employee->role, ['designer', 'video_editor'], true);
-
-        if ($isDesigner) {
-            // المصمم يشوف: التصميم + جاهز للنشر (ready_to_publish) حسب designer_id
-            $myTasks = WorkTask::query()
-                ->whereIn('pipeline_stage', ['design', 'ready_to_publish'])
-                ->where(function ($q) use ($employee) {
-                    $q->where(function ($q2) use ($employee) {
-                        $q2->where('pipeline_stage', 'design')
-                            ->where(function ($q3) use ($employee) {
-                                $q3->where('designer_id', $employee->id)
-                                    ->orWhere('assigned_to', $employee->id);
-                            });
-                    })->orWhere(function ($q2) use ($employee) {
-                        $q2->where('pipeline_stage', 'ready_to_publish')
-                            ->where('designer_id', $employee->id);
-                    });
-                })
-                ->with('activity')
-                ->get();
-        } else {
-            $myTasks = WorkTask::forEmployeeCurrentStage($employee->id)
-                ->with('activity')
-                ->get();
-        }
+        $myTasks = WorkTask::query()
+            ->forEmployeeBoard($employee->id, $employee->role)
+            ->with('activity')
+            ->get();
 
         $activityIds = $myTasks->pluck('work_activity_id')->unique()->filter()->values();
 

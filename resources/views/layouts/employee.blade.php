@@ -112,6 +112,11 @@
                 <span class="font-medium">لوحة التحكم</span>
             </a>
 
+            <a href="{{ route('employee.mine') }}" class="flex items-center px-4 py-3 text-gray-700 rounded-xl hover:bg-gray-100 {{ request()->routeIs('employee.mine') ? 'bg-purple-50 text-purple-700' : '' }}">
+                <span class="material-icons text-lg ml-3">task_alt</span>
+                <span class="font-medium">مهامي</span>
+            </a>
+
             @php
                 $employee = Auth::guard('employee')->user();
                 $hasManagerRole = $employee->managedProjects()->count() > 0;

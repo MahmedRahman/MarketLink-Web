@@ -65,13 +65,17 @@ class EmployeeDashboardController extends Controller
 
         $hasManagerRole = count($managedProjectIds) > 0;
 
-        // مهام مساحة العمل حسب مسؤول المرحلة الحالية فقط
-        $workTasks = WorkTask::forEmployeeCurrentStage($employee->id)
+        // مهام مساحة العمل الظاهرة للموظف (بما فيها المصممين)
+        $workTasks = WorkTask::query()
+            ->forEmployeeBoard($employee->id, $employee->role)
             ->with('activity')
             ->orderByRaw("CASE WHEN status = 'done' THEN 1 ELSE 0 END")
             ->orderBy('due_date')
             ->latest()
-            ->get();
+            ->get()
+            ->filter(fn (WorkTask $task) => $task->status !== 'done'
+                && ! in_array($task->pipeline_stage, ['published', 'archived'], true))
+            ->values();
 
         return view('employee.dashboard', compact('allTasks', 'tasksByStatus', 'stats', 'employee', 'hasManagerRole', 'managedProjectIds', 'workTasks'));
     }
