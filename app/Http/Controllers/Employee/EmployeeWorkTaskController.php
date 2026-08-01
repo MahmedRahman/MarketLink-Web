@@ -301,6 +301,15 @@ class EmployeeWorkTaskController extends Controller
         $employee = Auth::guard('employee')->user();
         abort_unless($task->isVisibleToEmployee($employee->id), 403);
 
+        if (in_array($task->pipeline_stage, ['published', 'archived'], true)) {
+            $message = 'المهام بعد النشر مقفولة — العرض فقط';
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => $message], 422);
+            }
+
+            return back()->with('error', $message);
+        }
+
         $validated = $request->validate([
             'status' => 'required|in:todo,in_progress,executed,review,done',
             'notes' => 'nullable|string',
