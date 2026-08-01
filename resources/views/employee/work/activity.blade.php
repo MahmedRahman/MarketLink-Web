@@ -14,22 +14,32 @@
 
     {{-- رأس النشاط --}}
     <div class="card rounded-2xl p-6">
-        <div class="flex items-center gap-4">
-            <div class="w-14 h-14 rounded-2xl bg-indigo-50 text-primary flex items-center justify-center">
-                <span class="material-icons text-3xl">{{ $activity->type_icon }}</span>
-            </div>
-            <div>
-                <h2 class="text-xl font-bold text-gray-800">{{ $activity->title }}</h2>
-                <div class="flex items-center gap-2 mt-1 text-sm text-gray-500 flex-wrap">
-                    <span>{{ $activity->type_label }}</span>
-                    @if($activity->event_date)
+        <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+            <div class="flex items-center gap-4 min-w-0">
+                <div class="w-14 h-14 rounded-2xl bg-indigo-50 text-primary flex items-center justify-center shrink-0">
+                    <span class="material-icons text-3xl">{{ $activity->type_icon }}</span>
+                </div>
+                <div class="min-w-0">
+                    <h2 class="text-xl font-bold text-gray-800">{{ $activity->title }}</h2>
+                    <div class="flex items-center gap-2 mt-1 text-sm text-gray-500 flex-wrap">
+                        <span>{{ $activity->type_label }}</span>
+                        @if($activity->event_date)
+                            <span>·</span>
+                            <span class="flex items-center gap-1"><span class="material-icons text-sm">event</span>{{ $activity->event_date->format('Y/m/d') }}</span>
+                        @endif
                         <span>·</span>
-                        <span class="flex items-center gap-1"><span class="material-icons text-sm">event</span>{{ $activity->event_date->format('Y/m/d') }}</span>
-                    @endif
-                    <span>·</span>
-                    <span class="role-badge role-{{ $activity->status_color }}">{{ $activity->status_label }}</span>
+                        <span class="role-badge role-{{ $activity->status_color }}">{{ $activity->status_label }}</span>
+                    </div>
                 </div>
             </div>
+
+            @if($activity->public_gallery_url)
+                <a href="{{ $activity->public_gallery_url }}" target="_blank" rel="noopener"
+                   class="shrink-0 px-4 py-2.5 rounded-xl bg-teal-50 text-teal-700 hover:bg-teal-100 text-sm font-semibold inline-flex items-center gap-1.5 border border-teal-100">
+                    <span class="material-icons text-lg">photo_library</span>
+                    معرض التصميم
+                </a>
+            @endif
         </div>
 
         @if($activity->description)
