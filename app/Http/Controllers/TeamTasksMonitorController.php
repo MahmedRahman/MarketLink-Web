@@ -12,7 +12,7 @@ use Illuminate\View\View;
 class TeamTasksMonitorController extends Controller
 {
     /**
-     * شاشة رقابة موحّدة للمدير: كل موظف وتاسكاته عبر كل الأنشطة.
+     * شاشة رقابة موحّدة للمدير: كل موظف والمهام الحالية المسندة له.
      */
     public function index(Request $request): View
     {
@@ -25,9 +25,12 @@ class TeamTasksMonitorController extends Controller
         $contentTypes = WorkTask::contentTypes();
         $roleLabels = $this->roleLabels();
 
+        // أول زيارة بدون فلاتر → المهام النشطة الحالية فقط
         $filters = [
             'stage' => $request->string('stage')->toString() ?: null,
-            'state' => $request->string('state')->toString() ?: null,
+            'state' => $request->has('state')
+                ? ($request->string('state')->toString() ?: null)
+                : 'active',
             'activity_id' => $request->filled('activity_id') ? (int) $request->input('activity_id') : null,
             'employee_id' => $request->filled('employee_id') ? (int) $request->input('employee_id') : null,
             'role' => $request->string('role')->toString() ?: null,
@@ -67,7 +70,6 @@ class TeamTasksMonitorController extends Controller
 
         $tasks = $tasksQuery->orderBy('due_date')->orderBy('id')->get();
 
-        // فلتر الحالة بعد التحميل (متأخرة تعتمد على accessor)
         $tasks = $tasks->filter(function (WorkTask $task) use ($filters) {
             return match ($filters['state']) {
                 'active' => $task->status !== 'done' && ! in_array($task->pipeline_stage, ['published', 'archived'], true),
@@ -77,25 +79,30 @@ class TeamTasksMonitorController extends Controller
             };
         })->values();
 
-        // صفوف مشاركة: كل تاسكة تحت كل موظف مشارك مع دوره
+        // صف واحد لكل تاسك تحت الموظف المسؤول الحالي عن مرحلته
         $rows = collect();
         foreach ($tasks as $task) {
-            foreach ($this->participationsForTask($task) as $participation) {
-                $rows->push([
-                    'employee_id' => $participation['employee_id'],
-                    'employee' => $participation['employee'],
-                    'task_role' => $participation['task_role'],
-                    'task_role_label' => $participation['task_role_label'],
-                    'task' => $task,
-                ]);
+            $assignment = $this->currentAssignmentForTask($task);
+            if (! $assignment) {
+                continue;
             }
+
+            $rows->push([
+                'employee_id' => $assignment['employee_id'],
+                'employee' => $assignment['employee'],
+                'task_role' => $assignment['task_role'],
+                'task_role_label' => $assignment['task_role_label'],
+                'task' => $task,
+            ]);
         }
 
         if ($filters['employee_id']) {
+            $employees = $employees->where('id', $filters['employee_id'])->values();
             $rows = $rows->where('employee_id', $filters['employee_id'])->values();
         }
 
         if ($filters['role'] && array_key_exists($filters['role'], $roleLabels)) {
+            $employees = $employees->where('role', $filters['role'])->values();
             $rows = $rows->filter(function (array $row) use ($filters) {
                 $emp = $row['employee'];
 
@@ -103,31 +110,36 @@ class TeamTasksMonitorController extends Controller
             })->values();
         }
 
-        $grouped = $rows
-            ->groupBy('employee_id')
-            ->map(function (Collection $employeeRows, $employeeId) {
-                /** @var Employee|null $employee */
-                $employee = $employeeRows->first()['employee'] ?? null;
-                $taskRows = $employeeRows->values();
-                $activeCount = $taskRows->filter(fn ($r) => $r['task']->status !== 'done' && ! in_array($r['task']->pipeline_stage, ['published', 'archived'], true))->count();
+        $rowsByEmployee = $rows->groupBy('employee_id');
+
+        $narrowFilters = $filters['q'] || $filters['stage'] || $filters['activity_id']
+            || in_array($filters['state'], ['overdue', 'done'], true);
+
+        $grouped = $employees
+            ->map(function (Employee $employee) use ($rowsByEmployee) {
+                $taskRows = ($rowsByEmployee->get($employee->id) ?? collect())->values();
+                $activeCount = $taskRows->filter(
+                    fn ($r) => $r['task']->status !== 'done'
+                        && ! in_array($r['task']->pipeline_stage, ['published', 'archived'], true)
+                )->count();
                 $overdueCount = $taskRows->filter(fn ($r) => $r['task']->is_overdue)->count();
 
                 return [
                     'employee' => $employee,
-                    'employee_id' => (int) $employeeId,
+                    'employee_id' => (int) $employee->id,
                     'rows' => $taskRows,
                     'active_count' => $activeCount,
                     'overdue_count' => $overdueCount,
                     'total_count' => $taskRows->count(),
                 ];
             })
+            ->when($narrowFilters, fn (Collection $groups) => $groups->filter(fn ($g) => $g['total_count'] > 0)->values())
             ->sortByDesc(fn ($g) => [$g['overdue_count'], $g['active_count'], $g['total_count']])
             ->values();
 
-        // موظفون بدون مهام (للـ KPI "فاضي") — فقط عند عدم فلترة موظف/بحث ضيق
-        $employeesWithTasks = $grouped->pluck('employee_id')->all();
-        $idleEmployees = $employees
-            ->reject(fn (Employee $e) => in_array((int) $e->id, $employeesWithTasks, true))
+        $idleEmployees = $grouped
+            ->filter(fn ($g) => $g['active_count'] === 0)
+            ->map(fn ($g) => $g['employee'])
             ->values();
 
         $busiest = $grouped->sortByDesc('active_count')->first();
@@ -147,70 +159,56 @@ class TeamTasksMonitorController extends Controller
             'contentTypes' => $contentTypes,
             'roleLabels' => $roleLabels,
             'activities' => $activities,
-            'employees' => $employees,
+            'employees' => Employee::query()
+                ->where('organization_id', $orgId)
+                ->where('status', 'active')
+                ->orderBy('name')
+                ->get(),
             'kpis' => $kpis,
             'idleEmployees' => $idleEmployees,
+            'showIdleSection' => false,
         ]);
     }
 
     /**
-     * @return list<array{employee_id:int,employee:Employee,task_role:string,task_role_label:string}>
+     * المهمة الحالية «مع» الموظف = مسؤول مرحلتها الآن.
+     *
+     * @return array{employee_id:int,employee:Employee,task_role:string,task_role_label:string}|null
      */
-    private function participationsForTask(WorkTask $task): array
+    private function currentAssignmentForTask(WorkTask $task): ?array
     {
-        $slots = [];
-
-        if ($task->content_writer_id && $task->contentWriter) {
-            $slots[] = [
-                'employee_id' => (int) $task->content_writer_id,
-                'employee' => $task->contentWriter,
-                'task_role' => 'content_writer',
-                'task_role_label' => 'كاتب محتوى',
-            ];
+        $ownerId = $task->stageOwnerId();
+        if (! $ownerId) {
+            return null;
         }
 
-        if ($task->designer_id && $task->designer) {
-            $slots[] = [
-                'employee_id' => (int) $task->designer_id,
-                'employee' => $task->designer,
-                'task_role' => 'designer',
-                'task_role_label' => 'مصمم',
-            ];
+        $employee = null;
+        if ((int) $task->content_writer_id === (int) $ownerId) {
+            $employee = $task->contentWriter;
+        } elseif ((int) $task->designer_id === (int) $ownerId) {
+            $employee = $task->designer;
+        } elseif ((int) $task->assigned_to === (int) $ownerId) {
+            $employee = $task->assignedEmployee;
         }
 
-        if ($task->assigned_to && $task->assignedEmployee) {
-            $isPublisher = in_array($task->pipeline_stage, ['ready_to_publish', 'published', 'archived'], true);
-            $already = collect($slots)->contains(fn ($s) => $s['employee_id'] === (int) $task->assigned_to);
-
-            // لو المسؤول الحالي مش ظاهر أصلاً ككاتب/مصمم، أظهره؛ أو لو مرحلة نشر أظهره كناشر حتى لو مكرر الدور
-            if (! $already || $isPublisher) {
-                if ($already && $isPublisher) {
-                    // حدّث الدور لناشر إذا كان نفس الشخص
-                    foreach ($slots as &$slot) {
-                        if ($slot['employee_id'] === (int) $task->assigned_to) {
-                            $slot['task_role'] = 'publisher';
-                            $slot['task_role_label'] = 'ناشر';
-                        }
-                    }
-                    unset($slot);
-                } else {
-                    $slots[] = [
-                        'employee_id' => (int) $task->assigned_to,
-                        'employee' => $task->assignedEmployee,
-                        'task_role' => $isPublisher ? 'publisher' : 'assignee',
-                        'task_role_label' => $isPublisher ? 'ناشر' : 'المسؤول الحالي',
-                    ];
-                }
-            }
+        if (! $employee) {
+            return null;
         }
 
-        // فريد حسب employee_id (دور واحد لكل موظف في التاسكة)
-        $unique = [];
-        foreach ($slots as $slot) {
-            $unique[$slot['employee_id']] = $slot;
-        }
+        [$taskRole, $taskRoleLabel] = match ($task->pipeline_stage) {
+            'planning' => ['planning', 'تخطيط'],
+            'writing' => ['content_writer', 'كاتب محتوى'],
+            'design' => ['designer', 'مصمم'],
+            'ready_to_publish', 'published', 'archived' => ['publisher', 'ناشر'],
+            default => ['assignee', 'المسؤول الحالي'],
+        };
 
-        return array_values($unique);
+        return [
+            'employee_id' => (int) $ownerId,
+            'employee' => $employee,
+            'task_role' => $taskRole,
+            'task_role_label' => $taskRoleLabel,
+        ];
     }
 
     private function roleLabels(): array

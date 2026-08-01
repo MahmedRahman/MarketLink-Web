@@ -2,7 +2,7 @@
 
 @section('title', 'متابعة مهام الفريق')
 @section('page-title', 'متابعة مهام الفريق')
-@section('page-description', 'شاشة رقابة للمدير: كل موظف وتاسكاته الحالية عبر كل الأنشطة')
+@section('page-description', 'المهام الحالية المسندة لكل موظف حسب مرحلتها الآن')
 
 @section('content')
 <div class="max-w-7xl mx-auto space-y-6">
@@ -126,7 +126,7 @@
             </div>
         </div>
 
-        @if(collect($filters)->filter()->isNotEmpty())
+        @if(request()->hasAny(['stage', 'state', 'activity_id', 'employee_id', 'role', 'q']))
             <div class="mt-3">
                 <a href="{{ route('team-tasks.index') }}" class="text-sm text-gray-500 hover:text-gray-700 inline-flex items-center gap-1">
                     <span class="material-icons text-base">filter_alt_off</span>
@@ -187,7 +187,7 @@
                     </div>
 
                     <div class="p-4 space-y-3">
-                        @foreach($group['rows'] as $row)
+                        @forelse($group['rows'] as $row)
                             @php
                                 /** @var \App\Models\WorkTask $task */
                                 $task = $row['task'];
@@ -232,6 +232,11 @@
                                                 <span class="material-icons text-sm">badge</span>
                                                 {{ $row['task_role_label'] }}
                                             </span>
+                                            @if($task->status_label ?? null)
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">
+                                                    {{ $task->status_label }}
+                                                </span>
+                                            @endif
                                             @if($task->due_date)
                                                 <span class="inline-flex items-center gap-1 {{ $task->is_overdue ? 'text-red-600 font-semibold' : '' }}">
                                                     <span class="material-icons text-sm">event</span>
@@ -256,14 +261,19 @@
                                     @endif
                                 </div>
                             </div>
-                        @endforeach
+                        @empty
+                            <div class="rounded-xl border-2 border-dashed border-emerald-200 bg-emerald-50/40 px-4 py-6 text-center">
+                                <p class="text-sm font-semibold text-emerald-800">مفيش مهام حالية مع الموظف ده</p>
+                                <p class="text-xs text-emerald-700/80 mt-1">فاضي في المرحلة الحالية</p>
+                            </div>
+                        @endforelse
                     </div>
                 </section>
             @endforeach
         </div>
     @endif
 
-    @if(($idleEmployees ?? collect())->isNotEmpty() && empty($filters['employee_id']) && empty($filters['q']) && empty($filters['activity_id']) && empty($filters['stage']) && empty($filters['state']) && empty($filters['role']))
+    @if(($showIdleSection ?? false) && ($idleEmployees ?? collect())->isNotEmpty() && empty($filters['employee_id']) && empty($filters['q']) && empty($filters['activity_id']) && empty($filters['stage']) && empty($filters['state']) && empty($filters['role']))
         <div class="card rounded-2xl p-5">
             <h3 class="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
                 <span class="material-icons text-emerald-600">hourglass_empty</span>
