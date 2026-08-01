@@ -118,9 +118,23 @@
     }
     .post-card-media {
         position: relative;
-        aspect-ratio: 1 / 1;
-        background: #f1f5f9;
+        aspect-ratio: 4 / 5;
+        background:
+            linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
         overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .post-card-media .gallery-img,
+    .post-card-media video {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        object-position: center;
+        background: transparent;
     }
     .post-card-body {
         display: flex;
@@ -382,15 +396,15 @@
                             class="post-card-media gallery-skel group text-start w-full"
                             data-review-open="{{ $itemIndex }}">
                         @if($cover && $cover->isImage())
-                            <img src="{{ $coverUrl }}"
+                                <img src="{{ $coverUrl }}"
                                  alt="{{ $task->title }}"
-                                 class="gallery-img absolute inset-0 w-full h-full object-cover"
+                                 class="gallery-img"
                                  loading="{{ $itemIndex < 3 ? 'eager' : 'lazy' }}"
                                  decoding="async"
-                                 width="640" height="640"
+                                 width="640" height="800"
                                  onload="this.classList.add('is-loaded'); this.parentElement.classList.remove('gallery-skel')">
                         @elseif($cover)
-                            <video src="{{ $coverUrl }}" class="absolute inset-0 w-full h-full object-cover" muted playsinline preload="metadata"></video>
+                            <video src="{{ $coverUrl }}" muted playsinline preload="metadata"></video>
                             <span class="absolute inset-0 flex items-center justify-center bg-black/25">
                                 <span class="material-icons text-white text-4xl">play_circle</span>
                             </span>
