@@ -58,27 +58,27 @@
     <div class="card rounded-2xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div class="flex flex-col sm:flex-row sm:items-center gap-3 flex-wrap">
             <div class="inline-flex rounded-xl border-2 border-gray-200 p-1 bg-gray-50 flex-wrap">
+                <a href="{{ work_route('index', array_filter(['type' => $filterType, 'status' => $filterStatus])) }}"
+                   class="px-3 py-1.5 rounded-lg text-sm font-semibold inline-flex items-center gap-1 transition-colors {{ ($viewMode ?? 'folder') === 'folder' ? 'bg-white text-primary shadow-sm' : 'text-gray-600 hover:text-gray-800' }}">
+                    <span class="material-icons text-base">folder</span>
+                    حسب الفولدر
+                </a>
                 <a href="{{ work_route('index', array_filter(['type' => $filterType, 'status' => $filterStatus, 'view' => 'title'])) }}"
-                   class="px-3 py-1.5 rounded-lg text-sm font-semibold inline-flex items-center gap-1 transition-colors {{ ($viewMode ?? 'title') === 'title' ? 'bg-white text-primary shadow-sm' : 'text-gray-600 hover:text-gray-800' }}">
+                   class="px-3 py-1.5 rounded-lg text-sm font-semibold inline-flex items-center gap-1 transition-colors {{ ($viewMode ?? 'folder') === 'title' ? 'bg-white text-primary shadow-sm' : 'text-gray-600 hover:text-gray-800' }}">
                     <span class="material-icons text-base">title</span>
                     حسب العنوان
                 </a>
                 @if($showMonthView ?? true)
                     <a href="{{ work_route('index', array_filter(['type' => $filterType, 'status' => $filterStatus, 'view' => 'month'])) }}"
-                       class="px-3 py-1.5 rounded-lg text-sm font-semibold inline-flex items-center gap-1 transition-colors {{ ($viewMode ?? 'title') === 'month' ? 'bg-white text-primary shadow-sm' : 'text-gray-600 hover:text-gray-800' }}">
+                       class="px-3 py-1.5 rounded-lg text-sm font-semibold inline-flex items-center gap-1 transition-colors {{ ($viewMode ?? 'folder') === 'month' ? 'bg-white text-primary shadow-sm' : 'text-gray-600 hover:text-gray-800' }}">
                         <span class="material-icons text-base">calendar_month</span>
                         حسب الشهر
                     </a>
                 @endif
-                <a href="{{ work_route('index', array_filter(['type' => $filterType, 'status' => $filterStatus, 'view' => 'folder'])) }}"
-                   class="px-3 py-1.5 rounded-lg text-sm font-semibold inline-flex items-center gap-1 transition-colors {{ ($viewMode ?? 'title') === 'folder' ? 'bg-white text-primary shadow-sm' : 'text-gray-600 hover:text-gray-800' }}">
-                    <span class="material-icons text-base">folder</span>
-                    حسب الفولدر
-                </a>
             </div>
 
             <form method="GET" class="flex flex-wrap items-center gap-2">
-                @if(in_array(($viewMode ?? 'title'), ['month', 'folder'], true))
+                @if(in_array(($viewMode ?? 'folder'), ['title', 'month'], true))
                     <input type="hidden" name="view" value="{{ $viewMode }}">
                 @endif
                 <select name="type" onchange="this.form.submit()" class="px-3 py-2 rounded-xl border-2 border-gray-200 text-sm focus:border-primary focus:outline-none">
@@ -94,7 +94,7 @@
                     @endforeach
                 </select>
                 @if($filterType || $filterStatus)
-                    <a href="{{ work_route('index', in_array(($viewMode ?? 'title'), ['month', 'folder'], true) ? ['view' => $viewMode] : []) }}" class="text-sm text-gray-500 hover:text-gray-700 px-2">مسح</a>
+                    <a href="{{ work_route('index', in_array(($viewMode ?? 'folder'), ['title', 'month'], true) ? ['view' => $viewMode] : []) }}" class="text-sm text-gray-500 hover:text-gray-700 px-2">مسح</a>
                 @endif
             </form>
         </div>
@@ -116,13 +116,13 @@
     </div>
 
     {{-- كروت الأنشطة --}}
-    @if($activities->isEmpty() && ($viewMode ?? 'title') !== 'folder')
+    @if($activities->isEmpty() && ($viewMode ?? 'folder') !== 'folder')
         <div class="card rounded-2xl p-12 text-center">
             <span class="material-icons text-6xl text-gray-300">dashboard_customize</span>
             <h3 class="text-lg font-bold text-gray-700 mt-4">لا توجد أنشطة بعد</h3>
             <p class="text-gray-500 text-sm mt-1">ابدأ بإضافة أول نشاط للأكاديمية (محاضرة لايف، راوند، محتوى...)</p>
         </div>
-    @elseif(($viewMode ?? 'title') === 'folder')
+    @elseif(($viewMode ?? 'folder') === 'folder')
         @if($canManageFolders ?? false)
             <div class="rounded-2xl border border-dashed border-amber-300 bg-amber-50/60 px-4 py-3 text-sm text-amber-900 flex items-center gap-2">
                 <span class="material-icons text-amber-700">swipe</span>
@@ -195,7 +195,7 @@
                 </div>
             @endforelse
         </div>
-    @elseif(($viewMode ?? 'title') === 'month')
+    @elseif(($viewMode ?? 'folder') === 'month')
         <div class="space-y-6">
             @foreach($activitiesByMonth as $monthGroup)
                 <section class="card rounded-2xl overflow-hidden">

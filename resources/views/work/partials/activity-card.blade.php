@@ -1,7 +1,7 @@
 @php
     $canManageFolders = $canManageFolders ?? false;
     $folders = $folders ?? collect();
-    $viewMode = $viewMode ?? 'title';
+    $viewMode = $viewMode ?? 'folder';
     $dndEnabled = $canManageFolders && ($viewMode === 'folder');
 @endphp
 <div class="space-y-2 {{ $dndEnabled ? 'folder-dnd-item' : '' }}"

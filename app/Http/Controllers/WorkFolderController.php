@@ -110,7 +110,7 @@ class WorkFolderController extends Controller
 
         return redirect()
             ->route(WorkHub::routeName('index'), array_filter([
-                'view' => $view === 'title' ? null : $view,
+                'view' => $view === 'folder' ? null : $view,
                 'type' => $request->input('type'),
                 'status' => $request->input('status'),
             ]))

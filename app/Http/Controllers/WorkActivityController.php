@@ -38,14 +38,14 @@ class WorkActivityController extends Controller
             ->latest()
             ->get();
 
-        $viewMode = $request->input('view', 'title');
+        $viewMode = $request->input('view', 'folder');
         if (! in_array($viewMode, ['title', 'month', 'folder'], true)) {
-            $viewMode = 'title';
+            $viewMode = 'folder';
         }
 
         // "حسب الشهر" متاح من لوحة الويب فقط (مش من employee hub).
         if (WorkHub::isEmployeeHub($request) && $viewMode === 'month') {
-            $viewMode = 'title';
+            $viewMode = 'folder';
         }
 
         $folders = WorkFolder::query()
