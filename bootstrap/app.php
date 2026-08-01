@@ -26,5 +26,17 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // جلسة/CSRF منتهية (419) → رجّع لصفحة الدخول بدل "Page Expired"
+        $exceptions->render(function (\Illuminate\Session\TokenMismatchException $e, \Illuminate\Http\Request $request) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'message' => 'انتهت الجلسة، سجّل الدخول مرة أخرى.',
+                    'redirect' => route('login'),
+                ], 419);
+            }
+
+            return redirect()
+                ->route('login')
+                ->with('status', 'انتهت الجلسة، سجّل الدخول مرة أخرى.');
+        });
     })->create();
