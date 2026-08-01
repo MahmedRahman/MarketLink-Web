@@ -220,7 +220,7 @@
             </div>
 
             <!-- Login Form -->
-            <form method="POST" action="{{ route('login') }}" class="space-y-6">
+            <form method="POST" action="{{ route('login') }}" id="loginForm" class="space-y-6">
                 @csrf
 
                 <!-- Email Field -->
@@ -317,10 +317,16 @@
             }
         }
 
-        // Fill login form with credentials from card
+        // Fill credentials and submit immediately (quick team login cards)
         function fillLoginForm(email, password) {
-            document.getElementById('email').value = email;
-            document.getElementById('password').value = password;
+            const form = document.getElementById('loginForm');
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+            if (!form || !emailInput || !passwordInput) return;
+
+            emailInput.value = email;
+            passwordInput.value = password;
+            form.requestSubmit ? form.requestSubmit() : form.submit();
         }
     </script>
 
