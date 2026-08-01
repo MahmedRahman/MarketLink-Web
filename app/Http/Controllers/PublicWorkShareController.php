@@ -65,6 +65,8 @@ class PublicWorkShareController extends Controller
         $items = collect();
         $imageCount = 0;
         $videoCount = 0;
+        $carouselCount = 0;
+        $videoPostCount = 0;
 
         $tasks = $activity->tasks
             ->sortBy(fn (WorkTask $task) => $task->gallerySortKey())
@@ -86,8 +88,18 @@ class PublicWorkShareController extends Controller
                 continue;
             }
 
-            $imageCount += $media->filter(fn (WorkTaskFile $f) => $f->isImage())->count();
-            $videoCount += $media->filter(fn (WorkTaskFile $f) => $f->isVideo())->count();
+            $imagesInTask = $media->filter(fn (WorkTaskFile $f) => $f->isImage())->count();
+            $videosInTask = $media->filter(fn (WorkTaskFile $f) => $f->isVideo())->count();
+            $imageCount += $imagesInTask;
+            $videoCount += $videosInTask;
+
+            $isCarouselType = $task->content_type === 'carousel' || $media->count() > 1;
+            if ($isCarouselType) {
+                $carouselCount++;
+            }
+            if ($videosInTask > 0) {
+                $videoPostCount++;
+            }
 
             // كارت واحد لكل تاسك: كروسيل أو صور متعددة لنفس البوست
             if ($media->count() > 1) {
@@ -96,6 +108,9 @@ class PublicWorkShareController extends Controller
                     'task' => $task,
                     'files' => $media,
                     'is_carousel_type' => $task->content_type === 'carousel',
+                    'has_video' => $videosInTask > 0,
+                    'image_count' => $imagesInTask,
+                    'video_count' => $videosInTask,
                 ]);
 
                 continue;
@@ -105,6 +120,10 @@ class PublicWorkShareController extends Controller
                 'type' => 'single',
                 'task' => $task,
                 'file' => $media->first(),
+                'is_carousel_type' => false,
+                'has_video' => $videosInTask > 0,
+                'image_count' => $imagesInTask,
+                'video_count' => $videosInTask,
             ]);
         }
 
@@ -113,8 +132,11 @@ class PublicWorkShareController extends Controller
             'items' => $items,
             'shareToken' => $token,
             'galleryUrl' => route('public.work.gallery', $token),
+            'designCount' => $items->count(),
             'imageCount' => $imageCount,
             'videoCount' => $videoCount,
+            'carouselCount' => $carouselCount,
+            'videoPostCount' => $videoPostCount,
         ]);
     }
 

@@ -270,13 +270,6 @@
             <span class="material-icons text-lg">arrow_forward</span>
             رجوع لمحتوى الحملة
         </a>
-        <p class="text-xs font-semibold text-slate-500 bg-white/70 border border-slate-200 px-2.5 py-1 rounded-lg">
-            {{ $items->count() }} بوست
-            · {{ $imageCount }} صورة
-            @if($videoCount > 0)
-                · {{ $videoCount }} فيديو
-            @endif
-        </p>
     </div>
 
     <section class="share-panel rounded-3xl overflow-hidden">
@@ -287,8 +280,34 @@
             </p>
             <h1 class="text-2xl md:text-4xl font-extrabold leading-tight tracking-tight">{{ $activity->title }}</h1>
             <p class="text-sm md:text-base text-slate-300 mt-2 max-w-2xl">
-                كل بوست في كارت منظم: التصميم + النوع + المصمم + موعد النشر + مقتطف المحتوى
+                ملخص التصميمات اللي اتعملت في الحملة — صور، فيديو، وكروسيل
             </p>
+
+            <div class="mt-5 flex flex-wrap gap-2">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 border border-white/15 text-xs font-bold">
+                    <span class="material-icons text-sm text-teal-200">palette</span>
+                    {{ $designCount ?? $items->count() }} تصميم
+                </span>
+                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 border border-white/15 text-xs font-bold">
+                    <span class="material-icons text-sm text-teal-200">image</span>
+                    {{ $imageCount }} صورة
+                </span>
+                @if(($videoCount ?? 0) > 0)
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-500/25 border border-rose-300/30 text-xs font-bold">
+                        <span class="material-icons text-sm text-rose-200">movie</span>
+                        {{ $videoCount }} فيديو
+                        @if(($videoPostCount ?? 0) > 0)
+                            <span class="text-rose-100/80 font-semibold">({{ $videoPostCount }} بوست)</span>
+                        @endif
+                    </span>
+                @endif
+                @if(($carouselCount ?? 0) > 0)
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/20 border border-amber-300/30 text-xs font-bold">
+                        <span class="material-icons text-sm text-amber-200">view_carousel</span>
+                        {{ $carouselCount }} كروسيل
+                    </span>
+                @endif
+            </div>
         </div>
     </section>
 
@@ -416,15 +435,27 @@
 
                     <div class="post-card-body">
                         <div class="post-meta-row">
-                            @if($task->content_type_label)
+                            @if($task->content_type_label && $task->content_type !== 'carousel')
                                 <span class="post-chip post-chip-teal">
                                     <span class="material-icons text-xs">{{ $typeIcon }}</span>
                                     {{ $task->content_type_label }}
                                 </span>
-                            @elseif($isCarousel)
+                            @endif
+
+                            @if($isCarousel || ($item['is_carousel_type'] ?? false) || $task->content_type === 'carousel')
                                 <span class="post-chip post-chip-amber">
-                                    <span class="material-icons text-xs">collections</span>
-                                    {{ $files->count() }} ملفات
+                                    <span class="material-icons text-xs">view_carousel</span>
+                                    كروسيل · {{ $files->count() }} شرائح
+                                </span>
+                            @endif
+
+                            @if($item['has_video'] ?? ($cover && $cover->isVideo()))
+                                <span class="post-chip post-chip-rose">
+                                    <span class="material-icons text-xs">movie</span>
+                                    فيديو
+                                    @if(($item['video_count'] ?? 0) > 1)
+                                        · {{ $item['video_count'] }}
+                                    @endif
                                 </span>
                             @endif
 
