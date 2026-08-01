@@ -36,7 +36,24 @@ return Application::configure(basePath: dirname(__DIR__))
             }
 
             return redirect()
-                ->route('login')
+                ->guest(route('login'))
+                ->with('status', 'انتهت الجلسة، سجّل الدخول مرة أخرى.');
+        });
+
+        $exceptions->respond(function (\Symfony\Component\HttpFoundation\Response $response, \Throwable $e, \Illuminate\Http\Request $request) {
+            if ($response->getStatusCode() !== 419) {
+                return $response;
+            }
+
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'message' => 'انتهت الجلسة، سجّل الدخول مرة أخرى.',
+                    'redirect' => route('login'),
+                ], 419);
+            }
+
+            return redirect()
+                ->guest(route('login'))
                 ->with('status', 'انتهت الجلسة، سجّل الدخول مرة أخرى.');
         });
     })->create();

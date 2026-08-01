@@ -3,6 +3,9 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
     <title>MarketLink - نظام إدارة شركات التسويق الإلكتروني</title>
     
     <!-- Cairo Font -->
@@ -317,8 +320,42 @@
             }
         }
 
-        // Fill credentials and submit immediately (quick team login cards)
-        function fillLoginForm(email, password) {
+        // Avoid bfcache serving a stale CSRF token after logout/back
+        window.addEventListener('pageshow', function (event) {
+            if (event.persisted) {
+                window.location.reload();
+            }
+        });
+
+        async function refreshLoginCsrfToken() {
+            const form = document.getElementById('loginForm');
+            if (!form) return;
+
+            try {
+                const response = await fetch(@json(route('login')), {
+                    method: 'GET',
+                    credentials: 'same-origin',
+                    cache: 'no-store',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                });
+                const html = await response.text();
+                const doc = new DOMParser().parseFromString(html, 'text/html');
+                const freshToken = doc.querySelector('input[name="_token"]')?.value
+                    || doc.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                if (!freshToken) return;
+
+                const tokenInput = form.querySelector('input[name="_token"]');
+                if (tokenInput) tokenInput.value = freshToken;
+
+                const meta = document.querySelector('meta[name="csrf-token"]');
+                if (meta) meta.setAttribute('content', freshToken);
+            } catch (e) {
+                // Fall back to the token already on the page
+            }
+        }
+
+        // Fill credentials, refresh CSRF, then submit (quick team login cards)
+        async function fillLoginForm(email, password) {
             const form = document.getElementById('loginForm');
             const emailInput = document.getElementById('email');
             const passwordInput = document.getElementById('password');
@@ -326,6 +363,7 @@
 
             emailInput.value = email;
             passwordInput.value = password;
+            await refreshLoginCsrfToken();
             form.requestSubmit ? form.requestSubmit() : form.submit();
         }
     </script>
