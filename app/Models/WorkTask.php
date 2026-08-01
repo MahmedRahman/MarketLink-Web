@@ -217,8 +217,19 @@ class WorkTask extends Model
         }
 
         // السماح للمصمم إنه يشوف مهام "جاهز للنشر" حتى لو الـ assigned_to اتغير للمسؤول (publish).
-        return $this->pipeline_stage === 'ready_to_publish'
-            && (int) $this->designer_id === (int) $employeeId;
+        if ($this->pipeline_stage === 'ready_to_publish'
+            && (int) $this->designer_id === (int) $employeeId) {
+            return true;
+        }
+
+        // بعد النشر/الأرشيف: أي حد اشتغل على التاسك يقدر يشوفه (عرض فقط).
+        if (in_array($this->pipeline_stage, ['published', 'archived'], true)) {
+            return (int) $this->assigned_to === (int) $employeeId
+                || (int) $this->content_writer_id === (int) $employeeId
+                || (int) $this->designer_id === (int) $employeeId;
+        }
+
+        return false;
     }
 
     public function getKindLabelAttribute(): string

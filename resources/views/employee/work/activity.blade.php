@@ -240,6 +240,77 @@
                     </div>
                 </section>
             @endforeach
+
+            {{-- بعد النشر: مهام اشتغل عليها الموظف — مقفولة للعرض فقط --}}
+            <section class="card rounded-2xl overflow-hidden border border-emerald-200/80">
+                <div class="px-4 py-3 border-b border-emerald-100 bg-emerald-50 flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                            <span class="material-icons">lock</span>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-gray-800 inline-flex items-center gap-1.5">
+                                بعد النشر
+                                <span class="material-icons text-base text-emerald-600">lock</span>
+                            </h4>
+                            <p class="text-xs text-gray-500">
+                                البوستات اللي اشتغلت عليها واتنشرت — عرض فقط ·
+                                <span class="font-semibold text-emerald-800">{{ ($publishedTasks ?? collect())->count() }}</span>
+                            </p>
+                        </div>
+                    </div>
+                    <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-100 text-emerald-800 inline-flex items-center gap-1">
+                        <span class="material-icons text-sm">lock</span>
+                        {{ ($publishedTasks ?? collect())->count() }}
+                    </span>
+                </div>
+
+                <div class="p-4 bg-emerald-50/30">
+                    @if(($publishedTasks ?? collect())->isEmpty())
+                        <div class="rounded-xl border border-dashed border-emerald-200 bg-white/70 px-4 py-8 text-center">
+                            <span class="material-icons text-3xl text-emerald-300 mb-1">lock</span>
+                            <p class="text-sm font-medium text-gray-700">لسه مفيش بوستات منشورة من شغلك هنا</p>
+                            <p class="text-xs text-gray-500 mt-1">لما يتنشر بوست اشتغلت عليه هيظهر هنا مقفول</p>
+                        </div>
+                    @else
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                            @foreach($publishedTasks as $task)
+                                <a href="{{ route('employee.work.show', $task) }}"
+                                   class="rounded-2xl border border-emerald-200/80 bg-white p-4 min-h-[110px] flex flex-col justify-between hover:border-emerald-300 hover:shadow-sm transition-all relative">
+                                    <span class="absolute top-3 left-3 inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-emerald-100 text-emerald-800 text-[10px] font-bold">
+                                        <span class="material-icons text-xs">lock</span>
+                                        مقفول
+                                    </span>
+                                    <div class="pe-16">
+                                        @if($task->content_type_label)
+                                            <span class="inline-block px-2 py-0.5 text-[10px] rounded-md bg-emerald-50 text-emerald-700 mb-2">{{ $task->content_type_label }}</span>
+                                        @endif
+                                        <h5 class="text-base font-bold text-gray-900 leading-snug line-clamp-3">
+                                            {{ $task->title }}
+                                        </h5>
+                                    </div>
+                                    <div class="mt-3 flex items-center justify-between gap-2">
+                                        <span class="px-2 py-0.5 text-[11px] rounded-lg bg-emerald-100 text-emerald-800">
+                                            تم النشر
+                                        </span>
+                                        @if($task->publish_schedule_label)
+                                            <span class="text-[11px] text-gray-500 flex items-center gap-0.5">
+                                                <span class="material-icons text-sm">event</span>
+                                                {{ $task->publish_schedule_label }}
+                                            </span>
+                                        @elseif($task->publish_date)
+                                            <span class="text-[11px] text-gray-500 flex items-center gap-0.5">
+                                                <span class="material-icons text-sm">event</span>
+                                                {{ $task->publish_date->format('Y/m/d') }}
+                                            </span>
+                                        @endif
+                                    </div>
+                                </a>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
+            </section>
         </div>
         @endif
     </div>

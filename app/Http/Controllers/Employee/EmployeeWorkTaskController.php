@@ -227,7 +227,24 @@ class EmployeeWorkTaskController extends Controller
             ];
         }
 
-        $archivedTasks = $myTasks->where('pipeline_stage', 'archived')->values();
+        $archivedTasks = WorkTask::forEmployee($employee->id)
+            ->where('work_activity_id', $work->id)
+            ->where('pipeline_stage', 'archived')
+            ->with(['assignedEmployee', 'contentWriter', 'designer'])
+            ->orderBy('order')
+            ->orderBy('id')
+            ->get();
+
+        // مهام اتنشرت واشتغل عليها الموظف — عرض فقط (مقفولة)
+        $publishedTasks = WorkTask::forEmployee($employee->id)
+            ->where('work_activity_id', $work->id)
+            ->where('pipeline_stage', 'published')
+            ->with(['assignedEmployee', 'contentWriter', 'designer'])
+            ->orderByDesc('publish_date')
+            ->orderBy('order')
+            ->orderBy('id')
+            ->get();
+
         $boardView = request()->input('board', 'pipeline');
         if (! in_array($boardView, ['pipeline', 'archive'], true)) {
             $boardView = 'pipeline';
@@ -244,12 +261,14 @@ class EmployeeWorkTaskController extends Controller
             'carousel' => $myTasks->where('content_type', 'carousel')->count(),
             'other' => $myTasks->filter(fn ($t) => ! in_array($t->content_type, ['post', 'reels', 'carousel'], true))->count(),
             'archived' => $archivedTasks->count(),
+            'published' => $publishedTasks->count(),
         ];
 
         return view('employee.work.activity', [
             'activity' => $work,
             'pipelineStages' => $pipelineStages,
             'archivedTasks' => $archivedTasks,
+            'publishedTasks' => $publishedTasks,
             'boardView' => $boardView,
             'contentCounts' => $contentCounts,
             'progress' => $progress,
@@ -401,6 +420,17 @@ class EmployeeWorkTaskController extends Controller
 
         $stage = $validated['pipeline_stage'];
         $isDesigner = in_array($employee->role, ['designer', 'video_editor'], true);
+
+        // المهام المنشورة/المؤرشفة مقفولة — مينفعش تنقل منها أو ليها من حساب الموظف
+        if (in_array($task->pipeline_stage, ['published', 'archived'], true)
+            || in_array($stage, ['published', 'archived'], true)) {
+            $message = 'المهام بعد النشر مقفولة — العرض فقط';
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => $message], 422);
+            }
+
+            return back()->with('error', $message);
+        }
 
         // المصمم ينقل بس بين التصميم وجاهز للنشر — مش لـ تم النشر
         if ($isDesigner && ! in_array($stage, ['design', 'ready_to_publish'], true)) {
