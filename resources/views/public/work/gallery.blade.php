@@ -24,12 +24,14 @@
             'title' => $task->title,
             'typeLabel' => $task->content_type_label,
             'designerName' => $task->designer?->name,
+            'stageLabel' => $task->pipeline_stage_label,
             'isCarousel' => ($item['type'] ?? 'single') === 'carousel',
             'caption' => $task->caption,
             'tov' => $task->tov,
             'idea' => $task->idea,
             'platforms' => $task->platform_labels ?? [],
-            'publishDate' => $task->publish_date?->format('Y/m/d'),
+            'publishDate' => $task->publish_schedule_label,
+            'postNumber' => \App\Models\WorkTask::extractPostSequence($task->title),
             'taskUrl' => route('public.work.task', [$shareToken, $task]),
             'slides' => $files->map(function ($file) use ($shareToken, $task) {
                 $fullUrl = route('public.work.file', [$shareToken, $task, $file]);
@@ -49,13 +51,28 @@
             })->values()->all(),
         ];
     }
+
+    $designerFilters = $items
+        ->map(function ($item) {
+            $designer = $item['task']->designer;
+
+            return $designer
+                ? ['id' => (string) $designer->id, 'name' => $designer->name]
+                : null;
+        })
+        ->filter()
+        ->unique('id')
+        ->sortBy('name', SORT_NATURAL)
+        ->values();
+    $unassignedCount = $items->filter(fn ($item) => ! $item['task']->designer_id)->count();
 @endphp
 
 @push('head')
 <style>
+    .share-shell { max-width: 72rem; }
+
     .gallery-skel {
-        background:
-            linear-gradient(90deg, #e2e8f0 0%, #f1f5f9 45%, #e2e8f0 90%);
+        background: linear-gradient(90deg, #e2e8f0 0%, #f1f5f9 45%, #e2e8f0 90%);
         background-size: 200% 100%;
         animation: galleryShimmer 1.1s ease-in-out infinite;
     }
@@ -68,42 +85,104 @@
         transition: opacity .25s ease;
     }
     .gallery-img.is-loaded { opacity: 1; }
+
     .gallery-filter-btn {
         background: #fff;
         color: #475569;
         border-color: #e2e8f0;
     }
     .gallery-filter-btn:hover {
-        border-color: #c4b5fd;
-        color: #6d28d9;
-        background: #f5f3ff;
+        border-color: #99f6e4;
+        color: #0f766e;
+        background: #f0fdfa;
     }
     .gallery-filter-btn.is-active {
-        background: #7c3aed;
+        background: #0d9488;
         color: #fff;
-        border-color: #7c3aed;
+        border-color: #0d9488;
     }
-    .carousel-strip {
+
+    .post-card {
+        background: #fff;
+        border: 1px solid rgba(15, 23, 42, 0.08);
+        border-radius: 1.25rem;
+        overflow: hidden;
         display: flex;
-        gap: 0.5rem;
-        overflow-x: auto;
-        scroll-snap-type: x mandatory;
-        -webkit-overflow-scrolling: touch;
-        padding-bottom: 0.25rem;
+        flex-direction: column;
+        height: 100%;
+        transition: transform .18s ease, box-shadow .18s ease;
     }
-    .carousel-strip::-webkit-scrollbar { height: 6px; }
-    .carousel-strip::-webkit-scrollbar-thumb {
-        background: rgba(15, 23, 42, 0.2);
-        border-radius: 999px;
+    .post-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 16px 36px rgba(15, 23, 42, 0.1);
     }
-    .carousel-strip-item {
-        scroll-snap-align: start;
-        flex: 0 0 auto;
-        width: min(42%, 11rem);
+    .post-card-media {
+        position: relative;
+        aspect-ratio: 1 / 1;
+        background: #f1f5f9;
+        overflow: hidden;
     }
-    @media (min-width: 768px) {
-        .carousel-strip-item { width: min(28%, 12rem); }
+    .post-card-body {
+        display: flex;
+        flex-direction: column;
+        gap: 0.65rem;
+        padding: 0.9rem 1rem 1rem;
+        flex: 1;
     }
+    .post-meta-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+    }
+    .post-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.65rem;
+        font-weight: 700;
+        line-height: 1.2;
+        padding: 0.28rem 0.5rem;
+        border-radius: 0.55rem;
+        background: #f8fafc;
+        color: #475569;
+        border: 1px solid #e2e8f0;
+    }
+    .post-chip-teal { background: #f0fdfa; color: #0f766e; border-color: #99f6e4; }
+    .post-chip-amber { background: #fffbeb; color: #b45309; border-color: #fde68a; }
+    .post-chip-slate { background: #f1f5f9; color: #334155; border-color: #e2e8f0; }
+    .post-chip-rose { background: #fff1f2; color: #be123c; border-color: #fecdd3; }
+    .post-caption {
+        font-size: 0.75rem;
+        line-height: 1.55;
+        color: #64748b;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    .post-thumb-stack {
+        position: absolute;
+        inset-inline-end: 0.6rem;
+        bottom: 0.6rem;
+        display: flex;
+        align-items: center;
+    }
+    .post-thumb-stack span {
+        width: 1.65rem;
+        height: 1.65rem;
+        border-radius: 0.45rem;
+        border: 2px solid #fff;
+        background: #cbd5e1;
+        margin-inline-start: -0.45rem;
+        box-shadow: 0 2px 6px rgba(15,23,42,.15);
+        overflow: hidden;
+    }
+    .post-thumb-stack span img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
     .review-modal {
         position: fixed;
         inset: 0;
@@ -191,8 +270,9 @@
             <span class="material-icons text-lg">arrow_forward</span>
             رجوع لمحتوى الحملة
         </a>
-        <p class="text-xs text-slate-500">
-            {{ $imageCount }} صورة
+        <p class="text-xs font-semibold text-slate-500 bg-white/70 border border-slate-200 px-2.5 py-1 rounded-lg">
+            {{ $items->count() }} بوست
+            · {{ $imageCount }} صورة
             @if($videoCount > 0)
                 · {{ $videoCount }} فيديو
             @endif
@@ -200,13 +280,15 @@
     </div>
 
     <section class="share-panel rounded-3xl overflow-hidden">
-        <div class="bg-gradient-to-l from-slate-900 via-slate-800 to-teal-900 px-5 py-6 md:px-7 md:py-8 text-white">
+        <div class="bg-gradient-to-l from-slate-900 via-slate-800 to-teal-900 px-5 py-6 md:px-8 md:py-8 text-white">
             <p class="text-xs font-bold text-teal-200/90 mb-2 inline-flex items-center gap-1">
                 <span class="material-icons text-sm">photo_library</span>
                 معرض تصميم الحملة
             </p>
             <h1 class="text-2xl md:text-4xl font-extrabold leading-tight tracking-tight">{{ $activity->title }}</h1>
-            <p class="text-sm md:text-base text-slate-300 mt-2">اضغط أي تصميم لمراجعة الصورة والمحتوى مع بعض</p>
+            <p class="text-sm md:text-base text-slate-300 mt-2 max-w-2xl">
+                كل بوست في كارت منظم: التصميم + النوع + المصمم + موعد النشر + مقتطف المحتوى
+            </p>
         </div>
     </section>
 
@@ -217,26 +299,10 @@
             <p class="text-sm text-slate-500 mt-1">لما المصمم يرفع الصور هتظهر هنا تلقائيًا</p>
         </section>
     @else
-        @php
-            $designerFilters = $items
-                ->map(function ($item) {
-                    $designer = $item['task']->designer;
-
-                    return $designer
-                        ? ['id' => (string) $designer->id, 'name' => $designer->name]
-                        : null;
-                })
-                ->filter()
-                ->unique('id')
-                ->sortBy('name', SORT_NATURAL)
-                ->values();
-            $unassignedCount = $items->filter(fn ($item) => ! $item['task']->designer_id)->count();
-        @endphp
-
         @if($designerFilters->isNotEmpty() || $unassignedCount > 0)
-            <section class="share-panel rounded-2xl p-3 md:p-4">
+            <section class="share-panel rounded-2xl p-3.5 md:p-4">
                 <div class="flex items-center gap-2 mb-2.5">
-                    <span class="material-icons text-base text-purple-600">palette</span>
+                    <span class="material-icons text-base text-teal-700">palette</span>
                     <p class="text-xs font-bold text-slate-600">تصفية حسب المصمم</p>
                     <span id="galleryFilterCount" class="text-[11px] text-slate-400 ms-auto"></span>
                 </div>
@@ -264,146 +330,170 @@
             </section>
         @endif
 
-        <section class="share-panel rounded-3xl p-4 md:p-6">
-            <div id="galleryEmptyFilter" class="hidden text-center py-10">
-                <span class="material-icons text-4xl text-slate-300">filter_alt_off</span>
-                <p class="text-sm font-bold text-slate-600 mt-2">مفيش تصاميم للمصمم ده</p>
-            </div>
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4" id="galleryGrid">
-                @foreach($items as $itemIndex => $item)
-                    @php
-                        $task = $item['task'];
-                        $taskUrl = route('public.work.task', [$shareToken, $task]);
-                        $designerId = $task->designer_id ? (string) $task->designer_id : 'none';
-                    @endphp
+        <div id="galleryEmptyFilter" class="hidden share-panel rounded-3xl p-10 text-center">
+            <span class="material-icons text-4xl text-slate-300">filter_alt_off</span>
+            <p class="text-sm font-bold text-slate-600 mt-2">مفيش تصاميم للمصمم ده</p>
+        </div>
 
-                    @if(($item['type'] ?? 'single') === 'carousel')
-                        @php $files = $item['files']; @endphp
-                        <article class="file-tile gallery-item col-span-2 md:col-span-3 rounded-2xl overflow-hidden border border-slate-200 bg-white flex flex-col"
-                                 data-designer="{{ $designerId }}">
-                            <button type="button"
-                                    class="text-start w-full p-3 pb-2"
-                                    data-review-open="{{ $itemIndex }}">
-                                <div class="carousel-strip" dir="ltr">
-                                    @foreach($files as $file)
-                                        @php
-                                            $fileUrl = route('public.work.file', [$shareToken, $task, $file]);
-                                            $thumbUrl = $file->isImage()
-                                                ? route('public.work.file', [$shareToken, $task, $file, 'w' => 360])
-                                                : $fileUrl;
-                                        @endphp
-                                        <div class="carousel-strip-item aspect-square rounded-xl overflow-hidden bg-slate-100 relative border border-slate-200/80 gallery-skel">
-                                            @if($file->isImage())
-                                                <img src="{{ $thumbUrl }}"
-                                                     alt="{{ $file->file_name }}"
-                                                     class="gallery-img w-full h-full object-cover"
-                                                     loading="{{ $loop->iteration <= 2 ? 'eager' : 'lazy' }}"
-                                                     decoding="async"
-                                                     width="360" height="360"
-                                                     onload="this.classList.add('is-loaded'); this.parentElement.classList.remove('gallery-skel')">
-                                            @else
-                                                <video src="{{ $fileUrl }}" class="w-full h-full object-cover" muted playsinline preload="metadata"></video>
-                                                <span class="absolute inset-0 flex items-center justify-center bg-black/25">
-                                                    <span class="material-icons text-white text-3xl">play_circle</span>
-                                                </span>
-                                            @endif
-                                            <span class="absolute bottom-1.5 start-1.5 text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-slate-900/70 text-white">
-                                                {{ $loop->iteration }}/{{ $files->count() }}
-                                            </span>
-                                        </div>
-                                    @endforeach
-                                </div>
-                            </button>
-                            <div class="px-3 pb-3 space-y-2">
-                                <button type="button" data-review-open="{{ $itemIndex }}"
-                                        class="block w-full text-start text-sm font-bold text-slate-800 leading-snug line-clamp-2 hover:text-teal-700">
-                                    {{ $task->title }}
-                                </button>
-                                @if($task->designer?->name)
-                                    <p class="text-[11px] text-slate-500 inline-flex items-center gap-1">
-                                        <span class="material-icons text-sm text-purple-500">palette</span>
-                                        تصميم: <span class="font-semibold text-slate-700">{{ $task->designer->name }}</span>
-                                    </p>
-                                @endif
-                                <div class="flex items-center justify-between gap-2">
-                                    <span class="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-orange-50 text-orange-700 inline-flex items-center gap-1">
-                                        <span class="material-icons text-xs">{{ ($item['is_carousel_type'] ?? ($task->content_type === 'carousel')) ? 'view_carousel' : 'collections' }}</span>
-                                        @if($item['is_carousel_type'] ?? ($task->content_type === 'carousel'))
-                                            كروسيل · {{ $files->count() }} شرائح
-                                        @else
-                                            {{ $files->count() }} ملفات
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-5" id="galleryGrid">
+            @foreach($items as $itemIndex => $item)
+                @php
+                    $task = $item['task'];
+                    $isCarousel = ($item['type'] ?? 'single') === 'carousel';
+                    $files = $isCarousel ? $item['files'] : collect([$item['file']]);
+                    $cover = $files->first();
+                    $designerId = $task->designer_id ? (string) $task->designer_id : 'none';
+                    $postNumber = \App\Models\WorkTask::extractPostSequence($task->title);
+                    $coverUrl = $cover && $cover->isImage()
+                        ? route('public.work.file', [$shareToken, $task, $cover, 'w' => 640])
+                        : ($cover ? route('public.work.file', [$shareToken, $task, $cover]) : null);
+                    $downloadUrl = $cover
+                        ? route('public.work.file', [$shareToken, $task, $cover, 'download' => 1])
+                        : null;
+                    $typeIcon = match ($task->content_type) {
+                        'reels' => 'movie',
+                        'carousel' => 'view_carousel',
+                        'post' => 'article',
+                        default => $isCarousel ? 'collections' : 'image',
+                    };
+                @endphp
+
+                <article class="post-card gallery-item" data-designer="{{ $designerId }}">
+                    <button type="button"
+                            class="post-card-media gallery-skel group text-start w-full"
+                            data-review-open="{{ $itemIndex }}">
+                        @if($cover && $cover->isImage())
+                            <img src="{{ $coverUrl }}"
+                                 alt="{{ $task->title }}"
+                                 class="gallery-img absolute inset-0 w-full h-full object-cover"
+                                 loading="{{ $itemIndex < 3 ? 'eager' : 'lazy' }}"
+                                 decoding="async"
+                                 width="640" height="640"
+                                 onload="this.classList.add('is-loaded'); this.parentElement.classList.remove('gallery-skel')">
+                        @elseif($cover)
+                            <video src="{{ $coverUrl }}" class="absolute inset-0 w-full h-full object-cover" muted playsinline preload="metadata"></video>
+                            <span class="absolute inset-0 flex items-center justify-center bg-black/25">
+                                <span class="material-icons text-white text-4xl">play_circle</span>
+                            </span>
+                        @endif
+
+                        <span class="absolute inset-0 bg-gradient-to-t from-slate-900/55 via-transparent to-transparent opacity-80"></span>
+
+                        @if($postNumber)
+                            <span class="absolute top-3 start-3 text-[11px] font-extrabold px-2.5 py-1 rounded-lg bg-white/95 text-slate-900 shadow-sm">
+                                بوست {{ $postNumber }}
+                            </span>
+                        @endif
+
+                        @if($files->count() > 1)
+                            <span class="absolute top-3 end-3 text-[10px] font-bold px-2 py-1 rounded-lg bg-slate-900/75 text-white inline-flex items-center gap-1">
+                                <span class="material-icons text-xs">{{ $typeIcon }}</span>
+                                {{ $files->count() }} شرائح
+                            </span>
+                            <div class="post-thumb-stack" dir="ltr">
+                                @foreach($files->take(3) as $thumbFile)
+                                    @php
+                                        $mini = $thumbFile->isImage()
+                                            ? route('public.work.file', [$shareToken, $task, $thumbFile, 'w' => 80])
+                                            : null;
+                                    @endphp
+                                    <span>
+                                        @if($mini)
+                                            <img src="{{ $mini }}" alt="" loading="lazy">
                                         @endif
                                     </span>
-                                    <button type="button"
-                                            class="inline-flex items-center gap-0.5 text-[11px] font-semibold text-teal-700 hover:text-teal-900"
-                                            data-review-open="{{ $itemIndex }}">
-                                        <span class="material-icons text-sm">rate_review</span>
-                                        مراجعة
-                                    </button>
-                                </div>
+                                @endforeach
                             </div>
-                        </article>
-                    @else
-                        @php
-                            $file = $item['file'];
-                            $fileUrl = route('public.work.file', [$shareToken, $task, $file]);
-                            $thumbUrl = $file->isImage()
-                                ? route('public.work.file', [$shareToken, $task, $file, 'w' => 480])
-                                : $fileUrl;
-                            $downloadUrl = route('public.work.file', [$shareToken, $task, $file, 'download' => 1]);
-                        @endphp
-                        <article class="file-tile gallery-item rounded-2xl overflow-hidden border border-slate-200 bg-white flex flex-col"
-                                 data-designer="{{ $designerId }}">
-                            <button type="button" data-review-open="{{ $itemIndex }}"
-                                    class="block aspect-square bg-slate-100 relative group text-start w-full gallery-skel">
-                                @if($file->isImage())
-                                    <img src="{{ $thumbUrl }}" alt="{{ $file->file_name }}"
-                                         class="gallery-img w-full h-full object-cover"
-                                         loading="{{ $itemIndex < 4 ? 'eager' : 'lazy' }}"
-                                         decoding="async"
-                                         fetchpriority="{{ $itemIndex < 2 ? 'high' : 'auto' }}"
-                                         width="480" height="480"
-                                         onload="this.classList.add('is-loaded'); this.parentElement.classList.remove('gallery-skel')">
-                                    <span class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                                        <span class="opacity-0 group-hover:opacity-100 material-icons text-white text-3xl drop-shadow">rate_review</span>
-                                    </span>
-                                @else
-                                    <video src="{{ $fileUrl }}" class="w-full h-full object-cover" muted playsinline preload="metadata"></video>
-                                    <span class="absolute inset-0 flex items-center justify-center bg-black/25">
-                                        <span class="material-icons text-white text-4xl">play_circle</span>
-                                    </span>
-                                @endif
+                        @endif
+
+                        <span class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <span class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white/95 text-slate-900 text-xs font-bold shadow">
+                                <span class="material-icons text-sm">rate_review</span>
+                                مراجعة
+                            </span>
+                        </span>
+                    </button>
+
+                    <div class="post-card-body">
+                        <div class="post-meta-row">
+                            @if($task->content_type_label)
+                                <span class="post-chip post-chip-teal">
+                                    <span class="material-icons text-xs">{{ $typeIcon }}</span>
+                                    {{ $task->content_type_label }}
+                                </span>
+                            @elseif($isCarousel)
+                                <span class="post-chip post-chip-amber">
+                                    <span class="material-icons text-xs">collections</span>
+                                    {{ $files->count() }} ملفات
+                                </span>
+                            @endif
+
+                            <span class="post-chip post-chip-slate">
+                                <span class="material-icons text-xs">{{ $task->pipeline_stage_icon }}</span>
+                                {{ $task->pipeline_stage_label }}
+                            </span>
+
+                            @if($task->is_overdue)
+                                <span class="post-chip post-chip-rose">متأخرة</span>
+                            @endif
+                        </div>
+
+                        <button type="button"
+                                data-review-open="{{ $itemIndex }}"
+                                class="text-start font-extrabold text-slate-900 leading-snug text-[0.95rem] line-clamp-2 hover:text-teal-700">
+                            {{ $task->title }}
+                        </button>
+
+                        @if(filled($task->caption))
+                            <p class="post-caption">{{ $task->caption }}</p>
+                        @endif
+
+                        <div class="space-y-1.5 pt-1 mt-auto border-t border-slate-100">
+                            @if($task->designer?->name)
+                                <p class="text-[11px] text-slate-600 inline-flex items-center gap-1.5">
+                                    <span class="material-icons text-sm text-teal-600">palette</span>
+                                    <span class="text-slate-400">المصمم</span>
+                                    <span class="font-bold text-slate-800">{{ $task->designer->name }}</span>
+                                </p>
+                            @endif
+
+                            @if($task->publish_schedule_label)
+                                <p class="text-[11px] text-slate-600 inline-flex items-center gap-1.5">
+                                    <span class="material-icons text-sm text-teal-600">event</span>
+                                    <span class="text-slate-400">موعد النشر</span>
+                                    <span class="font-bold text-slate-800">{{ $task->publish_schedule_label }}</span>
+                                </p>
+                            @endif
+
+                            @if(!empty($task->platform_labels))
+                                <div class="flex flex-wrap gap-1 pt-0.5">
+                                    @foreach($task->platform_labels as $platform)
+                                        <span class="post-chip">{{ $platform }}</span>
+                                    @endforeach
+                                </div>
+                            @endif
+                        </div>
+
+                        <div class="flex items-center justify-between gap-2 pt-1">
+                            <button type="button"
+                                    class="inline-flex items-center gap-1 text-[11px] font-bold text-teal-700 hover:text-teal-900"
+                                    data-review-open="{{ $itemIndex }}">
+                                <span class="material-icons text-sm">visibility</span>
+                                فتح المراجعة
                             </button>
-                            <div class="p-3 space-y-2">
-                                <button type="button" data-review-open="{{ $itemIndex }}"
-                                        class="block w-full text-start text-sm font-bold text-slate-800 leading-snug line-clamp-2 hover:text-teal-700">
-                                    {{ $task->title }}
-                                </button>
-                                @if($task->designer?->name)
-                                    <p class="text-[11px] text-slate-500 inline-flex items-center gap-1">
-                                        <span class="material-icons text-sm text-purple-500">palette</span>
-                                        تصميم: <span class="font-semibold text-slate-700">{{ $task->designer->name }}</span>
-                                    </p>
-                                @endif
-                                <div class="flex items-center justify-between gap-2">
-                                    @if($task->content_type_label)
-                                        <span class="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-teal-50 text-teal-700">{{ $task->content_type_label }}</span>
-                                    @else
-                                        <span class="text-[10px] text-slate-400">{{ $file->asset_kind_label }}</span>
-                                    @endif
-                                    <a href="{{ $downloadUrl }}"
-                                       class="inline-flex items-center gap-0.5 text-[11px] font-semibold text-slate-500 hover:text-slate-800"
-                                       onclick="event.stopPropagation()">
-                                        <span class="material-icons text-sm">download</span>
-                                        تحميل
-                                    </a>
-                                </div>
-                            </div>
-                        </article>
-                    @endif
-                @endforeach
-            </div>
-        </section>
+                            @if($downloadUrl)
+                                <a href="{{ $downloadUrl }}"
+                                   class="inline-flex items-center gap-0.5 text-[11px] font-semibold text-slate-500 hover:text-slate-800"
+                                   onclick="event.stopPropagation()">
+                                    <span class="material-icons text-sm">download</span>
+                                    تحميل
+                                </a>
+                            @endif
+                        </div>
+                    </div>
+                </article>
+            @endforeach
+        </div>
     @endif
 </div>
 
@@ -500,7 +590,7 @@
             if (grid) grid.classList.toggle('hidden', visible === 0);
             if (countEl) {
                 countEl.textContent = designerId === 'all'
-                    ? (visible + ' عنصر')
+                    ? (visible + ' بوست')
                     : (visible + ' من ' + items.length);
             }
         }
@@ -557,91 +647,79 @@
         document.body.style.overflow = '';
     }
 
-    function openReview(key) {
-        const item = reviewData[String(key)];
-        if (!item || !item.slides || !item.slides.length) return;
+    function openReview(index) {
+        const item = reviewData[String(index)];
+        if (!item) return;
 
-        titleEl.textContent = item.title || 'مراجعة التصميم';
-        const bits = [];
-        if (item.typeLabel) bits.push(item.typeLabel);
-        if (item.designerName) bits.push('تصميم: ' + item.designerName);
-        if (item.isCarousel) bits.push(item.slides.length + ' شرائح');
-        bits.push('مراجعة قبل النشر');
-        metaEl.textContent = bits.join(' · ');
+        const metaBits = [];
+        if (item.postNumber) metaBits.push('بوست ' + item.postNumber);
+        if (item.typeLabel) metaBits.push(item.typeLabel);
+        if (item.designerName) metaBits.push('تصميم: ' + item.designerName);
+        if (item.stageLabel) metaBits.push(item.stageLabel);
+        if (item.isCarousel && item.slides) metaBits.push(item.slides.length + ' شرائح');
+
+        titleEl.textContent = item.title || '';
+        metaEl.textContent = metaBits.join(' · ');
+
+        setTextOrPlaceholder(captionEl, item.caption, 'مفيش كابشن مكتوب لسه');
+
+        const hasTov = setTextOrPlaceholder(tovEl, item.tov, '');
+        tovBox.classList.toggle('hidden', !hasTov);
+
+        const hasIdea = setTextOrPlaceholder(ideaEl, item.idea, '');
+        ideaBox.classList.toggle('hidden', !hasIdea);
+
+        platformsEl.innerHTML = '';
+        (item.platforms || []).forEach(function (p) {
+            const chip = document.createElement('span');
+            chip.className = 'inline-flex px-2 py-0.5 rounded-md bg-teal-50 text-teal-800 text-[11px] font-bold border border-teal-100';
+            chip.textContent = p;
+            platformsEl.appendChild(chip);
+        });
+        publishDateEl.textContent = item.publishDate ? ('موعد النشر: ' + item.publishDate) : '';
+        const hasMeta = (item.platforms || []).length > 0 || !!item.publishDate;
+        metaBox.classList.toggle('hidden', !hasMeta);
+
+        if (item.taskUrl) {
+            taskLink.href = item.taskUrl;
+            taskLinkMobile.href = item.taskUrl;
+        }
 
         track.innerHTML = '';
-        const single = item.slides.length === 1;
-        item.slides.forEach(function (slide, index) {
+        const slides = item.slides || [];
+        slides.forEach(function (slide, i) {
             const wrap = document.createElement('div');
-            wrap.className = 'review-slide' + (single ? ' is-single' : '');
+            wrap.className = 'review-slide' + (slides.length === 1 ? ' is-single' : '');
             if (slide.kind === 'video') {
                 const video = document.createElement('video');
                 video.src = slide.url;
                 video.controls = true;
                 video.playsInline = true;
-                video.setAttribute('aria-label', slide.name || ('slide-' + (index + 1)));
                 wrap.appendChild(video);
             } else {
                 const img = document.createElement('img');
-                img.src = slide.url || slide.thumb;
-                img.alt = slide.name || ('slide-' + (index + 1));
-                img.decoding = 'async';
-                img.loading = index === 0 ? 'eager' : 'lazy';
+                img.src = slide.url;
+                img.alt = slide.name || '';
                 wrap.appendChild(img);
             }
             track.appendChild(wrap);
+            if (i === 0 && downloadLink) {
+                downloadLink.href = slide.download || '#';
+            }
         });
-        track.scrollLeft = 0;
-
-        setTextOrPlaceholder(captionEl, item.caption, 'مفيش كابشن مكتوب لسه');
-
-        if (setTextOrPlaceholder(tovEl, item.tov, '')) {
-            tovBox.classList.remove('hidden');
-        } else {
-            tovBox.classList.add('hidden');
-        }
-
-        if (setTextOrPlaceholder(ideaEl, item.idea, '')) {
-            ideaBox.classList.remove('hidden');
-        } else {
-            ideaBox.classList.add('hidden');
-        }
-
-        platformsEl.innerHTML = '';
-        const platforms = item.platforms || [];
-        platforms.forEach(function (p) {
-            const chip = document.createElement('span');
-            chip.className = 'text-[11px] font-semibold px-2 py-1 rounded-lg bg-teal-50 text-teal-800';
-            chip.textContent = p;
-            platformsEl.appendChild(chip);
-        });
-        publishDateEl.textContent = item.publishDate ? ('موعد النشر: ' + item.publishDate) : '';
-        if (platforms.length || item.publishDate) {
-            metaBox.classList.remove('hidden');
-        } else {
-            metaBox.classList.add('hidden');
-        }
-
-        taskLink.href = item.taskUrl || '#';
-        taskLinkMobile.href = item.taskUrl || '#';
-        downloadLink.href = item.slides[0].download || item.slides[0].url;
-        downloadLink.textContent = '';
-        downloadLink.innerHTML = '<span class="material-icons text-sm">download</span> ' +
-            (item.isCarousel ? 'تحميل أول شريحة' : 'تحميل التصميم');
 
         modal.classList.add('is-open');
         modal.setAttribute('aria-hidden', 'false');
         document.body.style.overflow = 'hidden';
     }
 
-    document.querySelectorAll('[data-review-open]').forEach(function (btn) {
-        btn.addEventListener('click', function (e) {
-            e.preventDefault();
-            openReview(btn.getAttribute('data-review-open'));
-        });
+    document.addEventListener('click', function (e) {
+        const btn = e.target.closest('[data-review-open]');
+        if (!btn) return;
+        openReview(btn.getAttribute('data-review-open'));
     });
 
-    closeBtn && closeBtn.addEventListener('click', closeReview);
+    closeBtn?.addEventListener('click', closeReview);
     modal.addEventListener('click', function (e) {
         if (e.target === modal) closeReview();
     });
