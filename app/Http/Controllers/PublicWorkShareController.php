@@ -146,6 +146,7 @@ class PublicWorkShareController extends Controller
     public function downloadGalleryPdf(string $token)
     {
         @ini_set('memory_limit', '512M');
+        @ini_set('pcre.backtrack_limit', '5000000');
         @set_time_limit(180);
 
         $activity = $this->findSharedActivity($token);
@@ -180,13 +181,14 @@ class PublicWorkShareController extends Controller
                     $images[] = [
                         'kind' => 'video',
                         'name' => $file->file_name,
-                        'data_uri' => null,
+                        'path' => null,
                     ];
 
                     continue;
                 }
 
-                $path = $thumbs->jpegPath($file, 920, 80);
+                // صور أصغر على القرص مباشرة — بدون base64 عشان الحملات الكبيرة
+                $path = $thumbs->jpegPath($file, 720, 70);
                 if (! $path || ! is_file($path)) {
                     continue;
                 }
@@ -194,7 +196,7 @@ class PublicWorkShareController extends Controller
                 $images[] = [
                     'kind' => 'image',
                     'name' => $file->file_name,
-                    'data_uri' => 'data:image/jpeg;base64,'.base64_encode((string) file_get_contents($path)),
+                    'path' => $path,
                 ];
             }
 
@@ -220,12 +222,6 @@ class PublicWorkShareController extends Controller
 
         abort_if($posts->isEmpty(), 404, 'مفيش تصميمات للتصدير');
 
-        $html = view('public.work.gallery-pdf', [
-            'activity' => $activity,
-            'posts' => $posts,
-            'generatedAt' => now()->timezone(config('app.timezone', 'Africa/Cairo'))->format('Y/m/d H:i'),
-        ])->render();
-
         $tempDir = storage_path('app/mpdf-tmp');
         if (! is_dir($tempDir)) {
             mkdir($tempDir, 0755, true);
@@ -245,7 +241,49 @@ class PublicWorkShareController extends Controller
         $mpdf->autoScriptToLang = true;
         $mpdf->autoLangToFont = true;
         $mpdf->SetTitle('مراجعة حملة — '.$activity->title);
-        $mpdf->WriteHTML($html);
+
+        $styles = <<<'CSS'
+<style>
+body { font-family: dejavusans, sans-serif; font-size: 11pt; color: #0f172a; line-height: 1.55; }
+.cover { text-align: center; padding: 28px 12px 18px; border-bottom: 2px solid #0d9488; margin-bottom: 18px; }
+.cover-kicker { color: #0d9488; font-size: 10pt; font-weight: bold; margin-bottom: 6px; }
+.cover h1 { font-size: 18pt; margin: 0 0 8px; }
+.cover-meta { color: #64748b; font-size: 9pt; }
+.stats { margin-top: 10px; font-size: 9pt; color: #334155; }
+.post { page-break-inside: avoid; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin: 0 0 16px; }
+.post-head { border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 10px; }
+.post-title { font-size: 12pt; font-weight: bold; margin: 0 0 4px; }
+.chips { color: #475569; font-size: 8.5pt; }
+.label { color: #0d9488; font-size: 8.5pt; font-weight: bold; margin: 8px 0 3px; }
+.caption { white-space: pre-wrap; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px 10px; font-size: 10pt; }
+.muted { color: #94a3b8; font-size: 9pt; }
+.img-wrap { text-align: center; margin: 8px 0; background: #f1f5f9; padding: 8px; border-radius: 6px; }
+.img-wrap img { max-width: 100%; max-height: 280px; height: auto; }
+.slide-label { font-size: 8pt; color: #64748b; margin-top: 3px; }
+.video-note { background: #fff1f2; border: 1px solid #fecdd3; color: #9f1239; padding: 8px; border-radius: 6px; font-size: 9pt; margin: 6px 0; }
+.footer { margin-top: 20px; text-align: center; color: #94a3b8; font-size: 8pt; border-top: 1px solid #e2e8f0; padding-top: 8px; }
+</style>
+CSS;
+
+        // اكتب HTML على أجزاء عشان الحملات الكبيرة ما تكسرش mPDF
+        $mpdf->WriteHTML($styles, \Mpdf\HTMLParserMode::HEADER_CSS);
+        $mpdf->WriteHTML(view('public.work.gallery-pdf-cover', [
+            'activity' => $activity,
+            'postsCount' => $posts->count(),
+            'generatedAt' => now()->timezone(config('app.timezone', 'Africa/Cairo'))->format('Y/m/d H:i'),
+        ])->render(), \Mpdf\HTMLParserMode::HTML_BODY);
+
+        foreach ($posts as $post) {
+            $mpdf->WriteHTML(
+                view('public.work.gallery-pdf-post', ['post' => $post])->render(),
+                \Mpdf\HTMLParserMode::HTML_BODY
+            );
+        }
+
+        $mpdf->WriteHTML(
+            '<div class="footer">MarketLink · ملف مراجعة داخلي قبل النشر</div>',
+            \Mpdf\HTMLParserMode::HTML_BODY
+        );
 
         $safeName = Str::slug($activity->title) ?: 'campaign';
         $filename = 'review-'.$safeName.'-'.now()->format('Ymd').'.pdf';
