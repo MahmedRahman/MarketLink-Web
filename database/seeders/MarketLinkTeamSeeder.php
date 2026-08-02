@@ -11,9 +11,9 @@ use Illuminate\Support\Facades\Hash;
 
 /**
  * فريق MarketLink الداخلي:
- * - محمد / مها / ألاء: أدمن (User على مستوى المنظمة + is_admin)
+ * - محمد / مها / ألاء / نيرة: أدمن (User على مستوى المنظمة + is_admin)
  * - ألاء: كمان Employee (account_manager) لتعيين مهام النشر — الدخول يكون كأدمن
- * - نيرة: كتابة محتوى (Employee: content_writer)
+ * - نيرة: كمان Employee (content_writer) لتعيين مهام الكتابة — الدخول يكون كأدمن
  * - يوسف / مريم: تصميم (Employee: designer)
  * - نفين: فيديو (Employee: video_editor)
  *
@@ -45,6 +45,7 @@ class MarketLinkTeamSeeder extends Seeder
             ['name' => 'محمد عبد الرحمن', 'email' => 'mohamed@marketlink.app', 'password' => 'Mohamed@2026'],
             ['name' => 'مها رافت', 'email' => 'maha@marketlink.app', 'password' => 'Maha@2026'],
             ['name' => 'الاء رآفت', 'email' => 'alaa@marketlink.app', 'password' => 'Alaa@2026'],
+            ['name' => 'نيرة', 'email' => 'nira@marketlink.app', 'password' => 'Nira@2026'],
         ];
 
         foreach ($admins as $admin) {
@@ -119,6 +120,6 @@ class MarketLinkTeamSeeder extends Seeder
             );
         }
 
-        $this->command?->info('MarketLink team seeded: 3 admins + 5 employees (org: marketlink).');
+        $this->command?->info('MarketLink team seeded: 4 admins + 5 employees (org: marketlink).');
     }
 }

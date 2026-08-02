@@ -175,18 +175,18 @@
                     </div>
                 </div>
 
-                <p class="text-xs font-semibold text-gray-500 pt-2">الموظفون</p>
-
-                <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-3 cursor-pointer hover:shadow-md transition-all" onclick="fillLoginForm('nira@marketlink.app', 'Nira@2026')">
+                <div class="bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 rounded-xl p-3 cursor-pointer hover:shadow-md transition-all" onclick="fillLoginForm('nira@marketlink.app', 'Nira@2026')">
                     <div class="flex items-center justify-between">
                         <div>
                             <h3 class="text-sm font-semibold text-gray-800">نيرة</h3>
-                            <p class="text-xs text-gray-600">كتابة محتوى · nira@marketlink.app</p>
-                            <p class="text-xs text-blue-600 mt-0.5">Nira@2026</p>
+                            <p class="text-xs text-gray-600">أدمن · nira@marketlink.app</p>
+                            <p class="text-xs text-red-600 mt-0.5">Nira@2026</p>
                         </div>
-                        <span class="material-icons text-blue-500 text-sm">arrow_forward</span>
+                        <span class="material-icons text-red-500 text-sm">arrow_forward</span>
                     </div>
                 </div>
+
+                <p class="text-xs font-semibold text-gray-500 pt-2">الموظفون</p>
 
                 <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-3 cursor-pointer hover:shadow-md transition-all" onclick="fillLoginForm('youssef@marketlink.app', 'Youssef@2026')">
                     <div class="flex items-center justify-between">
