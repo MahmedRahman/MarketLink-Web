@@ -5,6 +5,12 @@
 @section('page-description', 'أنشطة الأكاديمية: محاضرات لايف، راوندات مدفوعة، ومحتوى تعليمي')
 
 @section('content')
+@php
+    $quickTaskEnabled = $activities->isNotEmpty();
+    $quickTaskStoreUrls = $quickTaskEnabled
+        ? $activities->mapWithKeys(fn ($a) => [$a->id => work_route('tasks.store', $a)])->all()
+        : [];
+@endphp
 <div class="max-w-7xl mx-auto space-y-6">
 
     @if(session('success'))
@@ -100,6 +106,13 @@
         </div>
 
         <div class="flex flex-wrap items-center gap-2">
+            @if($activities->isNotEmpty())
+                <button type="button" onclick="openQuickTaskModal()"
+                        class="px-4 py-2.5 rounded-xl font-medium bg-indigo-50 text-indigo-800 border border-indigo-200 hover:bg-indigo-100 inline-flex items-center gap-2">
+                    <span class="material-icons text-lg">bolt</span>
+                    تاسك سريع
+                </button>
+            @endif
             @if($canManageFolders ?? false)
                 <button type="button" onclick="document.getElementById('newFolderModal').classList.remove('hidden')"
                         class="px-4 py-2.5 rounded-xl font-medium bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 inline-flex items-center gap-2">
@@ -179,7 +192,7 @@
                          data-folder-id="{{ $folderKey }}">
                         <div class="folder-drop-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 {{ $folderActivities->isEmpty() ? 'hidden' : '' }}">
                             @foreach($folderActivities as $activity)
-                                @include('work.partials.activity-card', ['activity' => $activity])
+                                @include('work.partials.activity-card', ['activity' => $activity, 'quickTaskEnabled' => $quickTaskEnabled])
                             @endforeach
                         </div>
                         <p class="folder-drop-empty text-sm text-gray-400 text-center py-8 border-2 border-dashed border-gray-200 rounded-2xl {{ $folderActivities->isEmpty() ? '' : 'hidden' }}">
@@ -216,7 +229,7 @@
                     <div class="p-5">
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                             @foreach($monthGroup['activities'] as $activity)
-                                @include('work.partials.activity-card', ['activity' => $activity])
+                                @include('work.partials.activity-card', ['activity' => $activity, 'quickTaskEnabled' => $quickTaskEnabled])
                             @endforeach
                         </div>
                     </div>
@@ -226,7 +239,7 @@
     @else
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             @foreach($activities as $activity)
-                @include('work.partials.activity-card', ['activity' => $activity])
+                @include('work.partials.activity-card', ['activity' => $activity, 'quickTaskEnabled' => $quickTaskEnabled])
             @endforeach
         </div>
     @endif
@@ -289,6 +302,93 @@
             <div class="flex gap-3 pt-2">
                 <button type="submit" class="btn-primary text-white px-5 py-2.5 rounded-xl font-medium flex-1">حفظ</button>
                 <button type="button" onclick="document.getElementById('editFolderModal').classList.add('hidden')"
+                        class="px-5 py-2.5 rounded-xl font-medium bg-gray-100 text-gray-700 hover:bg-gray-200">إلغاء</button>
+            </div>
+        </form>
+    </div>
+</div>
+@endif
+
+@if($quickTaskEnabled)
+{{-- مودال تاسك سريع --}}
+<div id="quickTaskModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
+    <div class="bg-white rounded-2xl w-full max-w-lg p-6 shadow-2xl">
+        <div class="flex items-center justify-between mb-5">
+            <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+                <span class="material-icons text-indigo-600">bolt</span>
+                تاسك سريع
+            </h3>
+            <button type="button" onclick="closeQuickTaskModal()" class="text-gray-400 hover:text-gray-600">
+                <span class="material-icons">close</span>
+            </button>
+        </div>
+
+        @if($errors->any() && old('quick_task'))
+            <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-xl mb-4">
+                <ul class="list-disc list-inside text-sm space-y-1">
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        <form method="POST" id="quickTaskForm" action="#" class="space-y-4">
+            @csrf
+            <input type="hidden" name="quick_task" value="1">
+
+            <div>
+                <label for="quickTaskActivity" class="block text-sm font-medium text-gray-700 mb-1">النشاط</label>
+                <select name="activity_id" id="quickTaskActivity" required
+                        class="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 text-sm focus:border-indigo-500 focus:outline-none">
+                    <option value="">— اختر النشاط —</option>
+                    @foreach($activities as $activityOption)
+                        <option value="{{ $activityOption->id }}" @selected((string) old('activity_id') === (string) $activityOption->id)>
+                            {{ $activityOption->title }}
+                            @if($activityOption->event_date)
+                                · {{ $activityOption->event_date->format('Y/m/d') }}
+                            @endif
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div>
+                <label for="quickTaskTitle" class="block text-sm font-medium text-gray-700 mb-1">عنوان التاسك</label>
+                <input type="text" name="title" id="quickTaskTitle" required maxlength="255"
+                       value="{{ old('title') }}"
+                       placeholder="مثال: بوست 3 — إعلان المحاضرة"
+                       class="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 text-sm focus:border-indigo-500 focus:outline-none">
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                    <label for="quickTaskKind" class="block text-sm font-medium text-gray-700 mb-1">نوع الشغل</label>
+                    <select name="kind" id="quickTaskKind"
+                            class="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 text-sm focus:border-indigo-500 focus:outline-none">
+                        @foreach($kinds as $key => $label)
+                            <option value="{{ $key }}" @selected(old('kind', 'content') === $key)>{{ $label }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label for="quickTaskDueDate" class="block text-sm font-medium text-gray-700 mb-1">التسليم (اختياري)</label>
+                    <input type="date" name="due_date" id="quickTaskDueDate" value="{{ old('due_date') }}"
+                           class="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 text-sm focus:border-indigo-500 focus:outline-none">
+                </div>
+            </div>
+
+            <p class="text-xs text-gray-500 bg-gray-50 border border-gray-100 rounded-xl px-3 py-2">
+                الكاتب والمصمم والمعيّن يتقترحوا تلقائيًا — تقدر تكمل التفاصيل من صفحة النشاط بعد الإضافة.
+            </p>
+
+            <div class="flex gap-3 pt-1">
+                <button type="submit" id="quickTaskSubmitBtn"
+                        class="flex-1 px-5 py-2.5 rounded-xl font-medium bg-indigo-600 text-white hover:bg-indigo-700 inline-flex items-center justify-center gap-2">
+                    <span class="material-icons text-base">add_task</span>
+                    إضافة التاسك
+                </button>
+                <button type="button" onclick="closeQuickTaskModal()"
                         class="px-5 py-2.5 rounded-xl font-medium bg-gray-100 text-gray-700 hover:bg-gray-200">إلغاء</button>
             </div>
         </form>
@@ -603,6 +703,56 @@
     }
 
     document.addEventListener('DOMContentLoaded', function () {
+        const quickTaskStoreUrls = @json($quickTaskStoreUrls ?? []);
+        const quickTaskForm = document.getElementById('quickTaskForm');
+        const quickTaskActivity = document.getElementById('quickTaskActivity');
+        const quickTaskModal = document.getElementById('quickTaskModal');
+
+        function syncQuickTaskFormAction() {
+            if (!quickTaskForm || !quickTaskActivity) return;
+            const id = quickTaskActivity.value;
+            quickTaskForm.action = id && quickTaskStoreUrls[id] ? quickTaskStoreUrls[id] : '#';
+        }
+
+        window.openQuickTaskModal = function (activityId) {
+            if (!quickTaskModal) return;
+            quickTaskModal.classList.remove('hidden');
+            if (activityId && quickTaskActivity) {
+                quickTaskActivity.value = String(activityId);
+            }
+            syncQuickTaskFormAction();
+            document.getElementById('quickTaskTitle')?.focus();
+        };
+
+        window.closeQuickTaskModal = function () {
+            quickTaskModal?.classList.add('hidden');
+        };
+
+        quickTaskActivity?.addEventListener('change', syncQuickTaskFormAction);
+
+        quickTaskForm?.addEventListener('submit', function (e) {
+            syncQuickTaskFormAction();
+            if (!quickTaskActivity?.value || quickTaskForm.action === '#') {
+                e.preventDefault();
+                alert('اختار النشاط الأول');
+                quickTaskActivity?.focus();
+                return;
+            }
+            const btn = document.getElementById('quickTaskSubmitBtn');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="material-icons text-base animate-spin">progress_activity</span> جاري الإضافة...';
+            }
+        });
+
+        quickTaskModal?.addEventListener('click', function (e) {
+            if (e.target === quickTaskModal) closeQuickTaskModal();
+        });
+
+        if (@json(old('quick_task') ? true : false)) {
+            openQuickTaskModal(@json(old('activity_id')));
+        }
+
         const params = new URLSearchParams(window.location.search);
         const openNew = params.get('open_new_activity');
         const ideaId = params.get('idea_id');

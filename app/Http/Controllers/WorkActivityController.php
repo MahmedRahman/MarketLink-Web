@@ -115,6 +115,7 @@ class WorkActivityController extends Controller
             'follow' => $follow,
             'types' => WorkActivity::types(),
             'statuses' => WorkActivity::statuses(),
+            'kinds' => WorkTask::kinds(),
             'filterType' => $request->type,
             'filterStatus' => $request->status,
             'canManageFolders' => WorkHub::canManageFolders($request),

@@ -64,6 +64,15 @@
         </div>
     </a>
 
+    @if($quickTaskEnabled ?? false)
+        <button type="button"
+                onclick="event.stopPropagation(); openQuickTaskModal({{ $activity->id }})"
+                class="w-full px-3 py-1.5 rounded-xl border border-indigo-100 bg-indigo-50/60 text-indigo-800 text-xs font-semibold hover:bg-indigo-100 inline-flex items-center justify-center gap-1 transition-colors">
+            <span class="material-icons text-sm">bolt</span>
+            تاسك سريع
+        </button>
+    @endif
+
     @if($canManageFolders)
         <form method="POST" action="{{ work_route('move-folder', $activity) }}" class="px-1 folder-move-form" onclick="event.stopPropagation()">
             @csrf
