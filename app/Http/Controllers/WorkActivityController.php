@@ -348,9 +348,13 @@ class WorkActivityController extends Controller
             ->where('pipeline_stage', 'archived')
             ->values();
 
-        $boardView = $request->input('board', 'pipeline');
-        if (! in_array($boardView, ['pipeline', 'archive'], true)) {
-            $boardView = 'pipeline';
+        $tableTasks = $work->tasks
+            ->where('pipeline_stage', '!=', 'archived')
+            ->values();
+
+        $boardView = $request->input('board', 'table');
+        if (! in_array($boardView, ['table', 'pipeline', 'archive'], true)) {
+            $boardView = 'table';
         }
 
         $designers = $employees->whereIn('role', ['designer', 'video_editor'])->values();
@@ -368,6 +372,7 @@ class WorkActivityController extends Controller
             'publishers' => $publishers,
             'pipelineStages' => $pipelineStages,
             'archivedTasks' => $archivedTasks,
+            'tableTasks' => $tableTasks,
             'boardView' => $boardView,
             'contentCounts' => $contentCounts,
             'kinds' => WorkTask::kinds(),

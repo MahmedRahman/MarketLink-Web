@@ -10,7 +10,7 @@
     // موظف مقترح لكل دور لعرض التلميح
     $roleEmployee = $employees->groupBy('role')->map(fn($g) => $g->first());
 @endphp
-<div class="max-w-6xl mx-auto space-y-6">
+<div class="max-w-7xl mx-auto space-y-6">
 
     @if(session('success'))
         <div class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-xl flex items-center">
@@ -220,13 +220,18 @@
             </div>
             <div class="flex items-center gap-2 flex-wrap">
                 <div class="inline-flex items-center rounded-xl border border-gray-200 bg-gray-50 p-1">
+                    <a href="{{ work_route('show', [$activity, 'board' => 'table']) }}"
+                       class="px-3 py-1.5 rounded-lg text-xs font-bold inline-flex items-center gap-1 {{ ($boardView ?? 'table') === 'table' ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-600 hover:text-gray-800' }}">
+                        <span class="material-icons text-sm">table_rows</span>
+                        جدول
+                    </a>
                     <a href="{{ work_route('show', [$activity, 'board' => 'pipeline']) }}"
-                       class="px-3 py-1.5 rounded-lg text-xs font-bold inline-flex items-center gap-1 {{ ($boardView ?? 'pipeline') === 'pipeline' ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-600 hover:text-gray-800' }}">
+                       class="px-3 py-1.5 rounded-lg text-xs font-bold inline-flex items-center gap-1 {{ ($boardView ?? 'table') === 'pipeline' ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-600 hover:text-gray-800' }}">
                         <span class="material-icons text-sm">view_kanban</span>
                         البايبلاين
                     </a>
                     <a href="{{ work_route('show', [$activity, 'board' => 'archive']) }}"
-                       class="px-3 py-1.5 rounded-lg text-xs font-bold inline-flex items-center gap-1 {{ ($boardView ?? 'pipeline') === 'archive' ? 'bg-white text-slate-800 shadow-sm' : 'text-gray-600 hover:text-gray-800' }}">
+                       class="px-3 py-1.5 rounded-lg text-xs font-bold inline-flex items-center gap-1 {{ ($boardView ?? 'table') === 'archive' ? 'bg-white text-slate-800 shadow-sm' : 'text-gray-600 hover:text-gray-800' }}">
                         <span class="material-icons text-sm">inventory_2</span>
                         الأرشيف
                         <span class="px-1.5 py-0.5 rounded-md bg-slate-200 text-slate-700">{{ $contentCounts['archived'] ?? ($archivedTasks ?? collect())->count() }}</span>
@@ -247,7 +252,7 @@
             </div>
         </div>
 
-        @if(($boardView ?? 'pipeline') === 'archive')
+        @if(($boardView ?? 'table') === 'archive')
             <div class="space-y-4" id="archiveBoard">
                 <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 flex items-start gap-2">
                     <span class="material-icons text-slate-500 shrink-0">info</span>
@@ -357,12 +362,82 @@
                         <span class="material-icons text-5xl text-slate-300">inventory_2</span>
                         <h3 class="text-lg font-bold text-slate-700 mt-3">الأرشيف فاضي</h3>
                         <p class="text-sm text-slate-500 mt-1">بعد «تم النشر» اسحب التاسك لمنطقة الأرشيف في البايبلاين</p>
-                        <a href="{{ work_route('show', [$activity, 'board' => 'pipeline']) }}"
+                        <a href="{{ work_route('show', [$activity, 'board' => 'table']) }}"
                            class="inline-flex mt-4 px-4 py-2 rounded-xl bg-indigo-50 text-indigo-700 text-sm font-bold hover:bg-indigo-100">
-                            رجوع للبايبلاين
+                            رجوع للجدول
                         </a>
                     </div>
                 @endforelse
+            </div>
+        @elseif(($boardView ?? 'table') === 'table')
+            <div class="card rounded-2xl overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-sm text-right">
+                        <thead class="bg-slate-50 text-slate-600">
+                            <tr class="border-b border-slate-200">
+                                <th class="px-4 py-3 font-bold whitespace-nowrap">#</th>
+                                <th class="px-4 py-3 font-bold">العنوان</th>
+                                <th class="px-4 py-3 font-bold whitespace-nowrap">النوع</th>
+                                <th class="px-4 py-3 font-bold whitespace-nowrap">المرحلة</th>
+                                <th class="px-4 py-3 font-bold whitespace-nowrap">الكاتب</th>
+                                <th class="px-4 py-3 font-bold whitespace-nowrap">المصمم</th>
+                                <th class="px-4 py-3 font-bold whitespace-nowrap">التسليم</th>
+                                <th class="px-4 py-3 font-bold whitespace-nowrap">ملفات</th>
+                                <th class="px-4 py-3 font-bold whitespace-nowrap">إجراء</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            @forelse(($tableTasks ?? collect()) as $index => $task)
+                                @php
+                                    $stageClass = match($task->pipeline_stage) {
+                                        'planning' => 'bg-amber-50 text-amber-800',
+                                        'writing' => 'bg-blue-50 text-blue-800',
+                                        'design' => 'bg-purple-50 text-purple-800',
+                                        'ready_to_publish' => 'bg-teal-50 text-teal-800',
+                                        'published' => 'bg-green-50 text-green-800',
+                                        default => 'bg-slate-100 text-slate-700',
+                                    };
+                                @endphp
+                                <tr class="hover:bg-slate-50/80 {{ $task->is_overdue ? 'bg-red-50/40' : '' }}">
+                                    <td class="px-4 py-3 text-slate-400 font-semibold">{{ $index + 1 }}</td>
+                                    <td class="px-4 py-3">
+                                        <a href="{{ work_route('tasks.show', [$activity, $task]) }}" class="font-bold text-gray-900 hover:text-indigo-700 leading-snug">
+                                            {{ $task->title }}
+                                        </a>
+                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        @if($task->content_type_label)
+                                            <span class="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 text-[11px] font-semibold">{{ $task->content_type_label }}</span>
+                                        @else
+                                            <span class="text-slate-400">—</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        <span class="px-2 py-0.5 rounded-md text-[11px] font-bold {{ $stageClass }}">{{ $task->pipeline_stage_label }}</span>
+                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-slate-700">{{ $task->contentWriter?->name ?? '—' }}</td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-slate-700">{{ $task->designer?->name ?? '—' }}</td>
+                                    <td class="px-4 py-3 whitespace-nowrap {{ $task->is_overdue ? 'text-red-600 font-bold' : 'text-slate-600' }}">
+                                        {{ optional($task->due_date)->format('Y/m/d') ?? '—' }}
+                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-slate-600">{{ $task->files->count() }}</td>
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        <div class="flex items-center gap-1">
+                                            <a href="{{ work_route('tasks.show', [$activity, $task]) }}" class="px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 text-[11px] font-bold hover:bg-indigo-100">فتح</a>
+                                            <a href="{{ work_route('tasks.edit', [$activity, $task]) }}" class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-[11px] font-bold hover:bg-slate-200">تعديل</a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="9" class="px-4 py-12 text-center text-slate-400">
+                                        مفيش تاسكات في النشاط ده — اضغط «إضافة تاسك محتوى»
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
             </div>
         @else
         <div class="space-y-4" id="pipelineBoard">
