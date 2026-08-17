@@ -129,6 +129,28 @@ class WorkActivityController extends Controller
         ]);
     }
 
+    /**
+     * أرشيف مساحة العمل: كل التاسكات اللي اتنقلت للأرشيف بعد النشر.
+     */
+    public function archive(Request $request)
+    {
+        $organizationId = WorkHub::organizationId($request);
+        abort_unless($organizationId, 403);
+
+        $tasks = WorkTask::query()
+            ->where('pipeline_stage', 'archived')
+            ->whereHas('activity', fn ($q) => $q->where('organization_id', $organizationId))
+            ->with(['activity', 'assignedEmployee', 'designer', 'contentWriter', 'files'])
+            ->orderByDesc('updated_at')
+            ->orderByDesc('id')
+            ->get();
+
+        return view('work.archive', [
+            'tasks' => $tasks,
+            'groups' => $tasks->groupBy('work_activity_id'),
+        ]);
+    }
+
     public function store(Request $request)
     {
         $organizationId = WorkHub::organizationId($request);

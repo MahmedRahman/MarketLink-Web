@@ -129,14 +129,22 @@
             </a>
 
             @if($isWorkHubAdmin)
-                <a href="{{ route('employee.hub.index') }}" class="flex items-center px-4 py-3 text-gray-700 rounded-xl hover:bg-gray-100 {{ request()->routeIs('employee.hub.*') ? 'bg-purple-50 text-purple-700' : '' }}">
+                <a href="{{ route('employee.hub.index') }}" class="flex items-center px-4 py-3 text-gray-700 rounded-xl hover:bg-gray-100 {{ request()->routeIs('employee.hub.*') && ! request()->routeIs('employee.hub.archive') ? 'bg-purple-50 text-purple-700' : '' }}">
                     <span class="material-icons text-lg ml-3">dashboard_customize</span>
                     <span class="font-medium">مساحة العمل</span>
+                </a>
+                <a href="{{ route('employee.hub.archive') }}" class="flex items-center px-4 py-3 text-gray-700 rounded-xl hover:bg-gray-100 {{ request()->routeIs('employee.hub.archive') ? 'bg-purple-50 text-purple-700' : '' }}">
+                    <span class="material-icons text-lg ml-3">inventory_2</span>
+                    <span class="font-medium">أرشيف</span>
                 </a>
             @else
                 <a href="{{ route('employee.tasks.index') }}" class="flex items-center px-4 py-3 text-gray-700 rounded-xl hover:bg-gray-100 {{ request()->routeIs('employee.tasks.index') || request()->routeIs('employee.work.*') ? 'bg-purple-50 text-purple-700' : '' }}">
                     <span class="material-icons text-lg ml-3">dashboard_customize</span>
                     <span class="font-medium">مساحة العمل</span>
+                </a>
+                <a href="{{ route('employee.archive') }}" class="flex items-center px-4 py-3 text-gray-700 rounded-xl hover:bg-gray-100 {{ request()->routeIs('employee.archive') ? 'bg-purple-50 text-purple-700' : '' }}">
+                    <span class="material-icons text-lg ml-3">inventory_2</span>
+                    <span class="font-medium">أرشيف</span>
                 </a>
             @endif
             

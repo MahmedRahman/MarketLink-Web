@@ -70,6 +70,29 @@ class EmployeeWorkTaskController extends Controller
     }
 
     /**
+     * أرشيف الموظف: التاسكات المؤرشفة اللي اشتغل عليها.
+     */
+    public function archive()
+    {
+        $employee = Auth::guard('employee')->user();
+
+        $tasks = WorkTask::forEmployee($employee->id)
+            ->where('pipeline_stage', 'archived')
+            ->whereHas('activity', fn ($q) => $q->where('organization_id', $employee->organization_id))
+            ->with(['activity', 'assignedEmployee', 'designer', 'contentWriter', 'files'])
+            ->orderByDesc('updated_at')
+            ->orderByDesc('id')
+            ->get();
+
+        return view('work.archive', [
+            'tasks' => $tasks,
+            'groups' => $tasks->groupBy('work_activity_id'),
+            'employeeOnly' => true,
+            'workLayout' => 'layouts.employee',
+        ]);
+    }
+
+    /**
      * مساحة العمل للموظف: فولدرات الأنشطة اللي فيها مهام مطلوبة منه.
      */
     public function index(Request $request)

@@ -157,6 +157,7 @@ Route::middleware(['auth', \App\Http\Middleware\CheckTrialStatus::class])->group
 
            // Academy Work Hub (مساحة العمل)
            Route::get('work', [\App\Http\Controllers\WorkActivityController::class, 'index'])->name('work.index');
+           Route::get('work/archive', [\App\Http\Controllers\WorkActivityController::class, 'archive'])->name('work.archive');
            Route::post('work', [\App\Http\Controllers\WorkActivityController::class, 'store'])->name('work.store');
            Route::post('work/folders', [\App\Http\Controllers\WorkFolderController::class, 'store'])->name('work.folders.store');
            Route::put('work/folders/{folder}', [\App\Http\Controllers\WorkFolderController::class, 'update'])->name('work.folders.update');
@@ -288,6 +289,7 @@ Route::middleware('auth:employee')->prefix('employee')->name('employee.')->group
 
     // Academy Work Hub Tasks (مساحة العمل - مهامي)
     Route::get('/mine', [\App\Http\Controllers\Employee\EmployeeWorkTaskController::class, 'mine'])->name('mine');
+    Route::get('/archive', [\App\Http\Controllers\Employee\EmployeeWorkTaskController::class, 'archive'])->name('archive');
     Route::get('/my-tasks', [\App\Http\Controllers\Employee\EmployeeWorkTaskController::class, 'index'])->name('tasks.index');
     Route::get('/activities/{work}', [\App\Http\Controllers\Employee\EmployeeWorkTaskController::class, 'showActivity'])->name('work.activity');
     Route::post('/activities/{work}/tasks/reorder', [\App\Http\Controllers\Employee\EmployeeWorkTaskController::class, 'reorder'])->name('work.reorder');
@@ -301,6 +303,7 @@ Route::middleware('auth:employee')->prefix('employee')->name('employee.')->group
     // مساحة العمل الكاملة للأكونت منجر (أدمن الحتة دي)
     Route::middleware('employee.work_hub')->prefix('hub')->name('hub.')->group(function () {
         Route::get('/', [\App\Http\Controllers\WorkActivityController::class, 'index'])->name('index');
+        Route::get('/archive', [\App\Http\Controllers\WorkActivityController::class, 'archive'])->name('archive');
         Route::post('/', [\App\Http\Controllers\WorkActivityController::class, 'store'])->name('store');
         Route::post('/folders', [\App\Http\Controllers\WorkFolderController::class, 'store'])->name('folders.store');
         Route::put('/folders/{folder}', [\App\Http\Controllers\WorkFolderController::class, 'update'])->name('folders.update');

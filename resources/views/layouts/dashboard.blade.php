@@ -1023,9 +1023,14 @@
                         <span class="font-medium">الأفكار المقترحة</span>
                     </a>
 
-                    <a href="{{ route('work.index') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('work.*') ? 'active' : '' }}">
+                    <a href="{{ route('work.index') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('work.*') && ! request()->routeIs('work.archive') ? 'active' : '' }}">
                         <span class="material-icons text-lg ml-3">dashboard_customize</span>
                         <span class="font-medium">مساحة العمل</span>
+                    </a>
+
+                    <a href="{{ route('work.archive') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('work.archive') ? 'active' : '' }}">
+                        <span class="material-icons text-lg ml-3">inventory_2</span>
+                        <span class="font-medium">أرشيف</span>
                     </a>
 
                     @if(Auth::check() && Auth::user()->is_admin)
@@ -1062,7 +1067,7 @@
                             aria-expanded="{{ $archiveOpen ? 'true' : 'false' }}">
                         <span class="flex items-center">
                             <span class="material-icons text-lg ml-3">inventory_2</span>
-                            <span class="font-medium text-sm">أرشيف</span>
+                            <span class="font-medium text-sm">أقسام أخرى</span>
                         </span>
                         <span id="archiveMenuChevron" class="material-icons text-base transition-transform duration-200 {{ $archiveOpen ? 'rotate-180' : '' }}">expand_more</span>
                     </button>
