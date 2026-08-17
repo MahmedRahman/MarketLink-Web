@@ -378,8 +378,21 @@
                 </div>
             </div>
 
+            <div>
+                <label for="quickTaskAssignee" class="block text-sm font-medium text-gray-700 mb-1">ابعت التاسك لـ (اختياري)</label>
+                <select name="assigned_to" id="quickTaskAssignee"
+                        class="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 text-sm focus:border-indigo-500 focus:outline-none">
+                    <option value="">اقتراح تلقائي حسب النوع</option>
+                    @foreach(($employees ?? collect()) as $emp)
+                        <option value="{{ $emp->id }}" @selected((string) old('assigned_to') === (string) $emp->id)>
+                            {{ $emp->name }} — {{ $emp->role_badge ?? $emp->role }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+
             <p class="text-xs text-gray-500 bg-gray-50 border border-gray-100 rounded-xl px-3 py-2">
-                الكاتب والمصمم والمعيّن يتقترحوا تلقائيًا — تقدر تكمل التفاصيل من صفحة النشاط بعد الإضافة.
+                لو اختارت المعّيّن هنا فهيتساب له التاسك مباشرة. لو سيبتها فالنظام هيقترح تلقائيًا.
             </p>
 
             <div class="flex gap-3 pt-1">

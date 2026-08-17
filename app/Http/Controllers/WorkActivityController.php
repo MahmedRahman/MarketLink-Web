@@ -18,6 +18,11 @@ class WorkActivityController extends Controller
         $organizationId = WorkHub::organizationId($request);
         abort_unless($organizationId, 403);
 
+        $employees = Employee::where('organization_id', $organizationId)
+            ->where('status', 'active')
+            ->orderBy('name')
+            ->get();
+
         $query = WorkActivity::where('organization_id', $organizationId)
             ->withCount([
                 'tasks',
@@ -116,6 +121,7 @@ class WorkActivityController extends Controller
             'types' => WorkActivity::types(),
             'statuses' => WorkActivity::statuses(),
             'kinds' => WorkTask::kinds(),
+            'employees' => $employees,
             'filterType' => $request->type,
             'filterStatus' => $request->status,
             'canManageFolders' => WorkHub::canManageFolders($request),
