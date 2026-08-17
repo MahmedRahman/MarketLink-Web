@@ -163,6 +163,8 @@ Route::middleware(['auth', \App\Http\Middleware\CheckTrialStatus::class])->group
            Route::put('work/folders/{folder}', [\App\Http\Controllers\WorkFolderController::class, 'update'])->name('work.folders.update');
            Route::delete('work/folders/{folder}', [\App\Http\Controllers\WorkFolderController::class, 'destroy'])->name('work.folders.destroy');
            Route::post('work/{work}/move-folder', [\App\Http\Controllers\WorkFolderController::class, 'moveActivity'])->name('work.move-folder');
+           Route::post('work/{work}/archive', [\App\Http\Controllers\WorkActivityController::class, 'moveToArchive'])->name('work.archive-activity');
+           Route::post('work/{work}/unarchive', [\App\Http\Controllers\WorkActivityController::class, 'restoreFromArchive'])->name('work.unarchive-activity');
            Route::get('work/{work}', [\App\Http\Controllers\WorkActivityController::class, 'show'])->name('work.show');
            Route::get('work/{work}/ready-to-publish', [\App\Http\Controllers\WorkActivityController::class, 'readyToPublish'])->name('work.ready-to-publish');
            Route::put('work/{work}', [\App\Http\Controllers\WorkActivityController::class, 'update'])->name('work.update');
@@ -309,6 +311,8 @@ Route::middleware('auth:employee')->prefix('employee')->name('employee.')->group
         Route::put('/folders/{folder}', [\App\Http\Controllers\WorkFolderController::class, 'update'])->name('folders.update');
         Route::delete('/folders/{folder}', [\App\Http\Controllers\WorkFolderController::class, 'destroy'])->name('folders.destroy');
         Route::post('/{work}/move-folder', [\App\Http\Controllers\WorkFolderController::class, 'moveActivity'])->name('move-folder');
+        Route::post('/{work}/archive', [\App\Http\Controllers\WorkActivityController::class, 'moveToArchive'])->name('archive-activity');
+        Route::post('/{work}/unarchive', [\App\Http\Controllers\WorkActivityController::class, 'restoreFromArchive'])->name('unarchive-activity');
         Route::get('/{work}', [\App\Http\Controllers\WorkActivityController::class, 'show'])->name('show');
         Route::get('/{work}/ready-to-publish', [\App\Http\Controllers\WorkActivityController::class, 'readyToPublish'])->name('ready-to-publish');
         Route::put('/{work}', [\App\Http\Controllers\WorkActivityController::class, 'update'])->name('update');

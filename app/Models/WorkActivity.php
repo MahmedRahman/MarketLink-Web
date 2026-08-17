@@ -176,6 +176,7 @@ class WorkActivity extends Model
             'in_progress' => 'قيد التنفيذ',
             'done' => 'منجز',
             'cancelled' => 'ملغي',
+            'archived' => 'أرشيف',
             default => 'غير محدد',
         };
     }
@@ -187,6 +188,7 @@ class WorkActivity extends Model
             'in_progress' => 'blue',
             'done' => 'green',
             'cancelled' => 'red',
+            'archived' => 'gray',
             default => 'gray',
         };
     }
@@ -403,6 +405,7 @@ class WorkActivity extends Model
             'in_progress' => 'قيد التنفيذ',
             'done' => 'منجز',
             'cancelled' => 'ملغي',
+            'archived' => 'أرشيف',
         ];
     }
 }

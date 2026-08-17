@@ -2,20 +2,23 @@
 
 @section('title', 'الأرشيف')
 @section('page-title', 'الأرشيف')
-@section('page-description', 'المهام اللي اتنقلت للأرشيف بعد النشر')
+@section('page-description', 'الأنشطة والمهام المؤرشفة')
 
 @section('content')
 @php
     $employeeOnly = $employeeOnly ?? false;
+    $activities = $activities ?? collect();
 @endphp
 <div class="max-w-6xl mx-auto space-y-6">
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
             <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2">
                 <span class="material-icons text-slate-600">inventory_2</span>
-                أرشيف المهام
+                الأرشيف
             </h2>
-            <p class="text-sm text-gray-500 mt-1">{{ $tasks->count() }} تاسك مؤرشف</p>
+            <p class="text-sm text-gray-500 mt-1">
+                {{ $activities->count() }} نشاط · {{ $tasks->count() }} تاسك
+            </p>
         </div>
         @unless($employeeOnly)
             <a href="{{ work_route('index') }}" class="px-4 py-2 rounded-xl bg-gray-100 text-gray-700 text-sm font-medium hover:bg-gray-200 inline-flex items-center gap-1">
@@ -25,13 +28,42 @@
         @endunless
     </div>
 
-    @if($tasks->isEmpty())
+    @if($activities->isNotEmpty())
+        <section class="space-y-3">
+            <h3 class="text-sm font-bold text-gray-700">الأنشطة المؤرشفة</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                @foreach($activities as $activity)
+                    <div class="card rounded-2xl p-5 space-y-3">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <h4 class="font-bold text-gray-800 truncate">{{ $activity->title }}</h4>
+                                <p class="text-xs text-gray-500 mt-0.5">{{ $activity->type_label }} · {{ $activity->tasks_count }} مهمة</p>
+                            </div>
+                            <span class="role-badge role-gray shrink-0">أرشيف</span>
+                        </div>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <a href="{{ work_route('show', $activity) }}"
+                               class="px-3 py-1.5 rounded-xl bg-indigo-50 text-indigo-700 text-xs font-bold hover:bg-indigo-100">فتح</a>
+                            <form method="POST" action="{{ work_route('unarchive-activity', $activity) }}">
+                                @csrf
+                                <button type="submit" class="px-3 py-1.5 rounded-xl bg-green-50 text-green-800 text-xs font-bold border border-green-100 hover:bg-green-100">
+                                    إرجاع لمساحة العمل
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </section>
+    @endif
+
+    @if($tasks->isEmpty() && $activities->isEmpty())
         <div class="card rounded-2xl p-12 text-center">
             <span class="material-icons text-6xl text-gray-300">inventory_2</span>
             <h3 class="text-lg font-bold text-gray-700 mt-4">الأرشيف فاضي</h3>
-            <p class="text-gray-500 text-sm mt-1">بعد «تم النشر» انقل التاسك للأرشيف من البايبلاين عشان يظهر هنا</p>
+            <p class="text-gray-500 text-sm mt-1">من مساحة العمل اضغط «اذهب إلى الأرشيف» على كارت النشاط عشان ينتقل هنا</p>
         </div>
-    @else
+    @elseif($tasks->isNotEmpty())
         <div class="space-y-6">
             @foreach($groups as $activityId => $activityTasks)
                 @php $activity = optional($activityTasks->first())->activity; @endphp

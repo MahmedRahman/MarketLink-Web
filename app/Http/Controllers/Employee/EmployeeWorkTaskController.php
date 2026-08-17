@@ -85,6 +85,7 @@ class EmployeeWorkTaskController extends Controller
             ->get();
 
         return view('work.archive', [
+            'activities' => collect(),
             'tasks' => $tasks,
             'groups' => $tasks->groupBy('work_activity_id'),
             'employeeOnly' => true,
@@ -118,6 +119,8 @@ class EmployeeWorkTaskController extends Controller
         }
         if ($request->filled('status')) {
             $activitiesQuery->where('status', $request->status);
+        } else {
+            $activitiesQuery->where('status', '!=', 'archived');
         }
 
         $activities = $activitiesQuery

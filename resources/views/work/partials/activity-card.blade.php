@@ -73,6 +73,17 @@
         </button>
     @endif
 
+    <form method="POST" action="{{ work_route('archive-activity', $activity) }}" class="px-1"
+          onclick="event.stopPropagation()"
+          onsubmit="return confirm('هيتنقل النشاط للأرشيف ويختفي من مساحة العمل. تقدر ترجّعه من صفحة الأرشيف.');">
+        @csrf
+        <button type="submit"
+                class="w-full px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 text-xs font-semibold hover:bg-slate-100 inline-flex items-center justify-center gap-1 transition-colors">
+            <span class="material-icons text-sm">inventory_2</span>
+            اذهب إلى الأرشيف
+        </button>
+    </form>
+
     @if($canManageFolders)
         <form method="POST" action="{{ work_route('move-folder', $activity) }}" class="px-1 folder-move-form" onclick="event.stopPropagation()">
             @csrf

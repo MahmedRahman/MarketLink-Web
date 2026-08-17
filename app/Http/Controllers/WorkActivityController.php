@@ -36,6 +36,8 @@ class WorkActivityController extends Controller
         }
         if ($request->filled('status')) {
             $query->where('status', $request->status);
+        } else {
+            $query->where('status', '!=', 'archived');
         }
 
         $activities = $query->orderByRaw("CASE WHEN status = 'done' THEN 1 ELSE 0 END")
@@ -100,7 +102,7 @@ class WorkActivityController extends Controller
         }
 
         // متابعة عامة عبر كل الأنشطة
-        $allTasks = WorkTask::whereHas('activity', fn ($q) => $q->where('organization_id', $organizationId))
+        $allTasks = WorkTask::whereHas('activity', fn ($q) => $q->where('organization_id', $organizationId)->where('status', '!=', 'archived'))
             ->with(['activity', 'assignedEmployee'])
             ->get();
 
@@ -119,7 +121,7 @@ class WorkActivityController extends Controller
             'viewMode' => $viewMode,
             'follow' => $follow,
             'types' => WorkActivity::types(),
-            'statuses' => WorkActivity::statuses(),
+            'statuses' => array_filter(WorkActivity::statuses(), fn ($key) => $key !== 'archived', ARRAY_FILTER_USE_KEY),
             'kinds' => WorkTask::kinds(),
             'employees' => $employees,
             'filterType' => $request->type,
@@ -137,15 +139,23 @@ class WorkActivityController extends Controller
         $organizationId = WorkHub::organizationId($request);
         abort_unless($organizationId, 403);
 
+        $activities = WorkActivity::query()
+            ->where('organization_id', $organizationId)
+            ->where('status', 'archived')
+            ->withCount(['tasks'])
+            ->orderByDesc('updated_at')
+            ->get();
+
         $tasks = WorkTask::query()
             ->where('pipeline_stage', 'archived')
-            ->whereHas('activity', fn ($q) => $q->where('organization_id', $organizationId))
+            ->whereHas('activity', fn ($q) => $q->where('organization_id', $organizationId)->where('status', '!=', 'archived'))
             ->with(['activity', 'assignedEmployee', 'designer', 'contentWriter', 'files'])
             ->orderByDesc('updated_at')
             ->orderByDesc('id')
             ->get();
 
         return view('work.archive', [
+            'activities' => $activities,
             'tasks' => $tasks,
             'groups' => $tasks->groupBy('work_activity_id'),
         ]);
@@ -378,12 +388,40 @@ class WorkActivityController extends Controller
             'type' => 'required|in:live_lecture,live_lecture_paid,paid_round,educational,other',
             'description' => 'nullable|string',
             'event_date' => 'nullable|date',
-            'status' => 'required|in:planning,in_progress,done,cancelled',
+            'status' => 'required|in:planning,in_progress,done,cancelled,archived',
         ]);
 
         $work->update($validated);
 
         return redirect()->route(WorkHub::routeName('show'), $work)->with('success', 'تم تحديث النشاط');
+    }
+
+    public function moveToArchive(Request $request, WorkActivity $work)
+    {
+        $this->authorizeActivity($request, $work);
+
+        $work->update(['status' => 'archived']);
+
+        return redirect()
+            ->route(WorkHub::routeName('index'))
+            ->with('success', 'اتنقل النشاط للأرشيف واختفى من مساحة العمل');
+    }
+
+    public function restoreFromArchive(Request $request, WorkActivity $work)
+    {
+        $this->authorizeActivity($request, $work);
+
+        $work->update([
+            'status' => match (true) {
+                $work->progress >= 100 => 'done',
+                $work->progress > 0 => 'in_progress',
+                default => 'planning',
+            },
+        ]);
+
+        return redirect()
+            ->route(WorkHub::routeName('archive'))
+            ->with('success', 'اترجع النشاط لمساحة العمل');
     }
 
     public function destroy(Request $request, WorkActivity $work)
