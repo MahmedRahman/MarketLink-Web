@@ -704,7 +704,12 @@
                                                     title="نسخ رابط شير الكارت">
                                                 <span class="material-icons text-sm">share</span>
                                             </button>
-                                            @if(Auth::check() && Auth::user()->is_admin)
+                                            @php
+                                                $actor = \App\Support\WorkHub::actor(request());
+                                                $canSendWhatsApp = ($actor instanceof \App\Models\User && $actor->is_admin)
+                                                    || ($actor instanceof \App\Models\Employee && $actor->isWorkHubAdmin());
+                                            @endphp
+                                            @if($canSendWhatsApp)
                                                 <form method="POST"
                                                       action="{{ work_route('tasks.whatsapp-reminder', [$activity, $task]) }}"
                                                       class="inline"
