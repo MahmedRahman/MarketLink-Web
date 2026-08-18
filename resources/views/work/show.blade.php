@@ -423,6 +423,23 @@
                                     <td class="px-4 py-3 whitespace-nowrap text-slate-600">{{ $task->files->count() }}</td>
                                     <td class="px-4 py-3 whitespace-nowrap">
                                         <div class="flex items-center gap-1">
+                                            @php
+                                                $tableActor = \App\Support\WorkHub::actor(request());
+                                                $canSendWhatsAppTable = ($tableActor instanceof \App\Models\User && $tableActor->is_admin)
+                                                    || ($tableActor instanceof \App\Models\Employee && $tableActor->isWorkHubAdmin());
+                                            @endphp
+                                            @if($canSendWhatsAppTable)
+                                                <form method="POST"
+                                                      action="{{ work_route('tasks.whatsapp-reminder', [$activity, $task]) }}"
+                                                      class="inline"
+                                                      onsubmit="return confirm('إرسال تذكرة واتساب للتاسك ده؟');">
+                                                    @csrf
+                                                    <button type="submit"
+                                                            class="px-2.5 py-1 rounded-lg bg-green-100 text-green-800 text-[11px] font-bold hover:bg-green-200 border border-green-300">
+                                                        واتساب
+                                                    </button>
+                                                </form>
+                                            @endif
                                             <a href="{{ work_route('tasks.show', [$activity, $task]) }}" class="px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 text-[11px] font-bold hover:bg-indigo-100">فتح</a>
                                             <a href="{{ work_route('tasks.edit', [$activity, $task]) }}" class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-[11px] font-bold hover:bg-slate-200">تعديل</a>
                                         </div>
