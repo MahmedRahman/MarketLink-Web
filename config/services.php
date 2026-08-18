@@ -44,4 +44,10 @@ return [
         'project_id' => env('GOOGLE_AI_SANDBOX_PROJECT_ID'),
     ],
 
+    'evolution' => [
+        'base_url' => env('EVOLUTION_API_BASE_URL'),
+        'api_key' => env('EVOLUTION_API_KEY'),
+        'instance' => env('EVOLUTION_INSTANCE_NAME'),
+    ],
+
 ];

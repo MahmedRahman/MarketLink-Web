@@ -23,9 +23,9 @@ class WhatsAppTestController extends Controller
         $groupJid = $user->whatsapp_group_jid;
         abort_unless(!empty($groupJid), 422);
 
-        $apiBaseUrl = rtrim((string) env('EVOLUTION_API_BASE_URL', ''), '/');
-        $apiKey = (string) env('EVOLUTION_API_KEY', '');
-        $instanceName = (string) env('EVOLUTION_INSTANCE_NAME', '');
+        $apiBaseUrl = rtrim((string) config('services.evolution.base_url', ''), '/');
+        $apiKey = (string) config('services.evolution.api_key', '');
+        $instanceName = (string) config('services.evolution.instance', '');
 
         abort_unless($apiBaseUrl && $apiKey && $instanceName, 500);
 
