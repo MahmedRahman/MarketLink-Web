@@ -126,6 +126,23 @@
                 @enderror
 
                 @if(Auth::check() && Auth::user()->is_admin)
+                    @if(session('whatsapp-test-status') === 'sent')
+                        <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-xl mb-4">
+                            تم إرسال رسالة تجريبية بنجاح.
+                        </div>
+                    @endif
+
+                    @if(session('whatsapp-test-status') === 'failed')
+                        <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-xl mb-4">
+                            فشل إرسال رسالة تجريبية.
+                            @if(session('whatsapp-test-error'))
+                                <div class="text-xs mt-1 text-red-700">
+                                    {{ session('whatsapp-test-error') }}
+                                </div>
+                            @endif
+                        </div>
+                    @endif
+
                     <!-- WhatsApp group link -->
                     <div>
                         <label for="whatsapp_group_url" class="block text-sm font-medium text-gray-700 mb-2">
@@ -155,6 +172,28 @@
                             </a>
                         </div>
                     @endif
+
+                    <!-- WhatsApp group JID -->
+                    <div class="pt-4">
+                        <label for="whatsapp_group_jid" class="block text-sm font-medium text-gray-700 mb-2">
+                            معرف الجروب (JID) لإرسال الرسائل
+                        </label>
+                        <input
+                            type="text"
+                            id="whatsapp_group_jid"
+                            name="whatsapp_group_jid"
+                            value="{{ old('whatsapp_group_jid', $user->whatsapp_group_jid) }}"
+                            placeholder="مثال: 120363123456789@g.us"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                        >
+                        @error('whatsapp_group_jid')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                        <p class="text-xs text-gray-500 mt-2">
+                            ده مطلوب عشان “إرسال رسالة تجريبية” يرسل داخل/على الجروب باستخدام Evolution API.
+                        </p>
+                    </div>
+
                 @endif
 
                 <!-- Submit Button -->
@@ -165,6 +204,20 @@
                     </button>
                 </div>
             </form>
+
+            @if(Auth::check() && Auth::user()->is_admin)
+                <form method="POST" action="{{ route('profile.whatsapp.test') }}" class="pt-4 flex items-center justify-start rtl-spacing">
+                    @csrf
+                    <button
+                        type="submit"
+                        class="btn-primary text-white px-8 py-3 rounded-xl flex items-center gap-2"
+                        @disabled(empty($user->whatsapp_group_jid))
+                    >
+                        <i class="fas fa-paper-plane text-sm"></i>
+                        إرسال رسالة تجريبية
+                    </button>
+                </form>
+            @endif
         </div>
 
         <!-- Update Password -->

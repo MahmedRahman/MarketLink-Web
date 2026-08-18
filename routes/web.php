@@ -25,6 +25,7 @@ use App\Http\Controllers\MeetingController;
 use App\Http\Controllers\ContractController;
 use App\Http\Controllers\ContentCreationController;
 use App\Http\Controllers\WorkIdeaController;
+use App\Http\Controllers\WhatsAppTestController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -78,6 +79,9 @@ Route::middleware(['auth', \App\Http\Middleware\CheckTrialStatus::class])->group
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Evolution API (WhatsApp) - test send message to group (admin only)
+    Route::post('/profile/whatsapp/test', [WhatsAppTestController::class, 'sendTestMessage'])->name('profile.whatsapp.test');
 
     // Clients Routes
     Route::resource('clients', ClientController::class);

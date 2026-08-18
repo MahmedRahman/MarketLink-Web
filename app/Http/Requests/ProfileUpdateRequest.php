@@ -20,6 +20,8 @@ class ProfileUpdateRequest extends FormRequest
             'auto_follow_tasks' => ['nullable', 'boolean'],
             // WhatsApp group share link (external URL). Optional because not all admins use it.
             'whatsapp_group_url' => ['nullable', 'string', 'max:2048'],
+            // WhatsApp group JID (e.g. 120363123456789@g.us). Needed to send messages via Evolution API.
+            'whatsapp_group_jid' => ['nullable', 'string', 'max:255'],
             // Email is not updatable, so we don't validate it
         ];
     }

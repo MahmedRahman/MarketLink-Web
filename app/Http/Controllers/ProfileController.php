@@ -41,6 +41,10 @@ class ProfileController extends Controller
         if (array_key_exists('whatsapp_group_url', $validated)) {
             $validated['whatsapp_group_url'] = $validated['whatsapp_group_url'] ?: null;
         }
+
+        if (array_key_exists('whatsapp_group_jid', $validated)) {
+            $validated['whatsapp_group_jid'] = $validated['whatsapp_group_jid'] ?: null;
+        }
         
         $request->user()->fill($validated);
         $request->user()->save();
