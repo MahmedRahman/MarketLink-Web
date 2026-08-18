@@ -704,6 +704,20 @@
                                                     title="نسخ رابط شير الكارت">
                                                 <span class="material-icons text-sm">share</span>
                                             </button>
+                                            @if(Auth::check() && Auth::user()->is_admin)
+                                                <form method="POST"
+                                                      action="{{ work_route('tasks.whatsapp-reminder', [$activity, $task]) }}"
+                                                      class="inline"
+                                                      onsubmit="return confirm('إرسال تذكرة واتساب للتاسك ده؟');">
+                                                    @csrf
+                                                    <button type="submit"
+                                                            class="inline-flex items-center justify-center px-2 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-medium hover:bg-emerald-100"
+                                                            draggable="false"
+                                                            title="إرسال تذكرة واتساب">
+                                                        <span class="material-icons text-sm">send</span>
+                                                    </button>
+                                                </form>
+                                            @endif
                                             <form method="POST"
                                                   action="{{ work_route('tasks.duplicate', [$activity, $task]) }}"
                                                   class="inline"

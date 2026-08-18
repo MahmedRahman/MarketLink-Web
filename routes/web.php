@@ -188,6 +188,7 @@ Route::middleware(['auth', \App\Http\Middleware\CheckTrialStatus::class])->group
            Route::post('work/{work}/tasks/{task}/duplicate', [\App\Http\Controllers\WorkTaskController::class, 'duplicate'])->name('work.tasks.duplicate');
            Route::post('work/{work}/tasks/{task}/publish-links', [\App\Http\Controllers\WorkTaskController::class, 'updatePublishLinks'])->name('work.tasks.publish-links');
            Route::post('work/{work}/tasks/{task}/publish-schedule', [\App\Http\Controllers\WorkTaskController::class, 'updatePublishSchedule'])->name('work.tasks.publish-schedule');
+           Route::post('work/{work}/tasks/{task}/whatsapp-reminder', [\App\Http\Controllers\WorkTaskController::class, 'sendWhatsAppReminder'])->name('work.tasks.whatsapp-reminder');
            Route::post('work/{work}/tasks/{task}/move-stage', [\App\Http\Controllers\WorkTaskController::class, 'moveStage'])->name('work.tasks.move-stage');
            Route::post('work/{work}/tasks/{task}/files', [\App\Http\Controllers\WorkTaskController::class, 'uploadFile'])->name('work.tasks.files.upload');
            Route::get('work/{work}/tasks/{task}/files/{file}/download', [\App\Http\Controllers\WorkTaskController::class, 'downloadFile'])->name('work.tasks.files.download');

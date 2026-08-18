@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use App\Support\WorkHub;
 
 class WorkTaskController extends Controller
@@ -1172,6 +1173,86 @@ PROMPT;
         }
 
         return $text;
+    }
+
+    public function sendWhatsAppReminder(Request $request, WorkActivity $work, WorkTask $task)
+    {
+        $this->authorizeActivity($request, $work);
+        $this->authorizeTask($work, $task);
+
+        $user = $request->user();
+        abort_unless($user && $user->is_admin, 403);
+
+        $groupJid = trim((string) ($user->whatsapp_group_jid ?? ''));
+        if ($groupJid === '') {
+            return back()->with('error', 'أضف معرف الجروب (JID) أولاً من صفحة الإعدادات.');
+        }
+
+        $apiBaseUrl = rtrim((string) config('services.evolution.base_url', ''), '/');
+        $apiKey = (string) config('services.evolution.api_key', '');
+        $instanceName = (string) config('services.evolution.instance', '');
+
+        if ($apiBaseUrl === '' || $apiKey === '' || $instanceName === '') {
+            return back()->with('error', 'إعدادات Evolution API غير مكتملة على السيرفر.');
+        }
+
+        $taskUrl = work_route('tasks.show', [$work, $task]);
+        $messageLines = [
+            'تذكير مهمة',
+            'النشاط: '.$work->title,
+            'التاسك: '.$task->title,
+            'المرحلة: '.$task->pipeline_stage_label,
+            'الحالة: '.$task->status_label,
+        ];
+
+        if ($task->due_date) {
+            $messageLines[] = 'تاريخ التسليم: '.$task->due_date->format('Y/m/d');
+        }
+
+        $messageLines[] = 'الرابط: '.$taskUrl;
+        $message = implode("\n", $messageLines);
+
+        try {
+            $response = Http::timeout(20)
+                ->withHeaders([
+                    'apikey' => $apiKey,
+                    'Content-Type' => 'application/json',
+                ])
+                ->post("{$apiBaseUrl}/message/sendText/{$instanceName}", [
+                    'number' => $groupJid,
+                    'text' => $message,
+                ]);
+
+            if (! $response->successful()) {
+                Log::warning('WhatsApp reminder send failed', [
+                    'task_id' => $task->id,
+                    'activity_id' => $work->id,
+                    'status' => $response->status(),
+                    'body' => Str::limit($response->body(), 2000),
+                ]);
+
+                return back()->with('error', 'فشل إرسال تذكرة الواتساب. راجع الإعدادات أو حاول مرة تانية.');
+            }
+
+            $task->logEvent(
+                'whatsapp_reminder_sent',
+                'تم إرسال تذكرة واتساب للتاسك',
+                'id',
+                null,
+                (string) $task->id,
+                ['group_jid' => $groupJid]
+            );
+
+            return back()->with('success', 'تم إرسال تذكرة واتساب بنجاح.');
+        } catch (\Throwable $e) {
+            Log::error('WhatsApp reminder send exception', [
+                'task_id' => $task->id,
+                'activity_id' => $work->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return back()->with('error', 'تعذر الاتصال بخدمة الواتساب حالياً.');
+        }
     }
 
     private function nullableDate(mixed $value): ?string
