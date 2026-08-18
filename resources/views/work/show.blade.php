@@ -711,10 +711,11 @@
                                                       onsubmit="return confirm('إرسال تذكرة واتساب للتاسك ده؟');">
                                                     @csrf
                                                     <button type="submit"
-                                                            class="inline-flex items-center justify-center px-2 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-medium hover:bg-emerald-100"
+                                                            class="inline-flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-lg bg-green-100 text-green-800 text-xs font-bold hover:bg-green-200 border border-green-300"
                                                             draggable="false"
                                                             title="إرسال تذكرة واتساب">
-                                                        <span class="material-icons text-sm">send</span>
+                                                        <span class="material-icons text-sm">chat</span>
+                                                        واتساب
                                                     </button>
                                                 </form>
                                             @endif
