@@ -125,6 +125,38 @@
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                 @enderror
 
+                @if(Auth::check() && Auth::user()->is_admin)
+                    <!-- WhatsApp group link -->
+                    <div>
+                        <label for="whatsapp_group_url" class="block text-sm font-medium text-gray-700 mb-2">
+                            رابط واتساب الجروب
+                        </label>
+                        <input
+                            type="text"
+                            id="whatsapp_group_url"
+                            name="whatsapp_group_url"
+                            value="{{ old('whatsapp_group_url', $user->whatsapp_group_url) }}"
+                            placeholder="مثال: https://chat.whatsapp.com/..."
+                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                        >
+                        @error('whatsapp_group_url')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    @if(!empty($user->whatsapp_group_url))
+                        <div class="pt-1">
+                            <a href="{{ $user->whatsapp_group_url }}"
+                               target="_blank"
+                               rel="noopener noreferrer"
+                               class="inline-flex items-center gap-2 text-sm font-medium text-emerald-700 hover:underline">
+                                <i class="fas fa-external-link-alt text-xs"></i>
+                                معاينة الرابط
+                            </a>
+                        </div>
+                    @endif
+                @endif
+
                 <!-- Submit Button -->
                 <div class="flex items-center justify-end rtl-spacing pt-4">
                     <button type="submit" class="btn-primary text-white px-8 py-3 rounded-xl flex items-center">

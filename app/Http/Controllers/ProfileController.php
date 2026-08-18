@@ -36,6 +36,11 @@ class ProfileController extends Controller
         } else {
             $validated['auto_follow_tasks'] = (bool) $validated['auto_follow_tasks'];
         }
+
+        // Normalize empty WhatsApp group link to null
+        if (array_key_exists('whatsapp_group_url', $validated)) {
+            $validated['whatsapp_group_url'] = $validated['whatsapp_group_url'] ?: null;
+        }
         
         $request->user()->fill($validated);
         $request->user()->save();

@@ -18,6 +18,8 @@ class ProfileUpdateRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'auto_follow_tasks' => ['nullable', 'boolean'],
+            // WhatsApp group share link (external URL). Optional because not all admins use it.
+            'whatsapp_group_url' => ['nullable', 'string', 'max:2048'],
             // Email is not updatable, so we don't validate it
         ];
     }

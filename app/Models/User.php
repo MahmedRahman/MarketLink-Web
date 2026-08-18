@@ -26,6 +26,7 @@ class User extends Authenticatable
         'is_admin',
         'status',
         'auto_follow_tasks',
+        'whatsapp_group_url',
     ];
 
     /**
