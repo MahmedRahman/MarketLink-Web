@@ -1023,9 +1023,14 @@
                         <span class="font-medium">الأفكار المقترحة</span>
                     </a>
 
-                    <a href="{{ route('work.index') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('work.*') && ! request()->routeIs('work.archive') ? 'active' : '' }}">
+                    <a href="{{ route('work.index') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('work.*') && ! request()->routeIs('work.archive') && request()->input('view') !== 'tasks' ? 'active' : '' }}">
                         <span class="material-icons text-lg ml-3">dashboard_customize</span>
                         <span class="font-medium">مساحة العمل</span>
+                    </a>
+
+                    <a href="{{ route('work.index', ['view' => 'tasks']) }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('work.*') && ! request()->routeIs('work.archive') && request()->input('view') === 'tasks' ? 'active' : '' }}">
+                        <span class="material-icons text-lg ml-3">table_rows</span>
+                        <span class="font-medium">تاسكات</span>
                     </a>
 
                     <a href="{{ route('work.archive') }}" class="sidebar-item flex items-center px-4 py-3 text-gray-700 rounded-xl {{ request()->routeIs('work.archive') ? 'active' : '' }}">

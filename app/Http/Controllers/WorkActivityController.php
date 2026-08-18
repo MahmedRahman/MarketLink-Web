@@ -46,7 +46,7 @@ class WorkActivityController extends Controller
             ->get();
 
         $viewMode = $request->input('view', 'folder');
-        if (! in_array($viewMode, ['title', 'month', 'folder'], true)) {
+        if (! in_array($viewMode, ['title', 'month', 'folder', 'tasks'], true)) {
             $viewMode = 'folder';
         }
 
@@ -103,7 +103,8 @@ class WorkActivityController extends Controller
 
         // متابعة عامة عبر كل الأنشطة
         $allTasks = WorkTask::whereHas('activity', fn ($q) => $q->where('organization_id', $organizationId)->where('status', '!=', 'archived'))
-            ->with(['activity', 'assignedEmployee'])
+            ->with(['activity', 'assignedEmployee', 'designer', 'contentWriter', 'files'])
+            ->orderByDesc('updated_at')
             ->get();
 
         $follow = [
@@ -126,6 +127,7 @@ class WorkActivityController extends Controller
             'employees' => $employees,
             'filterType' => $request->type,
             'filterStatus' => $request->status,
+            'allTasks' => $allTasks,
             'canManageFolders' => WorkHub::canManageFolders($request),
             'showMonthView' => ! WorkHub::isEmployeeHub($request),
         ]);

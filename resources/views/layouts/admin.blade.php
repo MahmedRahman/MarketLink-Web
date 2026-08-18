@@ -71,9 +71,14 @@
                     <div class="pt-3 pb-1 px-4">
                         <p class="text-xs font-semibold text-gray-500 tracking-wide">توزيع الشغل</p>
                     </div>
-                    <a href="{{ route('work.index') }}" class="flex items-center px-4 py-3 rounded-lg hover:bg-gray-800 transition-colors {{ request()->routeIs('work.*') && ! request()->routeIs('work.archive') ? 'bg-gray-800' : '' }}">
+                    <a href="{{ route('work.index') }}" class="flex items-center px-4 py-3 rounded-lg hover:bg-gray-800 transition-colors {{ request()->routeIs('work.*') && ! request()->routeIs('work.archive') && request()->input('view') !== 'tasks' ? 'bg-gray-800' : '' }}">
                         <span class="material-icons ml-3">dashboard_customize</span>
                         مساحة العمل
+                    </a>
+
+                    <a href="{{ route('work.index', ['view' => 'tasks']) }}" class="flex items-center px-4 py-3 rounded-lg hover:bg-gray-800 transition-colors {{ request()->routeIs('work.*') && ! request()->routeIs('work.archive') && request()->input('view') === 'tasks' ? 'bg-gray-800' : '' }}">
+                        <span class="material-icons ml-3">table_rows</span>
+                        تاسكات
                     </a>
                     <a href="{{ route('work.archive') }}" class="flex items-center px-4 py-3 rounded-lg hover:bg-gray-800 transition-colors {{ request()->routeIs('work.archive') ? 'bg-gray-800' : '' }}">
                         <span class="material-icons ml-3">inventory_2</span>

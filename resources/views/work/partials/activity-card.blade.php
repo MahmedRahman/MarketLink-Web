@@ -73,37 +73,23 @@
         </button>
     @endif
 
-    <form method="POST" action="{{ work_route('archive-activity', $activity) }}" class="px-1"
-          onclick="event.stopPropagation()"
-          onsubmit="return confirm('هيتنقل النشاط للأرشيف ويختفي من مساحة العمل. تقدر ترجّعه من صفحة الأرشيف.');">
-        @csrf
-        <button type="submit"
-                class="w-full px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 text-xs font-semibold hover:bg-slate-100 inline-flex items-center justify-center gap-1 transition-colors">
-            <span class="material-icons text-sm">inventory_2</span>
-            اذهب إلى الأرشيف
-        </button>
-    </form>
-
-    @if($canManageFolders)
-        <form method="POST" action="{{ work_route('move-folder', $activity) }}" class="px-1 folder-move-form" onclick="event.stopPropagation()">
-            @csrf
-            <input type="hidden" name="return_view" value="{{ $viewMode }}">
-            @if(!empty($filterType))
-                <input type="hidden" name="type" value="{{ $filterType }}">
-            @endif
-            @if(!empty($filterStatus))
-                <input type="hidden" name="status" value="{{ $filterStatus }}">
-            @endif
-            <label class="sr-only">نقل لفولدر</label>
-            <select name="folder_id" onchange="this.form.submit()"
-                    class="folder-move-select w-full px-3 py-1.5 rounded-xl border border-gray-200 text-xs text-gray-700 bg-white focus:border-primary focus:outline-none">
-                <option value="">بدون فولدر</option>
+    <div class="px-1" onclick="event.stopPropagation()">
+        @php $selectId = 'activity-action-'.$activity->id; @endphp
+        <select id="{{ $selectId }}"
+                onchange="handleActivityAction(this)"
+                data-archive-url="{{ work_route('archive-activity', $activity) }}"
+                @if($canManageFolders) data-move-url="{{ work_route('move-folder', $activity) }}" @endif
+                class="folder-move-select w-full px-3 py-1.5 rounded-xl border border-gray-200 text-xs text-gray-700 bg-white focus:border-primary focus:outline-none">
+            <option value="" selected disabled>نقل أو أرشفة...</option>
+            @if($canManageFolders)
+                <option value="folder:">بدون فولدر</option>
                 @foreach($folders as $folderOption)
-                    <option value="{{ $folderOption->id }}" @selected((int) $activity->folder_id === (int) $folderOption->id)>
-                        {{ $folderOption->title }}
+                    <option value="folder:{{ $folderOption->id }}" @selected((int) $activity->folder_id === (int) $folderOption->id)>
+                        📁 {{ $folderOption->title }}
                     </option>
                 @endforeach
-            </select>
-        </form>
-    @endif
+            @endif
+            <option value="archive">📦 أرشيف</option>
+        </select>
+    </div>
 </div>

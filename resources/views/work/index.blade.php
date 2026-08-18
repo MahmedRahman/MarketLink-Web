@@ -74,6 +74,11 @@
                     <span class="material-icons text-base">title</span>
                     حسب العنوان
                 </a>
+                <a href="{{ work_route('index', array_filter(['type' => $filterType, 'status' => $filterStatus, 'view' => 'tasks'])) }}"
+                   class="px-3 py-1.5 rounded-lg text-sm font-semibold inline-flex items-center gap-1 transition-colors {{ ($viewMode ?? 'folder') === 'tasks' ? 'bg-white text-primary shadow-sm' : 'text-gray-600 hover:text-gray-800' }}">
+                    <span class="material-icons text-base">table_rows</span>
+                    حسب التاسك
+                </a>
                 @if($showMonthView ?? true)
                     <a href="{{ work_route('index', array_filter(['type' => $filterType, 'status' => $filterStatus, 'view' => 'month'])) }}"
                        class="px-3 py-1.5 rounded-lg text-sm font-semibold inline-flex items-center gap-1 transition-colors {{ ($viewMode ?? 'folder') === 'month' ? 'bg-white text-primary shadow-sm' : 'text-gray-600 hover:text-gray-800' }}">
@@ -235,6 +240,75 @@
                     </div>
                 </section>
             @endforeach
+        </div>
+    @elseif(($viewMode ?? 'folder') === 'tasks')
+        <div class="card rounded-2xl overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-sm text-right">
+                    <thead class="bg-slate-50 text-slate-600">
+                        <tr class="border-b border-slate-200">
+                            <th class="px-4 py-3 font-bold whitespace-nowrap">#</th>
+                            <th class="px-4 py-3 font-bold">العنوان</th>
+                            <th class="px-4 py-3 font-bold">النشاط</th>
+                            <th class="px-4 py-3 font-bold whitespace-nowrap">النوع</th>
+                            <th class="px-4 py-3 font-bold whitespace-nowrap">المرحلة</th>
+                            <th class="px-4 py-3 font-bold whitespace-nowrap">الكاتب</th>
+                            <th class="px-4 py-3 font-bold whitespace-nowrap">المصمم</th>
+                            <th class="px-4 py-3 font-bold whitespace-nowrap">التسليم</th>
+                            <th class="px-4 py-3 font-bold whitespace-nowrap">ملفات</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        @forelse($allTasks as $index => $task)
+                            @php
+                                $stageClass = match($task->pipeline_stage) {
+                                    'planning' => 'bg-amber-50 text-amber-800',
+                                    'writing' => 'bg-blue-50 text-blue-800',
+                                    'design' => 'bg-purple-50 text-purple-800',
+                                    'ready_to_publish' => 'bg-teal-50 text-teal-800',
+                                    'published' => 'bg-green-50 text-green-800',
+                                    default => 'bg-slate-100 text-slate-700',
+                                };
+                            @endphp
+                            <tr class="hover:bg-slate-50/80 {{ $task->is_overdue ? 'bg-red-50/40' : '' }}">
+                                <td class="px-4 py-3 text-slate-400 font-semibold">{{ $index + 1 }}</td>
+                                <td class="px-4 py-3">
+                                    <a href="{{ work_route('tasks.show', [$task->activity, $task]) }}" class="font-bold text-gray-900 hover:text-indigo-700 leading-snug">
+                                        {{ $task->title }}
+                                    </a>
+                                </td>
+                                <td class="px-4 py-3 whitespace-nowrap">
+                                    <a href="{{ work_route('show', $task->activity) }}" class="text-indigo-600 hover:text-indigo-800 text-xs font-semibold">
+                                        {{ $task->activity?->title ?? '—' }}
+                                    </a>
+                                </td>
+                                <td class="px-4 py-3 whitespace-nowrap">
+                                    @if($task->content_type_label)
+                                        <span class="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 text-[11px] font-semibold">{{ $task->content_type_label }}</span>
+                                    @else
+                                        <span class="text-slate-400">—</span>
+                                    @endif
+                                </td>
+                                <td class="px-4 py-3 whitespace-nowrap">
+                                    <span class="px-2 py-0.5 rounded-md text-[11px] font-bold {{ $stageClass }}">{{ $task->pipeline_stage_label }}</span>
+                                </td>
+                                <td class="px-4 py-3 whitespace-nowrap text-slate-700">{{ $task->contentWriter?->name ?? '—' }}</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-slate-700">{{ $task->designer?->name ?? '—' }}</td>
+                                <td class="px-4 py-3 whitespace-nowrap {{ $task->is_overdue ? 'text-red-600 font-bold' : 'text-slate-600' }}">
+                                    {{ optional($task->due_date)->format('Y/m/d') ?? '—' }}
+                                </td>
+                                <td class="px-4 py-3 whitespace-nowrap text-slate-600">{{ $task->files->count() }}</td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="9" class="px-4 py-12 text-center text-slate-400">
+                                    مفيش تاسكات — أضف تاسكات من داخل الأنشطة
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
         </div>
     @else
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -591,6 +665,41 @@
                 icon.classList.toggle('text-gray-400', !on);
             }
         });
+    }
+
+    function handleActivityAction(select) {
+        const val = select.value;
+        if (!val) return;
+        const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+        if (val === 'archive') {
+            if (!confirm('هيتنقل النشاط للأرشيف ويختفي من مساحة العمل. تقدر ترجّعه من صفحة الأرشيف.')) {
+                select.value = '';
+                return;
+            }
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = select.dataset.archiveUrl;
+            form.innerHTML = '<input type="hidden" name="_token" value="' + csrf + '">';
+            document.body.appendChild(form);
+            form.submit();
+            return;
+        }
+
+        if (val.startsWith('folder:')) {
+            const folderId = val.replace('folder:', '');
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = select.dataset.moveUrl;
+            form.innerHTML = '<input type="hidden" name="_token" value="' + csrf + '">'
+                + '<input type="hidden" name="folder_id" value="' + folderId + '">'
+                + '<input type="hidden" name="return_view" value="{{ $viewMode }}">';
+            document.body.appendChild(form);
+            form.submit();
+            return;
+        }
+
+        select.value = '';
     }
 
     function initFolderDragAndDrop() {

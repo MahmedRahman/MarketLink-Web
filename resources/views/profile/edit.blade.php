@@ -33,6 +33,28 @@
             </div>
         @endif
 
+        @if(Auth::check() && Auth::user()->is_admin)
+            <div class="card rounded-2xl p-8">
+                <div class="flex items-center mb-4">
+                    <div class="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center icon-spacing ml-3">
+                        <i class="fas fa-users text-indigo-600"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800">إدارة الجروب</h3>
+                        <p class="text-sm text-gray-600">متابعة مهام الموظفين حسب المرحلة الحالية</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-start rtl-spacing pt-2">
+                    <a href="{{ route('team-tasks.index') }}"
+                       class="btn-primary text-white px-8 py-3 rounded-xl flex items-center">
+                        <i class="fas fa-table text-sm ml-2"></i>
+                        فتح شاشة الجروب
+                    </a>
+                </div>
+            </div>
+        @endif
+
         <!-- Update Profile Information -->
         <div class="card rounded-2xl p-8">
             <div class="flex items-center mb-6">
